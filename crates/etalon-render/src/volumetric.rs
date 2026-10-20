@@ -593,14 +593,14 @@ impl VolumetricPipeline {
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("etalon-holographic-pipeline-layout"),
-            bind_group_layouts: &[&uniforms_layout, &nodes_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&uniforms_layout), Some(&nodes_layout)],
+            immediate_size: 0,
         });
 
         let depth_stencil = depth_format.map(|format| etalon::DepthStencilState {
             format,
-            depth_write_enabled: false,
-            depth_compare: etalon::CompareFunction::LessEqual,
+            depth_write_enabled: Some(false),
+            depth_compare: Some(etalon::CompareFunction::LessEqual),
             stencil: etalon::StencilState::default(),
             bias: etalon::DepthBiasState::default(),
         });
@@ -635,7 +635,7 @@ impl VolumetricPipeline {
             },
             depth_stencil,
             multisample: etalon::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 

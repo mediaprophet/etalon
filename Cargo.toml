@@ -95,7 +95,6 @@ etalon = { version = "0.0.1", path = "./etalon", default-features = false, featu
     "metal",
     "vulkan-portability",
     "angle",
-    "static-dxc",
 ] }
 etalon-core = { version = "0.0.1", path = "./etalon-core", default-features = false }
 etalon-core-remote = { version = "0.0.1", path = "./etalon-core-remote" }
@@ -123,25 +122,25 @@ etalon-core-deps-apple = { version = "0.0.1", path = "./etalon-core/platform-dep
 etalon-core-deps-wasm = { version = "0.0.1", path = "./etalon-core/platform-deps/wasm" }
 etalon-core-deps-emscripten = { version = "0.0.1", path = "./etalon-core/platform-deps/emscripten" }
 
-anyhow = { version = "1.0.87", default-features = false }
+anyhow = { version = "1.0.104", default-features = false }
 approx = "0.5"
 arbitrary = "1.4.2"
 argh = "0.1.13"
-arrayvec = { version = "0.7.1", default-features = false }
+arrayvec = { version = "0.7.8", default-features = false }
 bincode = "2"
 bit-set = { version = "0.11", default-features = false }
 bit-vec = { version = "0.10", default-features = false }
-bitflags = "2.9"
-bytemuck = { version = "1.22", features = [
+bitflags = "2.13.2"
+bytemuck = { version = "1.25.2", features = [
     "extern_crate_alloc",
     "min_const_generics",
 ] }
 cargo_metadata = "0.23"
 cfg_aliases = "0.2.2"
-cfg-if = "1"
+cfg-if = "1.0.5"
 codespan-reporting = { version = "0.13", default-features = false }
 diff = "0.1"
-document-features = "0.2.10"
+document-features = "0.2.12"
 encase = "0.13"
 env_logger = { version = "0.11", default-features = false, features = [
     "humantime",
@@ -152,42 +151,42 @@ flume = "0.12"
 futures-lite = "2"
 glam = "0.34.0"
 glob = "0.3"
-half = { version = "2.5", default-features = false } # We require 2.5 to have `Arbitrary` support.
+half = { version = "2.7.1", default-features = false } # We require 2.5 to have `Arbitrary` support.
 hashbrown = { version = "0.17", default-features = false, features = [
     "default-hasher",
     "inline-more",
 ] }
 image = { version = "0.25", default-features = false, features = ["png"] }
-indexmap = { version = "2.11.4", default-features = false }
+indexmap = { version = "2.14.2", default-features = false }
 indicatif = "0.18"
 itertools = { version = "0.15" }
 jobserver = "0.1"
 ktx2 = "0.5"
-libc = { version = "0.2.183", default-features = false }
+libc = { version = "0.2.191", default-features = false }
 # See https://github.com/rust-fuzz/libfuzzer/issues/126
 libfuzzer-sys = ">0.4.0,<=0.4.7"
 libloading = "0.8"
 libm = { version = "0.2.6", default-features = false }
 libtest-mimic = "0.8"
 # Minimum version supported by parking_lot 0.12.3
-lock_api = { version = "0.4.6", default-features = false }
-log = "0.4.29"
+lock_api = { version = "0.4.14", default-features = false }
+log = "0.4.34"
 macro_rules_attribute = "0.2"
 nanoserde = "0.2"
 nanorand = { version = "0.8", default-features = false, features = ["wyrand"] }
 noise = "0.9"
-num_cpus = "1"
+num_cpus = "1.17.0"
 # `half` requires 0.2.16 for `FromBytes` and `ToBytes`.
-num-traits = { version = "0.2.16", default-features = false }
+num-traits = { version = "0.2.19", default-features = false }
 nv-flip = "0.1"
 obj = "0.10"
 # NOTE: once_cell/std is *required* for some commonly-used features, selecting this per crate
-once_cell = { version = "1.21", default-features = false }
+once_cell = { version = "1.21.4", default-features = false }
 # Firefox has 3.4.0 vendored, so we allow that version in our dependencies
 ordered-float = { version = ">=3, <6.0", default-features = false }
-parking_lot = "0.12.3"
+parking_lot = "0.12.5"
 paste = "1.0.15"
-petgraph = { version = "0.8", default-features = false }
+petgraph = { version = "0.8.3", default-features = false }
 pico-args = { version = "0.5", features = [
     "eq-separator",
     "short-space-opt",
@@ -195,14 +194,14 @@ pico-args = { version = "0.5", features = [
 ] }
 png = "0.18"
 pollster = "1.0"
-portable-atomic = "1.10"
-portable-atomic-util = "0.2.4"
+portable-atomic = "1.15.0"
+portable-atomic-util = "0.2.8"
 pp-rs = "0.2.1"
-profiling = { version = "1.0.1", default-features = false }
+profiling = { version = "1.0.18", default-features = false }
 # Limit to versions that use rand 0.8
 proptest = ">=1, <1.7"
 raw-window-handle = { version = "0.6.2", default-features = false }
-rayon = "1.3"
+rayon = "1.12.0"
 regex-lite = "0.1"
 renderdoc-sys = "1"
 rspirv = "0.13"
@@ -212,28 +211,28 @@ ron = "0.12"
 # (using default-features = false to support no-std build, avoiding any extra features that may require std::collections)
 rustc-hash = { version = "1.1", default-features = false }
 scopeguard = { version = "1.2", default-features = false }
-serde_json = "1.0.143"
-serde = { version = "1.0.225", default-features = false }
+serde_json = "1.0.154"
+serde = { version = "1.0.229", default-features = false }
 shell-words = "1"
-smallvec = "1.14"
+smallvec = "1.16.3"
 spirv = "0.4"
 static_assertions = "1.1"
 strum = { version = "0.28", default-features = false, features = ["derive"] }
-tempfile = "3"
-toml = "1.0.0"
+tempfile = "3.27.0"
+toml = "1.1.8"
 trybuild = "1"
 tracy-client = "0.19"
-thiserror = { version = "2.0.12", default-features = false }
-ureq = { version = "3.2.0", default-features = false }
-unicode-ident = "1.0.5"
-walkdir = "2.3"
-winit = { version = "0.30.8", features = ["android-native-activity"] }
+thiserror = { version = "2.0.21", default-features = false }
+ureq = { version = "3.4.2", default-features = false }
+unicode-ident = "1.0.27"
+walkdir = "2.5.0"
+winit = { version = "0.30.13", features = ["android-native-activity"] }
 which = "8"
-xshell = "0.2.6"
+xshell = "0.2.7"
 
 # Metal dependencies
 block2 = "0.6.2"
-objc2 = "0.6.3"
+objc2 = "0.6.5"
 objc2-core-foundation = { version = "0.3.2", default-features = false, features = [
     "std",
     "CFCGTypes",
@@ -305,8 +304,8 @@ ash = "0.38"
 range-alloc = "0.1"
 # 0.1.5 requires a newer MSVC toolset than Visual Studio 2022 provides.
 mach-dxcompiler-rs = { version = ">=0.1.0,<=0.1.4", default-features = false } # remember to increase max_shader_model if applicable
-windows-core = { version = "0.62", default-features = false }
-windows-result = { version = "0.4", default-features = false }
+windows-core = { version = "0.62.2", default-features = false }
+windows-result = { version = "0.4.1", default-features = false }
 
 # DX12 and Vulkan dependencies
 gpu-allocator = { version = "0.28", default-features = false, features = [
@@ -321,15 +320,15 @@ glutin-winit = { version = "0.5", default-features = false }
 glutin_wgl_sys = "0.6"
 
 # DX12 and GLES dependencies
-windows = { version = "0.62", default-features = false }
+windows = { version = "0.62.2", default-features = false }
 
 # wasm dependencies
-console_error_panic_hook = "0.1.5"
+console_error_panic_hook = "0.1.7"
 console_log = "1"
-js-sys = { version = "0.3.102", default-features = false }
-wasm-bindgen = { version = "0.2.125", default-features = false }
-wasm-bindgen-futures = { version = "0.4.75", default-features = false }
-web-sys = { version = "0.3.102", default-features = false }
+js-sys = { version = "0.3.106", default-features = false }
+wasm-bindgen = { version = "0.2.129", default-features = false }
+wasm-bindgen-futures = { version = "0.4.79", default-features = false }
+web-sys = { version = "0.3.106", default-features = false }
 web-time = "1.1.0"
 
 # deno dependencies
@@ -342,7 +341,7 @@ deno_webidl = "0.214.0"
 deno_webgpu = { version = "0.181.0", path = "./deno_etalon" }
 deno_unsync = "0.4.4"
 deno_error = "0.7.0"
-tokio = "1.47"
+tokio = "1.54.0"
 termcolor = "1.4.1"
 
 # android dependencies

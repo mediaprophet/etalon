@@ -200,7 +200,7 @@ impl Extent3d {
         format: crate::TextureFormat,
     ) -> Self {
         let mut size = self.mip_level_size(level, dim);
-        if format.is_multi_planar() {
+        if format.is_multi_planar_format() {
             let (req_w, req_h) = format.size_multiple_requirement();
             size.width = size.width.div_ceil(req_w) * req_w;
             size.height = size.height.div_ceil(req_h) * req_h;

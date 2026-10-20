@@ -65,7 +65,7 @@ impl InstanceDevices {
                     wgt::PollType::Poll
                 };
 
-                let (closures, result) = device.poll_and_return_closures(poll_type);
+                let (closures, result) = device.poll_and_return_closures(poll_type.clone());
 
                 let is_queue_empty = matches!(result, Ok(wgt::PollStatus::QueueEmpty));
 
@@ -80,7 +80,7 @@ impl InstanceDevices {
 
     pub(crate) fn poll_all_devices_with_poll_type(
         &self,
-        poll_type: wgt::PollType,
+        poll_type: wgt::PollType<crate::SubmissionIndex>,
         closure_list: &mut UserClosures,
     ) -> Result<bool, WaitIdleError> {
         let mut all_queue_empty = true;
@@ -88,7 +88,7 @@ impl InstanceDevices {
             let device_guard = self.0.lock();
 
             for device in device_guard.iter().filter_map(|device| device.upgrade()) {
-                let (closures, result) = device.poll_and_return_closures(poll_type);
+                let (closures, result) = device.poll_and_return_closures(poll_type.clone());
                 let is_queue_empty = matches!(result, Ok(wgt::PollStatus::QueueEmpty));
                 all_queue_empty &= is_queue_empty;
                 closure_list.extend(closures);
@@ -126,7 +126,7 @@ pub struct Instance {
     ///
     /// When used with `winit`, callers are expected to pass its `OwnedDisplayHandle` (created from
     /// the `EventLoop`) here.
-    display: Option<Box<dyn wgt::etalonHasDisplayHandle>>,
+    display: Option<Box<dyn wgt::EtalonHasDisplayHandle>>,
 
     /// Keeps track of all devices created from this instance, so that they can be polled.
     devices: InstanceDevices,
@@ -698,7 +698,7 @@ impl Instance {
     /// Polls all devices with a specific [`wgt::PollType`], allowing callers to supply a custom timeout.
     pub fn poll_all_devices_with_poll_type(
         &self,
-        poll_type: wgt::PollType,
+        poll_type: wgt::PollType<crate::SubmissionIndex>,
     ) -> Result<bool, WaitIdleError> {
         api_log!("poll_all_devices_with_poll_type");
         let mut closures = UserClosures::default();

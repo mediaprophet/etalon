@@ -12,6 +12,7 @@ std = []
 cuda = ["dep:cudarc"]
 
 [dependencies]
+etalon = { workspace = true }
 etalon-types = { workspace = true }
 bytemuck = { workspace = true }
 log = { workspace = true }

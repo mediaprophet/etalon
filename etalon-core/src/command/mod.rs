@@ -212,7 +212,7 @@ impl CommandEncoderStatus {
     ) -> Result<(), EncoderStateError> {
         match self {
             Self::Recording(cmd_buf_data) => {
-                cmd_buf_data.encoder.api.set(EncodingApi::etalon);
+                cmd_buf_data.encoder.api.set(EncodingApi::Etalon);
                 match f() {
                     Ok(cmd) => cmd_buf_data.commands.push(cmd),
                     Err(err) => {
@@ -536,7 +536,7 @@ impl Drop for CommandEncoder {
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 pub enum EncodingApi {
     // The regular etalon encoding APIs are being used.
-    etalon,
+    Etalon,
 
     // The raw hal encoding API is being used.
     Raw,

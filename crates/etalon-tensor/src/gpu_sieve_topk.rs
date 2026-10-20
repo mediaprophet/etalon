@@ -112,8 +112,8 @@ impl TopkReductionPipeline {
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("etalon-topk-reduction-pipeline-layout"),
-            bind_group_layouts: &[&layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&layout)],
+            immediate_size: 0,
         });
 
         let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {

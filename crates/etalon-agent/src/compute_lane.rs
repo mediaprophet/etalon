@@ -3,7 +3,7 @@
 use super::capability::CapabilityState;
 
 /// Hardware queue identifier.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct QueueId(pub u32);
 
 /// Per-queue monotonically increasing completion token.

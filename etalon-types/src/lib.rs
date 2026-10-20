@@ -311,6 +311,14 @@ impl<T> PollType<T> {
     /// This is a convenience function that creates a [`Self::Wait`] variant with
     /// no timeout and no submission index.
     #[must_use]
+    /// Wait for a maximum duration before returning a timeout error.
+    pub const fn wait_or_timeout(timeout: Duration) -> Self {
+        Self::Wait {
+            submission_index: None,
+            timeout: Some(timeout),
+        }
+    }
+
     pub const fn wait_indefinitely() -> Self {
         Self::Wait {
             submission_index: None,
