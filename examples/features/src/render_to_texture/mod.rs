@@ -10,87 +10,87 @@ async fn run(_path: Option<String>) {
     // a convenient size reference.
     let mut texture_data = Vec::<u8>::with_capacity(TEXTURE_DIMS.0 * TEXTURE_DIMS.1 * 4);
 
-    let instance = wgpu::Instance::default();
+    let instance = etalon::Instance::default();
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions::default())
+        .request_adapter(&etalon::RequestAdapterOptions::default())
         .await
         .unwrap();
     let (device, queue) = adapter
-        .request_device(&wgpu::DeviceDescriptor {
+        .request_device(&etalon::DeviceDescriptor {
             label: None,
-            required_features: wgpu::Features::empty(),
-            required_limits: wgpu::Limits::downlevel_defaults(),
-            default_queue: wgpu::QueueDescriptor { label: None },
-            experimental_features: wgpu::ExperimentalFeatures::disabled(),
-            memory_hints: wgpu::MemoryHints::MemoryUsage,
-            trace: wgpu::Trace::Off,
+            required_features: etalon::Features::empty(),
+            required_limits: etalon::Limits::downlevel_defaults(),
+            default_queue: etalon::QueueDescriptor { label: None },
+            experimental_features: etalon::ExperimentalFeatures::disabled(),
+            memory_hints: etalon::MemoryHints::MemoryUsage,
+            trace: etalon::Trace::Off,
         })
         .await
         .unwrap();
 
-    let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+    let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
-    let render_target = device.create_texture(&wgpu::TextureDescriptor {
+    let render_target = device.create_texture(&etalon::TextureDescriptor {
         label: None,
-        size: wgpu::Extent3d {
+        size: etalon::Extent3d {
             width: TEXTURE_DIMS.0 as u32,
             height: TEXTURE_DIMS.1 as u32,
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
         sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8UnormSrgb,
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
-        view_formats: &[wgpu::TextureFormat::Rgba8UnormSrgb],
+        dimension: etalon::TextureDimension::D2,
+        format: etalon::TextureFormat::Rgba8UnormSrgb,
+        usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::COPY_SRC,
+        view_formats: &[etalon::TextureFormat::Rgba8UnormSrgb],
     });
-    let output_staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+    let output_staging_buffer = device.create_buffer(&etalon::BufferDescriptor {
         label: None,
         size: texture_data.capacity() as u64,
-        usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+        usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
         mapped_at_creation: false,
     });
 
-    let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
         label: None,
         layout: None,
-        vertex: wgpu::VertexState {
+        vertex: etalon::VertexState {
             module: &shader,
             entry_point: Some("vs_main"),
             compilation_options: Default::default(),
             buffers: &[],
         },
-        fragment: Some(wgpu::FragmentState {
+        fragment: Some(etalon::FragmentState {
             module: &shader,
             entry_point: Some("fs_main"),
             compilation_options: Default::default(),
-            targets: &[Some(wgpu::TextureFormat::Rgba8UnormSrgb.into())],
+            targets: &[Some(etalon::TextureFormat::Rgba8UnormSrgb.into())],
         }),
-        primitive: wgpu::PrimitiveState::default(),
+        primitive: etalon::PrimitiveState::default(),
         depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
+        multisample: etalon::MultisampleState::default(),
         multiview_mask: None,
         cache: None,
     });
 
-    log::info!("Wgpu context set up.");
+    log::info!("etalon context set up.");
 
     //-----------------------------------------------
 
-    let texture_view = render_target.create_view(&wgpu::TextureViewDescriptor::default());
+    let texture_view = render_target.create_view(&etalon::TextureViewDescriptor::default());
 
     let mut command_encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+        device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
     {
-        let mut render_pass = command_encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut render_pass = command_encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: None,
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: &texture_view,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                    store: wgpu::StoreOp::Store,
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color::GREEN),
+                    store: etalon::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,
@@ -103,15 +103,15 @@ async fn run(_path: Option<String>) {
     }
     // The texture now contains our rendered image
     command_encoder.copy_texture_to_buffer(
-        wgpu::TexelCopyTextureInfo {
+        etalon::TexelCopyTextureInfo {
             texture: &render_target,
             mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
-            aspect: wgpu::TextureAspect::All,
+            origin: etalon::Origin3d::ZERO,
+            aspect: etalon::TextureAspect::All,
         },
-        wgpu::TexelCopyBufferInfo {
+        etalon::TexelCopyBufferInfo {
             buffer: &output_staging_buffer,
-            layout: wgpu::TexelCopyBufferLayout {
+            layout: etalon::TexelCopyBufferLayout {
                 offset: 0,
                 // This needs to be a multiple of 256. Normally we would need to pad
                 // it but we here know it will work out anyways.
@@ -119,7 +119,7 @@ async fn run(_path: Option<String>) {
                 rows_per_image: Some(TEXTURE_DIMS.1 as u32),
             },
         },
-        wgpu::Extent3d {
+        etalon::Extent3d {
             width: TEXTURE_DIMS.0 as u32,
             height: TEXTURE_DIMS.1 as u32,
             depth_or_array_layers: 1,
@@ -133,8 +133,8 @@ async fn run(_path: Option<String>) {
     // Time to get our image.
     let buffer_slice = output_staging_buffer.slice(..);
     let (sender, receiver) = flume::bounded(1);
-    buffer_slice.map_async(wgpu::MapMode::Read, move |r| sender.send(r).unwrap());
-    device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+    buffer_slice.map_async(etalon::MapMode::Read, move |r| sender.send(r).unwrap());
+    device.poll(etalon::PollType::wait_indefinitely()).unwrap();
     receiver.recv_async().await.unwrap().unwrap();
     log::info!("Output buffer mapped.");
     {

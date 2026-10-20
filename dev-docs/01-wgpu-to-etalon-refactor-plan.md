@@ -75,8 +75,8 @@ graph TD
 3. **Workspace Manifest Checkpoint 1**:
    - Update `[workspace.dependencies]` in root `Cargo.toml`:
      ```toml
-     etalon-types = { version = "30.0.0", path = "./etalon-types" }
-     etalon-sync = { version = "30.0.0", path = "./etalon-sync" }
+     etalon-types = { version = "0.0.1", path = "./etalon-types" }
+     etalon-sync = { version = "0.0.1", path = "./etalon-sync" }
      ```
 
 ### Phase 2: Hardware Abstraction Layer (`etalon-hal`)
@@ -136,7 +136,7 @@ To prevent fracturing the broader ecosystem during this transition, create `comp
 # compat/wgpu/Cargo.toml
 [package]
 name = "wgpu"
-version = "30.0.0"
+version = "0.0.1"
 edition = "2021"
 license-file = "../../LICENSE"
 

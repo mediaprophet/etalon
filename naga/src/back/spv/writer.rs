@@ -566,7 +566,7 @@ impl Writer {
                             // `a - b * (a / b)`: `OpSRem` produces a poison result for
                             // negative operands in the Vulkan SPIR-V environment unless
                             // `VK_KHR_maintenance8` is enabled. See
-                            // <https://github.com/gfx-rs/wgpu/issues/8191>.
+                            // <https://github.com/mediaprophet/etalon/issues/8191>.
                             (
                                 crate::BinaryOperator::Divide | crate::BinaryOperator::Modulo,
                                 crate::ScalarKind::Sint | crate::ScalarKind::Uint,
@@ -2220,7 +2220,7 @@ impl Writer {
         // If it's a type that needs SPIR-V capabilities, request them now.
         // This needs to happen regardless of the LocalType lookup succeeding,
         // because some types which map to the same LocalType have different
-        // capability requirements. See https://github.com/gfx-rs/wgpu/issues/5569
+        // capability requirements. See https://github.com/mediaprophet/etalon/issues/5569
         self.request_type_capabilities(&ty.inner)?;
         let id = if let Some(local) = self.localtype_from_inner(&ty.inner) {
             // This type can be represented as a `LocalType`, so check if we've

@@ -925,7 +925,7 @@ pub const TYPES: &[&str] = &{
 /// The above set of reserved keywords, turned into a cached HashSet. This saves
 /// significant time during [`Namer::reset`](crate::proc::Namer::reset).
 ///
-/// See <https://github.com/gfx-rs/wgpu/pull/7338> for benchmarks.
+/// See <https://github.com/mediaprophet/etalon/pull/7338> for benchmarks.
 pub static RESERVED_SET: RacyLock<KeywordSet> =
     RacyLock::new(|| KeywordSet::from_iter(RESERVED.iter().chain(TYPES)));
 

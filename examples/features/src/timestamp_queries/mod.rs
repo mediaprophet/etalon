@@ -1,28 +1,28 @@
 //! Sample demonstrating different kinds of gpu timestamp queries.
 //!
 //! Timestamp queries are typically used to profile how long certain operations take on the GPU.
-//! wgpu has several ways of performing gpu timestamp queries:
-//! * passing `wgpu::RenderPassTimestampWrites`/`wgpu::ComputePassTimestampWrites` during render/compute pass creation.
+//! etalon has several ways of performing gpu timestamp queries:
+//! * passing `etalon::RenderPassTimestampWrites`/`etalon::ComputePassTimestampWrites` during render/compute pass creation.
 //!   This writes timestamps for the beginning and end of a given pass.
-//!   (enabled with wgpu::Features::TIMESTAMP_QUERY)
-//! * `wgpu::CommandEncoder::write_timestamp` writes a timestamp between any commands recorded on an encoder.
-//!   (enabled with wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS)
-//! * `wgpu::RenderPass/ComputePass::write_timestamp` writes a timestamp within commands of a render pass.
+//!   (enabled with etalon::Features::TIMESTAMP_QUERY)
+//! * `etalon::CommandEncoder::write_timestamp` writes a timestamp between any commands recorded on an encoder.
+//!   (enabled with etalon::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS)
+//! * `etalon::RenderPass/ComputePass::write_timestamp` writes a timestamp within commands of a render pass.
 //!   Note that some GPU architectures do not support this.
-//!   (native only, enabled with wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES)
+//!   (native only, enabled with etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES)
 //!
-//! Any timestamp is written to a `wgpu::QuerySet` which needs to be resolved to a buffer with `wgpu::BufferUsages::QUERY_RESOLVE`.
-//! Since this usage is incompatible with `wgpu::BufferUsages::MAP_READ` we need to copy the resolved timestamps to a separate buffer afterwards.
+//! Any timestamp is written to a `etalon::QuerySet` which needs to be resolved to a buffer with `etalon::BufferUsages::QUERY_RESOLVE`.
+//! Since this usage is incompatible with `etalon::BufferUsages::MAP_READ` we need to copy the resolved timestamps to a separate buffer afterwards.
 //!
-//! The period, i.e. the unit of time, of the timestamps in wgpu is undetermined and needs to be queried with `wgpu::Queue::get_timestamp_period`
+//! The period, i.e. the unit of time, of the timestamps in etalon is undetermined and needs to be queried with `etalon::Queue::get_timestamp_period`
 //! in order to get comparable results.
 
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 struct Queries {
-    set: wgpu::QuerySet,
-    resolve_buffer: wgpu::Buffer,
-    destination_buffer: wgpu::Buffer,
+    set: etalon::QuerySet,
+    resolve_buffer: etalon::Buffer,
+    destination_buffer: etalon::Buffer,
     num_queries: u64,
     next_unused_query: u32,
 }
@@ -78,7 +78,7 @@ impl QueryResults {
         }
     }
 
-    fn print(&self, queue: &wgpu::Queue) {
+    fn print(&self, queue: &etalon::Queue) {
         let period = queue.get_timestamp_period();
         let elapsed_us = |start, end: u64| end.wrapping_sub(start) as f64 * period as f64 / 1000.0;
 
@@ -116,23 +116,23 @@ impl QueryResults {
 }
 
 impl Queries {
-    fn new(device: &wgpu::Device, num_queries: u64) -> Self {
+    fn new(device: &etalon::Device, num_queries: u64) -> Self {
         Queries {
-            set: device.create_query_set(&wgpu::QuerySetDescriptor {
+            set: device.create_query_set(&etalon::QuerySetDescriptor {
                 label: Some("Timestamp query set"),
                 count: num_queries as _,
-                ty: wgpu::QueryType::Timestamp,
+                ty: etalon::QueryType::Timestamp,
             }),
-            resolve_buffer: device.create_buffer(&wgpu::BufferDescriptor {
+            resolve_buffer: device.create_buffer(&etalon::BufferDescriptor {
                 label: Some("query resolve buffer"),
                 size: size_of::<u64>() as u64 * num_queries,
-                usage: wgpu::BufferUsages::COPY_SRC | wgpu::BufferUsages::QUERY_RESOLVE,
+                usage: etalon::BufferUsages::COPY_SRC | etalon::BufferUsages::QUERY_RESOLVE,
                 mapped_at_creation: false,
             }),
-            destination_buffer: device.create_buffer(&wgpu::BufferDescriptor {
+            destination_buffer: device.create_buffer(&etalon::BufferDescriptor {
                 label: Some("query dest buffer"),
                 size: size_of::<u64>() as u64 * num_queries,
-                usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
                 mapped_at_creation: false,
             }),
             num_queries,
@@ -140,7 +140,7 @@ impl Queries {
         }
     }
 
-    fn resolve(&self, encoder: &mut wgpu::CommandEncoder) {
+    fn resolve(&self, encoder: &mut etalon::CommandEncoder) {
         encoder.resolve_query_set(
             &self.set,
             0..self.next_unused_query,
@@ -156,16 +156,16 @@ impl Queries {
         );
     }
 
-    fn wait_for_results(&self, device: &wgpu::Device) -> Vec<u64> {
+    fn wait_for_results(&self, device: &etalon::Device) -> Vec<u64> {
         self.destination_buffer
             .slice(..)
-            .map_async(wgpu::MapMode::Read, |_| ());
-        device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+            .map_async(etalon::MapMode::Read, |_| ());
+        device.poll(etalon::PollType::wait_indefinitely()).unwrap();
 
         let timestamps = {
             let timestamp_view = self
                 .destination_buffer
-                .slice(..(size_of::<u64>() as wgpu::BufferAddress * self.num_queries))
+                .slice(..(size_of::<u64>() as etalon::BufferAddress * self.num_queries))
                 .get_mapped_range()
                 .unwrap();
             bytemuck::allocation::pod_collect_to_vec(&timestamp_view)
@@ -178,26 +178,26 @@ impl Queries {
 }
 
 async fn run() {
-    // Instantiates instance of wgpu
+    // Instantiates instance of etalon
     let instance =
-        wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+        etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle_from_env());
 
     // `request_adapter` instantiates the general connection to the GPU
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions::default())
+        .request_adapter(&etalon::RequestAdapterOptions::default())
         .await
         .expect("Failed to request adapter.");
 
     // Check timestamp features.
     let features = adapter.features()
-        & (wgpu::Features::TIMESTAMP_QUERY | wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES);
-    if features.contains(wgpu::Features::TIMESTAMP_QUERY) {
+        & (etalon::Features::TIMESTAMP_QUERY | etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES);
+    if features.contains(etalon::Features::TIMESTAMP_QUERY) {
         println!("Adapter supports timestamp queries.");
     } else {
         println!("Adapter does not support timestamp queries, aborting.");
         return;
     }
-    let timestamps_inside_passes = features.contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES);
+    let timestamps_inside_passes = features.contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES);
     if timestamps_inside_passes {
         println!("Adapter supports timestamp queries within passes.");
     } else {
@@ -207,14 +207,14 @@ async fn run() {
     // `request_device` instantiates the feature specific connection to the GPU, defining some parameters,
     //  `features` being the available features.
     let (device, queue) = adapter
-        .request_device(&wgpu::DeviceDescriptor {
+        .request_device(&etalon::DeviceDescriptor {
             label: None,
             required_features: features,
-            required_limits: wgpu::Limits::downlevel_defaults(),
-            default_queue: wgpu::QueueDescriptor { label: None },
-            experimental_features: wgpu::ExperimentalFeatures::disabled(),
-            memory_hints: wgpu::MemoryHints::MemoryUsage,
-            trace: wgpu::Trace::Off,
+            required_limits: etalon::Limits::downlevel_defaults(),
+            default_queue: etalon::QueueDescriptor { label: None },
+            experimental_features: etalon::ExperimentalFeatures::disabled(),
+            memory_hints: etalon::MemoryHints::MemoryUsage,
+            trace: etalon::Trace::Off,
         })
         .await
         .unwrap();
@@ -226,18 +226,18 @@ async fn run() {
 }
 
 fn submit_render_and_compute_pass_with_queries(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
+    device: &etalon::Device,
+    queue: &etalon::Queue,
 ) -> Queries {
     let mut encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
     let mut queries = Queries::new(device, QueryResults::NUM_QUERIES);
-    let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+    let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
     if device
         .features()
-        .contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS)
+        .contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS)
     {
         encoder.write_timestamp(&queries.set, queries.next_unused_query);
         queries.next_unused_query += 1;
@@ -263,7 +263,7 @@ fn submit_render_and_compute_pass_with_queries(
 
     if device
         .features()
-        .contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS)
+        .contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS)
     {
         encoder.write_timestamp(&queries.set, queries.next_unused_query);
         queries.next_unused_query += 1;
@@ -276,18 +276,18 @@ fn submit_render_and_compute_pass_with_queries(
 }
 
 fn compute_pass(
-    device: &wgpu::Device,
-    module: &wgpu::ShaderModule,
-    encoder: &mut wgpu::CommandEncoder,
-    query_set: &wgpu::QuerySet,
+    device: &etalon::Device,
+    module: &etalon::ShaderModule,
+    encoder: &mut etalon::CommandEncoder,
+    query_set: &etalon::QuerySet,
     next_unused_query: &mut u32,
 ) {
-    let storage_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let storage_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
         label: Some("Storage Buffer"),
         contents: bytemuck::cast_slice(&[42]),
-        usage: wgpu::BufferUsages::STORAGE,
+        usage: etalon::BufferUsages::STORAGE,
     });
-    let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+    let compute_pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
         label: None,
         layout: None,
         module,
@@ -296,18 +296,18 @@ fn compute_pass(
         cache: None,
     });
     let bind_group_layout = compute_pipeline.get_bind_group_layout(0);
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
         label: None,
         layout: &bind_group_layout,
-        entries: &[wgpu::BindGroupEntry {
+        entries: &[etalon::BindGroupEntry {
             binding: 0,
             resource: storage_buffer.as_entire_binding(),
         }],
     });
 
-    let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+    let mut cpass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
         label: None,
-        timestamp_writes: Some(wgpu::ComputePassTimestampWrites {
+        timestamp_writes: Some(etalon::ComputePassTimestampWrites {
             query_set,
             beginning_of_pass_write_index: Some(*next_unused_query),
             end_of_pass_write_index: Some(*next_unused_query + 1),
@@ -319,7 +319,7 @@ fn compute_pass(
     cpass.dispatch_workgroups(1, 1, 1);
     if device
         .features()
-        .contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES)
+        .contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES)
     {
         cpass.write_timestamp(query_set, *next_unused_query);
         *next_unused_query += 1;
@@ -328,70 +328,70 @@ fn compute_pass(
 }
 
 fn render_pass(
-    device: &wgpu::Device,
-    module: &wgpu::ShaderModule,
-    encoder: &mut wgpu::CommandEncoder,
-    query_set: &wgpu::QuerySet,
+    device: &etalon::Device,
+    module: &etalon::ShaderModule,
+    encoder: &mut etalon::CommandEncoder,
+    query_set: &etalon::QuerySet,
     next_unused_query: &mut u32,
 ) {
-    let format = wgpu::TextureFormat::Rgba8Unorm;
+    let format = etalon::TextureFormat::Rgba8Unorm;
 
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+    let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[],
         immediate_size: 0,
     });
 
-    let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let render_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
         label: None,
         layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
+        vertex: etalon::VertexState {
             module,
             entry_point: Some("vs_main"),
             compilation_options: Default::default(),
             buffers: &[],
         },
-        fragment: Some(wgpu::FragmentState {
+        fragment: Some(etalon::FragmentState {
             module,
             entry_point: Some("fs_main"),
             compilation_options: Default::default(),
             targets: &[Some(format.into())],
         }),
-        primitive: wgpu::PrimitiveState::default(),
+        primitive: etalon::PrimitiveState::default(),
         depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
+        multisample: etalon::MultisampleState::default(),
         multiview_mask: None,
         cache: None,
     });
-    let render_target = device.create_texture(&wgpu::TextureDescriptor {
+    let render_target = device.create_texture(&etalon::TextureDescriptor {
         label: Some("rendertarget"),
-        size: wgpu::Extent3d {
+        size: etalon::Extent3d {
             width: 512,
             height: 512,
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
         sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
+        dimension: etalon::TextureDimension::D2,
         format,
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        usage: etalon::TextureUsages::RENDER_ATTACHMENT,
         view_formats: &[format],
     });
-    let render_target_view = render_target.create_view(&wgpu::TextureViewDescriptor::default());
+    let render_target_view = render_target.create_view(&etalon::TextureViewDescriptor::default());
 
-    let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+    let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
         label: None,
-        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+        color_attachments: &[Some(etalon::RenderPassColorAttachment {
             view: &render_target_view,
             depth_slice: None,
             resolve_target: None,
-            ops: wgpu::Operations {
-                load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                store: wgpu::StoreOp::Store,
+            ops: etalon::Operations {
+                load: etalon::LoadOp::Clear(etalon::Color::GREEN),
+                store: etalon::StoreOp::Store,
             },
         })],
         depth_stencil_attachment: None,
-        timestamp_writes: Some(wgpu::RenderPassTimestampWrites {
+        timestamp_writes: Some(etalon::RenderPassTimestampWrites {
             query_set,
             beginning_of_pass_write_index: Some(*next_unused_query),
             end_of_pass_write_index: Some(*next_unused_query + 1),
@@ -406,7 +406,7 @@ fn render_pass(
     rpass.draw(0..3, 0..1);
     if device
         .features()
-        .contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES)
+        .contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES)
     {
         rpass.write_timestamp(query_set, *next_unused_query);
         *next_unused_query += 1;
@@ -431,28 +431,28 @@ pub fn main() {
 
 #[cfg(test)]
 pub mod tests {
-    use wgpu::Backends;
-    use wgpu_test::{apply, gpu_test, FailureCase, GpuTestConfiguration};
+    use etalon::Backends;
+    use etalon_test::{apply, gpu_test, FailureCase, GpuTestConfiguration};
 
     use super::{submit_render_and_compute_pass_with_queries, QueryResults};
 
     #[apply(gpu_test!)]
     pub static TIMESTAMPS_PASS_BOUNDARIES: GpuTestConfiguration = GpuTestConfiguration::new()
         .parameters(
-            wgpu_test::TestParameters::default()
-                .limits(wgpu::Limits::downlevel_defaults())
-                .features(wgpu::Features::TIMESTAMP_QUERY),
+            etalon_test::TestParameters::default()
+                .limits(etalon::Limits::downlevel_defaults())
+                .features(etalon::Features::TIMESTAMP_QUERY),
         )
         .run_sync(|ctx| test_timestamps(ctx, false, false));
 
     #[apply(gpu_test!)]
     pub static TIMESTAMPS_ENCODER: GpuTestConfiguration = GpuTestConfiguration::new()
         .parameters(
-            wgpu_test::TestParameters::default()
-                .limits(wgpu::Limits::downlevel_defaults())
+            etalon_test::TestParameters::default()
+                .limits(etalon::Limits::downlevel_defaults())
                 .features(
-                    wgpu::Features::TIMESTAMP_QUERY
-                        | wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS,
+                    etalon::Features::TIMESTAMP_QUERY
+                        | etalon::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS,
                 ),
         )
         .run_sync(|ctx| test_timestamps(ctx, true, false));
@@ -460,12 +460,12 @@ pub mod tests {
     #[apply(gpu_test!)]
     pub static TIMESTAMPS_PASSES: GpuTestConfiguration = GpuTestConfiguration::new()
         .parameters(
-            wgpu_test::TestParameters::default()
-                .limits(wgpu::Limits::downlevel_defaults())
+            etalon_test::TestParameters::default()
+                .limits(etalon::Limits::downlevel_defaults())
                 .features(
-                    wgpu::Features::TIMESTAMP_QUERY
-                        | wgpu::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS
-                        | wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES,
+                    etalon::Features::TIMESTAMP_QUERY
+                        | etalon::Features::TIMESTAMP_QUERY_INSIDE_ENCODERS
+                        | etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES,
                 )
                 .expect_fail(
                     FailureCase::backend_adapter(Backends::GL, "llvmpipe")
@@ -476,7 +476,7 @@ pub mod tests {
         .run_sync(|ctx| test_timestamps(ctx, true, true));
 
     fn test_timestamps(
-        ctx: wgpu_test::TestingContext,
+        ctx: etalon_test::TestingContext,
         timestamps_on_encoder: bool,
         timestamps_inside_passes: bool,
     ) {

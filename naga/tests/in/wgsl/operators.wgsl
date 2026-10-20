@@ -49,7 +49,7 @@ fn r() -> bool { return true; }
 fn s() -> bool { return false; }
 
 const short_circuit_1_invalid_rhs = false && sqrt(-1) != 0;
-// TODO(https://github.com/gfx-rs/wgpu/issues/8440):
+// TODO(https://github.com/mediaprophet/etalon/issues/8440):
 // The following should not be accepted, but it currently is.
 // When fixed, move this to a wgsl_errors test.
 const short_circuit_2_invalid_rhs = false && (0u + 1.0f > 0);
@@ -73,7 +73,7 @@ fn logical() {
     let bitwise_and1 = vec4(t) & vec4(f);
 
     const short_circuit_1_invalid = false && sqrt(-1) != 0;
-    // TODO(https://github.com/gfx-rs/wgpu/issues/8440):
+    // TODO(https://github.com/mediaprophet/etalon/issues/8440):
     // The following should not be accepted, but it currently is.
     // When fixed, move this to a wgsl_errors test.
     const short_circuit_2_invalid_rhs = false && (0u + 1.0f > 0);
@@ -195,7 +195,7 @@ fn arithmetic() {
     // be caught as a compiler error, as we bitcast the operands to unsigned which fails
     // if the expression's type has an unexpected width.
     var prevent_const_eval: i32;
-    var wgpu_7437 = prevent_const_eval + -2147483648;
+    var etalon_7437 = prevent_const_eval + -2147483648;
 }
 
 fn bit() {

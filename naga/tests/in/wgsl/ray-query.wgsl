@@ -40,7 +40,7 @@ struct RayIntersection {
 }
 */
 
-enable wgpu_ray_query;
+enable etalon_ray_query;
 
 fn query_loop(pos: vec3<f32>, dir: vec3<f32>, acs: acceleration_structure) -> RayIntersection {
     var rq: ray_query;

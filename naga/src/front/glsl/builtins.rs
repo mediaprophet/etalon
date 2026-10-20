@@ -1392,7 +1392,7 @@ fn inject_common_builtin(
                 declaration.overloads.push(module.add_builtin(args, fun))
             }
         }
-        // TODO: https://github.com/gfx-rs/naga/issues/2526
+        // TODO: https://github.com/mediaprophet/naga/issues/2526
         // "modf" | "frexp" => { ... }
         "cross" => {
             let args = vec![

@@ -6,7 +6,7 @@ It hooks up `winit` mouse controls for camera rotation around the model at the c
 ## To Run
 
 ```
-cargo run --bin wgpu-examples skybox
+cargo run --bin etalon-examples skybox
 ```
 
 ## Screenshots

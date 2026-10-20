@@ -15,54 +15,54 @@ struct GlobalParams {
 }
 
 pub struct Example {
-    pipeline: wgpu::ComputePipeline,
-    texture_view: wgpu::TextureView,
-    global_params: wgpu::Buffer,
-    bg: wgpu::BindGroup,
-    bgl: wgpu::BindGroupLayout,
-    blitter: wgpu::util::TextureBlitter,
+    pipeline: etalon::ComputePipeline,
+    texture_view: etalon::TextureView,
+    global_params: etalon::Buffer,
+    bg: etalon::BindGroup,
+    bgl: etalon::BindGroupLayout,
+    blitter: etalon::util::TextureBlitter,
     frame_count: u32,
     start_time: Option<Instant>,
 }
 impl crate::framework::Example for Example {
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
-        let sm = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
-        let bgl = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let sm = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
+        let bgl = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: None,
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::StorageTexture {
-                        access: wgpu::StorageTextureAccess::WriteOnly,
-                        format: wgpu::TextureFormat::Rgba8Unorm,
-                        view_dimension: wgpu::TextureViewDimension::D2,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::StorageTexture {
+                        access: etalon::StorageTextureAccess::WriteOnly,
+                        format: etalon::TextureFormat::Rgba8Unorm,
+                        view_dimension: etalon::TextureViewDimension::D2,
                     },
                     count: None,
                 },
             ],
         });
-        let ppl = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let ppl = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bgl)],
             immediate_size: 0,
         });
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: None,
             layout: Some(&ppl),
             module: &sm,
@@ -70,11 +70,11 @@ impl crate::framework::Example for Example {
             compilation_options: Default::default(),
             cache: None,
         });
-        let blitter = wgpu::util::TextureBlitter::new(device, config.view_formats[0]);
-        let global_params = device.create_buffer(&wgpu::BufferDescriptor {
+        let blitter = etalon::util::TextureBlitter::new(device, config.view_formats[0]);
+        let global_params = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
             size: size_of::<GlobalParams>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -92,8 +92,8 @@ impl crate::framework::Example for Example {
         }
     }
 
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits {
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits {
             max_storage_textures_per_shader_stage: 1,
             ..Default::default()
         }
@@ -101,9 +101,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         let (texture_view, bg) = create_tv_and_bg(
             device,
@@ -116,7 +116,7 @@ impl crate::framework::Example for Example {
         self.texture_view = texture_view;
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         let now = Instant::now();
         let start = *self.start_time.get_or_insert(now);
         let time_since_start = (now - start).as_secs_f32();
@@ -132,7 +132,7 @@ impl crate::framework::Example for Example {
         let mut encoder = device.create_command_encoder(&Default::default());
 
         {
-            let mut pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+            let mut pass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
                 label: None,
                 timestamp_writes: None,
             });
@@ -155,7 +155,7 @@ impl crate::framework::Example for Example {
             .copy(device, &mut encoder, &self.texture_view, view);
 
         queue.submit([encoder.finish()]);
-        device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+        device.poll(etalon::PollType::wait_indefinitely()).unwrap();
 
         self.frame_count += 1;
     }
@@ -164,38 +164,38 @@ impl crate::framework::Example for Example {
 }
 
 fn create_tv_and_bg(
-    device: &wgpu::Device,
-    bgl: &wgpu::BindGroupLayout,
-    global_params: &wgpu::Buffer,
+    device: &etalon::Device,
+    bgl: &etalon::BindGroupLayout,
+    global_params: &etalon::Buffer,
     width: u32,
     height: u32,
-) -> (wgpu::TextureView, wgpu::BindGroup) {
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
+) -> (etalon::TextureView, etalon::BindGroup) {
+    let texture = device.create_texture(&etalon::TextureDescriptor {
         label: None,
-        size: wgpu::Extent3d {
+        size: etalon::Extent3d {
             width,
             height,
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
         sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
-        format: wgpu::TextureFormat::Rgba8Unorm,
-        usage: wgpu::TextureUsages::STORAGE_BINDING | wgpu::TextureUsages::TEXTURE_BINDING,
+        dimension: etalon::TextureDimension::D2,
+        format: etalon::TextureFormat::Rgba8Unorm,
+        usage: etalon::TextureUsages::STORAGE_BINDING | etalon::TextureUsages::TEXTURE_BINDING,
         view_formats: &[],
     });
     let view = texture.create_view(&Default::default());
-    let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let bg = device.create_bind_group(&etalon::BindGroupDescriptor {
         label: None,
         layout: bgl,
         entries: &[
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(global_params.as_entire_buffer_binding()),
+                resource: etalon::BindingResource::Buffer(global_params.as_entire_buffer_binding()),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 1,
-                resource: wgpu::BindingResource::TextureView(&view),
+                resource: etalon::BindingResource::TextureView(&view),
             },
         ],
     });

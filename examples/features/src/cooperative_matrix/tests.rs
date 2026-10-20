@@ -1,16 +1,16 @@
 use super::*;
-use wgpu_test::{apply, gpu_test, GpuTestConfiguration, TestParameters};
+use etalon_test::{apply, gpu_test, GpuTestConfiguration, TestParameters};
 
 // These tests are split into `COOPERATIVE_MATRIX_F16` and
 // `COOPERATIVE_MATRIX_F32` because the latter can run without
-// `wgpu::Features::SHADER_F16`.
+// `etalon::Features::SHADER_F16`.
 
 #[apply(gpu_test!)]
 pub static COOPERATIVE_MATRIX_F32: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
-            .features(wgpu::Features::EXPERIMENTAL_COOPERATIVE_MATRIX)
-            .limits(wgpu::Limits::default()),
+            .features(etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX)
+            .limits(etalon::Limits::default()),
     )
     .run_async(|ctx| async move {
         let coop_props = ctx.adapter.cooperative_matrix_properties();
@@ -20,8 +20,8 @@ pub static COOPERATIVE_MATRIX_F32: GpuTestConfiguration = GpuTestConfiguration::
             prop.m_size == 8
                 && prop.n_size == 8
                 && prop.k_size == 8
-                && prop.ab_type == wgpu::CooperativeScalarType::F32
-                && prop.cr_type == wgpu::CooperativeScalarType::F32
+                && prop.ab_type == etalon::CooperativeScalarType::F32
+                && prop.cr_type == etalon::CooperativeScalarType::F32
         });
         let Some(config) = config else {
             // Not every adapter that supports EXPERIMENTAL_COOPERATIVE_MATRIX
@@ -49,8 +49,8 @@ pub static COOPERATIVE_MATRIX_F32: GpuTestConfiguration = GpuTestConfiguration::
 pub static COOPERATIVE_MATRIX_F16: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
-            .features(wgpu::Features::EXPERIMENTAL_COOPERATIVE_MATRIX | wgpu::Features::SHADER_F16)
-            .limits(wgpu::Limits::default()),
+            .features(etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX | etalon::Features::SHADER_F16)
+            .limits(etalon::Limits::default()),
     )
     .run_async(|ctx| async move {
         let coop_props = ctx.adapter.cooperative_matrix_properties();
@@ -60,8 +60,8 @@ pub static COOPERATIVE_MATRIX_F16: GpuTestConfiguration = GpuTestConfiguration::
             prop.m_size == 16
                 && prop.n_size == 16
                 && prop.k_size == 16
-                && prop.ab_type == wgpu::CooperativeScalarType::F16
-                && prop.cr_type == wgpu::CooperativeScalarType::F16
+                && prop.ab_type == etalon::CooperativeScalarType::F16
+                && prop.cr_type == etalon::CooperativeScalarType::F16
         });
         let Some(config) = config else {
             // See the comment in COOPERATIVE_MATRIX_F32 above: not every adapter

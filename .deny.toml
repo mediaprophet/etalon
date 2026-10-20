@@ -1,5 +1,5 @@
 [graph]
-# This configuration is tuned for the published `wgpu`/`naga` library crates and
+# This configuration is tuned for the published `etalon`/`naga` library crates and
 # their dependencies *only* -- the skip/ignore/allow entries below assume that
 # scope. The binaries, tests, examples, and tooling in this workspace pull in many
 # more dependencies that would produce false-positive advisory/ban/license noise.
@@ -19,7 +19,7 @@ skip = [
     # naga depends on hashbrown 0.16 directly, while naga -> indexmap pulls hashbrown 0.17
     { name = "hashbrown", version = "0.16.1" },
 
-    # wgpu-hal -> drm -> drm-sys uses an older version, while wgpu-hal -> drm -> rustix uses a newer one
+    # etalon-hal -> drm -> drm-sys uses an older version, while etalon-hal -> drm -> rustix uses a newer one
     { name = "linux-raw-sys", version = "0.9.4" },
 
     # Derive macros use both syn 2 and syn 3.

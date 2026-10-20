@@ -1,4 +1,4 @@
-Collection of CPU benchmarks for `wgpu`.
+Collection of CPU benchmarks for `etalon`.
 
 These benchmarks are designed as a first line of defence against performance regressions and generally approximate the performance for users.
 
@@ -6,12 +6,12 @@ These benchmarks are designed as a first line of defence against performance reg
 
 ```sh
 # Run all benchmarks
-cargo bench -p wgpu-benchmark
+cargo bench -p etalon-benchmark
 # Run a specific benchmarks that contains "filter" in its name
-cargo bench -p wgpu-benchmark -- "filter"
+cargo bench -p etalon-benchmark -- "filter"
 ```
 
-Use `WGPU_BACKEND` and `WGPU_ADAPTER_NAME` to adjust which device the benchmarks use. [More info on env vars](../README.md#environment-variables).
+Use `etalon_BACKEND` and `etalon_ADAPTER_NAME` to adjust which device the benchmarks use. [More info on env vars](../README.md#environment-variables).
 
 ## Comparing Against a Baseline
 
@@ -22,11 +22,11 @@ For example, to compare v28 against trunk, you could run the following:
 ```sh
 git checkout v28
 # Run the baseline benchmarks
-cargo bench -p wgpu-benchmark -- --save-baseline "v28"
+cargo bench -p etalon-benchmark -- --save-baseline "v28"
 
 git checkout trunk
 # Run the current benchmarks
-cargo bench -p wgpu-benchmark -- --baseline "v28"
+cargo bench -p etalon-benchmark -- --baseline "v28"
 ```
 
 The current benchmarking framework was added before v28, so comparisons only work after it was added. Before that the same commands will work, but comparison will be done using `criterion`.
@@ -42,7 +42,7 @@ Tracy is available prebuilt for Windows on [github](https://github.com/wolfpld/t
 
 ```sh
 # Once this is running, you can connect to it with the Tracy Profiler
-cargo bench -p wgpu-benchmark --features tracy,profiling/profile-with-tracy
+cargo bench -p etalon-benchmark --features tracy,profiling/profile-with-tracy
 ```
 
 #### Superluminal
@@ -51,7 +51,7 @@ Superluminal is a paid product for windows available [here](https://superluminal
 
 ```sh
 # This command will build the benchmarks, and display the path to the executable
-cargo bench -p wgpu-benchmark --features profiling/profile-with-superluminal -- -h
+cargo bench -p etalon-benchmark --features profiling/profile-with-superluminal -- -h
 
 # Have Superluminal run the following command (replacing with the path to the executable)
 <path_to_exe> --bench "filter"
@@ -64,7 +64,7 @@ For example, the command line tool `perf` can be used to profile the benchmarks.
 
 ```sh
 # This command will build the benchmarks, and display the path to the executable
-cargo bench -p wgpu-benchmark -- -h
+cargo bench -p etalon-benchmark -- -h
 
 # Run the benchmarks with perf
 perf record <path_to_exe> --bench "filter"
@@ -93,7 +93,7 @@ Within this benchmark, both single threaded and multi-threaded recording are tes
 the compute pass into multiple passes over multiple command buffers.
 If available, it also tests a bindless approach, binding all resources at once instead of switching
 the bind group for every draw call.
-TODO(https://github.com/gfx-rs/wgpu/issues/5766): The bindless version uses only 1k dispatches with 6k resources since it would be too slow for a reasonable benchmarking time otherwise.
+TODO(https://github.com/gfx-rs/etalon/issues/5766): The bindless version uses only 1k dispatches with 6k resources since it would be too slow for a reasonable benchmarking time otherwise.
 
 #### `Device::create_buffer`
 

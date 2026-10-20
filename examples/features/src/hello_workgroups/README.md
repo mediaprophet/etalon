@@ -9,7 +9,7 @@ The example starts with two arrays of numbers. One where `a[i] = i` and the othe
 ## To Run
 
 ```
-cargo run --bin wgpu-examples hello_workgroups
+cargo run --bin etalon-examples hello_workgroups
 ```
 
 ## What are Workgroups?

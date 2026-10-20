@@ -1,7 +1,7 @@
 use std::{f32::consts, iter, ops::Range};
 
 use bytemuck::{Pod, Zeroable};
-use wgpu::util::{align_to, DeviceExt};
+use etalon::util::{align_to, DeviceExt};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -79,20 +79,20 @@ fn create_plane(size: i8) -> (Vec<Vertex>, Vec<u16>) {
 struct Entity {
     mx_world: glam::Mat4,
     rotation_speed: f32,
-    color: wgpu::Color,
-    vertex_buf: wgpu::Buffer,
-    index_buf: wgpu::Buffer,
-    index_format: wgpu::IndexFormat,
+    color: etalon::Color,
+    vertex_buf: etalon::Buffer,
+    index_buf: etalon::Buffer,
+    index_format: etalon::IndexFormat,
     index_count: usize,
-    uniform_offset: wgpu::DynamicOffset,
+    uniform_offset: etalon::DynamicOffset,
 }
 
 struct Light {
     pos: glam::Vec3,
-    color: wgpu::Color,
+    color: etalon::Color,
     fov: f32,
     depth: Range<f32>,
-    target_view: wgpu::TextureView,
+    target_view: etalon::TextureView,
 }
 
 #[repr(C)]
@@ -141,9 +141,9 @@ struct EntityUniforms {
 }
 
 struct Pass {
-    pipeline: wgpu::RenderPipeline,
-    bind_group: wgpu::BindGroup,
-    uniform_buf: wgpu::Buffer,
+    pipeline: etalon::RenderPipeline,
+    bind_group: etalon::BindGroup,
+    uniform_buf: etalon::Buffer,
 }
 
 struct Example {
@@ -152,21 +152,21 @@ struct Example {
     lights_are_dirty: bool,
     shadow_pass: Pass,
     forward_pass: Pass,
-    forward_depth: wgpu::TextureView,
-    entity_bind_group: wgpu::BindGroup,
-    light_storage_buf: wgpu::Buffer,
-    entity_uniform_buf: wgpu::Buffer,
+    forward_depth: etalon::TextureView,
+    entity_bind_group: etalon::BindGroup,
+    light_storage_buf: etalon::Buffer,
+    entity_uniform_buf: etalon::Buffer,
 }
 
 impl Example {
     const MAX_LIGHTS: usize = 10;
-    const SHADOW_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
-    const SHADOW_SIZE: wgpu::Extent3d = wgpu::Extent3d {
+    const SHADOW_FORMAT: etalon::TextureFormat = etalon::TextureFormat::Depth32Float;
+    const SHADOW_SIZE: etalon::Extent3d = etalon::Extent3d {
         width: 512,
         height: 512,
         depth_or_array_layers: Self::MAX_LIGHTS as u32,
     };
-    const DEPTH_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Depth32Float;
+    const DEPTH_FORMAT: etalon::TextureFormat = etalon::TextureFormat::Depth32Float;
 
     fn generate_matrix(aspect_ratio: f32) -> glam::Mat4 {
         let projection = glam::camera::rh::proj::directx::perspective(
@@ -184,72 +184,72 @@ impl Example {
     }
 
     fn create_depth_texture(
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-    ) -> wgpu::TextureView {
-        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
-            size: wgpu::Extent3d {
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+    ) -> etalon::TextureView {
+        let depth_texture = device.create_texture(&etalon::TextureDescriptor {
+            size: etalon::Extent3d {
                 width: config.width,
                 height: config.height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format: Self::DEPTH_FORMAT,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TRANSIENT_ATTACHMENT,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TRANSIENT_ATTACHMENT,
             label: None,
             view_formats: &[],
         });
 
-        depth_texture.create_view(&wgpu::TextureViewDescriptor::default())
+        depth_texture.create_view(&etalon::TextureViewDescriptor::default())
     }
 }
 
 impl crate::framework::Example for Example {
-    fn optional_features() -> wgpu::Features {
-        wgpu::Features::DEPTH_CLIP_CONTROL
+    fn optional_features() -> etalon::Features {
+        etalon::Features::DEPTH_CLIP_CONTROL
     }
 
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
         let supports_storage_resources = adapter
             .get_downlevel_capabilities()
             .flags
-            .contains(wgpu::DownlevelFlags::VERTEX_STORAGE)
+            .contains(etalon::DownlevelFlags::VERTEX_STORAGE)
             && device.limits().max_storage_buffers_per_shader_stage > 0;
 
         // Create the vertex and index buffers
         let vertex_size = size_of::<Vertex>();
         let (cube_vertex_data, cube_index_data) = create_cube();
-        let cube_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let cube_vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Cubes Vertex Buffer"),
             contents: bytemuck::cast_slice(&cube_vertex_data),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: etalon::BufferUsages::VERTEX,
         });
 
-        let cube_index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let cube_index_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Cubes Index Buffer"),
             contents: bytemuck::cast_slice(&cube_index_data),
-            usage: wgpu::BufferUsages::INDEX,
+            usage: etalon::BufferUsages::INDEX,
         });
 
         let (plane_vertex_data, plane_index_data) = create_plane(7);
-        let plane_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let plane_vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Plane Vertex Buffer"),
             contents: bytemuck::cast_slice(&plane_vertex_data),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: etalon::BufferUsages::VERTEX,
         });
 
-        let plane_index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let plane_index_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Plane Index Buffer"),
             contents: bytemuck::cast_slice(&plane_index_data),
-            usage: wgpu::BufferUsages::INDEX,
+            usage: etalon::BufferUsages::INDEX,
         });
 
         struct CubeDesc {
@@ -285,29 +285,29 @@ impl crate::framework::Example for Example {
             },
         ];
 
-        let entity_uniform_size = size_of::<EntityUniforms>() as wgpu::BufferAddress;
-        let num_entities = 1 + cube_descs.len() as wgpu::BufferAddress;
+        let entity_uniform_size = size_of::<EntityUniforms>() as etalon::BufferAddress;
+        let num_entities = 1 + cube_descs.len() as etalon::BufferAddress;
         // Make the `uniform_alignment` >= `entity_uniform_size` and aligned to `min_uniform_buffer_offset_alignment`.
         let uniform_alignment = {
             let alignment =
-                device.limits().min_uniform_buffer_offset_alignment as wgpu::BufferAddress;
+                device.limits().min_uniform_buffer_offset_alignment as etalon::BufferAddress;
             align_to(entity_uniform_size, alignment)
         };
         // Note: dynamic uniform offsets also have to be aligned to `Limits::min_uniform_buffer_offset_alignment`.
-        let entity_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let entity_uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
             size: num_entities * uniform_alignment,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let index_format = wgpu::IndexFormat::Uint16;
+        let index_format = etalon::IndexFormat::Uint16;
 
         let mut entities = vec![{
             Entity {
                 mx_world: glam::Mat4::IDENTITY,
                 rotation_speed: 0.0,
-                color: wgpu::Color::WHITE,
+                color: etalon::Color::WHITE,
                 vertex_buf: plane_vertex_buf,
                 index_buf: plane_index_buf,
                 index_format,
@@ -328,7 +328,7 @@ impl crate::framework::Example for Example {
             entities.push(Entity {
                 mx_world,
                 rotation_speed: cube.rotation,
-                color: wgpu::Color::GREEN,
+                color: etalon::Color::GREEN,
                 vertex_buf: cube_vertex_buf.clone(),
                 index_buf: cube_index_buf.clone(),
                 index_format,
@@ -338,77 +338,77 @@ impl crate::framework::Example for Example {
         }
 
         let local_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                entries: &[etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: true,
-                        min_binding_size: wgpu::BufferSize::new(entity_uniform_size),
+                        min_binding_size: etalon::BufferSize::new(entity_uniform_size),
                     },
                     count: None,
                 }],
                 label: None,
             });
-        let entity_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let entity_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &local_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                resource: etalon::BindingResource::Buffer(etalon::BufferBinding {
                     buffer: &entity_uniform_buf,
                     offset: 0,
-                    size: wgpu::BufferSize::new(entity_uniform_size),
+                    size: etalon::BufferSize::new(entity_uniform_size),
                 }),
             }],
             label: None,
         });
 
         // Create other resources
-        let shadow_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let shadow_sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("shadow"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
-            compare: Some(wgpu::CompareFunction::LessEqual),
+            address_mode_u: etalon::AddressMode::ClampToEdge,
+            address_mode_v: etalon::AddressMode::ClampToEdge,
+            address_mode_w: etalon::AddressMode::ClampToEdge,
+            mag_filter: etalon::FilterMode::Linear,
+            min_filter: etalon::FilterMode::Linear,
+            mipmap_filter: etalon::MipmapFilterMode::Nearest,
+            compare: Some(etalon::CompareFunction::LessEqual),
             ..Default::default()
         });
 
-        let shadow_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let shadow_texture = device.create_texture(&etalon::TextureDescriptor {
             size: Self::SHADOW_SIZE,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format: Self::SHADOW_FORMAT,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
             label: None,
             view_formats: &[],
         });
-        let shadow_view = shadow_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let shadow_view = shadow_texture.create_view(&etalon::TextureViewDescriptor::default());
 
         let mut shadow_target_views = (0..2)
             .map(|i| {
-                Some(shadow_texture.create_view(&wgpu::TextureViewDescriptor {
+                Some(shadow_texture.create_view(&etalon::TextureViewDescriptor {
                     label: Some("shadow"),
                     format: None,
-                    dimension: Some(wgpu::TextureViewDimension::D2),
+                    dimension: Some(etalon::TextureViewDimension::D2),
                     usage: None,
-                    aspect: wgpu::TextureAspect::All,
+                    aspect: etalon::TextureAspect::All,
                     base_mip_level: 0,
                     mip_level_count: None,
                     base_array_layer: i as u32,
                     array_layer_count: Some(1),
-                    swizzle: wgpu::TextureComponentSwizzle::default(),
+                    swizzle: etalon::TextureComponentSwizzle::default(),
                 }))
             })
             .collect::<Vec<_>>();
         let lights = vec![
             Light {
                 pos: glam::Vec3::new(7.0, -5.0, 10.0),
-                color: wgpu::Color {
+                color: etalon::Color {
                     r: 0.5,
                     g: 1.0,
                     b: 0.5,
@@ -420,7 +420,7 @@ impl crate::framework::Example for Example {
             },
             Light {
                 pos: glam::Vec3::new(-5.0, 7.0, 10.0),
-                color: wgpu::Color {
+                color: etalon::Color {
                     r: 1.0,
                     g: 0.5,
                     b: 0.5,
@@ -431,62 +431,62 @@ impl crate::framework::Example for Example {
                 target_view: shadow_target_views[1].take().unwrap(),
             },
         ];
-        let light_uniform_size = (Self::MAX_LIGHTS * size_of::<LightRaw>()) as wgpu::BufferAddress;
-        let light_storage_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let light_uniform_size = (Self::MAX_LIGHTS * size_of::<LightRaw>()) as etalon::BufferAddress;
+        let light_storage_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
             size: light_uniform_size,
             usage: if supports_storage_resources {
-                wgpu::BufferUsages::STORAGE
+                etalon::BufferUsages::STORAGE
             } else {
-                wgpu::BufferUsages::UNIFORM
-            } | wgpu::BufferUsages::COPY_SRC
-                | wgpu::BufferUsages::COPY_DST,
+                etalon::BufferUsages::UNIFORM
+            } | etalon::BufferUsages::COPY_SRC
+                | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let vertex_attr = wgpu::vertex_attr_array![0 => Sint8x4, 1 => Sint8x4];
-        let vertex_buffers = [Some(wgpu::VertexBufferLayout {
-            array_stride: vertex_size as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
+        let vertex_attr = etalon::vertex_attr_array![0 => Sint8x4, 1 => Sint8x4];
+        let vertex_buffers = [Some(etalon::VertexBufferLayout {
+            array_stride: vertex_size as etalon::BufferAddress,
+            step_mode: etalon::VertexStepMode::Vertex,
             attributes: &vertex_attr,
         })];
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
         let shadow_pass = {
-            let uniform_size = size_of::<GlobalUniforms>() as wgpu::BufferAddress;
+            let uniform_size = size_of::<GlobalUniforms>() as etalon::BufferAddress;
             // Create pipeline layout
             let bind_group_layout =
-                device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                     label: None,
-                    entries: &[wgpu::BindGroupLayoutEntry {
+                    entries: &[etalon::BindGroupLayoutEntry {
                         binding: 0, // global
-                        visibility: wgpu::ShaderStages::VERTEX,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new(uniform_size),
+                            min_binding_size: etalon::BufferSize::new(uniform_size),
                         },
                         count: None,
                     }],
                 });
-            let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: Some("shadow"),
                 bind_group_layouts: &[Some(&bind_group_layout), Some(&local_bind_group_layout)],
                 immediate_size: 0,
             });
 
-            let uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+            let uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
                 label: None,
                 size: uniform_size,
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             });
 
             // Create bind group
-            let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
                 layout: &bind_group_layout,
-                entries: &[wgpu::BindGroupEntry {
+                entries: &[etalon::BindGroupEntry {
                     binding: 0,
                     resource: uniform_buf.as_entire_binding(),
                 }],
@@ -494,37 +494,37 @@ impl crate::framework::Example for Example {
             });
 
             // Create the render pipeline
-            let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                 label: Some("shadow"),
                 layout: Some(&pipeline_layout),
-                vertex: wgpu::VertexState {
+                vertex: etalon::VertexState {
                     module: &shader,
                     entry_point: Some("vs_bake"),
                     compilation_options: Default::default(),
                     buffers: &vertex_buffers,
                 },
                 fragment: None,
-                primitive: wgpu::PrimitiveState {
-                    topology: wgpu::PrimitiveTopology::TriangleList,
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: Some(wgpu::Face::Back),
+                primitive: etalon::PrimitiveState {
+                    topology: etalon::PrimitiveTopology::TriangleList,
+                    front_face: etalon::FrontFace::Ccw,
+                    cull_mode: Some(etalon::Face::Back),
                     unclipped_depth: device
                         .features()
-                        .contains(wgpu::Features::DEPTH_CLIP_CONTROL),
+                        .contains(etalon::Features::DEPTH_CLIP_CONTROL),
                     ..Default::default()
                 },
-                depth_stencil: Some(wgpu::DepthStencilState {
+                depth_stencil: Some(etalon::DepthStencilState {
                     format: Self::SHADOW_FORMAT,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::LessEqual),
-                    stencil: wgpu::StencilState::default(),
-                    bias: wgpu::DepthBiasState {
+                    depth_compare: Some(etalon::CompareFunction::LessEqual),
+                    stencil: etalon::StencilState::default(),
+                    bias: etalon::DepthBiasState {
                         constant: 2, // corresponds to bilinear filtering
                         slope_scale: 2.0,
                         clamp: 0.0,
                     },
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: etalon::MultisampleState::default(),
                 multiview_mask: None,
                 cache: None,
             });
@@ -539,54 +539,54 @@ impl crate::framework::Example for Example {
         let forward_pass = {
             // Create pipeline layout
             let bind_group_layout =
-                device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                     entries: &[
-                        wgpu::BindGroupLayoutEntry {
+                        etalon::BindGroupLayoutEntry {
                             binding: 0, // global
-                            visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Buffer {
-                                ty: wgpu::BufferBindingType::Uniform,
+                            visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                            ty: etalon::BindingType::Buffer {
+                                ty: etalon::BufferBindingType::Uniform,
                                 has_dynamic_offset: false,
-                                min_binding_size: wgpu::BufferSize::new(
+                                min_binding_size: etalon::BufferSize::new(
                                     size_of::<GlobalUniforms>() as _,
                                 ),
                             },
                             count: None,
                         },
-                        wgpu::BindGroupLayoutEntry {
+                        etalon::BindGroupLayoutEntry {
                             binding: 1, // lights
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Buffer {
+                            visibility: etalon::ShaderStages::FRAGMENT,
+                            ty: etalon::BindingType::Buffer {
                                 ty: if supports_storage_resources {
-                                    wgpu::BufferBindingType::Storage { read_only: true }
+                                    etalon::BufferBindingType::Storage { read_only: true }
                                 } else {
-                                    wgpu::BufferBindingType::Uniform
+                                    etalon::BufferBindingType::Uniform
                                 },
                                 has_dynamic_offset: false,
-                                min_binding_size: wgpu::BufferSize::new(light_uniform_size),
+                                min_binding_size: etalon::BufferSize::new(light_uniform_size),
                             },
                             count: None,
                         },
-                        wgpu::BindGroupLayoutEntry {
+                        etalon::BindGroupLayoutEntry {
                             binding: 2,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
+                            visibility: etalon::ShaderStages::FRAGMENT,
+                            ty: etalon::BindingType::Texture {
                                 multisampled: false,
-                                sample_type: wgpu::TextureSampleType::Depth,
-                                view_dimension: wgpu::TextureViewDimension::D2Array,
+                                sample_type: etalon::TextureSampleType::Depth,
+                                view_dimension: etalon::TextureViewDimension::D2Array,
                             },
                             count: None,
                         },
-                        wgpu::BindGroupLayoutEntry {
+                        etalon::BindGroupLayoutEntry {
                             binding: 3,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Comparison),
+                            visibility: etalon::ShaderStages::FRAGMENT,
+                            ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Comparison),
                             count: None,
                         },
                     ],
                     label: None,
                 });
-            let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: Some("main"),
                 bind_group_layouts: &[Some(&bind_group_layout), Some(&local_bind_group_layout)],
                 immediate_size: 0,
@@ -597,47 +597,47 @@ impl crate::framework::Example for Example {
                 proj: mx_total.to_cols_array_2d(),
                 num_lights: [lights.len() as u32, 0, 0, 0],
             };
-            let uniform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            let uniform_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
                 label: Some("Uniform Buffer"),
                 contents: bytemuck::bytes_of(&forward_uniforms),
-                usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+                usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             });
 
             // Create bind group
-            let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
                 layout: &bind_group_layout,
                 entries: &[
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 0,
                         resource: uniform_buf.as_entire_binding(),
                     },
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 1,
                         resource: light_storage_buf.as_entire_binding(),
                     },
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 2,
-                        resource: wgpu::BindingResource::TextureView(&shadow_view),
+                        resource: etalon::BindingResource::TextureView(&shadow_view),
                     },
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 3,
-                        resource: wgpu::BindingResource::Sampler(&shadow_sampler),
+                        resource: etalon::BindingResource::Sampler(&shadow_sampler),
                     },
                 ],
                 label: None,
             });
 
             // Create the render pipeline
-            let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                 label: Some("main"),
                 layout: Some(&pipeline_layout),
-                vertex: wgpu::VertexState {
+                vertex: etalon::VertexState {
                     module: &shader,
                     entry_point: Some("vs_main"),
                     compilation_options: Default::default(),
                     buffers: &vertex_buffers,
                 },
-                fragment: Some(wgpu::FragmentState {
+                fragment: Some(etalon::FragmentState {
                     module: &shader,
                     entry_point: Some(if supports_storage_resources {
                         "fs_main"
@@ -647,19 +647,19 @@ impl crate::framework::Example for Example {
                     compilation_options: Default::default(),
                     targets: &[Some(config.view_formats[0].into())],
                 }),
-                primitive: wgpu::PrimitiveState {
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: Some(wgpu::Face::Back),
+                primitive: etalon::PrimitiveState {
+                    front_face: etalon::FrontFace::Ccw,
+                    cull_mode: Some(etalon::Face::Back),
                     ..Default::default()
                 },
-                depth_stencil: Some(wgpu::DepthStencilState {
+                depth_stencil: Some(etalon::DepthStencilState {
                     format: Self::DEPTH_FORMAT,
                     depth_write_enabled: Some(true),
-                    depth_compare: Some(wgpu::CompareFunction::Less),
-                    stencil: wgpu::StencilState::default(),
-                    bias: wgpu::DepthBiasState::default(),
+                    depth_compare: Some(etalon::CompareFunction::Less),
+                    stencil: etalon::StencilState::default(),
+                    bias: etalon::DepthBiasState::default(),
                 }),
-                multisample: wgpu::MultisampleState::default(),
+                multisample: etalon::MultisampleState::default(),
                 multiview_mask: None,
                 cache: None,
             });
@@ -692,9 +692,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) {
         // update view-projection matrix
         let mx_total = Self::generate_matrix(config.width as f32 / config.height as f32);
@@ -708,7 +708,7 @@ impl crate::framework::Example for Example {
         self.forward_depth = Self::create_depth_texture(config, device);
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         // update uniforms
         for entity in self.entities.iter_mut() {
             if entity.rotation_speed != 0.0 {
@@ -727,7 +727,7 @@ impl crate::framework::Example for Example {
             };
             queue.write_buffer(
                 &self.entity_uniform_buf,
-                entity.uniform_offset as wgpu::BufferAddress,
+                entity.uniform_offset as etalon::BufferAddress,
                 bytemuck::bytes_of(&data),
             );
         }
@@ -737,14 +737,14 @@ impl crate::framework::Example for Example {
             for (i, light) in self.lights.iter().enumerate() {
                 queue.write_buffer(
                     &self.light_storage_buf,
-                    (i * size_of::<LightRaw>()) as wgpu::BufferAddress,
+                    (i * size_of::<LightRaw>()) as etalon::BufferAddress,
                     bytemuck::bytes_of(&light.to_raw()),
                 );
             }
         }
 
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         encoder.push_debug_group("shadow passes");
         for (i, light) in self.lights.iter().enumerate() {
@@ -757,7 +757,7 @@ impl crate::framework::Example for Example {
             // let's just copy it over to the shadow uniform buffer.
             encoder.copy_buffer_to_buffer(
                 &self.light_storage_buf,
-                (i * size_of::<LightRaw>()) as wgpu::BufferAddress,
+                (i * size_of::<LightRaw>()) as etalon::BufferAddress,
                 &self.shadow_pass.uniform_buf,
                 0,
                 64,
@@ -765,14 +765,14 @@ impl crate::framework::Example for Example {
 
             encoder.insert_debug_marker("render entities");
             {
-                let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                     label: None,
                     color_attachments: &[],
-                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                    depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                         view: &light.target_view,
-                        depth_ops: Some(wgpu::Operations {
-                            load: wgpu::LoadOp::Clear(1.0),
-                            store: wgpu::StoreOp::Store,
+                        depth_ops: Some(etalon::Operations {
+                            load: etalon::LoadOp::Clear(1.0),
+                            store: etalon::StoreOp::Store,
                         }),
                         stencil_ops: None,
                     }),
@@ -798,27 +798,27 @@ impl crate::framework::Example for Example {
         // forward pass
         encoder.push_debug_group("forward rendering pass");
         {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color {
                             r: 0.1,
                             g: 0.2,
                             b: 0.3,
                             a: 1.0,
                         }),
-                        store: wgpu::StoreOp::Store,
+                        store: etalon::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                     view: &self.forward_depth,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Discard,
+                    depth_ops: Some(etalon::Operations {
+                        load: etalon::LoadOp::Clear(1.0),
+                        store: etalon::StoreOp::Discard,
                     }),
                     stencil_ops: None,
                 }),
@@ -847,20 +847,20 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "shadow",
     image_path: "/examples/features/src/shadow/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default()
-        .downlevel_flags(wgpu::DownlevelFlags::COMPARISON_SAMPLERS)
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default()
+        .downlevel_flags(etalon::DownlevelFlags::COMPARISON_SAMPLERS)
         // rpi4 on VK doesn't work: https://gitlab.freedesktop.org/mesa/mesa/-/issues/3916
-        .expect_fail(wgpu_test::FailureCase::backend_adapter(
-            wgpu::Backends::VULKAN,
+        .expect_fail(etalon_test::FailureCase::backend_adapter(
+            etalon::Backends::VULKAN,
             "V3D",
         )),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.026)], // Bounded by Apple A9
+    comparisons: &[etalon_test::ComparisonType::Mean(0.026)], // Bounded by Apple A9
     _phantom: std::marker::PhantomData::<Example>,
 };

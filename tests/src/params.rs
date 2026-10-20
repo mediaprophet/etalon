@@ -1,15 +1,15 @@
 use arrayvec::ArrayVec;
-use wgpu::{DownlevelCapabilities, DownlevelFlags, Features, InstanceFlags, Limits};
+use etalon::{DownlevelCapabilities, DownlevelFlags, Features, InstanceFlags, Limits};
 
 use crate::{
     report::AdapterReport, FailureApplicationReasons, FailureBehavior, FailureCase,
     GpuTestConfiguration,
 };
 
-const LOWEST_DOWNLEVEL_PROPERTIES: wgpu::DownlevelCapabilities = DownlevelCapabilities {
-    flags: wgpu::DownlevelFlags::empty(),
-    limits: wgpu::DownlevelLimits {},
-    shader_model: wgpu::ShaderModel::Sm2,
+const LOWEST_DOWNLEVEL_PROPERTIES: etalon::DownlevelCapabilities = DownlevelCapabilities {
+    flags: etalon::DownlevelFlags::empty(),
+    limits: etalon::DownlevelLimits {},
+    shader_model: etalon::ShaderModel::Sm2,
 };
 
 /// This information determines if a test should run.
@@ -52,7 +52,7 @@ impl Default for TestParameters {
             force_fxc: false,
             // By default we skip the noop backend, and enable it if the test
             // parameters ask us to remove it.
-            skips: vec![FailureCase::backend(wgpu::Backends::NOOP)],
+            skips: vec![FailureCase::backend(etalon::Backends::NOOP)],
             failures: Vec::new(),
             disable_mtl_shader_validation: false,
         }
@@ -64,7 +64,7 @@ impl TestParameters {
     /// Set of common features that most internal tests require for compute and readback.
     pub fn test_features_limits(self) -> Self {
         self.downlevel_flags(DownlevelFlags::COMPUTE_SHADERS)
-            .limits(wgpu::Limits::downlevel_defaults())
+            .limits(etalon::Limits::downlevel_defaults())
     }
 
     /// Set the list of features this test requires.
@@ -120,7 +120,7 @@ impl TestParameters {
     /// validation and memory safety.
     pub fn enable_noop(mut self) -> Self {
         self.skips
-            .retain(|case| *case != FailureCase::backend(wgpu::Backends::NOOP));
+            .retain(|case| *case != FailureCase::backend(etalon::Backends::NOOP));
         self
     }
 
@@ -167,7 +167,7 @@ impl TestInfo {
 
         // Produce a lower-case version of the adapter info, for comparison against
         // `parameters.skips` and `parameters.failures`.
-        let adapter_lowercase_info = wgpu::AdapterInfo {
+        let adapter_lowercase_info = etalon::AdapterInfo {
             name: adapter.info.name.to_lowercase(),
             driver: adapter.info.driver.to_lowercase(),
             ..adapter.info.clone()

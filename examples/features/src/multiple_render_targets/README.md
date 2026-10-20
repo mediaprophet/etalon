@@ -12,7 +12,7 @@ will be displayed on the screen by rendering each one of them to their own viewp
 ## To Run
 
 ```
-cargo run --bin wgpu-examples multiple_render_targets
+cargo run --bin etalon-examples multiple_render_targets
 ```
 
 ## Screenshots

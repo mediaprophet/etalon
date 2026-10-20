@@ -1,4 +1,4 @@
-enable wgpu_binding_array;
+enable etalon_binding_array;
 
 const OFFSET: u32 = 1u << 8u;
 const BUFFER_MAX_ELEMENTS: u32 = 1u << 25u; // Think `buffer.len()`

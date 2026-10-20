@@ -1,13 +1,13 @@
 use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
-use wgpu::{
+use etalon::{
     AdapterInfo, DownlevelCapabilities, Features, Limits, TextureFormat, TextureFormatFeatures,
 };
 
 /// Report specifying the capabilities of the GPUs on the system.
 ///
-/// Must be synchronized with the definition on wgpu-info/src/report.rs.
+/// Must be synchronized with the definition on etalon-info/src/report.rs.
 #[derive(Serialize, Deserialize)]
 pub(crate) struct GpuReport {
     #[cfg_attr(target_arch = "wasm32", allow(unused))]
@@ -20,10 +20,10 @@ impl GpuReport {
     pub(crate) fn noop_only() -> Self {
         GpuReport {
             devices: vec![AdapterReport {
-                info: wgpu::hal::noop::adapter_info(),
+                info: etalon::hal::noop::adapter_info(),
                 features: Features::all(),
-                limits: wgpu::hal::noop::CAPABILITIES.limits,
-                downlevel_caps: wgpu::hal::noop::CAPABILITIES.downlevel,
+                limits: etalon::hal::noop::CAPABILITIES.limits,
+                downlevel_caps: etalon::hal::noop::CAPABILITIES.downlevel,
                 texture_format_features: HashMap::new(), // todo
             }],
         }
@@ -38,7 +38,7 @@ impl GpuReport {
 
 /// A single report of the capabilities of an Adapter.
 ///
-/// Must be synchronized with the definition on wgpu-info/src/report.rs.
+/// Must be synchronized with the definition on etalon-info/src/report.rs.
 #[derive(Serialize, Deserialize, Clone)]
 pub struct AdapterReport {
     pub info: AdapterInfo,
@@ -49,7 +49,7 @@ pub struct AdapterReport {
 }
 
 impl AdapterReport {
-    pub(crate) fn from_adapter(adapter: &wgpu::Adapter) -> Self {
+    pub(crate) fn from_adapter(adapter: &etalon::Adapter) -> Self {
         let info = adapter.get_info();
         let features = adapter.features();
         let limits = adapter.limits();

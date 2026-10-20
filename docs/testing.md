@@ -1,6 +1,6 @@
-# Testing in `wgpu` and `naga`
+# Testing in `etalon` and `naga`
 
-There exist a large variety of tests within the `wgpu` repository
+There exist a large variety of tests within the `etalon` repository
 to make sure we can easily test all the aspects of our libraries.
 This document serves as a guide to each class of test, and what
 they are used for.
@@ -37,11 +37,11 @@ This is a table of contents, in the form of the repository's directory structure
 - player
   - [tests](#player-tests)
 - tests
-  - [compile](#wgpu-compile-tests)
-  - [dependency](#wgpu-dependency-tests)
-  - [gpu](#wgpu-gpu-tests)
-  - [trace](#wgpu-trace-tests)
-  - [validation](#wgpu-validation-tests)
+  - [compile](#etalon-compile-tests)
+  - [dependency](#etalon-dependency-tests)
+  - [gpu](#etalon-gpu-tests)
+  - [trace](#etalon-trace-tests)
+  - [validation](#etalon-validation-tests)
 
 And where applicable [unit-tests](#unit-tests)
 are scatteredthroughout the codebase.
@@ -49,10 +49,10 @@ are scatteredthroughout the codebase.
 ## Benchmark Tests
 
 - Located in: `benches/benches`
-- Run with `cargo nextest run --bench wgpu-benchmark`
-- `wgpu` benchmarks for performance testing.
+- Run with `cargo nextest run --bench etalon-benchmark`
+- `etalon` benchmarks for performance testing.
 
-These are benchmarks that test the performance of `wgpu` in various
+These are benchmarks that test the performance of `etalon` in various
 scenarios. When run as part of the test suite, they run a single
 iteration of each benchmark to ensure they continue to function.
 
@@ -68,16 +68,16 @@ To run the benchmarks for benchmarking purposes, use `cargo bench`.
 ## Example Tests
 
 - Located in: `examples/features`
-- Run with `cargo xtask test --bin wgpu-examples`
+- Run with `cargo xtask test --bin etalon-examples`
 - Uses a custom `#[apply(gpu_test!)]` harness.
-- `wgpu` integration tests, with access to `wgpu_test` helpers.
+- `etalon` integration tests, with access to `etalon_test` helpers.
 
 These tests validate that the examples are functioning correctly
 and do not have any regressions. They use the same harness as the
-[gpu tests](#wgpu-gpu-tests), see that section for more information
+[gpu tests](#etalon-gpu-tests), see that section for more information
 on the harness.
 
-These tests use `nv-flip`'s image comparison through the wgpu
+These tests use `nv-flip`'s image comparison through the etalon
 example framework to validate that the images outputted by the
 examples are within tolerance of the expected output.
 
@@ -151,7 +151,7 @@ is produced by the validator from a given `wgsl` snippet.
 - Located in: `player/tests`
 - Run with `cargo nextest run --test player`
 - Data driven tests using the `player`'s replay system.
-- `wgpu` integration tests.
+- `etalon` integration tests.
 
 These are soft-deprecated tests which are another way to write
 API tests. These use captures of the api calls and replay them
@@ -161,72 +161,72 @@ tests exist, but you should not write new ones.
 
 These tests only run on your system's default GPU.
 
-## `wgpu` Compile Tests
+## `etalon` Compile Tests
 
-- Located in: `tests/tests/wgpu-compile`
-- Run with `cargo nextest run --test wgpu-compile`
-- `trybuild` tests of all rust files in `tests/tests/wgpu-compile/fail` directory.
+- Located in: `tests/tests/etalon-compile`
+- Run with `cargo nextest run --test etalon-compile`
+- `trybuild` tests of all rust files in `tests/tests/etalon-compile/fail` directory.
 
 These use the `trybuild` crate to test a few scenarios where
-the `wgpu` crate is expected to fail to compile. This mainly
+the `etalon` crate is expected to fail to compile. This mainly
 revolves around ensuring lifetimes are properly handled when
 dropping passes, etc.
 
-## `wgpu` Dependency Tests
+## `etalon` Dependency Tests
 
-- Located in: `tests/tests/wgpu-dependency`
-- Run with `cargo nextest run --test wgpu-dependency`
+- Located in: `tests/tests/etalon-dependency`
+- Run with `cargo nextest run --test etalon-dependency`
 - Tests against `cargo tree`.
 
-These tests ensure that the `wgpu` crate has the correct dependency
+These tests ensure that the `etalon` crate has the correct dependency
 tree on all platforms. It's super easy to subtly mess up the dependencies
 which can cause issues or extra dependencies to be pulled in.
 
 This provides a way to ensure that our `toml` files are correct.
 
-## `wgpu` GPU Tests
+## `etalon` GPU Tests
 
-- Located in: `tests/tests/wgpu-gpu`
-- Run with `cargo xtask test --test wgpu-gpu`
+- Located in: `tests/tests/etalon-gpu`
+- Run with `cargo xtask test --test etalon-gpu`
 - Uses a custom `#[apply(gpu_test!)]` harness.
-- `wgpu` integration tests, with access to `wgpu_test` helpers.
+- `etalon` integration tests, with access to `etalon_test` helpers.
 
 These tests use a custom harness to run each test on all GPUs
 available on the system. They are general integration tests
-that write code against the normal `wgpu` API and assert on the behavior.
+that write code against the normal `etalon` API and assert on the behavior.
 
 These tests are useful to check the runtime behavior of a program,
 validate that there are no validation errors coming from the
 `vulkan`/`dx12`/`metal` validation layers, and ensure behavior
 is the same across GPUs. If the test does not need to run on a
-real GPU, it should be in the [validation tests](#wgpu-validation-tests) instead.
+real GPU, it should be in the [validation tests](#etalon-validation-tests) instead.
 
 There is a special parameter system that deals with if a GPU
 can support the given test, and dealing with expectation
-management for tests that are expected to fail due to driver or wgpu bugs.
+management for tests that are expected to fail due to driver or etalon bugs.
 
 Normal `#[test]`s will not be found in this test crate, as we use a custom harness.
 
 See also the [example tests](#example-tests) for additional GPU tests.
 
-## `wgpu` Trace Tests
+## `etalon` Trace Tests
 
-- Located in: `tests/tests/wgpu_trace.rs`
-- Run with `cargo nextest run --test wgpu_trace`
+- Located in: `tests/tests/etalon_trace.rs`
+- Run with `cargo nextest run --test etalon_trace`
 - Use the standard `#[test]` harness.
 
-These tests are focused on testing the tracing functionality in `wgpu`. They
+These tests are focused on testing the tracing functionality in `etalon`. They
 use the a special `noop` backend which does not connect to a real GPU.
 
-## `wgpu` Validation Tests
+## `etalon` Validation Tests
 
-- Located in: `tests/tests/wgpu-validation`
-- Run with `cargo nextest run --test wgpu-validation`
+- Located in: `tests/tests/etalon-validation`
+- Run with `cargo nextest run --test etalon-validation`
 - Use the standard `#[test]` harness.
-- `wgpu` integration tests, with access to `wgpu_test` helpers.
+- `etalon` integration tests, with access to `etalon_test` helpers.
 
-These tests are focused on testing the validation inside of `wgpu-core`.
-They are written against the `wgpu` API, but are targeting a special `noop`
+These tests are focused on testing the validation inside of `etalon-core`.
+They are written against the `etalon` API, but are targeting a special `noop`
 backend which does not connect to a real GPU.
 
 This is significantly faster and simpler than running on real hardware,
@@ -245,7 +245,7 @@ functions or small parts of the codebase. These don't run on the gpu.
 ## WebGPU CTS
 
 WebGPU includes a Conformance Test Suite to validate that implementations are
-working correctly. We run cases from the CTS against wgpu using
+working correctly. We run cases from the CTS against etalon using
 [Deno](https://deno.com/). A [default list of enabled
 tests](../cts_runner/test.lst) is automatically run on pull requests in CI.
 

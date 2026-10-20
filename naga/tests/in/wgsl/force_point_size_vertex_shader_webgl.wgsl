@@ -1,6 +1,6 @@
 // AUTHOR: REASY
-// ISSUE: https://github.com/gfx-rs/wgpu/issues/3179
-// FIX: https://github.com/gfx-rs/wgpu/pull/3440
+// ISSUE: https://github.com/mediaprophet/etalon/issues/3179
+// FIX: https://github.com/mediaprophet/etalon/pull/3440
 @vertex
 fn vs_main(@builtin(vertex_index) in_vertex_index: u32) -> @builtin(position) vec4<f32> {
     let x = f32(i32(in_vertex_index) - 1);

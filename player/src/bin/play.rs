@@ -2,12 +2,12 @@
 
 #[cfg(not(target_arch = "wasm32"))]
 fn main() {
-    extern crate wgpu_core as wgc;
-    extern crate wgpu_types as wgt;
+    extern crate etalon_core as wgc;
+    extern crate etalon_types as wgt;
 
     use player::Player;
     use wgc::device::trace;
-    use wgpu_core::command::PointerReferences;
+    use etalon_core::command::PointerReferences;
 
     use std::{
         fs,
@@ -35,7 +35,7 @@ fn main() {
     const HELP: &str = "\
     Usage: play <trace directory> | <trace file>\n\
     \n\
-    Play a wgpu trace from the specified file or directory. If the trace contains\n\
+    Play a etalon trace from the specified file or directory. If the trace contains\n\
     buffers, textures, or shaders, the directory form must be used.\n";
 
     let (dir, trace) = match std::env::args().nth(1) {
@@ -138,7 +138,7 @@ fn main() {
                     event_loop
                         .create_window(
                             Window::default_attributes()
-                                .with_title("wgpu player")
+                                .with_title("etalon player")
                                 .with_resizable(true),
                         )
                         .unwrap(),

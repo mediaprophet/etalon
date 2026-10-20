@@ -41,7 +41,7 @@ pub mod uniform_values;
 pub mod water;
 
 #[cfg(test)]
-fn all_tests() -> Vec<wgpu_test::GpuTestInitializer> {
+fn all_tests() -> Vec<etalon_test::GpuTestInitializer> {
     #[cfg_attr(
         wasm_test,
         expect(unused_mut, reason = "non-wasm32 needs this mutable")
@@ -93,4 +93,4 @@ fn all_tests() -> Vec<wgpu_test::GpuTestInitializer> {
 }
 
 #[cfg(test)]
-wgpu_test::gpu_test_main!(all_tests());
+etalon_test::gpu_test_main!(all_tests());

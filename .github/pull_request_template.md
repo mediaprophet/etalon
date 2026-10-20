@@ -33,7 +33,7 @@ ask that you understand all the code you submit and treat it as your own.
 We do ask that any significant descriptions be written by hand._
 
 <!--
-Thanks for filing! Reviewers are assigned for non-draft PRs in the weekly wgpu maintainers meetings.
+Thanks for filing! Reviewers are assigned for non-draft PRs in the weekly etalon maintainers meetings.
 
 After you get a review and have addressed any comments, please explicitly re-request a review from the
 person(s) who reviewed your changes. This will make sure it gets re-added to their review queue - you're not bothering us!
@@ -48,7 +48,7 @@ person(s) who reviewed your changes. This will make sure it gets re-added to the
 - [ ] The PR is minimal, and doesn't make sense to land as multiple PRs.
 - [ ] Commits are logically scoped and individually reviewable.
 - [ ] The PR description has enough context to understand the motivation and solution implemented.
-- [ ] (If applicable) WebGPU implementations built with `wgpu` may be affected behaviorally.
+- [ ] (If applicable) WebGPU implementations built with `etalon` may be affected behaviorally.
 - [ ] (If applicable) Validation and feature gates are in place to confine behavioral changes.
 - [ ] (If applicable) Tests demonstrate the validation and altered logic works. <!-- See `docs/testing.md` -->
 

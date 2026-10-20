@@ -4,7 +4,7 @@ use bytemuck::{Pod, Zeroable};
 use glam::Vec3;
 use nanorand::{Rng, WyRand};
 use std::{f32::consts, iter};
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 ///
 /// Radius of the terrain.
@@ -51,34 +51,34 @@ struct Uniforms {
 }
 
 struct Example {
-    water_vertex_buf: wgpu::Buffer,
+    water_vertex_buf: etalon::Buffer,
     water_vertex_count: usize,
-    water_bind_group_layout: wgpu::BindGroupLayout,
-    water_bind_group: wgpu::BindGroup,
-    water_uniform_buf: wgpu::Buffer,
-    water_pipeline: wgpu::RenderPipeline,
+    water_bind_group_layout: etalon::BindGroupLayout,
+    water_bind_group: etalon::BindGroup,
+    water_uniform_buf: etalon::Buffer,
+    water_pipeline: etalon::RenderPipeline,
 
-    terrain_vertex_buf: wgpu::Buffer,
+    terrain_vertex_buf: etalon::Buffer,
     terrain_vertex_count: usize,
-    terrain_normal_bind_group: wgpu::BindGroup,
-    terrain_normal_uniform_buf: wgpu::Buffer,
+    terrain_normal_bind_group: etalon::BindGroup,
+    terrain_normal_uniform_buf: etalon::Buffer,
     ///
     /// Contains uniform variables where the camera
     /// has been placed underwater.
     ///
-    terrain_flipped_uniform_buf: wgpu::Buffer,
-    terrain_pipeline: wgpu::RenderPipeline,
+    terrain_flipped_uniform_buf: etalon::Buffer,
+    terrain_pipeline: etalon::RenderPipeline,
 
     /// A render bundle for drawing the terrain.
     ///
     /// This isn't really necessary, but it does make sure we have at
     /// least one use of `RenderBundleEncoder::set_bind_group` among
     /// the examples.
-    terrain_bundle: wgpu::RenderBundle,
+    terrain_bundle: etalon::RenderBundle,
 
-    reflect_view: wgpu::TextureView,
+    reflect_view: etalon::TextureView,
 
-    depth_buffer: wgpu::TextureView,
+    depth_buffer: etalon::TextureView,
 
     current_frame: usize,
 
@@ -154,14 +154,14 @@ impl Example {
     /// Initializes Uniforms and textures.
     ///
     fn initialize_resources(
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        water_uniforms: &wgpu::Buffer,
-        terrain_normal_uniforms: &wgpu::Buffer,
-        terrain_flipped_uniforms: &wgpu::Buffer,
-        water_bind_group_layout: &wgpu::BindGroupLayout,
-    ) -> (wgpu::TextureView, wgpu::TextureView, wgpu::BindGroup) {
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+        water_uniforms: &etalon::Buffer,
+        terrain_normal_uniforms: &etalon::Buffer,
+        terrain_flipped_uniforms: &etalon::Buffer,
+        water_bind_group_layout: &etalon::BindGroupLayout,
+    ) -> (etalon::TextureView, etalon::TextureView, etalon::BindGroup) {
         // Matrices for our projection and view.
         // flipped_view is the view from under the water.
         let Uniforms {
@@ -183,87 +183,87 @@ impl Example {
         );
         queue.write_buffer(water_uniforms, 0, bytemuck::cast_slice(&[water]));
 
-        let texture_extent = wgpu::Extent3d {
+        let texture_extent = etalon::Extent3d {
             width: config.width,
             height: config.height,
             depth_or_array_layers: 1,
         };
 
-        let reflection_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let reflection_texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("Reflection Render Texture"),
             size: texture_extent,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format: config.view_formats[0],
-            usage: wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: etalon::TextureUsages::TEXTURE_BINDING
+                | etalon::TextureUsages::COPY_DST
+                | etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
 
-        let draw_depth_buffer = device.create_texture(&wgpu::TextureDescriptor {
+        let draw_depth_buffer = device.create_texture(&etalon::TextureDescriptor {
             label: Some("Depth Buffer"),
             size: texture_extent,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Depth32Float,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::Depth32Float,
+            usage: etalon::TextureUsages::TEXTURE_BINDING
+                | etalon::TextureUsages::COPY_DST
+                | etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
 
-        let color_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let color_sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("Color Sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+            address_mode_u: etalon::AddressMode::ClampToEdge,
+            address_mode_v: etalon::AddressMode::ClampToEdge,
+            address_mode_w: etalon::AddressMode::ClampToEdge,
+            mag_filter: etalon::FilterMode::Nearest,
+            min_filter: etalon::FilterMode::Linear,
+            mipmap_filter: etalon::MipmapFilterMode::Nearest,
             ..Default::default()
         });
 
-        let depth_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let depth_sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("Depth Sampler"),
             ..Default::default()
         });
 
-        let depth_view = draw_depth_buffer.create_view(&wgpu::TextureViewDescriptor::default());
+        let depth_view = draw_depth_buffer.create_view(&etalon::TextureViewDescriptor::default());
 
-        let water_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let water_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: water_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
                     resource: water_uniforms.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(
-                        &reflection_texture.create_view(&wgpu::TextureViewDescriptor::default()),
+                    resource: etalon::BindingResource::TextureView(
+                        &reflection_texture.create_view(&etalon::TextureViewDescriptor::default()),
                     ),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 2,
-                    resource: wgpu::BindingResource::TextureView(&depth_view),
+                    resource: etalon::BindingResource::TextureView(&depth_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 3,
-                    resource: wgpu::BindingResource::Sampler(&color_sampler),
+                    resource: etalon::BindingResource::Sampler(&color_sampler),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 4,
-                    resource: wgpu::BindingResource::Sampler(&depth_sampler),
+                    resource: etalon::BindingResource::Sampler(&depth_sampler),
                 },
             ],
             label: Some("Water Bind Group"),
         });
 
         (
-            reflection_texture.create_view(&wgpu::TextureViewDescriptor::default()),
+            reflection_texture.create_view(&etalon::TextureViewDescriptor::default()),
             depth_view,
             water_bind_group,
         )
@@ -272,10 +272,10 @@ impl Example {
 
 impl crate::framework::Example for Example {
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) -> Self {
         // Size of one water vertex
         let water_vertex_size = size_of::<point_gen::WaterVertexAttributes>();
@@ -339,87 +339,87 @@ impl crate::framework::Example for Example {
         let terrain_vertices = terrain.make_buffer_data();
 
         // Create the buffers on the GPU to hold the data.
-        let water_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let water_vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Water vertices"),
             contents: bytemuck::cast_slice(&water_vertices),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: etalon::BufferUsages::VERTEX,
         });
 
-        let terrain_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let terrain_vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Terrain vertices"),
             contents: bytemuck::cast_slice(&terrain_vertices),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: etalon::BufferUsages::VERTEX,
         });
 
         // Create the bind group layout. This is what our uniforms will look like.
         let water_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 label: Some("Water Bind Group Layout"),
                 entries: &[
                     // Uniform variables such as projection/view.
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::VERTEX | wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
+                        visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new(
+                            min_binding_size: etalon::BufferSize::new(
                                 size_of::<WaterUniforms>() as _,
                             ),
                         },
                         count: None,
                     },
                     // Reflection texture.
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
                             multisampled: false,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
                         },
                         count: None,
                     },
                     // Depth texture for terrain.
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
                             multisampled: false,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: etalon::TextureSampleType::Float { filterable: false },
+                            view_dimension: etalon::TextureViewDimension::D2,
                         },
                         count: None,
                     },
                     // Sampler to be able to sample the textures.
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 3,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
                         count: None,
                     },
                     // Sampler to be able to sample the textures.
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 4,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::NonFiltering),
                         count: None,
                     },
                 ],
             });
 
         let terrain_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 label: Some("Terrain Bind Group Layout"),
                 entries: &[
                     // Regular uniform variables like view/projection.
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::VERTEX,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new(
+                            min_binding_size: etalon::BufferSize::new(
                                 size_of::<TerrainUniforms>() as _
                             ),
                         },
@@ -430,37 +430,37 @@ impl crate::framework::Example for Example {
 
         // Create our pipeline layouts.
         let water_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: Some("water"),
                 bind_group_layouts: &[Some(&water_bind_group_layout)],
                 immediate_size: 0,
             });
 
         let terrain_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: Some("terrain"),
                 bind_group_layouts: &[Some(&terrain_bind_group_layout)],
                 immediate_size: 0,
             });
 
-        let water_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let water_uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("Water Uniforms"),
             size: size_of::<WaterUniforms>() as _,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let terrain_normal_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let terrain_normal_uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("Normal Terrain Uniforms"),
             size: size_of::<TerrainUniforms>() as _,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let terrain_flipped_uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let terrain_flipped_uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("Flipped Terrain Uniforms"),
             size: size_of::<TerrainUniforms>() as _,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -477,9 +477,9 @@ impl crate::framework::Example for Example {
             &water_bind_group_layout,
         );
 
-        let terrain_normal_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let terrain_normal_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &terrain_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
                 resource: terrain_normal_uniform_buf.as_entire_binding(),
             }],
@@ -488,9 +488,9 @@ impl crate::framework::Example for Example {
 
         // Binds to the uniform buffer where the
         // camera has been placed underwater.
-        let terrain_flipped_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let terrain_flipped_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &terrain_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
                 resource: terrain_flipped_uniform_buf.as_entire_binding(),
             }],
@@ -498,17 +498,17 @@ impl crate::framework::Example for Example {
         });
 
         // Upload/compile them to GPU code.
-        let terrain_module = device.create_shader_module(wgpu::include_wgsl!("terrain.wgsl"));
-        let water_module = device.create_shader_module(wgpu::include_wgsl!("water.wgsl"));
+        let terrain_module = device.create_shader_module(etalon::include_wgsl!("terrain.wgsl"));
+        let water_module = device.create_shader_module(etalon::include_wgsl!("water.wgsl"));
 
         // Create the render pipelines. These describe how the data will flow through the GPU, and what
         // constraints and modifiers it will have.
-        let water_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let water_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("water"),
             // The "layout" is what uniforms will be needed.
             layout: Some(&water_pipeline_layout),
             // Vertex shader and input buffers
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &water_module,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
@@ -517,43 +517,43 @@ impl crate::framework::Example for Example {
                 // ensured by tagging on either a `#[repr(C)]` onto a
                 // struct, or a `#[repr(transparent)]` if it only contains
                 // one item, which is itself `repr(C)`.
-                buffers: &[Some(wgpu::VertexBufferLayout {
-                    array_stride: water_vertex_size as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &wgpu::vertex_attr_array![0 => Sint16x2, 1 => Sint8x4],
+                buffers: &[Some(etalon::VertexBufferLayout {
+                    array_stride: water_vertex_size as etalon::BufferAddress,
+                    step_mode: etalon::VertexStepMode::Vertex,
+                    attributes: &etalon::vertex_attr_array![0 => Sint16x2, 1 => Sint8x4],
                 })],
             },
             // Fragment shader and output targets
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &water_module,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 // Describes how the colour will be interpolated
                 // and assigned to the output attachment.
-                targets: &[Some(wgpu::ColorTargetState {
+                targets: &[Some(etalon::ColorTargetState {
                     format: config.view_formats[0],
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
-                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                            operation: wgpu::BlendOperation::Add,
+                    blend: Some(etalon::BlendState {
+                        color: etalon::BlendComponent {
+                            src_factor: etalon::BlendFactor::SrcAlpha,
+                            dst_factor: etalon::BlendFactor::OneMinusSrcAlpha,
+                            operation: etalon::BlendOperation::Add,
                         },
-                        alpha: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::One,
-                            operation: wgpu::BlendOperation::Max,
+                        alpha: etalon::BlendComponent {
+                            src_factor: etalon::BlendFactor::One,
+                            dst_factor: etalon::BlendFactor::One,
+                            operation: etalon::BlendOperation::Max,
                         },
                     }),
-                    write_mask: wgpu::ColorWrites::ALL,
+                    write_mask: etalon::ColorWrites::ALL,
                 })],
             }),
             // How the triangles will be rasterized. This is more important
             // for the terrain because of the beneath-the water shot.
             // This is also dependent on how the triangles are being generated.
-            primitive: wgpu::PrimitiveState {
+            primitive: etalon::PrimitiveState {
                 // What kind of data are we passing in?
-                topology: wgpu::PrimitiveTopology::TriangleList,
-                front_face: wgpu::FrontFace::Cw,
+                topology: etalon::PrimitiveTopology::TriangleList,
+                front_face: etalon::FrontFace::Cw,
                 ..Default::default()
             },
             // Describes how us writing to the depth/stencil buffer
@@ -562,53 +562,53 @@ impl crate::framework::Example for Example {
             // input attachment to do depth-testing. We don't write, so
             // depth_write_enabled is set to false. This is called RODS,
             // or read-only depth stencil. Here, we don't use stencil.
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
+            depth_stencil: Some(etalon::DepthStencilState {
+                format: etalon::TextureFormat::Depth32Float,
                 depth_write_enabled: Some(false),
-                depth_compare: Some(wgpu::CompareFunction::Less),
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
+                depth_compare: Some(etalon::CompareFunction::Less),
+                stencil: etalon::StencilState::default(),
+                bias: etalon::DepthBiasState::default(),
             }),
             // No multisampling is used.
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             // No pipeline caching is used
             cache: None,
         });
 
         // Same idea as the water pipeline.
-        let terrain_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let terrain_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("terrain"),
             layout: Some(&terrain_pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &terrain_module,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
-                buffers: &[Some(wgpu::VertexBufferLayout {
-                    array_stride: terrain_vertex_size as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &wgpu::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Unorm8x4],
+                buffers: &[Some(etalon::VertexBufferLayout {
+                    array_stride: terrain_vertex_size as etalon::BufferAddress,
+                    step_mode: etalon::VertexStepMode::Vertex,
+                    attributes: &etalon::vertex_attr_array![0 => Float32x3, 1 => Float32x3, 2 => Unorm8x4],
                 })],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &terrain_module,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(config.view_formats[0].into())],
             }),
-            primitive: wgpu::PrimitiveState {
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: Some(wgpu::Face::Front),
+            primitive: etalon::PrimitiveState {
+                front_face: etalon::FrontFace::Ccw,
+                cull_mode: Some(etalon::Face::Front),
                 ..Default::default()
             },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
+            depth_stencil: Some(etalon::DepthStencilState {
+                format: etalon::TextureFormat::Depth32Float,
                 depth_write_enabled: Some(true),
-                depth_compare: Some(wgpu::CompareFunction::Less),
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
+                depth_compare: Some(etalon::CompareFunction::Less),
+                stencil: etalon::StencilState::default(),
+                bias: etalon::DepthBiasState::default(),
             }),
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None
         });
@@ -616,11 +616,11 @@ impl crate::framework::Example for Example {
         // A render bundle to draw the terrain.
         let terrain_bundle = {
             let mut encoder =
-                device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
+                device.create_render_bundle_encoder(&etalon::RenderBundleEncoderDescriptor {
                     label: None,
                     color_formats: &[Some(config.view_formats[0])],
-                    depth_stencil: Some(wgpu::RenderBundleDepthStencil {
-                        format: wgpu::TextureFormat::Depth32Float,
+                    depth_stencil: Some(etalon::RenderBundleDepthStencil {
+                        format: etalon::TextureFormat::Depth32Float,
                         depth_read_only: false,
                         stencil_read_only: true,
                     }),
@@ -631,7 +631,7 @@ impl crate::framework::Example for Example {
             encoder.set_bind_group(0, &terrain_flipped_bind_group, &[]);
             encoder.set_vertex_buffer(0, terrain_vertex_buf.slice(..));
             encoder.draw(0..terrain_vertices.len() as u32, 0..1);
-            encoder.finish(&wgpu::RenderBundleDescriptor::default())
+            encoder.finish(&etalon::RenderBundleDescriptor::default())
         };
 
         // Done
@@ -667,9 +667,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) {
         if config.width == 0 && config.height == 0 {
             // Stop rendering altogether.
@@ -695,11 +695,11 @@ impl crate::framework::Example for Example {
         self.reflect_view = reflect_view;
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         // Increment frame count regardless of if we draw.
         self.current_frame += 1;
         #[expect(clippy::eq_op, reason = "keeping common divisor on all elements")]
-        let back_color = wgpu::Color {
+        let back_color = etalon::Color {
             r: 161.0 / 255.0,
             g: 246.0 / 255.0,
             b: 255.0 / 255.0,
@@ -710,7 +710,7 @@ impl crate::framework::Example for Example {
         let (water_sin, water_cos) = ((self.current_frame as f32) / 600.0).sin_cos();
         queue.write_buffer(
             &self.water_uniform_buf,
-            size_of::<[f32; 16]>() as wgpu::BufferAddress * 2,
+            size_of::<[f32; 16]>() as etalon::BufferAddress * 2,
             bytemuck::cast_slice(&[water_sin, water_cos]),
         );
 
@@ -725,30 +725,30 @@ impl crate::framework::Example for Example {
 
         // The encoder provides a way to turn our instructions here, into
         // a command buffer the GPU can understand.
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
             label: Some("Main Command Encoder"),
         });
 
         // First pass: render the reflection.
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: Some("reflection"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: &self.reflect_view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(back_color),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(back_color),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 // We still need to use the depth buffer here
                 // since the pipeline requires it.
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                     view: &self.depth_buffer,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
+                    depth_ops: Some(etalon::Operations {
+                        load: etalon::LoadOp::Clear(1.0),
+                        store: etalon::StoreOp::Store,
                     }),
                     stencil_ops: None,
                 }),
@@ -762,22 +762,22 @@ impl crate::framework::Example for Example {
         // Terrain right side up. This time we need to use the
         // depth values, so we must use StoreOp::Store.
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: Some("terrain"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(back_color),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(back_color),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                     view: &self.depth_buffer,
-                    depth_ops: Some(wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(1.0),
-                        store: wgpu::StoreOp::Store,
+                    depth_ops: Some(etalon::Operations {
+                        load: etalon::LoadOp::Clear(1.0),
+                        store: etalon::StoreOp::Store,
                     }),
                     stencil_ops: None,
                 }),
@@ -793,18 +793,18 @@ impl crate::framework::Example for Example {
         // Render the water. This reads from the depth buffer, but does not write
         // to it, so it cannot be in the same render pass.
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: Some("water"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Load,
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Load,
+                        store: etalon::StoreOp::Store,
                     },
                 })],
-                depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                     view: &self.depth_buffer,
                     depth_ops: None,
                     stencil_ops: None,
@@ -829,15 +829,15 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "water",
     image_path: "/examples/features/src/water/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default()
-        .downlevel_flags(wgpu::DownlevelFlags::READ_ONLY_DEPTH_STENCIL),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.018)], // Bounded by Apple A9
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default()
+        .downlevel_flags(etalon::DownlevelFlags::READ_ONLY_DEPTH_STENCIL),
+    comparisons: &[etalon_test::ComparisonType::Mean(0.018)], // Bounded by Apple A9
     _phantom: std::marker::PhantomData::<Example>,
 };

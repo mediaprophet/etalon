@@ -103,7 +103,7 @@ Due to limitations in how sampler heaps work in D3D12, we need to access sampler
 through a layer of indirection. Instead of directly binding samplers, we bind the entire
 sampler heap as both a standard and a comparison sampler heap. We then use a sampler
 index buffer for each bind group. This buffer is accessed in the shader to get the actual
-sampler index within the heap. See the wgpu_hal dx12 backend documentation for more
+sampler index within the heap. See the etalon_hal dx12 backend documentation for more
 information.
 
 # External textures
@@ -787,7 +787,7 @@ pub struct Writer<'a, W> {
 pub fn supported_capabilities() -> crate::valid::Capabilities {
     use crate::valid::Capabilities as Caps;
     Caps::IMMEDIATES
-        | Caps::FLOAT64 // Unsupported by wgpu but supported by naga
+        | Caps::FLOAT64 // Unsupported by etalon but supported by naga
         | Caps::PRIMITIVE_INDEX
         | Caps::TEXTURE_AND_SAMPLER_BINDING_ARRAY
         // No BUFFER_BINDING_ARRAY

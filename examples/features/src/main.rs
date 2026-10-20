@@ -10,211 +10,211 @@ struct ExampleDesc {
 const EXAMPLES: &[ExampleDesc] = &[
     ExampleDesc {
         name: "big_compute_buffers",
-        function: wgpu_examples::big_compute_buffers::main,
+        function: etalon_examples::big_compute_buffers::main,
         webgl: false,  // Native only example
         webgpu: false, // Native only example
     },
     ExampleDesc {
         name: "boids",
-        function: wgpu_examples::boids::main,
+        function: etalon_examples::boids::main,
         webgl: false, // No compute
         webgpu: true,
     },
     ExampleDesc {
         name: "bunnymark",
-        function: wgpu_examples::bunnymark::main,
+        function: etalon_examples::bunnymark::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "conservative_raster",
-        function: wgpu_examples::conservative_raster::main,
+        function: etalon_examples::conservative_raster::main,
         webgl: false,  // No conservative raster
         webgpu: false, // No conservative raster
     },
     ExampleDesc {
         name: "cooperative_matrix",
-        function: wgpu_examples::cooperative_matrix::main,
+        function: etalon_examples::cooperative_matrix::main,
         webgl: false,  // No cooperative matrix support
         webgpu: false, // No cooperative matrix support
     },
     ExampleDesc {
         name: "cube",
-        function: wgpu_examples::cube::main,
+        function: etalon_examples::cube::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "error_scope",
-        function: wgpu_examples::error_scope::main,
+        function: etalon_examples::error_scope::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "hello_synchronization",
-        function: wgpu_examples::hello_synchronization::main,
+        function: etalon_examples::hello_synchronization::main,
         webgl: false, // No canvas for WebGL
         webgpu: true,
     },
     ExampleDesc {
         name: "hello_triangle",
-        function: wgpu_examples::hello_triangle::main,
+        function: etalon_examples::hello_triangle::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "hello_windows",
-        function: wgpu_examples::hello_windows::main,
+        function: etalon_examples::hello_windows::main,
         webgl: false,  // Native only example
         webgpu: false, // Native only example
     },
     ExampleDesc {
         name: "hello_workgroups",
-        function: wgpu_examples::hello_workgroups::main,
+        function: etalon_examples::hello_workgroups::main,
         webgl: false,
         webgpu: true,
     },
     ExampleDesc {
         name: "mipmap",
-        function: wgpu_examples::mipmap::main,
+        function: etalon_examples::mipmap::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "msaa_line",
-        function: wgpu_examples::msaa_line::main,
+        function: etalon_examples::msaa_line::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "multiple_render_targets",
-        function: wgpu_examples::multiple_render_targets::main,
+        function: etalon_examples::multiple_render_targets::main,
         webgl: false,
         webgpu: true,
     },
     ExampleDesc {
         name: "render_to_texture",
-        function: wgpu_examples::render_to_texture::main,
+        function: etalon_examples::render_to_texture::main,
         webgl: false, // No canvas for WebGL
         webgpu: true,
     },
     ExampleDesc {
         name: "render_with_compute",
-        function: wgpu_examples::render_with_compute::main,
+        function: etalon_examples::render_with_compute::main,
         webgl: false,
         webgpu: true,
     },
     ExampleDesc {
         name: "repeated_compute",
-        function: wgpu_examples::repeated_compute::main,
+        function: etalon_examples::repeated_compute::main,
         webgl: false, // No compute
         webgpu: true,
     },
     ExampleDesc {
         name: "shadow",
-        function: wgpu_examples::shadow::main,
+        function: etalon_examples::shadow::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "skybox",
-        function: wgpu_examples::skybox::main,
+        function: etalon_examples::skybox::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "srgb_blend",
-        function: wgpu_examples::srgb_blend::main,
+        function: etalon_examples::srgb_blend::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "stencil_triangles",
-        function: wgpu_examples::stencil_triangles::main,
+        function: etalon_examples::stencil_triangles::main,
         webgl: true,
         webgpu: true,
     },
     ExampleDesc {
         name: "storage_texture",
-        function: wgpu_examples::storage_texture::main,
+        function: etalon_examples::storage_texture::main,
         webgl: false, // No storage textures
         webgpu: true,
     },
     ExampleDesc {
         name: "texture_arrays",
-        function: wgpu_examples::texture_arrays::main,
+        function: etalon_examples::texture_arrays::main,
         webgl: false,  // No texture arrays
         webgpu: false, // No texture arrays
     },
     ExampleDesc {
         name: "timestamp_queries",
-        function: wgpu_examples::timestamp_queries::main,
+        function: etalon_examples::timestamp_queries::main,
         webgl: false,  // No canvas for WebGL
         webgpu: false, // No timestamp queries
     },
     ExampleDesc {
         name: "uniform_values",
-        function: wgpu_examples::uniform_values::main,
+        function: etalon_examples::uniform_values::main,
         webgl: false, // No compute
         webgpu: true,
     },
     ExampleDesc {
         name: "water",
-        function: wgpu_examples::water::main,
+        function: etalon_examples::water::main,
         webgl: false, // No RODS
         webgpu: true,
     },
     ExampleDesc {
         name: "ray_aabb_compute",
-        function: wgpu_examples::ray_aabb_compute::main,
+        function: etalon_examples::ray_aabb_compute::main,
         webgl: false,
         webgpu: false,
     },
     ExampleDesc {
         name: "ray_cube_compute",
-        function: wgpu_examples::ray_cube_compute::main,
+        function: etalon_examples::ray_cube_compute::main,
         webgl: false,  // No Ray-tracing extensions
         webgpu: false, // No Ray-tracing extensions (yet)
     },
     ExampleDesc {
         name: "ray_cube_fragment",
-        function: wgpu_examples::ray_cube_fragment::main,
+        function: etalon_examples::ray_cube_fragment::main,
         webgl: false,  // No Ray-tracing extensions
         webgpu: false, // No Ray-tracing extensions (yet)
     },
     ExampleDesc {
         name: "ray_scene",
-        function: wgpu_examples::ray_scene::main,
+        function: etalon_examples::ray_scene::main,
         webgl: false,  // No Ray-tracing extensions
         webgpu: false, // No Ray-tracing extensions (yet)
     },
     ExampleDesc {
         name: "ray_shadows",
-        function: wgpu_examples::ray_shadows::main,
+        function: etalon_examples::ray_shadows::main,
         webgl: false,  // No Ray-tracing extensions
         webgpu: false, // No Ray-tracing extensions (yet)
     },
     ExampleDesc {
         name: "ray_traced_triangle",
-        function: wgpu_examples::ray_traced_triangle::main,
+        function: etalon_examples::ray_traced_triangle::main,
         webgl: false,
         webgpu: false,
     },
     ExampleDesc {
         name: "ray_cube_normals",
-        function: wgpu_examples::ray_cube_normals::main,
+        function: etalon_examples::ray_cube_normals::main,
         webgl: false,  // No Ray-tracing extensions
         webgpu: false, // No Ray-tracing extensions (yet)
     },
     ExampleDesc {
         name: "mesh_shader",
-        function: wgpu_examples::mesh_shader::main,
+        function: etalon_examples::mesh_shader::main,
         webgl: false,
         webgpu: false,
     },
     ExampleDesc {
         name: "multiview",
-        function: wgpu_examples::multiview::main,
+        function: etalon_examples::multiview::main,
         webgl: false,
         webgpu: false,
     },
@@ -225,7 +225,7 @@ fn get_example_name() -> Option<String> {
         if #[cfg(target_arch = "wasm32")] {
             let query_string = web_sys::window()?.location().search().ok()?;
 
-            wgpu_examples::framework::parse_url_query_string(&query_string, "example").map(String::from)
+            etalon_examples::framework::parse_url_query_string(&query_string, "example").map(String::from)
         } else {
             std::env::args().nth(1)
         }

@@ -5,7 +5,7 @@ static TEST_ACTIVE_IN_PROCESS: AtomicBool = AtomicBool::new(false);
 
 const OTHER_TEST_IN_PROGRESS_ERROR: &str = "TEST ISOLATION ERROR:
 
-wgpu's test harness requires that no more than one test is running per process.
+etalon's test harness requires that no more than one test is running per process.
 
 The best way to facilitate this is by using cargo-nextest which runs each test in its own process
 and has a very good testing UI:

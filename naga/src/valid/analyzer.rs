@@ -911,7 +911,7 @@ impl FunctionInfo {
                                     // the user is supposed to render what would normally be an
                                     // error here. Once we actually support warning-level
                                     // diagnostic items, then we won't need this non-compliant hack:
-                                    // <https://github.com/gfx-rs/wgpu/issues/6458>
+                                    // <https://github.com/mediaprophet/etalon/issues/6458>
                                     |e, level| log::log!(level, "{e}"),
                                 )?;
                             }
@@ -946,7 +946,7 @@ impl FunctionInfo {
                     let _condition_nur = self.add_ref(pointer);
 
                     // Don't check that this call occurs in uniform control flow until Naga implements WGSL's standard
-                    // uniformity analysis (https://github.com/gfx-rs/naga/issues/1744).
+                    // uniformity analysis (https://github.com/mediaprophet/naga/issues/1744).
                     // The uniformity analysis Naga uses now is less accurate than the one in the WGSL standard,
                     // causing Naga to reject correct uses of `workgroupUniformLoad` in some interesting programs.
 

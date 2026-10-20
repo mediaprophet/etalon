@@ -1,7 +1,7 @@
 #![cfg_attr(target_arch = "wasm32", allow(dead_code, unused_imports))]
 
 use std::{collections::HashMap, sync::Arc};
-use wgpu::CurrentSurfaceTexture;
+use etalon::CurrentSurfaceTexture;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -11,17 +11,17 @@ use winit::{
 
 struct ViewportDesc {
     window: Arc<Window>,
-    background: wgpu::Color,
-    surface: wgpu::Surface<'static>,
+    background: etalon::Color,
+    surface: etalon::Surface<'static>,
 }
 
 struct Viewport {
     desc: ViewportDesc,
-    config: wgpu::SurfaceConfiguration,
+    config: etalon::SurfaceConfiguration,
 }
 
 impl ViewportDesc {
-    fn new(window: Arc<Window>, background: wgpu::Color, instance: &wgpu::Instance) -> Self {
+    fn new(window: Arc<Window>, background: etalon::Color, instance: &etalon::Instance) -> Self {
         let surface = instance.create_surface(window.clone()).unwrap();
         Self {
             window,
@@ -30,7 +30,7 @@ impl ViewportDesc {
         }
     }
 
-    fn build(self, adapter: &wgpu::Adapter, device: &wgpu::Device) -> Viewport {
+    fn build(self, adapter: &etalon::Adapter, device: &etalon::Device) -> Viewport {
         let size = self.window.inner_size();
         let config = self
             .surface
@@ -42,7 +42,7 @@ impl ViewportDesc {
 }
 
 impl Viewport {
-    fn resize(&mut self, device: &wgpu::Device, size: winit::dpi::PhysicalSize<u32>) {
+    fn resize(&mut self, device: &etalon::Device, size: winit::dpi::PhysicalSize<u32>) {
         self.config.width = size.width;
         self.config.height = size.height;
         self.desc.surface.configure(device, &self.config);
@@ -63,9 +63,9 @@ const COLUMNS: u32 = 4;
 enum AppState {
     Uninitialized,
     Running {
-        instance: wgpu::Instance,
-        device: wgpu::Device,
-        queue: wgpu::Queue,
+        instance: etalon::Instance,
+        device: etalon::Device,
+        queue: etalon::Queue,
         viewports: HashMap<WindowId, Viewport>,
     },
 }
@@ -89,7 +89,7 @@ impl ApplicationHandler for App {
         }
 
         // Create all 16 windows.
-        let mut windows: Vec<(Arc<Window>, wgpu::Color)> =
+        let mut windows: Vec<(Arc<Window>, etalon::Color)> =
             Vec::with_capacity((ROWS * COLUMNS) as usize);
         for row in 0..ROWS {
             for column in 0..COLUMNS {
@@ -114,7 +114,7 @@ impl ApplicationHandler for App {
                 }
                 windows.push((
                     window,
-                    wgpu::Color {
+                    etalon::Color {
                         r: frac(row, ROWS),
                         g: 0.5 - frac(row * column, ROWS * COLUMNS) * 0.5,
                         b: frac(column, COLUMNS),
@@ -124,9 +124,9 @@ impl ApplicationHandler for App {
             }
         }
 
-        // Initialize wgpu synchronously (native-only).
+        // Initialize etalon synchronously (native-only).
         let instance =
-            wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle_from_env(
+            etalon::Instance::new(etalon::InstanceDescriptor::new_with_display_handle_from_env(
                 Box::new(event_loop.owned_display_handle()),
             ));
         let viewport_descs: Vec<_> = windows
@@ -135,7 +135,7 @@ impl ApplicationHandler for App {
             .collect();
         let (adapter, device, queue) = pollster::block_on(async {
             let adapter = instance
-                .request_adapter(&wgpu::RequestAdapterOptions {
+                .request_adapter(&etalon::RequestAdapterOptions {
                     compatible_surface: viewport_descs.first().map(|desc| &desc.surface),
                     ..Default::default()
                 })
@@ -143,14 +143,14 @@ impl ApplicationHandler for App {
                 .expect("Failed to find an appropriate adapter");
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor {
+                .request_device(&etalon::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::empty(),
-                    required_limits: wgpu::Limits::downlevel_defaults(),
-                    default_queue: wgpu::QueueDescriptor { label: None },
-                    experimental_features: wgpu::ExperimentalFeatures::disabled(),
-                    memory_hints: wgpu::MemoryHints::MemoryUsage,
-                    trace: wgpu::Trace::Off,
+                    required_features: etalon::Features::empty(),
+                    required_limits: etalon::Limits::downlevel_defaults(),
+                    default_queue: etalon::QueueDescriptor { label: None },
+                    experimental_features: etalon::ExperimentalFeatures::disabled(),
+                    memory_hints: etalon::MemoryHints::MemoryUsage,
+                    trace: etalon::Trace::Off,
                 })
                 .await
                 .expect("Failed to create device");
@@ -232,19 +232,19 @@ impl ApplicationHandler for App {
 
                     let view = frame
                         .texture
-                        .create_view(&wgpu::TextureViewDescriptor::default());
+                        .create_view(&etalon::TextureViewDescriptor::default());
                     let mut encoder = device
-                        .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+                        .create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
                     {
-                        let _rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        let _rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                             label: None,
-                            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                                 view: &view,
                                 depth_slice: None,
                                 resolve_target: None,
-                                ops: wgpu::Operations {
-                                    load: wgpu::LoadOp::Clear(viewport.desc.background),
-                                    store: wgpu::StoreOp::Store,
+                                ops: etalon::Operations {
+                                    load: etalon::LoadOp::Clear(viewport.desc.background),
+                                    store: etalon::StoreOp::Store,
                                 },
                             })],
                             depth_stencil_attachment: None,

@@ -106,7 +106,7 @@ Note: this is an issue with snapshot configuration, not code. If you added a new
             debug_info = Some(naga::back::spv::DebugInfo {
                 source_code,
                 file_name: &name,
-                // wgpu#6266: we technically know all the information here to
+                // etalon#6266: we technically know all the information here to
                 // produce the valid language but it's not too important for
                 // validation purposes
                 language: naga::back::spv::SourceLanguage::Unknown,

@@ -1,6 +1,6 @@
 // AUTHOR: Unknown
 // ISSUE: #246
-// NOTE: Taken from the wgpu repo
+// NOTE: Taken from the etalon repo
 #version 450
 layout(local_size_x = 1) in;
 

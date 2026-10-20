@@ -1,4 +1,4 @@
-enable wgpu_int16;
+enable etalon_int16;
 
 struct UniformCompatible {
     val_u32_: u32,

@@ -2,7 +2,7 @@
 resolver = "3"
 members = [
     "cts_runner",
-    "deno_webgpu",
+    "deno_etalon",
 
     # default members
     "benches",
@@ -19,16 +19,16 @@ members = [
     "naga/xtask",
     "player",
     "tests",
-    "wgpu-core",
-    "wgpu-core/platform-deps/*",
-    "wgpu-core-remote",
-    "wgpu-core-remote-types",
-    "wgpu-hal",
-    "wgpu-info",
-    "wgpu-naga-bridge",
-    "wgpu-sync",
-    "wgpu-types",
-    "wgpu",
+    "etalon-core",
+    "etalon-core/platform-deps/*",
+    "etalon-core-remote",
+    "etalon-core-remote-types",
+    "etalon-hal",
+    "etalon-info",
+    "etalon-naga-bridge",
+    "etalon-sync",
+    "etalon-types",
+    "etalon",
     "xtask",
 ]
 exclude = []
@@ -47,16 +47,16 @@ default-members = [
     "naga/xtask",
     "player",
     "tests",
-    "wgpu-core",
-    "wgpu-core/platform-deps/*",
-    "wgpu-core-remote",
-    "wgpu-core-remote-types",
-    "wgpu-hal",
-    "wgpu-info",
-    "wgpu-naga-bridge",
-    "wgpu-sync",
-    "wgpu-types",
-    "wgpu",
+    "etalon-core",
+    "etalon-core/platform-deps/*",
+    "etalon-core-remote",
+    "etalon-core-remote-types",
+    "etalon-hal",
+    "etalon-info",
+    "etalon-naga-bridge",
+    "etalon-sync",
+    "etalon-types",
+    "etalon",
     "xtask",
 ]
 
@@ -75,15 +75,15 @@ edition = "2021"
 rust-version = "1.95"
 keywords = ["graphics"]
 license = "MIT OR Apache-2.0"
-homepage = "https://wgpu.rs/"
-repository = "https://github.com/gfx-rs/wgpu"
-version = "30.0.0"
+homepage = "https://etalon.rs/"
+repository = "https://github.com/mediaprophet/etalon"
+version = "0.0.1"
 
 [workspace.dependencies]
-naga = { version = "30.0.0", path = "./naga" }
+naga = { version = "0.0.1", path = "./naga" }
 naga-test = { path = "./naga-test" }
-naga-types = { version = "30.0.0", path = "./naga-types" }
-wgpu = { version = "30.0.0", path = "./wgpu", default-features = false, features = [
+naga-types = { version = "0.0.1", path = "./naga-types" }
+etalon = { version = "0.0.1", path = "./etalon", default-features = false, features = [
     "std",
     "serde",
     "wgsl",
@@ -95,25 +95,25 @@ wgpu = { version = "30.0.0", path = "./wgpu", default-features = false, features
     "angle",
     "static-dxc",
 ] }
-wgpu-core = { version = "30.0.0", path = "./wgpu-core", default-features = false }
-wgpu-core-remote = { version = "30.0.0", path = "./wgpu-core-remote" }
-wgpu-core-remote-types = { version = "30.0.0", path = "./wgpu-core-remote-types" }
-wgpu-hal = { version = "30.0.0", path = "./wgpu-hal", default-features = false }
-wgpu-naga-bridge = { version = "30.0.0", path = "./wgpu-naga-bridge" }
-wgpu-sync = { version = "30.0.0", path = "./wgpu-sync", default-features = false }
-wgpu-test = { version = "30.0.0", path = "./tests" }
-wgpu-types = { version = "30.0.0", path = "./wgpu-types", default-features = false }
+etalon-core = { version = "0.0.1", path = "./etalon-core", default-features = false }
+etalon-core-remote = { version = "0.0.1", path = "./etalon-core-remote" }
+etalon-core-remote-types = { version = "0.0.1", path = "./etalon-core-remote-types" }
+etalon-hal = { version = "0.0.1", path = "./etalon-hal", default-features = false }
+etalon-naga-bridge = { version = "0.0.1", path = "./etalon-naga-bridge" }
+etalon-sync = { version = "0.0.1", path = "./etalon-sync", default-features = false }
+etalon-test = { version = "0.0.1", path = "./tests" }
+etalon-types = { version = "0.0.1", path = "./etalon-types", default-features = false }
 
 # These _cannot_ have a version specified. If it does, crates.io will look
 # for a version of the package on crates when we publish naga. Path dependencies
 # are allowed through though.
 hlsl-snapshots = { path = "naga/hlsl-snapshots" }
 
-wgpu-core-deps-linux-android-bsd = { version = "30.0.0", path = "./wgpu-core/platform-deps/linux-android-bsd" }
-wgpu-core-deps-windows = { version = "30.0.0", path = "./wgpu-core/platform-deps/windows" }
-wgpu-core-deps-apple = { version = "30.0.0", path = "./wgpu-core/platform-deps/apple" }
-wgpu-core-deps-wasm = { version = "30.0.0", path = "./wgpu-core/platform-deps/wasm" }
-wgpu-core-deps-emscripten = { version = "30.0.0", path = "./wgpu-core/platform-deps/emscripten" }
+etalon-core-deps-linux-android-bsd = { version = "0.0.1", path = "./etalon-core/platform-deps/linux-android-bsd" }
+etalon-core-deps-windows = { version = "0.0.1", path = "./etalon-core/platform-deps/windows" }
+etalon-core-deps-apple = { version = "0.0.1", path = "./etalon-core/platform-deps/apple" }
+etalon-core-deps-wasm = { version = "0.0.1", path = "./etalon-core/platform-deps/wasm" }
+etalon-core-deps-emscripten = { version = "0.0.1", path = "./etalon-core/platform-deps/emscripten" }
 
 anyhow = { version = "1.0.87", default-features = false }
 approx = "0.5"
@@ -331,7 +331,7 @@ deno_features = "0.11.0"
 deno_url = "0.214.0"
 deno_web = "0.245.0"
 deno_webidl = "0.214.0"
-deno_webgpu = { version = "0.181.0", path = "./deno_webgpu" }
+deno_webgpu = { version = "0.181.0", path = "./deno_etalon" }
 deno_unsync = "0.4.4"
 deno_error = "0.7.0"
 tokio = "1.47"
@@ -342,7 +342,7 @@ ndk-sys = "0.6"
 
 # These overrides allow our examples to explicitly depend on release crates
 [patch.crates-io]
-wgpu = { path = "./wgpu" }
+etalon = { path = "./etalon" }
 
 [profile.release]
 lto = "thin"

@@ -11,7 +11,7 @@ so this example will not work.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples ray_aabb_compute
+cargo run --bin etalon-examples ray_aabb_compute
 ```
 
 ## Screenshots

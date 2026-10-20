@@ -5,7 +5,7 @@ Creates a window which displays a grayscale render of the [Mandelbrot set](https
 ## To Run
 
 ```
-cargo run --bin wgpu-examples uniform_values
+cargo run --bin etalon-examples uniform_values
 ```
 
 ## Usage of Uniform Buffers / Variables

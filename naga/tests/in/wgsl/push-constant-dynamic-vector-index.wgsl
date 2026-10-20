@@ -1,4 +1,4 @@
-// Regression test for <https://github.com/gfx-rs/wgpu/issues/8612>.
+// Regression test for <https://github.com/mediaprophet/etalon/issues/8612>.
 //
 // The Vulkan environment spec (`VUID-RuntimeSpirv-None-04745`) requires
 // that accesses into a `PushConstant`-storage-class variable that are

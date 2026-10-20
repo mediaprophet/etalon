@@ -21,26 +21,26 @@ pub fn map_address_space<'a>(
         "immediate" => Ok(crate::AddressSpace::Immediate),
         "function" => Ok(crate::AddressSpace::Function),
         "task_payload" => {
-            enable_extensions.require(ImplementedEnableExtension::WgpuMeshShader, span)?;
+            enable_extensions.require(ImplementedEnableExtension::etalonMeshShader, span)?;
             Ok(crate::AddressSpace::TaskPayload)
         }
         "ray_payload" => {
-            if enable_extensions.contains(ImplementedEnableExtension::WgpuRayTracingPipeline) {
+            if enable_extensions.contains(ImplementedEnableExtension::etalonRayTracingPipeline) {
                 Ok(crate::AddressSpace::RayPayload)
             } else {
                 Err(Box::new(Error::EnableExtensionNotEnabled {
                     span,
-                    kind: ImplementedEnableExtension::WgpuRayTracingPipeline.into(),
+                    kind: ImplementedEnableExtension::etalonRayTracingPipeline.into(),
                 }))
             }
         }
         "incoming_ray_payload" => {
-            if enable_extensions.contains(ImplementedEnableExtension::WgpuRayTracingPipeline) {
+            if enable_extensions.contains(ImplementedEnableExtension::etalonRayTracingPipeline) {
                 Ok(crate::AddressSpace::IncomingRayPayload)
             } else {
                 Err(Box::new(Error::EnableExtensionNotEnabled {
                     span,
-                    kind: ImplementedEnableExtension::WgpuRayTracingPipeline.into(),
+                    kind: ImplementedEnableExtension::etalonRayTracingPipeline.into(),
                 }))
             }
         }
@@ -67,10 +67,10 @@ pub fn map_ray_flag(
 ) -> Result<'static, ()> {
     match word {
         "vertex_return" => {
-            if !enable_extensions.contains(ImplementedEnableExtension::WgpuRayQueryVertexReturn) {
+            if !enable_extensions.contains(ImplementedEnableExtension::etalonRayQueryVertexReturn) {
                 return Err(Box::new(Error::EnableExtensionNotEnabled {
                     span,
-                    kind: ImplementedEnableExtension::WgpuRayQueryVertexReturn.into(),
+                    kind: ImplementedEnableExtension::etalonRayQueryVertexReturn.into(),
                 }));
             }
             Ok(())
@@ -166,7 +166,7 @@ pub fn map_built_in(
         | crate::BuiltIn::Vertices
         | crate::BuiltIn::PrimitiveCount
         | crate::BuiltIn::Primitives => {
-            enable_extensions.require(ImplementedEnableExtension::WgpuMeshShader, span)?
+            enable_extensions.require(ImplementedEnableExtension::etalonMeshShader, span)?
         }
         _ => {}
     }
@@ -183,7 +183,7 @@ pub fn map_interpolation(
         "flat" => Ok(crate::Interpolation::Flat),
         "perspective" => Ok(crate::Interpolation::Perspective),
         "per_vertex" => {
-            enable_extensions.require(ImplementedEnableExtension::WgpuPerVertex, span)?;
+            enable_extensions.require(ImplementedEnableExtension::etalonPerVertex, span)?;
             Ok(crate::Interpolation::PerVertex)
         }
         _ => Err(Box::new(Error::UnknownAttribute(span))),
@@ -577,20 +577,20 @@ pub fn map_predeclared_type(
             Some(&[ImplementedEnableExtension::F16])
         }
         PredeclaredType::TypeInner(ref ty) if matches!(ty.scalar(), Some(s) if s == Sc::I16 || s == Sc::U16) => {
-            Some(&[ImplementedEnableExtension::WgpuInt16])
+            Some(&[ImplementedEnableExtension::etalonInt16])
         }
         PredeclaredType::RayDesc
         | PredeclaredType::RayIntersection
         | PredeclaredType::TypeGenerator(TypeGenerator::AccelerationStructure)
         | PredeclaredType::TypeGenerator(TypeGenerator::RayQuery) => Some(&[
-            ImplementedEnableExtension::WgpuRayQuery,
-            ImplementedEnableExtension::WgpuRayTracingPipeline,
+            ImplementedEnableExtension::etalonRayQuery,
+            ImplementedEnableExtension::etalonRayTracingPipeline,
         ]),
         PredeclaredType::TypeGenerator(TypeGenerator::CooperativeMatrix { .. }) => {
-            Some(&[ImplementedEnableExtension::WgpuCooperativeMatrix])
+            Some(&[ImplementedEnableExtension::etalonCooperativeMatrix])
         }
         PredeclaredType::TypeGenerator(TypeGenerator::BindingArray) => {
-            Some(&[ImplementedEnableExtension::WgpuBindingArray])
+            Some(&[ImplementedEnableExtension::etalonBindingArray])
         }
         _ => None,
     };

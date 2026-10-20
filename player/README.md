@@ -1,6 +1,6 @@
-# wgpu player
+# etalon player
 
-This is an application that allows replaying the `wgpu` workloads recorded elsewhere. It requires the player to be built from
+This is an application that allows replaying the `etalon` workloads recorded elsewhere. It requires the player to be built from
 the same revision as an application was linking to, or otherwise, the data may fail to load.
 
 Launch as:

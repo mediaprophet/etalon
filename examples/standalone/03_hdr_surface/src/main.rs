@@ -17,7 +17,7 @@
 //! `hdr10|hlg|scrgb|extended-srgb|extended-display-p3|srgb` (e.g. `cargo run --
 //! hdr10`; on the web: a `?mode=` query parameter) — to force a particular color
 //! space instead of auto-picking.
-//! Set `WGPU_BACKEND=vulkan` to force the backend.
+//! Set `etalon_BACKEND=vulkan` to force the backend.
 
 use std::sync::Arc;
 
@@ -40,13 +40,13 @@ fn report(msg: impl std::fmt::Display) {
 }
 
 /// Report the display HDR info returned by
-/// [`wgpu::Surface::display_hdr_info`], the read-only query of what the panel can
+/// [`etalon::Surface::display_hdr_info`], the read-only query of what the panel can
 /// show right now, tagged with the `source` that triggered it (startup, a window
 /// event, or the macOS notification). Every field is advisory and
 /// platform-dependent (`None` == unknown here, **not** an SDR display). It's also
 /// a live check: on macOS, dimming the display changes `headroom` between
 /// re-queries.
-fn report_display_hdr_info(source: &str, info: &wgpu::DisplayHdrInfo) {
+fn report_display_hdr_info(source: &str, info: &etalon::DisplayHdrInfo) {
     report(format_args!(
         "Display HDR info [{source}] (advisory; None = unknown on this platform):"
     ));
@@ -98,26 +98,26 @@ fn spawn(future: impl core::future::Future<Output = ()> + 'static) {
 }
 
 struct ModeChoice {
-    format: wgpu::TextureFormat,
-    color_space: wgpu::SurfaceColorSpace,
+    format: etalon::TextureFormat,
+    color_space: etalon::SurfaceColorSpace,
     shader_mode: u32,
 }
 
 /// Pick the most capable (format, color space) combination the surface
 /// supports, preferring HDR10, then extended linear scRGB, then encoded
 /// extended-range sRGB, then sRGB.
-fn pick_mode(caps: &wgpu::SurfaceCapabilities, forced: Option<&str>) -> ModeChoice {
-    use wgpu::{SurfaceColorSpace as Cs, SurfaceColorSpaces as Csf};
+fn pick_mode(caps: &etalon::SurfaceCapabilities, forced: Option<&str>) -> ModeChoice {
+    use etalon::{SurfaceColorSpace as Cs, SurfaceColorSpaces as Csf};
 
     // (color space, flag, shader mode, preferred formats in order)
-    const PREFERENCES: &[(Cs, Csf, u32, &[wgpu::TextureFormat])] = &[
+    const PREFERENCES: &[(Cs, Csf, u32, &[etalon::TextureFormat])] = &[
         (
             Cs::Bt2100Pq,
             Csf::BT2100_PQ,
             2,
             &[
-                wgpu::TextureFormat::Rgb10a2Unorm,
-                wgpu::TextureFormat::Rgba16Float,
+                etalon::TextureFormat::Rgb10a2Unorm,
+                etalon::TextureFormat::Rgba16Float,
             ],
         ),
         (
@@ -125,27 +125,27 @@ fn pick_mode(caps: &wgpu::SurfaceCapabilities, forced: Option<&str>) -> ModeChoi
             Csf::BT2100_HLG,
             3,
             &[
-                wgpu::TextureFormat::Rgb10a2Unorm,
-                wgpu::TextureFormat::Rgba16Float,
+                etalon::TextureFormat::Rgb10a2Unorm,
+                etalon::TextureFormat::Rgba16Float,
             ],
         ),
         (
             Cs::ExtendedSrgbLinear,
             Csf::EXTENDED_SRGB_LINEAR,
             1,
-            &[wgpu::TextureFormat::Rgba16Float],
+            &[etalon::TextureFormat::Rgba16Float],
         ),
         (
             Cs::ExtendedSrgb,
             Csf::EXTENDED_SRGB,
             4,
-            &[wgpu::TextureFormat::Rgba16Float],
+            &[etalon::TextureFormat::Rgba16Float],
         ),
         (
             Cs::ExtendedDisplayP3,
             Csf::EXTENDED_DISPLAY_P3,
             5,
-            &[wgpu::TextureFormat::Rgba16Float],
+            &[etalon::TextureFormat::Rgba16Float],
         ),
     ];
 
@@ -196,7 +196,7 @@ fn pick_mode(caps: &wgpu::SurfaceCapabilities, forced: Option<&str>) -> ModeChoi
     let format = caps.formats[0];
     ModeChoice {
         format,
-        color_space: wgpu::SurfaceColorSpace::Auto,
+        color_space: etalon::SurfaceColorSpace::Auto,
         shader_mode: 0,
     }
 }
@@ -205,32 +205,32 @@ struct State {
     window: Arc<Window>,
     /// Kept so the display info can be re-queried after startup;
     /// `display_hdr_info` takes the adapter, exactly like `get_capabilities`.
-    adapter: wgpu::Adapter,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    surface: wgpu::Surface<'static>,
-    config: wgpu::SurfaceConfiguration,
-    pipeline: wgpu::RenderPipeline,
-    bind_group: wgpu::BindGroup,
+    adapter: etalon::Adapter,
+    device: etalon::Device,
+    queue: etalon::Queue,
+    surface: etalon::Surface<'static>,
+    config: etalon::SurfaceConfiguration,
+    pipeline: etalon::RenderPipeline,
+    bind_group: etalon::BindGroup,
     /// The most recent display info, so a re-query only logs on change.
-    last_hdr_info: wgpu::DisplayHdrInfo,
+    last_hdr_info: etalon::DisplayHdrInfo,
 }
 
 impl State {
     async fn new(
         window: Arc<Window>,
-        instance: wgpu::Instance,
-        surface: wgpu::Surface<'static>,
+        instance: etalon::Instance,
+        surface: etalon::Surface<'static>,
     ) -> State {
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
+            .request_adapter(&etalon::RequestAdapterOptions {
                 compatible_surface: Some(&surface),
                 ..Default::default()
             })
             .await
             .unwrap();
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor::default())
+            .request_device(&etalon::DeviceDescriptor::default())
             .await
             .unwrap();
 
@@ -250,7 +250,7 @@ impl State {
         // should advertise `ExtendedSrgb` / `ExtendedDisplayP3` whenever it is
         // configurable, regardless of whether the display is *currently* in HDR
         // mode (that state lives in the display info below, not here).
-        let sdr = wgpu::SurfaceColorSpaces::SRGB | wgpu::SurfaceColorSpaces::DISPLAY_P3;
+        let sdr = etalon::SurfaceColorSpaces::SRGB | etalon::SurfaceColorSpaces::DISPLAY_P3;
         report("HDR / wide-gamut color spaces (beyond SDR sRGB / Display-P3):");
         for fc in &caps.format_capabilities {
             let hdr = fc.color_spaces.difference(sdr);
@@ -278,7 +278,7 @@ impl State {
         // makes visible. On web + `Rgba16Float` the extended spaces should be
         // advertised regardless of display HDR state, so seeing this there
         // means the capability query is under-reporting.
-        if matches!(choice.color_space, wgpu::SurfaceColorSpace::Auto)
+        if matches!(choice.color_space, etalon::SurfaceColorSpace::Auto)
             && forced.as_deref().is_some_and(|m| m != "srgb")
         {
             report(
@@ -299,77 +299,77 @@ impl State {
             choice.format, choice.color_space,
         ));
         window.set_title(&format!(
-            "wgpu HDR test — {:?} + {:?}",
+            "etalon HDR test — {:?} + {:?}",
             choice.format, choice.color_space
         ));
 
         let size = window.inner_size();
-        let config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        let config = etalon::SurfaceConfiguration {
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT,
             format: choice.format,
             color_space: choice.color_space,
             width: size.width.max(1),
             height: size.height.max(1),
-            present_mode: wgpu::PresentMode::AutoVsync,
+            present_mode: etalon::PresentMode::AutoVsync,
             desired_maximum_frame_latency: 2,
-            alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            alpha_mode: etalon::CompositeAlphaMode::Auto,
             view_formats: vec![],
         };
         surface.configure(&device, &config);
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
         // mode, encode_srgb
         let params: [u32; 2] = [
             choice.shader_mode,
             u32::from(choice.shader_mode == 0 && !choice.format.has_srgb_suffix()),
         ];
-        let params_buffer = wgpu::util::DeviceExt::create_buffer_init(
+        let params_buffer = etalon::util::DeviceExt::create_buffer_init(
             &device,
-            &wgpu::util::BufferInitDescriptor {
+            &etalon::util::BufferInitDescriptor {
                 label: Some("params"),
                 contents: params.map(u32::to_ne_bytes).as_flattened(),
-                usage: wgpu::BufferUsages::UNIFORM,
+                usage: etalon::BufferUsages::UNIFORM,
             },
         );
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: None,
-            entries: &[wgpu::BindGroupLayoutEntry {
+            entries: &[etalon::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
+                visibility: etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
                 count: None,
             }],
         });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
                 resource: params_buffer.as_entire_binding(),
             }],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("hdr test pattern"),
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
@@ -392,7 +392,7 @@ impl State {
             pipeline,
             bind_group,
             // Seeded by the first main-thread query in `user_event`.
-            last_hdr_info: wgpu::DisplayHdrInfo::default(),
+            last_hdr_info: etalon::DisplayHdrInfo::default(),
         }
     }
 
@@ -427,9 +427,9 @@ impl State {
 
     fn render(&mut self) {
         let surface_texture = match self.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(t)
-            | wgpu::CurrentSurfaceTexture::Suboptimal(t) => t,
-            wgpu::CurrentSurfaceTexture::Outdated => {
+            etalon::CurrentSurfaceTexture::Success(t)
+            | etalon::CurrentSurfaceTexture::Suboptimal(t) => t,
+            etalon::CurrentSurfaceTexture::Outdated => {
                 self.surface.configure(&self.device, &self.config);
                 return;
             }
@@ -439,14 +439,14 @@ impl State {
 
         let mut encoder = self.device.create_command_encoder(&Default::default());
         {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: &view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 ..Default::default()
@@ -501,7 +501,7 @@ impl ApplicationHandler<UserEvent> for App {
             not(target_arch = "wasm32"),
             expect(unused_mut, reason = "wasm32 re-assigns to specify canvas")
         )]
-        let mut attributes = Window::default_attributes().with_title("wgpu HDR test");
+        let mut attributes = Window::default_attributes().with_title("etalon HDR test");
 
         #[cfg(target_arch = "wasm32")]
         {
@@ -525,10 +525,10 @@ impl ApplicationHandler<UserEvent> for App {
         // `window_handle()` errors with `Unavailable` anywhere else).
         //
         // `InstanceDescriptor::new_without_display_handle_from_env` honors
-        // `WGPU_BACKEND` (e.g. `vulkan`, `dx12`) so each backend's color-space
+        // `etalon_BACKEND` (e.g. `vulkan`, `dx12`) so each backend's color-space
         // path can be exercised separately.
         let instance =
-            wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+            etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle_from_env());
         let surface = instance.create_surface(window.clone()).unwrap();
 
         // The async tail (adapter, device, pipeline) runs off the main thread

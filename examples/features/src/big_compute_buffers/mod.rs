@@ -5,30 +5,30 @@
 //! repeated-compute for code that is more thoroughly commented.
 
 use std::num::{NonZeroU32, NonZeroU64};
-use wgpu::{util::DeviceExt, Features};
+use etalon::{util::DeviceExt, Features};
 
 // These are set by the minimum required defaults for webgpu.
 const MAX_BUFFER_SIZE: u64 = 1 << 27; // 134_217_728 // 134MB
 const MAX_DISPATCH_SIZE: u32 = (1 << 16) - 1;
 
 pub async fn execute_gpu(numbers: &[f32]) -> Vec<f32> {
-    let instance = wgpu::Instance::default();
+    let instance = etalon::Instance::default();
 
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions::default())
+        .request_adapter(&etalon::RequestAdapterOptions::default())
         .await
         .unwrap();
 
     let (device, queue) = adapter
-        .request_device(&wgpu::DeviceDescriptor {
+        .request_device(&etalon::DeviceDescriptor {
             label: None,
             // These features are required to use `binding_array` in your wgsl.
             // Without them your shader may fail to compile.
             required_features: Features::BUFFER_BINDING_ARRAY
                 | Features::STORAGE_RESOURCE_BINDING_ARRAY
                 | Features::SAMPLED_TEXTURE_AND_STORAGE_BUFFER_ARRAY_NON_UNIFORM_INDEXING,
-            memory_hints: wgpu::MemoryHints::Performance,
-            required_limits: wgpu::Limits {
+            memory_hints: etalon::MemoryHints::Performance,
+            required_limits: etalon::Limits {
                 max_buffer_size: MAX_BUFFER_SIZE,
                 max_binding_array_elements_per_shader_stage: 8,
                 ..Default::default()
@@ -42,16 +42,16 @@ pub async fn execute_gpu(numbers: &[f32]) -> Vec<f32> {
 }
 
 pub async fn execute_gpu_inner(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
+    device: &etalon::Device,
+    queue: &etalon::Queue,
     numbers: &[f32],
 ) -> Vec<f32> {
     let (staging_buffers, storage_buffers, bind_group, compute_pipeline) = setup(device, numbers);
 
     let mut encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
     {
-        let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        let mut cpass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
             label: Some("compute pass descriptor"),
             timestamp_writes: None,
         });
@@ -77,10 +77,10 @@ pub async fn execute_gpu_inner(
 
     for staging_buffer in &staging_buffers {
         let slice = staging_buffer.slice(..);
-        slice.map_async(wgpu::MapMode::Read, |_| {});
+        slice.map_async(etalon::MapMode::Read, |_| {});
     }
 
-    device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+    device.poll(etalon::PollType::wait_indefinitely()).unwrap();
 
     let mut data = Vec::new();
     for staging_buffer in &staging_buffers {
@@ -96,15 +96,15 @@ pub async fn execute_gpu_inner(
 }
 
 fn setup(
-    device: &wgpu::Device,
+    device: &etalon::Device,
     numbers: &[f32],
 ) -> (
-    Vec<wgpu::Buffer>,
-    Vec<wgpu::Buffer>,
-    wgpu::BindGroup,
-    wgpu::ComputePipeline,
+    Vec<etalon::Buffer>,
+    Vec<etalon::Buffer>,
+    etalon::BindGroup,
+    etalon::ComputePipeline,
 ) {
-    let cs_module = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+    let cs_module = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
     let staging_buffers = create_staging_buffers(device, numbers);
     let storage_buffers = create_storage_buffers(device, numbers);
@@ -121,17 +121,17 @@ fn setup(
 }
 
 fn setup_pipeline(
-    device: &wgpu::Device,
-    bind_group_layout: wgpu::BindGroupLayout,
-    cs_module: wgpu::ShaderModule,
-) -> wgpu::ComputePipeline {
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+    device: &etalon::Device,
+    bind_group_layout: etalon::BindGroupLayout,
+    cs_module: etalon::ShaderModule,
+) -> etalon::ComputePipeline {
+    let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
         label: Some("Compute Pipeline Layout"),
         bind_group_layouts: &[Some(&bind_group_layout)],
         immediate_size: 0,
     });
 
-    device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+    device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
         label: Some("Compute Pipeline"),
         layout: Some(&pipeline_layout),
         module: &cs_module,
@@ -142,36 +142,36 @@ fn setup_pipeline(
 }
 
 fn setup_binds(
-    storage_buffers: &[wgpu::Buffer],
-    device: &wgpu::Device,
-) -> (wgpu::BindGroupLayout, wgpu::BindGroup) {
+    storage_buffers: &[etalon::Buffer],
+    device: &etalon::Device,
+) -> (etalon::BindGroupLayout, etalon::BindGroup) {
     let buffers: Vec<_> = storage_buffers
         .iter()
         .map(|b| b.as_entire_buffer_binding())
         .collect();
 
-    let entry = wgpu::BindGroupEntry {
+    let entry = etalon::BindGroupEntry {
         binding: 0,
-        resource: wgpu::BindingResource::BufferArray(&buffers),
+        resource: etalon::BindingResource::BufferArray(&buffers),
     };
 
-    let bgl_entry = wgpu::BindGroupLayoutEntry {
+    let bgl_entry = etalon::BindGroupLayoutEntry {
         binding: 0,
-        visibility: wgpu::ShaderStages::COMPUTE,
-        ty: wgpu::BindingType::Buffer {
-            ty: wgpu::BufferBindingType::Storage { read_only: false },
+        visibility: etalon::ShaderStages::COMPUTE,
+        ty: etalon::BindingType::Buffer {
+            ty: etalon::BufferBindingType::Storage { read_only: false },
             has_dynamic_offset: false,
             min_binding_size: Some(NonZeroU64::new(4).unwrap()),
         },
         count: Some(NonZeroU32::new(buffers.len() as u32).unwrap()),
     };
 
-    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+    let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("Custom Storage Bind Group Layout"),
         entries: &[bgl_entry],
     });
 
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
         label: Some("Combined Storage Bind Group"),
         layout: &bind_group_layout,
         entries: &[entry],
@@ -185,35 +185,35 @@ fn calculate_chunks(numbers: &[f32], max_buffer_size: u64) -> Vec<&[f32]> {
     numbers.chunks(max_elements_per_chunk).collect()
 }
 
-fn create_storage_buffers(device: &wgpu::Device, numbers: &[f32]) -> Vec<wgpu::Buffer> {
+fn create_storage_buffers(device: &etalon::Device, numbers: &[f32]) -> Vec<etalon::Buffer> {
     let chunks = calculate_chunks(numbers, MAX_BUFFER_SIZE);
 
     chunks
         .iter()
         .enumerate()
         .map(|(e, seg)| {
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            device.create_buffer_init(&etalon::util::BufferInitDescriptor {
                 label: Some(&format!("Storage Buffer-{e}")),
                 contents: bytemuck::cast_slice(seg),
-                usage: wgpu::BufferUsages::STORAGE
-                    | wgpu::BufferUsages::COPY_DST
-                    | wgpu::BufferUsages::COPY_SRC,
+                usage: etalon::BufferUsages::STORAGE
+                    | etalon::BufferUsages::COPY_DST
+                    | etalon::BufferUsages::COPY_SRC,
             })
         })
         .collect()
 }
 
-fn create_staging_buffers(device: &wgpu::Device, numbers: &[f32]) -> Vec<wgpu::Buffer> {
+fn create_staging_buffers(device: &etalon::Device, numbers: &[f32]) -> Vec<etalon::Buffer> {
     let chunks = calculate_chunks(numbers, MAX_BUFFER_SIZE);
 
     (0..chunks.len())
         .map(|e| {
             let size = std::mem::size_of_val(chunks[e]) as u64;
 
-            device.create_buffer(&wgpu::BufferDescriptor {
+            device.create_buffer(&etalon::BufferDescriptor {
                 label: Some(&format!("staging buffer-{e}")),
                 size,
-                usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+                usage: etalon::BufferUsages::MAP_READ | etalon::BufferUsages::COPY_DST,
                 mapped_at_creation: false,
             })
         })

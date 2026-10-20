@@ -1,24 +1,24 @@
-# wgpu Project Structure
+# etalon Project Structure
 
-wgpu is a GPU API written in pure rust. Changes of any significance need to apply across the stack.
+etalon is a GPU API written in pure rust. Changes of any significance need to apply across the stack.
 
 - `naga` is our shader translator. It is responsible for consuming and translating untrusted shaders to trusted shader code.
-- `wgpu-types` are the common types used on both Native and WASM.
-- `naga-types` holds the shader-language types, such as target versions and binding maps, that `naga` and `wgpu-core` both use.
-- `wgpu-naga-bridge` converts between `naga` and `wgpu-types`. It maps wgpu features and downlevel flags to naga validation capabilities.
-- `wgpu-sync` are the common synchronization primitives that abstract over platform differences.
-- `wgpu-hal` does not provide the validation required for safety. Its callers must satisfy its safety contracts.
-- `wgpu-core` does all the validation and provides a coherent interface.
-- `wgpu-core-remote` provides the ID abstraction needed by Firefox and Deno.
-- `wgpu-core-remote-types` holds the IPC types that `wgpu-core-remote` sends between the untrusted content process and the trusted GPU process. They are defined separately from the `wgpu-core` types, so untrusted content cannot express non-standard features.
-- `wgpu` is an ergonomic Rust interface to `wgpu-core`
+- `etalon-types` are the common types used on both Native and WASM.
+- `naga-types` holds the shader-language types, such as target versions and binding maps, that `naga` and `etalon-core` both use.
+- `etalon-naga-bridge` converts between `naga` and `etalon-types`. It maps etalon features and downlevel flags to naga validation capabilities.
+- `etalon-sync` are the common synchronization primitives that abstract over platform differences.
+- `etalon-hal` does not provide the validation required for safety. Its callers must satisfy its safety contracts.
+- `etalon-core` does all the validation and provides a coherent interface.
+- `etalon-core-remote` provides the ID abstraction needed by Firefox and Deno.
+- `etalon-core-remote-types` holds the IPC types that `etalon-core-remote` sends between the untrusted content process and the trusted GPU process. They are defined separately from the `etalon-core` types, so untrusted content cannot express non-standard features.
+- `etalon` is an ergonomic Rust interface to `etalon-core`
 - `deno_webgpu` contains the WebGPU bindings for Deno.
 
-`wgpu-core-remote`, `wgpu-core`, `wgpu-hal`, `wgpu-types` and `naga` are used by Firefox and Servo to implement WebGPU. These crates process untrusted API and shader input. Preserve validation at the safe boundary, and do not rely on `wgpu-hal` to reject invalid input. Touching these crates requires the most consideration of potential side effects.
+`etalon-core-remote`, `etalon-core`, `etalon-hal`, `etalon-types` and `naga` are used by Firefox and Servo to implement WebGPU. These crates process untrusted API and shader input. Preserve validation at the safe boundary, and do not rely on `etalon-hal` to reject invalid input. Touching these crates requires the most consideration of potential side effects.
 
-Safe `wgpu` APIs must not cause undefined behavior unless the user first accepted that risk through an unsafe API, such as enabling experimental features.
+Safe `etalon` APIs must not cause undefined behavior unless the user first accepted that risk through an unsafe API, such as enabling experimental features.
 
-We use deno's webgpu bindings to run the WebGPU CTS. Change `deno_webgpu` only if the issue is specific to Deno. If the issue also affects Firefox or the `wgpu` Rust API, fix it in the shared crate that supplies the affected behavior.
+We use deno's webgpu bindings to run the WebGPU CTS. Change `deno_webgpu` only if the issue is specific to Deno. If the issue also affects Firefox or the `etalon` Rust API, fix it in the shared crate that supplies the affected behavior.
 
 Repository documentation exists in `docs/`. For info on where tests live, read `docs/testing.md`. For info about cargo dependencies, read `docs/managing-cargo-dependencies.md`.
 
@@ -67,9 +67,9 @@ All changes are expected to pass CI. The commands below are useful local checks,
 - `-E 'test(/expression/)'` matches test names with a regular expression.
 - In an `-E` expression, `package(name)` restricts the package and `binary(name)` restricts the test binary. Restricting binaries can make test startup quicker.
 - Use `&` for intersection, `|` for union, and `!` for exclusion. Use parentheses to group expressions.
-- For example, `-E 'binary(wgpu-gpu) & test(buffer) & !test(map)'` selects tests in the `wgpu-gpu` binary whose names contain `buffer` but not `map`.
+- For example, `-E 'binary(etalon-gpu) & test(buffer) & !test(map)'` selects tests in the `etalon-gpu` binary whose names contain `buffer` but not `map`.
 - Quote each `-E` expression so the shell does not interpret its operators.
 
 ## Changelog
 
-We maintain a changelog in CHANGELOG.md. Changes should be noted in the changelog if they are user-visible (changes to documented public APIs, significant bug fixes, or new functionality). We generally do not consider changes to wgpu-core, wgpu-hal, wgpu-core-remote, or wgpu-core-remote-types worthy of changelogs, unless a `wgpu` user is expected to interface with them directly. Changelog descriptions should be concise. If you are not sure whether something should be in the CHANGELOG or you are not sure how to describe the change, ask the user for guidance.
+We maintain a changelog in CHANGELOG.md. Changes should be noted in the changelog if they are user-visible (changes to documented public APIs, significant bug fixes, or new functionality). We generally do not consider changes to etalon-core, etalon-hal, etalon-core-remote, or etalon-core-remote-types worthy of changelogs, unless a `etalon` user is expected to interface with them directly. Changelog descriptions should be concise. If you are not sure whether something should be in the CHANGELOG or you are not sure how to describe the change, ask the user for guidance.

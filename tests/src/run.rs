@@ -1,7 +1,7 @@
 use std::panic::AssertUnwindSafe;
 
 use futures_lite::FutureExt;
-use wgpu::{Adapter, Device, Instance, Queue};
+use etalon::{Adapter, Device, Instance, Queue};
 
 use crate::{
     expectations::{expectations_match_failures, ExpectationMatchResult, FailureResult},
@@ -17,11 +17,11 @@ use crate::{
 pub struct TestingContext {
     pub instance: Instance,
     pub adapter: Adapter,
-    pub adapter_info: wgpu::AdapterInfo,
-    pub adapter_downlevel_capabilities: wgpu::DownlevelCapabilities,
+    pub adapter_info: etalon::AdapterInfo,
+    pub adapter_downlevel_capabilities: etalon::DownlevelCapabilities,
     pub device: Device,
-    pub device_features: wgpu::Features,
-    pub device_limits: wgpu::Limits,
+    pub device_features: etalon::Features,
+    pub device_limits: etalon::Limits,
     pub queue: Queue,
 }
 
@@ -111,7 +111,7 @@ pub async fn execute_test(
     // Check whether any validation errors were reported during the test run.
     cfg_if::cfg_if!(
         if #[cfg(any(not(target_arch = "wasm32"), target_os = "emscripten"))] {
-            failures.extend(wgpu::hal::VALIDATION_CANARY.get_and_reset().into_iter().map(|msg| FailureResult::validation_error().with_message(msg)));
+            failures.extend(etalon::hal::VALIDATION_CANARY.get_and_reset().into_iter().map(|msg| FailureResult::validation_error().with_message(msg)));
         } else if #[cfg(all(target_arch = "wasm32", feature = "webgl"))] {
             if _surface_guard.unwrap().check_for_unreported_errors() {
                 failures.push(FailureResult::validation_error());

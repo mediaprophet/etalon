@@ -163,18 +163,18 @@ fn create_output_image_element(document: &web_sys::Document) -> web_sys::HtmlIma
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-/// If the environment variable `WGPU_ADAPTER_NAME` is set, this function will attempt to
+/// If the environment variable `etalon_ADAPTER_NAME` is set, this function will attempt to
 /// initialize the adapter with that name. If it is not set, it will attempt to initialize
 /// the adapter which supports the required features.
 pub(crate) async fn get_adapter_with_capabilities_or_from_env(
-    instance: &wgpu::Instance,
-    required_features: &wgpu::Features,
-    required_downlevel_capabilities: &wgpu::DownlevelCapabilities,
-    surface: &Option<&wgpu::Surface<'_>>,
-) -> wgpu::Adapter {
-    use wgpu::Backends;
-    if std::env::var("WGPU_ADAPTER_NAME").is_ok() {
-        let adapter = wgpu::util::initialize_adapter_from_env_or_default(instance, *surface)
+    instance: &etalon::Instance,
+    required_features: &etalon::Features,
+    required_downlevel_capabilities: &etalon::DownlevelCapabilities,
+    surface: &Option<&etalon::Surface<'_>>,
+) -> etalon::Adapter {
+    use etalon::Backends;
+    if std::env::var("etalon_ADAPTER_NAME").is_ok() {
+        let adapter = etalon::util::initialize_adapter_from_env_or_default(instance, *surface)
             .await
             .expect("No suitable GPU adapters found on the system!");
 
@@ -229,12 +229,12 @@ pub(crate) async fn get_adapter_with_capabilities_or_from_env(
 
 #[cfg(target_arch = "wasm32")]
 pub(crate) async fn get_adapter_with_capabilities_or_from_env(
-    instance: &wgpu::Instance,
-    required_features: &wgpu::Features,
-    required_downlevel_capabilities: &wgpu::DownlevelCapabilities,
-    surface: &Option<&wgpu::Surface<'_>>,
-) -> wgpu::Adapter {
-    let adapter = wgpu::util::initialize_adapter_from_env_or_default(instance, *surface)
+    instance: &etalon::Instance,
+    required_features: &etalon::Features,
+    required_downlevel_capabilities: &etalon::DownlevelCapabilities,
+    surface: &Option<&etalon::Surface<'_>>,
+) -> etalon::Adapter {
+    let adapter = etalon::util::initialize_adapter_from_env_or_default(instance, *surface)
         .await
         .expect("No suitable GPU adapters found on the system!");
 

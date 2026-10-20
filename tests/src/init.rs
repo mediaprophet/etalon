@@ -1,15 +1,15 @@
-use wgpu::{Adapter, Backends, Device, Features, Instance, Limits, Queue};
+use etalon::{Adapter, Backends, Device, Features, Instance, Limits, Queue};
 
 use crate::{report::AdapterReport, TestParameters};
 
 /// Default device-lost callback installed by [`initialize_device`]. Panics on
-/// any non-[`wgpu::DeviceLostReason::Destroyed`] device loss, which will
+/// any non-[`etalon::DeviceLostReason::Destroyed`] device loss, which will
 /// cause the test to be treated as a failure.
 ///
 /// Tests intentionally provoking device loss should install their own callback
-/// with [`wgpu::Device::set_device_lost_callback`].
-fn default_device_lost_callback(reason: wgpu::DeviceLostReason, message: String) {
-    if reason != wgpu::DeviceLostReason::Destroyed {
+/// with [`etalon::Device::set_device_lost_callback`].
+fn default_device_lost_callback(reason: etalon::DeviceLostReason, message: String) {
+    if reason != etalon::DeviceLostReason::Destroyed {
         panic!("Device lost: {message}");
     }
 }
@@ -18,7 +18,7 @@ fn default_device_lost_callback(reason: wgpu::DeviceLostReason, message: String)
 pub fn init_logger() {
     // Millisecond timestamps, because second resolution is not enough to tell
     // where the time goes when CI stalls. See
-    // <https://github.com/gfx-rs/wgpu/issues/9248>.
+    // <https://github.com/mediaprophet/etalon/issues/9248>.
     //
     // We don't actually care if it fails
     #[cfg(not(target_arch = "wasm32"))]
@@ -27,9 +27,9 @@ pub fn init_logger() {
     let _ = console_log::init_with_level(log::Level::Info);
 }
 
-/// Initialize a wgpu instance with the options from the environment.
-pub fn initialize_instance(backends: wgpu::Backends, params: &TestParameters) -> Instance {
-    // We ignore `WGPU_BACKEND` for now, merely using test filtering to only run a single backend's tests.
+/// Initialize a etalon instance with the options from the environment.
+pub fn initialize_instance(backends: etalon::Backends, params: &TestParameters) -> Instance {
+    // We ignore `etalon_BACKEND` for now, merely using test filtering to only run a single backend's tests.
     //
     // We can potentially work support back into the test runner in the future, but as the adapters are matched up
     // based on adapter index, removing some backends messes up the indexes in annoying ways.
@@ -40,16 +40,16 @@ pub fn initialize_instance(backends: wgpu::Backends, params: &TestParameters) ->
     // To "disable" webgpu regardless, we do this by removing the webgpu backend whenever we see
     // the webgl feature.
     let backends = if cfg!(feature = "webgl") {
-        backends - wgpu::Backends::BROWSER_WEBGPU
+        backends - etalon::Backends::BROWSER_WEBGPU
     } else {
         backends
     };
     // Some tests need to be able to force demote to FXC, to specifically test workarounds for FXC
     // behavior.
     let dx12_shader_compiler = if params.force_fxc {
-        wgpu::Dx12Compiler::Fxc
+        etalon::Dx12Compiler::Fxc
     } else {
-        wgpu::Dx12Compiler::from_env().unwrap_or(wgpu::Dx12Compiler::StaticDxc)
+        etalon::Dx12Compiler::from_env().unwrap_or(etalon::Dx12Compiler::StaticDxc)
     };
     assert!(
         params
@@ -59,43 +59,43 @@ pub fn initialize_instance(backends: wgpu::Backends, params: &TestParameters) ->
         "overlapping required_instance_flags and forbidden_instance_flags does not make sense"
     );
     // The defaults for debugging, overridden by the environment, overridden by the test parameters.
-    let flags = wgpu::InstanceFlags::debugging()
+    let flags = etalon::InstanceFlags::debugging()
         .with_env()
         .union(params.required_instance_flags)
         .difference(params.forbidden_instance_flags);
 
-    Instance::new(wgpu::InstanceDescriptor {
+    Instance::new(etalon::InstanceDescriptor {
         backends,
         flags,
-        memory_budget_thresholds: wgpu::MemoryBudgetThresholds {
+        memory_budget_thresholds: etalon::MemoryBudgetThresholds {
             for_resource_creation: Some(99),
             for_device_loss: None,
         },
-        backend_options: wgpu::BackendOptions {
-            dx12: wgpu::Dx12BackendOptions {
+        backend_options: etalon::BackendOptions {
+            dx12: etalon::Dx12BackendOptions {
                 shader_compiler: dx12_shader_compiler,
                 ..Default::default()
             },
-            gl: wgpu::GlBackendOptions {
+            gl: etalon::GlBackendOptions {
                 fence_behavior: if cfg!(target_family = "wasm") {
                     // On WebGL, you cannot call Poll(Wait) with any timeout. This is because the
                     // browser does not things to block. However all of our tests are written to
                     // expect this behavior. This is the workaround to allow this to work.
                     //
                     // However on native you can wait, so we want to ensure that behavior as well.
-                    wgpu::GlFenceBehavior::AutoFinish
+                    etalon::GlFenceBehavior::AutoFinish
                 } else {
-                    wgpu::GlFenceBehavior::Normal
+                    etalon::GlFenceBehavior::Normal
                 },
                 ..Default::default()
             },
             // Allow the noop backend to be used in tests. This will not be used unless
-            // WGPU_GPU_TESTS_USE_NOOP_BACKEND env var is set, because wgpu-info will not
+            // etalon_GPU_TESTS_USE_NOOP_BACKEND env var is set, because etalon-info will not
             // enumerate the noop backend.
             //
-            // However, we use wasm_bindgen_test to run tests on wasm, and wgpu
+            // However, we use wasm_bindgen_test to run tests on wasm, and etalon
             // will chose the noop on wasm32 for some reason.
-            noop: wgpu::NoopBackendOptions {
+            noop: etalon::NoopBackendOptions {
                 enable: !cfg!(target_arch = "wasm32"),
                 ..Default::default()
             },
@@ -116,7 +116,7 @@ pub fn initialize_instance(backends: wgpu::Backends, params: &TestParameters) ->
     })
 }
 
-/// Initialize a wgpu adapter, using the given adapter report to match the adapter.
+/// Initialize a etalon adapter, using the given adapter report to match the adapter.
 ///
 /// Returns `None` if the adapter from the report is not returned by `enumerate_adapters` due to `InstanceFlags::STRICT_WEBGPU_COMPLIANCE` being set.
 pub async fn initialize_adapter(
@@ -129,7 +129,7 @@ pub async fn initialize_adapter(
 
     let instance = initialize_instance(backends, params);
     #[allow(unused_variables)]
-    let surface: Option<wgpu::Surface>;
+    let surface: Option<etalon::Surface>;
     let surface_guard: Option<SurfaceGuard>;
 
     #[allow(unused_assignments)]
@@ -152,7 +152,7 @@ pub async fn initialize_adapter(
 
         surface = Some(
             instance
-                .create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone()))
+                .create_surface(etalon::SurfaceTarget::Canvas(canvas.clone()))
                 .expect("could not create surface from canvas"),
         );
 
@@ -172,7 +172,7 @@ pub async fn initialize_adapter(
                     true
                 });
         } else {
-            let adapter = instance.request_adapter(&wgpu::RequestAdapterOptions {
+            let adapter = instance.request_adapter(&etalon::RequestAdapterOptions {
                 compatible_surface: surface.as_ref(),
                 ..Default::default()
             }).await.ok();
@@ -182,7 +182,7 @@ pub async fn initialize_adapter(
     let Some(adapter) = adapter else {
         if params
             .required_instance_flags
-            .contains(wgpu::InstanceFlags::STRICT_WEBGPU_COMPLIANCE)
+            .contains(etalon::InstanceFlags::STRICT_WEBGPU_COMPLIANCE)
         {
             return None;
         } else {
@@ -203,21 +203,21 @@ pub async fn initialize_adapter(
     Some((instance, adapter, surface_guard))
 }
 
-/// Initialize a wgpu device from a given adapter.
+/// Initialize a etalon device from a given adapter.
 pub async fn initialize_device(
     adapter: &Adapter,
     features: Features,
     limits: Limits,
 ) -> (Device, Queue) {
     let bundle = adapter
-        .request_device(&wgpu::DeviceDescriptor {
+        .request_device(&etalon::DeviceDescriptor {
             label: None,
             required_features: features,
             required_limits: limits,
-            default_queue: wgpu::QueueDescriptor { label: None },
-            experimental_features: unsafe { wgpu::ExperimentalFeatures::enabled() },
-            memory_hints: wgpu::MemoryHints::MemoryUsage,
-            trace: wgpu::Trace::Off,
+            default_queue: etalon::QueueDescriptor { label: None },
+            experimental_features: unsafe { etalon::ExperimentalFeatures::enabled() },
+            memory_hints: etalon::MemoryHints::MemoryUsage,
+            trace: etalon::Trace::Off,
         })
         .await;
 

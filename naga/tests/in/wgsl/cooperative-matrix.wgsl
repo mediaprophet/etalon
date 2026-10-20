@@ -1,4 +1,4 @@
-enable wgpu_cooperative_matrix;
+enable etalon_cooperative_matrix;
 
 // type declarations with different roles
 var<private> a: coop_mat8x8<f32, A>;

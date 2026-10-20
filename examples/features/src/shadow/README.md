@@ -5,7 +5,7 @@ This animated example demonstrates shadow mapping.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples shadow
+cargo run --bin etalon-examples shadow
 ```
 
 ## Screenshots

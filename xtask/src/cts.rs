@@ -1,4 +1,4 @@
-//! Interface for running the WebGPU CTS (Conformance Test Suite) against wgpu.
+//! Interface for running the WebGPU CTS (Conformance Test Suite) against etalon.
 //!
 //! To run the default set of tests from `cts_runner/test.lst`:
 //!
@@ -74,7 +74,7 @@ pub fn run_cts(
 
     // This is used in the Vulkan hal to waive pre-existing validation
     // errors in the CTS, until they can be fixed.
-    shell.set_var("WGPU_CTS_XTASK", "1");
+    shell.set_var("etalon_CTS_XTASK", "1");
 
     let output_filter = args
         .opt_value_from_str::<_, String>("--print-output-when")?
@@ -238,7 +238,7 @@ pub fn run_cts(
         }
     }
 
-    let wgpu_cargo_toml = std::path::absolute(shell.current_dir().join("Cargo.toml"))
+    let etalon_cargo_toml = std::path::absolute(shell.current_dir().join("Cargo.toml"))
         .context("Failed to get path to `Cargo.toml`")?;
 
     let cts_revision = shell
@@ -337,7 +337,7 @@ pub fn run_cts(
 
     let mut cargo_opts: Vec<OsString> = vec![
         "--manifest-path".into(),
-        wgpu_cargo_toml.into(),
+        etalon_cargo_toml.into(),
         "-p".into(),
         "cts_runner".into(),
         "--bin".into(),

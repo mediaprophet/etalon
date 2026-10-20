@@ -16,7 +16,7 @@ env:
   CARGO_INCREMENTAL: false
   CARGO_TERM_COLOR: always
   RUST_BACKTRACE: full
-  RUSTFLAGS: -D warnings --cfg wgpu_validate_locks_debug
+  RUSTFLAGS: -D warnings --cfg etalon_validate_locks_debug
   RUSTDOCFLAGS: -D warnings
 
   #
@@ -164,7 +164,7 @@ jobs:
         if: matrix.suite == 'other'
         shell: bash
         run: |
-          export LLVM_PROFILE_FILE=${{ github.workspace }}/target/wgpu-%p-%m.profraw
+          export LLVM_PROFILE_FILE=${{ github.workspace }}/target/etalon-%p-%m.profraw
           export DENO_WEBGPU_BACKEND=${{ matrix.backend }}
           cargo --locked test -p cts_runner
 

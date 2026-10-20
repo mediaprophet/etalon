@@ -11,7 +11,7 @@ const OVERFLOW: u32 = 0xffffffff;
 
 async fn run() {
     let mut numbers = [0u32; 256];
-    let context = WgpuContext::new(size_of_val(&numbers)).await;
+    let context = etalonContext::new(size_of_val(&numbers)).await;
 
     let mut rand = nanorand::WyRand::new();
 
@@ -33,7 +33,7 @@ async fn run() {
     }
 }
 
-async fn compute(local_buffer: &mut [u32], context: &WgpuContext) {
+async fn compute(local_buffer: &mut [u32], context: &etalonContext) {
     log::info!("Beginning GPU compute on data {local_buffer:?}.");
     // Local buffer contents -> GPU storage buffer
     // Adds a write buffer command to the queue. This command is more complicated
@@ -47,10 +47,10 @@ async fn compute(local_buffer: &mut [u32], context: &WgpuContext) {
 
     let mut command_encoder = context
         .device
-        .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        .create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
     {
-        let mut compute_pass = command_encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        let mut compute_pass = command_encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
             label: None,
             timestamp_writes: None,
         });
@@ -100,14 +100,14 @@ async fn compute(local_buffer: &mut [u32], context: &WgpuContext) {
     // channels is wholly unnecessary, for the sake of portability to WASM (std channels
     // don't work on WASM,) we'll use async channels that work on both native and WASM.
     let (sender, receiver) = flume::bounded(1);
-    buffer_slice.map_async(wgpu::MapMode::Read, move |r| sender.send(r).unwrap());
+    buffer_slice.map_async(etalon::MapMode::Read, move |r| sender.send(r).unwrap());
     // In order for the mapping to be completed, one of three things must happen.
     // One of those can be calling `Device::poll`. This isn't necessary on the web as devices
     // are polled automatically but natively, we need to make sure this happens manually.
     // `PollType::Wait` will cause the thread to wait on native but not on WebGpu.
     context
         .device
-        .poll(wgpu::PollType::wait_indefinitely())
+        .poll(etalon::PollType::wait_indefinitely())
         .unwrap();
     log::info!("Device polled.");
     // Now we await the receiving and panic if anything went wrong because we're lazy.
@@ -146,46 +146,46 @@ pub fn main() {
     }
 }
 
-/// A convenient way to hold together all the useful wgpu stuff together.
-struct WgpuContext {
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    pipeline: wgpu::ComputePipeline,
-    bind_group: wgpu::BindGroup,
-    storage_buffer: wgpu::Buffer,
-    output_staging_buffer: wgpu::Buffer,
+/// A convenient way to hold together all the useful etalon stuff together.
+struct etalonContext {
+    device: etalon::Device,
+    queue: etalon::Queue,
+    pipeline: etalon::ComputePipeline,
+    bind_group: etalon::BindGroup,
+    storage_buffer: etalon::Buffer,
+    output_staging_buffer: etalon::Buffer,
 }
 
-impl WgpuContext {
-    async fn new(buffer_size: usize) -> WgpuContext {
-        let instance = wgpu::Instance::default();
+impl etalonContext {
+    async fn new(buffer_size: usize) -> etalonContext {
+        let instance = etalon::Instance::default();
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions::default())
+            .request_adapter(&etalon::RequestAdapterOptions::default())
             .await
             .unwrap();
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor {
+            .request_device(&etalon::DeviceDescriptor {
                 label: None,
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::downlevel_defaults(),
-                default_queue: wgpu::QueueDescriptor { label: None },
-                experimental_features: wgpu::ExperimentalFeatures::disabled(),
-                memory_hints: wgpu::MemoryHints::Performance,
-                trace: wgpu::Trace::Off,
+                required_features: etalon::Features::empty(),
+                required_limits: etalon::Limits::downlevel_defaults(),
+                default_queue: etalon::QueueDescriptor { label: None },
+                experimental_features: etalon::ExperimentalFeatures::disabled(),
+                memory_hints: etalon::MemoryHints::Performance,
+                trace: etalon::Trace::Off,
             })
             .await
             .unwrap();
 
         // Our shader, kindly compiled with Naga.
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
         // This is where the GPU will read from and write to.
-        let storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let storage_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
-            size: buffer_size as wgpu::BufferAddress,
-            usage: wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::COPY_SRC,
+            size: buffer_size as etalon::BufferAddress,
+            usage: etalon::BufferUsages::STORAGE
+                | etalon::BufferUsages::COPY_DST
+                | etalon::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
         // For portability reasons, WebGPU draws a distinction between memory that is
@@ -195,21 +195,21 @@ impl WgpuContext {
         // data from the GPU, we need to use CommandEncoder::copy_buffer_to_buffer
         // (which we will later) to copy the buffer modified by the GPU into a
         // mappable, CPU-accessible buffer which we'll create here.
-        let output_staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let output_staging_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
-            size: buffer_size as wgpu::BufferAddress,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            size: buffer_size as etalon::BufferAddress,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
             mapped_at_creation: false,
         });
 
         // This can be though of as the function signature for our CPU-GPU function.
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: None,
-            entries: &[wgpu::BindGroupLayoutEntry {
+            entries: &[etalon::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: false },
                     has_dynamic_offset: false,
                     // Going to have this be None just to be safe.
                     min_binding_size: None,
@@ -219,21 +219,21 @@ impl WgpuContext {
         });
         // This ties actual resources stored in the GPU to our metaphorical function
         // through the binding slots we defined above.
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
                 resource: storage_buffer.as_entire_binding(),
             }],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
             module: &shader,
@@ -242,7 +242,7 @@ impl WgpuContext {
             cache: None,
         });
 
-        WgpuContext {
+        etalonContext {
             device,
             queue,
             pipeline,

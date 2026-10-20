@@ -2,7 +2,7 @@
 
 A composite action that detects AI-authored commits and AI metadata trailers in a pull request.
 
-wgpu allows contributors to write code with an LLM, but the contributor must own the
+etalon allows contributors to write code with an LLM, but the contributor must own the
 change. See the [LLMs (AI)](../../../CONTRIBUTING.md#llms-ai) section of `CONTRIBUTING.md`.
 This action rejects commits that attribute authorship to an AI instead.
 

@@ -1,58 +1,58 @@
-const RENDER_TARGET_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8UnormSrgb;
+const RENDER_TARGET_FORMAT: etalon::TextureFormat = etalon::TextureFormat::Rgba8UnormSrgb;
 
 struct Example {
-    low_res_target: wgpu::TextureView,
-    bind_group_upscale: wgpu::BindGroup,
+    low_res_target: etalon::TextureView,
+    bind_group_upscale: etalon::BindGroup,
 
-    pipeline_triangle_conservative: wgpu::RenderPipeline,
-    pipeline_triangle_regular: wgpu::RenderPipeline,
-    pipeline_upscale: wgpu::RenderPipeline,
-    pipeline_lines: Option<wgpu::RenderPipeline>,
-    bind_group_layout_upscale: wgpu::BindGroupLayout,
+    pipeline_triangle_conservative: etalon::RenderPipeline,
+    pipeline_triangle_regular: etalon::RenderPipeline,
+    pipeline_upscale: etalon::RenderPipeline,
+    pipeline_lines: Option<etalon::RenderPipeline>,
+    bind_group_layout_upscale: etalon::BindGroupLayout,
 }
 
 impl Example {
     fn create_low_res_target(
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        bind_group_layout_upscale: &wgpu::BindGroupLayout,
-    ) -> (wgpu::TextureView, wgpu::BindGroup) {
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        bind_group_layout_upscale: &etalon::BindGroupLayout,
+    ) -> (etalon::TextureView, etalon::BindGroup) {
         let texture_view = device
-            .create_texture(&wgpu::TextureDescriptor {
+            .create_texture(&etalon::TextureDescriptor {
                 label: Some("Low Resolution Target"),
-                size: wgpu::Extent3d {
+                size: etalon::Extent3d {
                     width: (config.width / 16).max(1),
                     height: (config.height / 16).max(1),
                     depth_or_array_layers: 1,
                 },
                 mip_level_count: 1,
                 sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
+                dimension: etalon::TextureDimension::D2,
                 format: RENDER_TARGET_FORMAT,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                usage: etalon::TextureUsages::TEXTURE_BINDING
+                    | etalon::TextureUsages::RENDER_ATTACHMENT,
                 view_formats: &[],
             })
             .create_view(&Default::default());
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("Nearest Neighbor Sampler"),
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Nearest,
+            mag_filter: etalon::FilterMode::Nearest,
+            min_filter: etalon::FilterMode::Nearest,
             ..Default::default()
         });
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("upscale bind group"),
             layout: bind_group_layout_upscale,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                    resource: etalon::BindingResource::TextureView(&texture_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: etalon::BindingResource::Sampler(&sampler),
                 },
             ],
         });
@@ -62,104 +62,104 @@ impl Example {
 }
 
 impl crate::framework::Example for Example {
-    fn required_features() -> wgpu::Features {
-        wgpu::Features::CONSERVATIVE_RASTERIZATION
+    fn required_features() -> etalon::Features {
+        etalon::Features::CONSERVATIVE_RASTERIZATION
     }
-    fn optional_features() -> wgpu::Features {
-        wgpu::Features::POLYGON_MODE_LINE
+    fn optional_features() -> etalon::Features {
+        etalon::Features::POLYGON_MODE_LINE
     }
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
         let pipeline_layout_empty =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: None,
                 bind_group_layouts: &[],
                 immediate_size: 0,
             });
 
         let shader_triangle_and_lines =
-            device.create_shader_module(wgpu::include_wgsl!("triangle_and_lines.wgsl"));
+            device.create_shader_module(etalon::include_wgsl!("triangle_and_lines.wgsl"));
 
         let pipeline_triangle_conservative =
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                 label: Some("Conservative Rasterization"),
                 layout: Some(&pipeline_layout_empty),
-                vertex: wgpu::VertexState {
+                vertex: etalon::VertexState {
                     module: &shader_triangle_and_lines,
                     entry_point: Some("vs_main"),
                     compilation_options: Default::default(),
                     buffers: &[],
                 },
-                fragment: Some(wgpu::FragmentState {
+                fragment: Some(etalon::FragmentState {
                     module: &shader_triangle_and_lines,
                     entry_point: Some("fs_main_red"),
                     compilation_options: Default::default(),
                     targets: &[Some(RENDER_TARGET_FORMAT.into())],
                 }),
-                primitive: wgpu::PrimitiveState {
+                primitive: etalon::PrimitiveState {
                     conservative: true,
                     ..Default::default()
                 },
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: etalon::MultisampleState::default(),
                 multiview_mask: None,
                 cache: None,
             });
 
         let pipeline_triangle_regular =
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                 label: Some("Regular Rasterization"),
                 layout: Some(&pipeline_layout_empty),
-                vertex: wgpu::VertexState {
+                vertex: etalon::VertexState {
                     module: &shader_triangle_and_lines,
                     entry_point: Some("vs_main"),
                     compilation_options: Default::default(),
                     buffers: &[],
                 },
-                fragment: Some(wgpu::FragmentState {
+                fragment: Some(etalon::FragmentState {
                     module: &shader_triangle_and_lines,
                     entry_point: Some("fs_main_blue"),
                     compilation_options: Default::default(),
                     targets: &[Some(RENDER_TARGET_FORMAT.into())],
                 }),
-                primitive: wgpu::PrimitiveState::default(),
+                primitive: etalon::PrimitiveState::default(),
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: etalon::MultisampleState::default(),
                 multiview_mask: None,
                 cache: None,
             });
 
         let pipeline_lines = if device
             .features()
-            .contains(wgpu::Features::POLYGON_MODE_LINE)
+            .contains(etalon::Features::POLYGON_MODE_LINE)
         {
             Some(
-                device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                     label: Some("Lines"),
                     layout: Some(&pipeline_layout_empty),
-                    vertex: wgpu::VertexState {
+                    vertex: etalon::VertexState {
                         module: &shader_triangle_and_lines,
                         entry_point: Some("vs_main"),
                         compilation_options: Default::default(),
                         buffers: &[],
                     },
-                    fragment: Some(wgpu::FragmentState {
+                    fragment: Some(etalon::FragmentState {
                         module: &shader_triangle_and_lines,
                         entry_point: Some("fs_main_white"),
                         compilation_options: Default::default(),
                         targets: &[Some(config.view_formats[0].into())],
                     }),
-                    primitive: wgpu::PrimitiveState {
-                        polygon_mode: wgpu::PolygonMode::Line,
-                        topology: wgpu::PrimitiveTopology::LineStrip,
+                    primitive: etalon::PrimitiveState {
+                        polygon_mode: etalon::PolygonMode::Line,
+                        topology: etalon::PrimitiveTopology::LineStrip,
                         ..Default::default()
                     },
                     depth_stencil: None,
-                    multisample: wgpu::MultisampleState::default(),
+                    multisample: etalon::MultisampleState::default(),
                     multiview_mask: None,
                     cache: None,
                 }),
@@ -170,53 +170,53 @@ impl crate::framework::Example for Example {
 
         let (pipeline_upscale, bind_group_layout_upscale) = {
             let bind_group_layout =
-                device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                     label: Some("upscale bindgroup"),
                     entries: &[
-                        wgpu::BindGroupLayoutEntry {
+                        etalon::BindGroupLayoutEntry {
                             binding: 0,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Texture {
-                                sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                                view_dimension: wgpu::TextureViewDimension::D2,
+                            visibility: etalon::ShaderStages::FRAGMENT,
+                            ty: etalon::BindingType::Texture {
+                                sample_type: etalon::TextureSampleType::Float { filterable: false },
+                                view_dimension: etalon::TextureViewDimension::D2,
                                 multisampled: false,
                             },
                             count: None,
                         },
-                        wgpu::BindGroupLayoutEntry {
+                        etalon::BindGroupLayoutEntry {
                             binding: 1,
-                            visibility: wgpu::ShaderStages::FRAGMENT,
-                            ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                            visibility: etalon::ShaderStages::FRAGMENT,
+                            ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::NonFiltering),
                             count: None,
                         },
                     ],
                 });
 
-            let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: None,
                 bind_group_layouts: &[Some(&bind_group_layout)],
                 immediate_size: 0,
             });
-            let shader = device.create_shader_module(wgpu::include_wgsl!("upscale.wgsl"));
+            let shader = device.create_shader_module(etalon::include_wgsl!("upscale.wgsl"));
             (
-                device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                     label: Some("Upscale"),
                     layout: Some(&pipeline_layout),
-                    vertex: wgpu::VertexState {
+                    vertex: etalon::VertexState {
                         module: &shader,
                         entry_point: Some("vs_main"),
                         compilation_options: Default::default(),
                         buffers: &[],
                     },
-                    fragment: Some(wgpu::FragmentState {
+                    fragment: Some(etalon::FragmentState {
                         module: &shader,
                         entry_point: Some("fs_main"),
                         compilation_options: Default::default(),
                         targets: &[Some(config.view_formats[0].into())],
                     }),
-                    primitive: wgpu::PrimitiveState::default(),
+                    primitive: etalon::PrimitiveState::default(),
                     depth_stencil: None,
-                    multisample: wgpu::MultisampleState::default(),
+                    multisample: etalon::MultisampleState::default(),
                     multiview_mask: None,
                     cache: None,
                 }),
@@ -241,9 +241,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         let (low_res_target, bind_group_upscale) =
             Self::create_low_res_target(config, device, &self.bind_group_layout_upscale);
@@ -253,21 +253,21 @@ impl crate::framework::Example for Example {
 
     fn update(&mut self, _event: winit::event::WindowEvent) {}
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
             label: Some("primary"),
         });
 
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: Some("low resolution"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: &self.low_res_target,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -282,15 +282,15 @@ impl crate::framework::Example for Example {
             rpass.draw(0..3, 0..1);
         }
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: Some("full resolution"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -318,14 +318,14 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "conservative-raster",
     image_path: "/examples/features/src/conservative_raster/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default(),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.0)],
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default(),
+    comparisons: &[etalon_test::ComparisonType::Mean(0.0)],
     _phantom: std::marker::PhantomData::<Example>,
 };

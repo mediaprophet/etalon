@@ -67,7 +67,7 @@ fn runtime_values() {
   var shr_iai_u: i32 = 1 << u;
 }
 
-fn wgpu_4445() {
+fn etalon_4445() {
   // This ok:
   let a = (3.0*2.0-(1.0)) * 1.0;
   let b = (3.0*2.0+1.0) * 1.0;
@@ -75,12 +75,12 @@ fn wgpu_4445() {
   let c = (3.0*2.0-1.0) * 1.0;
 }
 
-const wgpu_4492 = i32(-0x80000000);
-const wgpu_4492_2 = -2147483648;
+const etalon_4492 = i32(-0x80000000);
+const etalon_4492_2 = -2147483648;
 
 var<workgroup> a: array<u32, 64>;
 
-fn wgpu_4435() {
+fn etalon_4435() {
     let x = 1;
     let y = a[x-1];
 }
@@ -88,6 +88,6 @@ fn wgpu_4435() {
 @compute @workgroup_size(1)
 fn main() {
     runtime_values();
-    wgpu_4445();
-    wgpu_4435();
+    etalon_4445();
+    etalon_4435();
 }

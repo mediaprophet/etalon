@@ -26,23 +26,23 @@ struct App {
 }
 
 struct State {
-    instance: wgpu::Instance,
+    instance: etalon::Instance,
     window: Arc<Window>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    surface: wgpu::Surface<'static>,
-    surface_config: wgpu::SurfaceConfiguration,
+    device: etalon::Device,
+    queue: etalon::Queue,
+    surface: etalon::Surface<'static>,
+    surface_config: etalon::SurfaceConfiguration,
     width: u32,
     height: u32,
-    _storage_texture: wgpu::Texture,
-    _dummy_texture: wgpu::Texture,
-    clear_pipeline: wgpu::ComputePipeline,
-    clear_bg: wgpu::BindGroup,
-    raster_pipeline: wgpu::RenderPipeline,
-    raster_bg: wgpu::BindGroup,
-    dummy_view: wgpu::TextureView,
-    vis_pipeline: wgpu::RenderPipeline,
-    vis_bg: wgpu::BindGroup,
+    _storage_texture: etalon::Texture,
+    _dummy_texture: etalon::Texture,
+    clear_pipeline: etalon::ComputePipeline,
+    clear_bg: etalon::BindGroup,
+    raster_pipeline: etalon::RenderPipeline,
+    raster_bg: etalon::BindGroup,
+    dummy_view: etalon::TextureView,
+    vis_pipeline: etalon::RenderPipeline,
+    vis_bg: etalon::BindGroup,
 }
 
 impl ApplicationHandler for App {
@@ -90,8 +90,8 @@ impl ApplicationHandler for App {
     }
 }
 
-fn tex_bind_entry(binding: u32, resource: wgpu::BindingResource<'_>) -> wgpu::BindGroupEntry<'_> {
-    wgpu::BindGroupEntry { binding, resource }
+fn tex_bind_entry(binding: u32, resource: etalon::BindingResource<'_>) -> etalon::BindGroupEntry<'_> {
+    etalon::BindGroupEntry { binding, resource }
 }
 
 impl State {
@@ -101,9 +101,9 @@ impl State {
         let height = size.height.max(1);
 
         let instance =
-            wgpu::Instance::new(wgpu::InstanceDescriptor::new_without_display_handle_from_env());
+            etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle_from_env());
         let surface = instance.create_surface(window.clone()).unwrap();
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        let adapter = pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions {
             compatible_surface: Some(&surface),
             ..Default::default()
         }))
@@ -111,66 +111,66 @@ impl State {
 
         println!("Adapter: {:?}", adapter.get_info().name);
 
-        let required = wgpu::Features::TEXTURE_ATOMIC;
+        let required = etalon::Features::TEXTURE_ATOMIC;
         assert!(
             adapter.features().contains(required),
             "Texture atomics not supported"
         );
 
-        let (device, queue) = pollster::block_on(adapter.request_device(&wgpu::DeviceDescriptor {
+        let (device, queue) = pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
             required_features: required,
             ..Default::default()
         }))
         .unwrap();
 
         let surface_format = surface.get_capabilities(&adapter).formats[0];
-        let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        let surface_config = etalon::SurfaceConfiguration {
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            color_space: wgpu::SurfaceColorSpace::Auto,
+            color_space: etalon::SurfaceColorSpace::Auto,
             width,
             height,
-            present_mode: wgpu::PresentMode::AutoVsync,
-            alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            present_mode: etalon::PresentMode::AutoVsync,
+            alpha_mode: etalon::CompositeAlphaMode::Auto,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };
         surface.configure(&device, &surface_config);
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
-        let tex_size = wgpu::Extent3d {
+        let tex_size = etalon::Extent3d {
             width,
             height,
             depth_or_array_layers: 1,
         };
 
-        let storage_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let storage_texture = device.create_texture(&etalon::TextureDescriptor {
             label: None,
             size: tex_size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R32Uint,
-            usage: wgpu::TextureUsages::STORAGE_ATOMIC | wgpu::TextureUsages::STORAGE_BINDING,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::R32Uint,
+            usage: etalon::TextureUsages::STORAGE_ATOMIC | etalon::TextureUsages::STORAGE_BINDING,
             view_formats: &[],
         });
         let storage_view = storage_texture.create_view(&Default::default());
 
-        let dummy_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let dummy_texture = device.create_texture(&etalon::TextureDescriptor {
             label: None,
             size: tex_size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R8Uint,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::R8Uint,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
         let dummy_view = dummy_texture.create_view(&Default::default());
 
         // Pipelines use auto-layout; bind groups derived from pipeline layouts.
-        let clear_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let clear_pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: None,
             layout: None,
             module: &shader,
@@ -178,31 +178,31 @@ impl State {
             compilation_options: Default::default(),
             cache: None,
         });
-        let clear_bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let clear_bg = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &clear_pipeline.get_bind_group_layout(0),
             entries: &[tex_bind_entry(
                 0,
-                wgpu::BindingResource::TextureView(&storage_view),
+                etalon::BindingResource::TextureView(&storage_view),
             )],
         });
 
-        let raster_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let raster_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: None,
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("fullscreen"),
                 buffers: &[],
                 compilation_options: Default::default(),
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("write_atomic"),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::R8Uint,
+                targets: &[Some(etalon::ColorTargetState {
+                    format: etalon::TextureFormat::R8Uint,
                     blend: None,
-                    write_mask: wgpu::ColorWrites::empty(),
+                    write_mask: etalon::ColorWrites::empty(),
                 })],
                 compilation_options: Default::default(),
             }),
@@ -212,25 +212,25 @@ impl State {
             multiview_mask: None,
             cache: None,
         });
-        let raster_bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let raster_bg = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &raster_pipeline.get_bind_group_layout(0),
             entries: &[tex_bind_entry(
                 0,
-                wgpu::BindingResource::TextureView(&storage_view),
+                etalon::BindingResource::TextureView(&storage_view),
             )],
         });
 
-        let vis_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let vis_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: None,
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("fullscreen"),
                 buffers: &[],
                 compilation_options: Default::default(),
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("visualize"),
                 targets: &[Some(surface_format.into())],
@@ -242,12 +242,12 @@ impl State {
             multiview_mask: None,
             cache: None,
         });
-        let vis_bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let vis_bg = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &vis_pipeline.get_bind_group_layout(0),
             entries: &[tex_bind_entry(
                 0,
-                wgpu::BindingResource::TextureView(&storage_view),
+                etalon::BindingResource::TextureView(&storage_view),
             )],
         });
 
@@ -274,17 +274,17 @@ impl State {
 
     fn render_frame(&mut self) {
         let frame = match self.surface.get_current_texture() {
-            wgpu::CurrentSurfaceTexture::Success(f) => f,
-            wgpu::CurrentSurfaceTexture::Suboptimal(texture) => {
+            etalon::CurrentSurfaceTexture::Success(f) => f,
+            etalon::CurrentSurfaceTexture::Suboptimal(texture) => {
                 drop(texture);
                 self.surface.configure(&self.device, &self.surface_config);
                 return;
             }
-            wgpu::CurrentSurfaceTexture::Outdated => {
+            etalon::CurrentSurfaceTexture::Outdated => {
                 self.surface.configure(&self.device, &self.surface_config);
                 return;
             }
-            wgpu::CurrentSurfaceTexture::Lost => {
+            etalon::CurrentSurfaceTexture::Lost => {
                 self.surface = self.instance.create_surface(self.window.clone()).unwrap();
                 self.surface.configure(&self.device, &self.surface_config);
                 return;
@@ -304,14 +304,14 @@ impl State {
 
         // Write via textureAtomicMax in fragment shader
         {
-            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            let mut pass = enc.begin_render_pass(&etalon::RenderPassDescriptor {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: &self.dummy_view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Discard,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Discard,
                     },
                 })],
                 ..Default::default()
@@ -323,14 +323,14 @@ impl State {
 
         // Read texture in fragment shader to visualize
         {
-            let mut pass = enc.begin_render_pass(&wgpu::RenderPassDescriptor {
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            let mut pass = enc.begin_render_pass(&etalon::RenderPassDescriptor {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: &frame_view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 ..Default::default()

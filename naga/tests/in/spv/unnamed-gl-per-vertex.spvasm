@@ -10,9 +10,9 @@
 ;; This specifically doesn't name the gl_PerVertex struct to make sure we don't
 ;; rely on checks for this name.
 ;;
-;; See https://github.com/gfx-rs/wgpu/issues/4915
+;; See https://github.com/mediaprophet/etalon/issues/4915
 ;;
-;; Generated via `glslc -O` on this glsl code (taken from https://github.com/gfx-rs/wgpu/issues/4915):
+;; Generated via `glslc -O` on this glsl code (taken from https://github.com/mediaprophet/etalon/issues/4915):
 ;;
 ;; ```glsl
 ;; #version 450

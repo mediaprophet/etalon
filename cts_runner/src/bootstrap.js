@@ -126,7 +126,7 @@ const util = {
   getterOnly(getter) {
     return {
       get: getter,
-      set() {},
+      set() { },
       enumerable: true,
       configurable: true,
     };
@@ -241,11 +241,11 @@ webgpu.GPUAdapter.prototype.requestDevice = function (desc) {
     // an option to enable it anyways to allow running some CTS tests that
     // do pass.
     if (!desc) {
-      desc = { requiredFeatures: ["wgpu-external-texture"] };
+      desc = { requiredFeatures: ["etalon-external-texture"] };
     } else if (!desc.requiredFeatures) {
-      desc.requiredFeatures = ["wgpu-external-texture"];
+      desc.requiredFeatures = ["etalon-external-texture"];
     } else {
-      desc.requiredFeatures.push("wgpu-external-texture");
+      desc.requiredFeatures.push("etalon-external-texture");
     }
   }
 

@@ -1,10 +1,10 @@
 #![cfg(not(target_arch = "wasm32"))]
 #![expect(
     clippy::disallowed_types,
-    reason = "We're outside of the main wgpu codebase"
+    reason = "We're outside of the main etalon codebase"
 )]
 
-//! Benchmarking framework for `wgpu`.
+//! Benchmarking framework for `etalon`.
 //!
 //! This crate is a basic framework for benchmarking. Its design is guided
 //! by a few goals:
@@ -89,7 +89,7 @@ pub struct Benchmark {
 }
 
 const HELP: &str = "\
-Usage: wgpu-benchmark [OPTIONS] [BENCHMARK_NAME]
+Usage: etalon-benchmark [OPTIONS] [BENCHMARK_NAME]
 
 Modes:
     --bench                     Run in benchmark mode, comparing against previous results.
@@ -117,7 +117,7 @@ Other:
 pub fn main(benchmarks: Vec<Benchmark>) {
     // The benchmarks run as tests in CI, where they occasionally time out with
     // no output at all to say where the time went. See
-    // <https://github.com/gfx-rs/wgpu/issues/9248>.
+    // <https://github.com/mediaprophet/etalon/issues/9248>.
     let _ = env_logger::builder().format_timestamp_millis().try_init();
 
     let mut args = Arguments::from_env();

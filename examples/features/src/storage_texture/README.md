@@ -5,7 +5,7 @@ A simple example that uses a storage texture to compute an image of the Mandelbr
 ## To Run
 
 ```
-cargo run --bin wgpu-examples storage_texture
+cargo run --bin etalon-examples storage_texture
 ```
 
 ## Example Output

@@ -1,8 +1,8 @@
 [package]
-name = "wgpu-test"
+name = "etalon-test"
 version.workspace = true
 edition.workspace = true
-description = "common code for wgpu tests"
+description = "common code for etalon tests"
 homepage.workspace = true
 repository.workspace = true
 keywords.workspace = true
@@ -11,28 +11,28 @@ rust-version.workspace = true
 publish = false
 
 [[test]]
-name = "wgpu-compile"
+name = "etalon-compile"
 harness = true
 
 [[test]]
-name = "wgpu-dependency"
+name = "etalon-dependency"
 harness = true
 
 [[test]]
-name = "wgpu-gpu"
+name = "etalon-gpu"
 harness = false
 
 [[test]]
-name = "wgpu_trace"
+name = "etalon_trace"
 harness = true
 
 [[test]]
-name = "wgpu-validation"
+name = "etalon-validation"
 harness = true
 
 [features]
-webgl = ["wgpu/webgl"]
-exhaust = ["wgpu/exhaust"]
+webgl = ["etalon/webgl"]
+exhaust = ["etalon/exhaust"]
 # This feature is not actually used by this package, but it being present somewhere in the workspace
 # allows us to force the build to have profiling code enabled so we can test that configuration.
 test-build-with-profiling = ["profiling/type-check"]
@@ -44,11 +44,11 @@ test-build-with-profiling = ["profiling/type-check"]
 [dependencies]
 # Passthrough backend uses as_hal for the GLES backend, and there's not a great way to cfg-gate that.
 # These are all enabled for any testing on CI anyway, and won't do anything if no devices are detected.
-wgpu = { workspace = true, features = ["noop", "gles", "webgl", "angle", "counters"] }
-wgpu-core = { workspace = true, default-features = true, features = ["trace"] }
-wgpu-hal = { workspace = true, default-features = true, features = ["validation_canary"] }
-wgpu-sync.workspace = true
-wgpu-types.workspace = true
+etalon = { workspace = true, features = ["noop", "gles", "webgl", "angle", "counters"] }
+etalon-core = { workspace = true, default-features = true, features = ["trace"] }
+etalon-hal = { workspace = true, default-features = true, features = ["validation_canary"] }
+etalon-sync.workspace = true
+etalon-types.workspace = true
 naga = { workspace = true, features = [
     "spv-out",
     "wgsl-out",

@@ -9,7 +9,7 @@ use alloc::{format, string::String, vec::Vec};
 // https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2015/n4431.pdf
 const RESERVED: &[&str] = &[
     // Undocumented
-    "assert", // found in https://github.com/gfx-rs/wgpu/issues/5347
+    "assert", // found in https://github.com/mediaprophet/etalon/issues/5347
     // Standard for Programming Language C++ (N4431): 2.5 Alternative tokens
     "and",
     "bitor",
@@ -387,7 +387,7 @@ static DOT_FUNCTION_NAMES: RacyLock<Vec<String>> = RacyLock::new(|| {
 /// The above set of reserved keywords, turned into a cached HashSet. This saves
 /// significant time during [`Namer::reset`](crate::proc::Namer::reset).
 ///
-/// See <https://github.com/gfx-rs/wgpu/pull/7338> for benchmarks.
+/// See <https://github.com/mediaprophet/etalon/pull/7338> for benchmarks.
 pub static RESERVED_SET: RacyLock<KeywordSet> = RacyLock::new(|| {
     let mut set = KeywordSet::from_iter(RESERVED);
     set.extend(DOT_FUNCTION_NAMES.iter().map(String::as_str));

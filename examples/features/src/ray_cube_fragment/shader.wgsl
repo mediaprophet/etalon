@@ -1,4 +1,4 @@
-enable wgpu_ray_query;
+enable etalon_ray_query;
 
 struct VertexOutput {
     @builtin(position) position: vec4<f32>,

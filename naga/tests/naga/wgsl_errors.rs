@@ -58,7 +58,7 @@ fn check_success(input: &str) {
 
 #[test]
 fn very_negative_integers() {
-    // wgpu#4492
+    // etalon#4492
     check(
         "const i32min = -0x80000000i;",
         r###"error: numeric literal not representable by target type: `0x80000000i`
@@ -1201,7 +1201,7 @@ macro_rules! check_extension_validation {
         // `acceleration_structure`s) can be enabled by multiple extensions
         let error = naga::valid::Validator::new(naga::valid::ValidationFlags::all(), !(caps | other_caps))
             .validate(&module).map_err(|e|e.into_inner());
-        let error = error.as_ref(); // TODO(https://github.com/gfx-rs/wgpu/issues/8153): Add tests for spans
+        let error = error.as_ref(); // TODO(https://github.com/mediaprophet/etalon/issues/8153): Add tests for spans
         #[allow(clippy::redundant_pattern_matching)]
         if !matches!(error, $val_err_pat) {
             eprintln!(
@@ -1291,7 +1291,7 @@ fn validation_error(
     };
     naga::valid::Validator::new(naga::valid::ValidationFlags::all(), caps)
         .validate(&module)
-        .map_err(|e| e.into_inner()) // TODO(https://github.com/gfx-rs/wgpu/issues/8153): Add tests for spans
+        .map_err(|e| e.into_inner()) // TODO(https://github.com/mediaprophet/etalon/issues/8153): Add tests for spans
 }
 
 /// Check that a shader validates successfully.
@@ -1320,7 +1320,7 @@ fn int64_capability() {
 fn per_vertex_capability() {
     check_validation! {
             r#"
-            enable wgpu_per_vertex;
+            enable etalon_per_vertex;
 
             @fragment
             fn fs_main(@location(0) @interpolate(per_vertex) v: array<f32, 3>) -> @location(0) vec4<f32> {
@@ -1345,7 +1345,7 @@ fn per_vertex_capability() {
 
 #[test]
 fn linear_interpolation_capability() {
-    // Regression test for https://github.com/gfx-rs/wgpu/issues/9971: `@interpolate(linear)`
+    // Regression test for https://github.com/mediaprophet/etalon/issues/9971: `@interpolate(linear)`
     // has no GLSL ES equivalent, so it must be rejected during validation rather than
     // silently passing and then failing in the GLSL backend at pipeline creation.
     let source = r#"
@@ -1518,13 +1518,13 @@ fn int16_capability_and_enable() {
             let a = u16();
         }
         "#,
-        r#"error: the `wgpu_int16` enable extension is not enabled
+        r#"error: the `etalon_int16` enable extension is not enabled
   ┌─ wgsl:2:21
   │
 2 │             let a = u16();
-  │                     ^^^ the `wgpu_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                     ^^^ the `etalon_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_int16;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_int16;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -1540,13 +1540,13 @@ fn int16_capability_and_enable() {
             let a = u16(1);
         }
         "#,
-        r#"error: the `wgpu_int16` enable extension is not enabled
+        r#"error: the `etalon_int16` enable extension is not enabled
   ┌─ wgsl:2:21
   │
 2 │             let a = u16(1);
-  │                     ^^^ the `wgpu_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                     ^^^ the `etalon_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_int16;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_int16;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Function {
@@ -1566,13 +1566,13 @@ fn int16_capability_and_enable() {
     check_extension_validation! {
         Capabilities::SHADER_INT16,
         "var input: u16;",
-        r#"error: the `wgpu_int16` enable extension is not enabled
+        r#"error: the `etalon_int16` enable extension is not enabled
   ┌─ wgsl:1:12
   │
 1 │ var input: u16;
-  │            ^^^ the `wgpu_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │            ^^^ the `etalon_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_int16;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_int16;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -1585,13 +1585,13 @@ fn int16_capability_and_enable() {
     check_extension_validation! {
         Capabilities::SHADER_INT16,
         "var input: i16;",
-        r#"error: the `wgpu_int16` enable extension is not enabled
+        r#"error: the `etalon_int16` enable extension is not enabled
   ┌─ wgsl:1:12
   │
 1 │ var input: i16;
-  │            ^^^ the `wgpu_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │            ^^^ the `etalon_int16` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_int16;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_int16;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -1604,8 +1604,8 @@ fn int16_capability_and_enable() {
 #[test]
 fn int16_in_atomic() {
     check_validation! {
-        "enable wgpu_int16; @group(0) @binding(0) var<storage> a: atomic<u16>;",
-        "enable wgpu_int16; @group(0) @binding(0) var<storage> a: atomic<i16>;":
+        "enable etalon_int16; @group(0) @binding(0) var<storage> a: atomic<u16>;",
+        "enable etalon_int16; @group(0) @binding(0) var<storage> a: atomic<i16>;":
         Err(naga::valid::ValidationError::Type {
             source: naga::valid::TypeError::InvalidAtomicWidth(_, 2),
             ..
@@ -1617,10 +1617,10 @@ fn int16_in_atomic() {
 #[test]
 fn int16_subgroup_bitwise_rejected() {
     check_validation! {
-        "enable wgpu_int16; @compute @workgroup_size(1) fn main() { var v = i16(1); v = subgroupAnd(v); }",
-        "enable wgpu_int16; @compute @workgroup_size(1) fn main() { var v = i16(1); v = subgroupOr(v); }",
-        "enable wgpu_int16; @compute @workgroup_size(1) fn main() { var v = i16(1); v = subgroupXor(v); }",
-        "enable wgpu_int16; @compute @workgroup_size(1) fn main() { var v = u16(1); v = subgroupAnd(v); }":
+        "enable etalon_int16; @compute @workgroup_size(1) fn main() { var v = i16(1); v = subgroupAnd(v); }",
+        "enable etalon_int16; @compute @workgroup_size(1) fn main() { var v = i16(1); v = subgroupOr(v); }",
+        "enable etalon_int16; @compute @workgroup_size(1) fn main() { var v = i16(1); v = subgroupXor(v); }",
+        "enable etalon_int16; @compute @workgroup_size(1) fn main() { var v = u16(1); v = subgroupAnd(v); }":
         Err(naga::valid::ValidationError::EntryPoint {
             source: naga::valid::EntryPointError::Function(
                 naga::valid::FunctionError::InvalidSubgroup(
@@ -1636,10 +1636,10 @@ fn int16_subgroup_bitwise_rejected() {
 #[test]
 fn int16_in_immediate() {
     check_validation! {
-        "enable wgpu_int16; var<immediate> input: i16;",
-        "enable wgpu_int16; var<immediate> input: u16;",
-        "enable wgpu_int16; var<immediate> input: vec2<i16>;",
-        "enable wgpu_int16; struct S { a: u16 }; var<immediate> input: S;":
+        "enable etalon_int16; var<immediate> input: i16;",
+        "enable etalon_int16; var<immediate> input: u16;",
+        "enable etalon_int16; var<immediate> input: vec2<i16>;",
+        "enable etalon_int16; struct S { a: u16 }; var<immediate> input: S;":
         Err(naga::valid::ValidationError::GlobalVariable {
             source: naga::valid::GlobalVariableError::InvalidImmediateType(
                 naga::valid::ImmediateError::InvalidScalar(_)
@@ -1913,7 +1913,7 @@ fn struct_type_mismatch_in_argument() {
     );
 }
 
-/// Regression test for <https://github.com/gfx-rs/wgpu/issues/7419>: a
+/// Regression test for <https://github.com/mediaprophet/etalon/issues/7419>: a
 /// constructor component of the wrong concrete type used to be reported by the
 /// IR validator as `Composing 0's component type is not expected`.
 #[test]
@@ -2105,7 +2105,7 @@ fn invalid_functions() {
     );
 }
 
-/// Regression test for <https://github.com/gfx-rs/wgpu/issues/10046>.
+/// Regression test for <https://github.com/mediaprophet/etalon/issues/10046>.
 ///
 /// Loading a value whose type contains an atomic, even nested inside a
 /// struct or array, must be rejected by the front end. It used to reach the
@@ -2523,7 +2523,7 @@ fn invalid_blend_src() {
         Capabilities::DUAL_SOURCE_BLENDING
     }
 
-    // Multiple entrypoints (regression test for https://github.com/gfx-rs/wgpu/issues/9111)
+    // Multiple entrypoints (regression test for https://github.com/mediaprophet/etalon/issues/9111)
     check_validation! {
         "
             enable dual_source_blending;
@@ -3747,7 +3747,7 @@ fn global_initialization_type_mismatch() {
 #[test]
 fn binding_array_local() {
     check_validation! {
-        "enable wgpu_binding_array;
+        "enable etalon_binding_array;
          fn f() { var x: binding_array<sampler, 4>; }":
         Err(_)
     }
@@ -3756,7 +3756,7 @@ fn binding_array_local() {
 #[test]
 fn binding_array_private() {
     check_validation! {
-        "enable wgpu_binding_array;
+        "enable etalon_binding_array;
          var<private> x: binding_array<sampler, 4>;":
         Err(_)
     }
@@ -3765,7 +3765,7 @@ fn binding_array_private() {
 #[test]
 fn binding_array_non_struct() {
     check_validation! {
-        "enable wgpu_binding_array;
+        "enable etalon_binding_array;
          var<storage> x: binding_array<i32, 4>;":
         Err(naga::valid::ValidationError::Type {
             source: naga::valid::TypeError::BindingArrayBaseTypeNotStruct(_),
@@ -3775,8 +3775,8 @@ fn binding_array_non_struct() {
 
     check_validation! {
         r#"
-            enable wgpu_ray_query;
-            enable wgpu_binding_array;
+            enable etalon_ray_query;
+            enable etalon_binding_array;
             @group(0) @binding(0)
             var<storage> ray_query_array: binding_array<ray_query, 10>;
         "#:
@@ -4321,7 +4321,7 @@ fn vector_logical_ops() {
 
 #[test]
 fn issue7165() {
-    // Regression test for https://github.com/gfx-rs/wgpu/issues/7165
+    // Regression test for https://github.com/mediaprophet/etalon/issues/7165
     // Any shader that parses but fails validation with a span will do.
     let shader = "
         struct Atom { a: atomic<u32> }
@@ -4341,9 +4341,9 @@ fn issue7165() {
     // handler installed so it doesn't immediately panic):
     //
     // ```
-    // device.create_shader_module(wgpu::ShaderModuleDescriptor {
+    // device.create_shader_module(etalon::ShaderModuleDescriptor {
     //     label,
-    //     source: wgpu::ShaderSource::Naga(module),
+    //     source: etalon::ShaderSource::Naga(module),
     // });
     // ```
     //
@@ -4706,7 +4706,7 @@ fn bitfield_range_too_large() {
 /// when both are const expressions.
 /// Even if the operand is not.
 ///
-/// <https://github.com/gfx-rs/wgpu/issues/9152>
+/// <https://github.com/mediaprophet/etalon/issues/9152>
 #[test]
 fn bitfield_range_too_large_partially_const() {
     // The operand is a function parameter, so these calls never reach constant
@@ -4755,7 +4755,7 @@ fn bitfield_range_too_large_partially_const() {
 fn subgroup_capability() {
     // Some of these tests should be `check_extension_validation` tests that
     // also check handling of the enable directive, but that handling is not
-    // currently correct. https://github.com/gfx-rs/wgpu/issues/8202
+    // currently correct. https://github.com/mediaprophet/etalon/issues/8202
 
     // Non-barrier subgroup operations...
 
@@ -5017,7 +5017,7 @@ error: the `subgroups` enable-extension is not yet supported
 1 │ enable subgroups;
   │        ^^^^^^^^^ this enable-extension specifies standard functionality which is not yet implemented in Naga
   │
-  = note: Let Naga maintainers know that you ran into this at <https://github.com/gfx-rs/wgpu/issues/5555>, so they can prioritize it!
+  = note: Let Naga maintainers know that you ran into this at <https://github.com/mediaprophet/etalon/issues/5555>, so they can prioritize it!
 
 ",
         };
@@ -5170,7 +5170,7 @@ fn max_type_size_array_constructor_with_oversize_type() {
     // oversize, the layouter encounters it and the error must be reported
     // rather than panicking.
     //
-    // Regression test for <https://github.com/gfx-rs/wgpu/issues/9440>.
+    // Regression test for <https://github.com/mediaprophet/etalon/issues/9440>.
     check(
         r#"
             var<workgroup> big: array<u32, 1 << 29>;
@@ -5191,7 +5191,7 @@ fn max_type_size_concretize_with_oversize_type() {
     // type is oversize, the layouter encounters it and the error must be
     // reported rather than panicking.
     //
-    // Regression test for <https://github.com/gfx-rs/wgpu/issues/9440>.
+    // Regression test for <https://github.com/mediaprophet/etalon/issues/9440>.
     check(
         r#"
             const a = array(0.);
@@ -5243,13 +5243,13 @@ fn ray_types_enable_extension() {
             var a: ray_query;
         }
         "#,
-        r#"error: the `wgpu_ray_query` enable extension is not enabled
+        r#"error: the `etalon_ray_query` enable extension is not enabled
   ┌─ wgsl:2:20
   │
 2 │             var a: ray_query;
-  │                    ^^^^^^^^^ the `wgpu_ray_query` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                    ^^^^^^^^^ the `etalon_ray_query` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_query;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_query;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -5264,13 +5264,13 @@ fn ray_types_enable_extension() {
         r#"@group(0) @binding(0)
         var acc_struct: acceleration_structure;
         "#,
-        r#"error: the `wgpu_ray_query` enable extension is not enabled
+        r#"error: the `etalon_ray_query` enable extension is not enabled
   ┌─ wgsl:2:25
   │
 2 │         var acc_struct: acceleration_structure;
-  │                         ^^^^^^^^^^^^^^^^^^^^^^ the `wgpu_ray_query` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                         ^^^^^^^^^^^^^^^^^^^^^^ the `etalon_ray_query` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_query;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_query;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -5284,13 +5284,13 @@ fn ray_types_enable_extension() {
         r#"@group(0) @binding(0)
         var acc_struct: acceleration_structure;
         "#,
-        r#"error: the `wgpu_ray_query` enable extension is not enabled
+        r#"error: the `etalon_ray_query` enable extension is not enabled
   ┌─ wgsl:2:25
   │
 2 │         var acc_struct: acceleration_structure;
-  │                         ^^^^^^^^^^^^^^^^^^^^^^ the `wgpu_ray_query` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                         ^^^^^^^^^^^^^^^^^^^^^^ the `etalon_ray_query` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_query;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_query;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -5305,19 +5305,19 @@ fn ray_types_enable_extension() {
 fn ray_query_vertex_return_enable_extension() {
     check_extension_validation!(
         Capabilities::RAY_HIT_VERTEX_POSITION,
-        r#"enable wgpu_ray_query;
+        r#"enable etalon_ray_query;
 
         fn foo() {
             var a: ray_query<vertex_return>;
         }
         "#,
-        r#"error: the `wgpu_ray_query_vertex_return` enable extension is not enabled
+        r#"error: the `etalon_ray_query_vertex_return` enable extension is not enabled
   ┌─ wgsl:4:30
   │
 4 │             var a: ray_query<vertex_return>;
-  │                              ^^^^^^^^^^^^^ the `wgpu_ray_query_vertex_return` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                              ^^^^^^^^^^^^^ the `etalon_ray_query_vertex_return` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_query_vertex_return;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_query_vertex_return;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -5330,18 +5330,18 @@ fn ray_query_vertex_return_enable_extension() {
 
     check_extension_validation!(
         Capabilities::RAY_HIT_VERTEX_POSITION,
-        r#"enable wgpu_ray_query;
+        r#"enable etalon_ray_query;
 
         @group(0) @binding(0)
         var acc_struct: acceleration_structure<vertex_return>;
         "#,
-        r#"error: the `wgpu_ray_query_vertex_return` enable extension is not enabled
+        r#"error: the `etalon_ray_query_vertex_return` enable extension is not enabled
   ┌─ wgsl:4:48
   │
 4 │         var acc_struct: acceleration_structure<vertex_return>;
-  │                                                ^^^^^^^^^^^^^ the `wgpu_ray_query_vertex_return` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                                ^^^^^^^^^^^^^ the `etalon_ray_query_vertex_return` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_query_vertex_return;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_query_vertex_return;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::Type {
@@ -5362,13 +5362,13 @@ fn binding_array_enable_extension() {
         r#"struct UniformBuffer { data: u32 }
 @group(0) @binding(0)
 var<uniform> uniform_array: binding_array<UniformBuffer, 5>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:3:29
   │
 3 │ var<uniform> uniform_array: binding_array<UniformBuffer, 5>;
-  │                             ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                             ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5384,13 +5384,13 @@ var<uniform> uniform_array: binding_array<UniformBuffer, 5>;"#,
         r#"struct Buffer { data: u32 }
 @group(0) @binding(0)
 var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:3:35
   │
 3 │ var<storage, read> storage_array: binding_array<Buffer, 5>;
-  │                                   ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                   ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5406,13 +5406,13 @@ var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
         Capabilities::TEXTURE_AND_SAMPLER_BINDING_ARRAY,
         r#"@group(0) @binding(0)
         var texture_array_unbounded: binding_array<texture_2d<f32>>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:2:38
   │
 2 │         var texture_array_unbounded: binding_array<texture_2d<f32>>;
-  │                                      ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                      ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5427,13 +5427,13 @@ var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
         Capabilities::TEXTURE_AND_SAMPLER_BINDING_ARRAY,
         r#"@group(0) @binding(0)
         var texture_array_bounded: binding_array<texture_2d<f32>, 5>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:2:36
   │
 2 │         var texture_array_bounded: binding_array<texture_2d<f32>, 5>;
-  │                                    ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                    ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5448,13 +5448,13 @@ var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
         Capabilities::TEXTURE_AND_SAMPLER_BINDING_ARRAY,
         r#"@group(0) @binding(0)
         var texture_array_2darray: binding_array<texture_2d_array<f32>, 5>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:2:36
   │
 2 │         var texture_array_2darray: binding_array<texture_2d_array<f32>, 5>;
-  │                                    ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                    ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5469,13 +5469,13 @@ var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
         Capabilities::TEXTURE_AND_SAMPLER_BINDING_ARRAY,
         r#"@group(0) @binding(0)
         var samp: binding_array<sampler, 5>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:2:19
   │
 2 │         var samp: binding_array<sampler, 5>;
-  │                   ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                   ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5490,13 +5490,13 @@ var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
         Capabilities::STORAGE_TEXTURE_BINDING_ARRAY,
         r#"@group(0) @binding(0)
         var texture_array_storage: binding_array<texture_storage_2d<rgba32float, write>, 5>;"#,
-        r#"error: the `wgpu_binding_array` enable extension is not enabled
+        r#"error: the `etalon_binding_array` enable extension is not enabled
   ┌─ wgsl:2:36
   │
 2 │         var texture_array_storage: binding_array<texture_storage_2d<rgba32float, write>, 5>;
-  │                                    ^^^^^^^^^^^^^ the `wgpu_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                    ^^^^^^^^^^^^^ the `etalon_binding_array` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_binding_array;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_binding_array;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5512,7 +5512,7 @@ var<storage, read> storage_array: binding_array<Buffer, 5>;"#,
 fn binding_array_requires_capability() {
     check_validation! {
         r#"
-            enable wgpu_binding_array;
+            enable etalon_binding_array;
             struct Buffer { data: u32 }
             @group(0) @binding(0)
             var<storage> storage_array: binding_array<Buffer, 10>;
@@ -5527,7 +5527,7 @@ fn binding_array_requires_capability() {
 
     check_validation! {
         r#"
-            enable wgpu_binding_array;
+            enable etalon_binding_array;
             struct Buffer { data: u32 }
             @group(0) @binding(0)
             var<uniform> uniform_array: binding_array<Buffer, 10>;
@@ -5542,7 +5542,7 @@ fn binding_array_requires_capability() {
 
     check_validation! {
         r#"
-            enable wgpu_binding_array;
+            enable etalon_binding_array;
             @group(0) @binding(0)
             var storage_texture_array: binding_array<texture_storage_2d<rgba8unorm, write>, 10>;
         "#:
@@ -5556,7 +5556,7 @@ fn binding_array_requires_capability() {
 
     check_validation! {
         r#"
-            enable wgpu_binding_array;
+            enable etalon_binding_array;
             @group(0) @binding(0)
             var sampled_texture_array: binding_array<texture_2d<f32>, 10>;
         "#:
@@ -5570,7 +5570,7 @@ fn binding_array_requires_capability() {
 
     check_validation! {
         r#"
-            enable wgpu_binding_array;
+            enable etalon_binding_array;
             @group(0) @binding(0)
             var sampler_array: binding_array<sampler, 10>;
         "#:
@@ -5585,7 +5585,7 @@ fn binding_array_requires_capability() {
     // Binding arrays of external textures are not yet supported.
     check_validation! {
         r#"
-            enable wgpu_binding_array;
+            enable etalon_binding_array;
             @group(0) @binding(0)
             var external_texture_array: binding_array<texture_external, 10>;
         "#:
@@ -5599,8 +5599,8 @@ fn binding_array_requires_capability() {
     // Binding arrays of acceleration structures require a capability.
     check_validation! {
         r#"
-            enable wgpu_binding_array;
-            enable wgpu_ray_query;
+            enable etalon_binding_array;
+            enable etalon_ray_query;
             @group(0) @binding(0)
             var acc_struct_array: binding_array<acceleration_structure, 10>;
         "#:
@@ -5629,13 +5629,13 @@ fn cooperative_matrix_enable_extension() {
 "#
             ),
             &format!(
-                r#"error: the `wgpu_cooperative_matrix` enable extension is not enabled
+                r#"error: the `etalon_cooperative_matrix` enable extension is not enabled
   ┌─ wgsl:2:12
   │
 2 │     var a: {ty}<f32, A>;
-  │            {carets} the `wgpu_cooperative_matrix` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │            {carets} the `etalon_cooperative_matrix` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_cooperative_matrix;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_cooperative_matrix;` at the top of the shader, before any other items.
 
 "#,
             ),
@@ -5655,13 +5655,13 @@ fn cooperative_matrix_enable_extension() {
 "#,
             ),
             &format!(
-                r#"error: the `wgpu_cooperative_matrix` enable extension is not enabled
+                r#"error: the `etalon_cooperative_matrix` enable extension is not enabled
   ┌─ wgsl:2:13
   │
 2 │     let a = {ty}<f32, A>();
-  │             {carets}^^^^^^^^ the `wgpu_cooperative_matrix` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │             {carets}^^^^^^^^ the `etalon_cooperative_matrix` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_cooperative_matrix;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_cooperative_matrix;` at the top of the shader, before any other items.
 
 "#,
             ),
@@ -5689,13 +5689,13 @@ fn mesh_shader_enable_extension() {
             return vec3(1u, 1u, 1u);
         }
         "#,
-        r#"error: the `wgpu_mesh_shader` enable extension is not enabled
+        r#"error: the `etalon_mesh_shader` enable extension is not enabled
   ┌─ wgsl:1:2
   │
 1 │ @task @workgroup_size(1)
-  │  ^^^^ the `wgpu_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │  ^^^^ the `etalon_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_mesh_shader;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_mesh_shader;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::EntryPoint {
@@ -5712,13 +5712,13 @@ fn mesh_shader_enable_extension() {
         @mesh(mesh_output) @workgroup_size(1)
         fn main() {}
         "#,
-        r#"error: the `wgpu_mesh_shader` enable extension is not enabled
+        r#"error: the `etalon_mesh_shader` enable extension is not enabled
   ┌─ wgsl:3:10
   │
 3 │         @mesh(mesh_output) @workgroup_size(1)
-  │          ^^^^ the `wgpu_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │          ^^^^ the `etalon_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_mesh_shader;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_mesh_shader;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::EntryPoint {
@@ -5736,13 +5736,13 @@ fn mesh_shader_enable_extension() {
         @fragment
         fn main(input: FragInput) {}
         "#,
-        r#"error: the `wgpu_mesh_shader` enable extension is not enabled
+        r#"error: the `etalon_mesh_shader` enable extension is not enabled
   ┌─ wgsl:2:27
   │
 2 │             @location(0) @per_primitive value: f32,
-  │                           ^^^^^^^^^^^^^ the `wgpu_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                           ^^^^^^^^^^^^^ the `etalon_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_mesh_shader;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_mesh_shader;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::EntryPoint {
@@ -5764,13 +5764,13 @@ fn mesh_shader_enable_extension() {
         r#"@compute @workgroup_size(1) @payload(foo)
         fn main() {}
         "#,
-        r#"error: the `wgpu_mesh_shader` enable extension is not enabled
+        r#"error: the `etalon_mesh_shader` enable extension is not enabled
   ┌─ wgsl:1:30
   │
 1 │ @compute @workgroup_size(1) @payload(foo)
-  │                              ^^^^^^^ the `wgpu_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                              ^^^^^^^ the `etalon_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_mesh_shader;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_mesh_shader;` at the top of the shader, before any other items.
 
 "#,
     );
@@ -5785,13 +5785,13 @@ fn mesh_shader_enable_extension() {
             taskPayload.dummy = 1u;
         }
         "#,
-        r#"error: the `wgpu_mesh_shader` enable extension is not enabled
+        r#"error: the `etalon_mesh_shader` enable extension is not enabled
   ┌─ wgsl:2:13
   │
 2 │         var<task_payload> taskPayload: Payload;
-  │             ^^^^^^^^^^^^ the `wgpu_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │             ^^^^^^^^^^^^ the `etalon_mesh_shader` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_mesh_shader;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_mesh_shader;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::GlobalVariable {
@@ -5814,13 +5814,13 @@ fn fs_main(@location(0) @interpolate(per_vertex) v: array<f32, 3>) -> @location(
 }
 
         "#,
-        r#"error: the `wgpu_per_vertex` enable extension is not enabled
+        r#"error: the `etalon_per_vertex` enable extension is not enabled
   ┌─ wgsl:2:38
   │
 2 │ fn fs_main(@location(0) @interpolate(per_vertex) v: array<f32, 3>) -> @location(0) vec4<f32> {
-  │                                      ^^^^^^^^^^ the `wgpu_per_vertex` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │                                      ^^^^^^^^^^ the `etalon_per_vertex` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_per_vertex;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_per_vertex;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::EntryPoint {
@@ -5845,13 +5845,13 @@ fn main() {
 }
 
         "#,
-        r#"error: the `wgpu_debug_printf` enable extension is not enabled
+        r#"error: the `etalon_debug_printf` enable extension is not enabled
   ┌─ wgsl:3:5
   │
 3 │     debugPrintf("debug value: %d", 1i);
-  │     ^^^^^^^^^^^ the `wgpu_debug_printf` "Enable Extension" is needed for this functionality, but it is not currently enabled.
+  │     ^^^^^^^^^^^ the `etalon_debug_printf` "Enable Extension" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_debug_printf;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_debug_printf;` at the top of the shader, before any other items.
 
 "#,
         Err(naga::valid::ValidationError::EntryPoint {
@@ -5866,7 +5866,7 @@ fn main() {
 #[test]
 fn debug_printf_rejects_string_literal_outside_call() {
     check_error_matches(
-        r#"enable wgpu_debug_printf;
+        r#"enable etalon_debug_printf;
 
 @compute @workgroup_size(1)
 fn main() {
@@ -5880,7 +5880,7 @@ fn main() {
 #[test]
 fn debug_printf_rejects_non_literal_format() {
     check_error_matches(
-        r#"enable wgpu_debug_printf;
+        r#"enable etalon_debug_printf;
 
 @compute @workgroup_size(1)
 fn main() {
@@ -5894,7 +5894,7 @@ fn main() {
 #[test]
 fn debug_printf_rejects_vector_argument() {
     check_validation! {
-        r#"enable wgpu_debug_printf;
+        r#"enable etalon_debug_printf;
 
 @compute @workgroup_size(1)
 fn main() {
@@ -5955,7 +5955,7 @@ fn check_ray_tracing_pipeline_hit_barycentrics_stage() {
     for stage in ["@ray_generation", "@miss @incoming_payload(incoming)"] {
         check_one_validation!(
             &format!(
-                "enable wgpu_ray_tracing_pipeline;
+                "enable etalon_ray_tracing_pipeline;
             var<incoming_ray_payload> incoming: u32;
 
             {stage} fn main(@builtin(hit_barycentrics) bary: vec2<f32>) {{}}"
@@ -5979,13 +5979,13 @@ fn check_ray_tracing_pipeline_ray_generation() {
             Capabilities::RAY_TRACING_PIPELINE,
             "@ray_generation
                 fn main() {{}}",
-            "error: the `wgpu_ray_tracing_pipeline` enable extension is not enabled
+            "error: the `etalon_ray_tracing_pipeline` enable extension is not enabled
   ┌─ wgsl:1:2
   │
 1 │ @ray_generation
-  │  ^^^^^^^^^^^^^^ the `wgpu_ray_tracing_pipeline` \"Enable Extension\" is needed for this functionality, but it is not currently enabled.
+  │  ^^^^^^^^^^^^^^ the `etalon_ray_tracing_pipeline` \"Enable Extension\" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_tracing_pipeline;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_tracing_pipeline;` at the top of the shader, before any other items.
 
 ",
             Err(naga::valid::ValidationError::EntryPoint {
@@ -6003,13 +6003,13 @@ fn check_ray_tracing_pipeline_payload() {
         check_extension_validation!(
             Capabilities::RAY_TRACING_PIPELINE,
             &format!("var<{space}> payload: u32;"),
-            &format!("error: the `wgpu_ray_tracing_pipeline` enable extension is not enabled
+            &format!("error: the `etalon_ray_tracing_pipeline` enable extension is not enabled
   ┌─ wgsl:1:5
   │
 1 │ var<{space}> payload: u32;
-  │     {space_arrows} the `wgpu_ray_tracing_pipeline` \"Enable Extension\" is needed for this functionality, but it is not currently enabled.
+  │     {space_arrows} the `etalon_ray_tracing_pipeline` \"Enable Extension\" is needed for this functionality, but it is not currently enabled.
   │
-  = note: You can enable this extension by adding `enable wgpu_ray_tracing_pipeline;` at the top of the shader, before any other items.
+  = note: You can enable this extension by adding `enable etalon_ray_tracing_pipeline;` at the top of the shader, before any other items.
 
 "),
             Err(naga::valid::ValidationError::GlobalVariable {
@@ -6026,11 +6026,11 @@ fn check_ray_tracing_pipeline_incoming_payload_required() {
         // ascii is a byte per char so length is fine
         let stage_arrows = "^".to_string().repeat(stage.len());
         check(
-            &format!("enable wgpu_ray_tracing_pipeline; @{stage} fn main() {{}}"),
+            &format!("enable etalon_ray_tracing_pipeline; @{stage} fn main() {{}}"),
             &format!("error: incoming payload is missing on a `closest_hit`, `any_hit` or `miss` shader entry point
   ┌─ wgsl:1:36
   │
-1 │ enable wgpu_ray_tracing_pipeline; @{stage} fn main() {{}}
+1 │ enable etalon_ray_tracing_pipeline; @{stage} fn main() {{}}
   │                                    {stage_arrows} must be paired with a `@incoming_payload` attribute
 
 "),
@@ -6056,7 +6056,7 @@ fn check_ray_tracing_pipeline_payload_disallowed() {
     ] {
         check_one_validation!(
             &format!(
-                "enable wgpu_ray_tracing_pipeline;
+                "enable etalon_ray_tracing_pipeline;
             @group(0) @binding(0) var acc_struct: acceleration_structure;
             var<ray_payload> payload: u32;
 
@@ -6156,7 +6156,7 @@ fn bitwise_shift_errors() {
 
     // (CTS has more 32-bit test cases)
 
-    // Const evaluation of `i64` and `u64` is not implemented, https://github.com/gfx-rs/wgpu/issues/8972
+    // Const evaluation of `i64` and `u64` is not implemented, https://github.com/mediaprophet/etalon/issues/8972
 
     // 64-bit runtime by const < bitwidth
     check_success("fn foo() { var x: u64; var n = x << 63; }");
@@ -6283,7 +6283,7 @@ fn ray_query_store() {
     // ray queries cannot be stored to despite them being a `var`
     check_validation! {
         r#"
-            enable wgpu_ray_query;
+            enable etalon_ray_query;
 
             @compute @workgroup_size(1)
             fn main() {
@@ -6308,7 +6308,7 @@ fn ray_query_initializer() {
     // ray queries cannot have initializers
     check_validation! {
         r#"
-            enable wgpu_ray_query;
+            enable etalon_ray_query;
 
             @compute @workgroup_size(1)
             fn main() {
@@ -6333,7 +6333,7 @@ fn ray_query_initializer() {
 fn ray_query_let() {
     check_error_matches(
         "
-            enable wgpu_ray_query;
+            enable etalon_ray_query;
 
             @compute @workgroup_size(1)
             fn main() {

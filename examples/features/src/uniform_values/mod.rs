@@ -18,9 +18,9 @@
 
 use std::{future::Future, sync::Arc};
 // We won't bring StorageBuffer into scope as that might be too easy to confuse
-// with actual GPU-allocated wgpu storage buffers.
+// with actual GPU-allocated etalon storage buffers.
 use encase::ShaderType;
-use wgpu::CurrentSurfaceTexture;
+use etalon::CurrentSurfaceTexture;
 use winit::{
     application::ApplicationHandler,
     event::{KeyEvent, WindowEvent},
@@ -96,80 +96,80 @@ impl Default for ShaderState {
     }
 }
 
-struct WgpuContext {
-    pub instance: wgpu::Instance,
+struct etalonContext {
+    pub instance: etalon::Instance,
     pub window: Arc<Window>,
-    pub surface: wgpu::Surface<'static>,
-    pub surface_config: wgpu::SurfaceConfiguration,
-    pub device: wgpu::Device,
-    pub queue: wgpu::Queue,
-    pub pipeline: wgpu::RenderPipeline,
-    pub bind_group: wgpu::BindGroup,
-    pub uniform_buffer: wgpu::Buffer,
+    pub surface: etalon::Surface<'static>,
+    pub surface_config: etalon::SurfaceConfiguration,
+    pub device: etalon::Device,
+    pub queue: etalon::Queue,
+    pub pipeline: etalon::RenderPipeline,
+    pub bind_group: etalon::BindGroup,
+    pub uniform_buffer: etalon::Buffer,
 }
 
-impl WgpuContext {
+impl etalonContext {
     async fn new(
         window: Arc<Window>,
         display_handle: winit::event_loop::OwnedDisplayHandle,
-    ) -> WgpuContext {
+    ) -> etalonContext {
         let size = window.inner_size();
 
-        let instance = wgpu::Instance::new(
-            wgpu::InstanceDescriptor::new_with_display_handle_from_env(Box::new(display_handle)),
+        let instance = etalon::Instance::new(
+            etalon::InstanceDescriptor::new_with_display_handle_from_env(Box::new(display_handle)),
         );
         let surface = instance.create_surface(window.clone()).unwrap();
         let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::HighPerformance,
+            .request_adapter(&etalon::RequestAdapterOptions {
+                power_preference: etalon::PowerPreference::HighPerformance,
                 compatible_surface: Some(&surface),
                 ..Default::default()
             })
             .await
             .unwrap();
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor {
+            .request_device(&etalon::DeviceDescriptor {
                 label: None,
-                required_features: wgpu::Features::empty(),
-                required_limits: wgpu::Limits::downlevel_defaults(),
-                default_queue: wgpu::QueueDescriptor { label: None },
-                experimental_features: wgpu::ExperimentalFeatures::disabled(),
-                memory_hints: wgpu::MemoryHints::MemoryUsage,
-                trace: wgpu::Trace::Off,
+                required_features: etalon::Features::empty(),
+                required_limits: etalon::Limits::downlevel_defaults(),
+                default_queue: etalon::QueueDescriptor { label: None },
+                experimental_features: etalon::ExperimentalFeatures::disabled(),
+                memory_hints: etalon::MemoryHints::MemoryUsage,
+                trace: etalon::Trace::Off,
             })
             .await
             .unwrap();
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
         // (2)
-        let uniform_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let uniform_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
             size: size_of::<ShaderState>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         // (3)
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: None,
-            entries: &[wgpu::BindGroupLayoutEntry {
+            entries: &[etalon::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
+                visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
                 count: None,
             }],
         });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                resource: etalon::BindingResource::Buffer(etalon::BufferBinding {
                     buffer: &uniform_buffer,
                     offset: 0,
                     size: None,
@@ -177,7 +177,7 @@ impl WgpuContext {
             }],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             // (4)
             bind_group_layouts: &[Some(&bind_group_layout)],
@@ -187,24 +187,24 @@ impl WgpuContext {
         let swapchain_capabilities = surface.get_capabilities(&adapter);
         let swapchain_format = swapchain_capabilities.formats[0];
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(swapchain_format.into())],
             }),
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: etalon::PrimitiveState::default(),
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
@@ -214,7 +214,7 @@ impl WgpuContext {
         surface.configure(&device, &surface_config);
 
         // (5)
-        WgpuContext {
+        etalonContext {
             instance,
             window,
             surface,
@@ -235,7 +235,7 @@ impl WgpuContext {
 }
 
 enum UniformAction {
-    Initialized(WgpuContext),
+    Initialized(etalonContext),
 }
 
 #[expect(clippy::large_enum_variant)]
@@ -243,7 +243,7 @@ enum RunState {
     Uninitialized,
     Loading,
     Running {
-        wgpu_ctx: WgpuContext,
+        etalon_ctx: etalonContext,
         // (6)
         shader_state: ShaderState,
     },
@@ -306,16 +306,16 @@ impl ApplicationHandler<UniformAction> for App {
         let proxy = self.proxy.clone();
 
         spawn(async move {
-            let wgpu_ctx = WgpuContext::new(window, display_handle).await;
-            let _ = proxy.send_event(UniformAction::Initialized(wgpu_ctx));
+            let etalon_ctx = etalonContext::new(window, display_handle).await;
+            let _ = proxy.send_event(UniformAction::Initialized(etalon_ctx));
         });
     }
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: UniformAction) {
         match event {
-            UniformAction::Initialized(wgpu_ctx) => {
+            UniformAction::Initialized(etalon_ctx) => {
                 self.state = RunState::Running {
-                    wgpu_ctx,
+                    etalon_ctx,
                     shader_state: ShaderState::default(),
                 };
                 if let Some(window) = &self.window {
@@ -336,7 +336,7 @@ impl ApplicationHandler<UniformAction> for App {
         event: WindowEvent,
     ) {
         let RunState::Running {
-            wgpu_ctx,
+            etalon_ctx,
             shader_state,
         } = &mut self.state
         else {
@@ -388,13 +388,13 @@ impl ApplicationHandler<UniformAction> for App {
                 }
             }
             WindowEvent::Resized(new_size) => {
-                wgpu_ctx.resize(new_size);
+                etalon_ctx.resize(new_size);
                 if let Some(window) = &self.window {
                     window.request_redraw();
                 }
             }
             WindowEvent::RedrawRequested => {
-                let frame = match wgpu_ctx.surface.get_current_texture() {
+                let frame = match etalon_ctx.surface.get_current_texture() {
                     CurrentSurfaceTexture::Success(frame) => frame,
                     CurrentSurfaceTexture::Timeout | CurrentSurfaceTexture::Occluded => {
                         if let Some(window) = &self.window {
@@ -405,18 +405,18 @@ impl ApplicationHandler<UniformAction> for App {
                     CurrentSurfaceTexture::Suboptimal(texture) => {
                         drop(texture);
 
-                        wgpu_ctx
+                        etalon_ctx
                             .surface
-                            .configure(&wgpu_ctx.device, &wgpu_ctx.surface_config);
+                            .configure(&etalon_ctx.device, &etalon_ctx.surface_config);
                         if let Some(window) = &self.window {
                             window.request_redraw();
                         }
                         return;
                     }
                     CurrentSurfaceTexture::Outdated => {
-                        wgpu_ctx
+                        etalon_ctx
                             .surface
-                            .configure(&wgpu_ctx.device, &wgpu_ctx.surface_config);
+                            .configure(&etalon_ctx.device, &etalon_ctx.surface_config);
                         if let Some(window) = &self.window {
                             window.request_redraw();
                         }
@@ -426,13 +426,13 @@ impl ApplicationHandler<UniformAction> for App {
                         unreachable!("No error scope registered, so validation errors will panic")
                     }
                     CurrentSurfaceTexture::Lost => {
-                        wgpu_ctx.surface = wgpu_ctx
+                        etalon_ctx.surface = etalon_ctx
                             .instance
-                            .create_surface(wgpu_ctx.window.clone())
+                            .create_surface(etalon_ctx.window.clone())
                             .unwrap();
-                        wgpu_ctx
+                        etalon_ctx
                             .surface
-                            .configure(&wgpu_ctx.device, &wgpu_ctx.surface_config);
+                            .configure(&etalon_ctx.device, &etalon_ctx.surface_config);
                         if let Some(window) = &self.window {
                             window.request_redraw();
                         }
@@ -442,30 +442,30 @@ impl ApplicationHandler<UniformAction> for App {
 
                 let view = frame
                     .texture
-                    .create_view(&wgpu::TextureViewDescriptor::default());
+                    .create_view(&etalon::TextureViewDescriptor::default());
 
                 // (8)
-                wgpu_ctx.queue.write_buffer(
-                    &wgpu_ctx.uniform_buffer,
+                etalon_ctx.queue.write_buffer(
+                    &etalon_ctx.uniform_buffer,
                     0,
                     &shader_state.as_wgsl_bytes().expect(
                         "Error in encase translating ShaderState \
                     struct to WGSL bytes.",
                     ),
                 );
-                let mut encoder = wgpu_ctx
+                let mut encoder = etalon_ctx
                     .device
-                    .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+                    .create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
                 {
-                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    let mut render_pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                         label: None,
-                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        color_attachments: &[Some(etalon::RenderPassColorAttachment {
                             view: &view,
                             depth_slice: None,
                             resolve_target: None,
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                                store: wgpu::StoreOp::Store,
+                            ops: etalon::Operations {
+                                load: etalon::LoadOp::Clear(etalon::Color::GREEN),
+                                store: etalon::StoreOp::Store,
                             },
                         })],
                         depth_stencil_attachment: None,
@@ -473,16 +473,16 @@ impl ApplicationHandler<UniformAction> for App {
                         timestamp_writes: None,
                         multiview_mask: None,
                     });
-                    render_pass.set_pipeline(&wgpu_ctx.pipeline);
+                    render_pass.set_pipeline(&etalon_ctx.pipeline);
                     // (9)
-                    render_pass.set_bind_group(0, Some(&wgpu_ctx.bind_group), &[]);
+                    render_pass.set_bind_group(0, Some(&etalon_ctx.bind_group), &[]);
                     render_pass.draw(0..3, 0..1);
                 }
-                wgpu_ctx.queue.submit(Some(encoder.finish()));
+                etalon_ctx.queue.submit(Some(encoder.finish()));
                 if let Some(window) = &self.window {
                     window.pre_present_notify();
                 }
-                wgpu_ctx.queue.present(frame);
+                etalon_ctx.queue.present(frame);
             }
             WindowEvent::Occluded(false) => {
                 if let Some(window) = &self.window {

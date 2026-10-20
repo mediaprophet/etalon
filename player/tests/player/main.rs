@@ -10,8 +10,8 @@
 
 #![cfg(not(target_arch = "wasm32"))]
 
-extern crate wgpu_core as wgc;
-extern crate wgpu_types as wgt;
+extern crate etalon_core as wgc;
+extern crate etalon_types as wgt;
 
 use player::Player;
 use std::{
@@ -215,7 +215,7 @@ mod tests {
     #[cfg_attr(miri, ignore)]
     #[test]
     fn test_api() {
-        // Millisecond timestamps; see <https://github.com/gfx-rs/wgpu/issues/9248>.
+        // Millisecond timestamps; see <https://github.com/mediaprophet/etalon/issues/9248>.
         env_logger::builder().format_timestamp_millis().init();
 
         Corpus::run_from(

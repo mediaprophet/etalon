@@ -5,7 +5,7 @@ This example renders a set of 16 windows, with a differently colored background
 ## To Run
 
 ```
-cargo run --bin wgpu-examples hello_windows
+cargo run --bin etalon-examples hello_windows
 ```
 
 ## Screenshots

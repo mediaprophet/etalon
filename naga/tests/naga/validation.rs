@@ -692,7 +692,7 @@ mod dummy_interpolation_shader {
             };
 
             let enable_extension = if interpolation == naga::Interpolation::PerVertex {
-                "enable wgpu_per_vertex;\n\n"
+                "enable etalon_per_vertex;\n\n"
             } else {
                 ""
             };

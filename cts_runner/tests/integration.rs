@@ -16,7 +16,7 @@ pub fn target_dir() -> PathBuf {
 }
 
 pub fn cts_runner_exe_path() -> PathBuf {
-    // Something like /Users/lucacasonato/src/wgpu/target/debug/cts_runner
+    // Something like /Users/lucacasonato/src/etalon/target/debug/cts_runner
     let mut p = target_dir().join("cts_runner");
     if cfg!(windows) {
         p.set_extension("exe");
@@ -123,7 +123,7 @@ fn features() -> Result<(), Error> {
         const adapter = await navigator.gpu.requestAdapter();
 
         if (adapter.features.has("mappable-primary-buffers")) {
-            throw new TypeError("Adapter should not report support for wgpu native-only features");
+            throw new TypeError("Adapter should not report support for etalon native-only features");
         }
     "#,
     )?;
@@ -134,7 +134,7 @@ fn features() -> Result<(), Error> {
     // serves to bridge the gap between the coverage provided by the CTS
     // ("feature must work if available") and our desired coverage ("feature
     // must be implemented and work"), in case we inadvertently stop reporting
-    // support for a feature. (There ought to also be relevant wgpu tests of the
+    // support for a feature. (There ought to also be relevant etalon tests of the
     // feature that would catch this, but better to be safe.)
     exec_js(
         r#"

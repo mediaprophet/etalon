@@ -5,5 +5,5 @@ This example renders a triangle to a window with mesh shaders, while showcasing 
 ## To Run
 
 ```
-cargo run --bin wgpu-examples mesh_shader
+cargo run --bin etalon-examples mesh_shader
 ```

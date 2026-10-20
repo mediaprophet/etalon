@@ -11,9 +11,9 @@ use core::fmt;
 /// example:
 ///
 /// ```
-/// # use wgpu_test::*;
+/// # use etalon_test::*;
 /// FailureCase {
-///     backends: Some(wgpu::Backends::DX12),
+///     backends: Some(etalon::Backends::DX12),
 ///     vendor: None,
 ///     adapter: Some("RTX"),
 ///     driver: None,
@@ -35,14 +35,14 @@ use core::fmt;
 ///
 /// [skip]: super::TestParameters::skip
 /// [expect_fail]: super::TestParameters::expect_fail
-/// [`AdapterInfo`]: wgpu::AdapterInfo
+/// [`AdapterInfo`]: etalon::AdapterInfo
 #[derive(Default, Clone, PartialEq)]
 pub struct FailureCase {
     /// Backends expected to fail, or `None` for any backend.
     ///
     /// If this is `None`, or if the test is using one of the backends
     /// in `backends`, then this `FailureCase` applies.
-    pub backends: Option<wgpu::Backends>,
+    pub backends: Option<etalon::Backends>,
 
     /// Vendor expected to fail, or `None` for any vendor.
     ///
@@ -50,7 +50,7 @@ pub struct FailureCase {
     /// usually the PCI device id. Otherwise, this `FailureCase`
     /// applies regardless of vendor.
     ///
-    /// [`AdapterInfo::device`]: wgpu::AdapterInfo::device
+    /// [`AdapterInfo::device`]: etalon::AdapterInfo::device
     pub vendor: Option<u32>,
 
     /// Name of adapter expected to fail, or `None` for any adapter name.
@@ -59,7 +59,7 @@ pub struct FailureCase {
     /// [`AdapterInfo::name`], then this `FailureCase` applies. If
     /// this is `None`, the adapter name isn't considered.
     ///
-    /// [`AdapterInfo::name`]: wgpu::AdapterInfo::name
+    /// [`AdapterInfo::name`]: etalon::AdapterInfo::name
     pub adapter: Option<&'static str>,
 
     /// Name of driver expected to fail, or `None` for any driver name.
@@ -68,7 +68,7 @@ pub struct FailureCase {
     /// [`AdapterInfo::driver`], then this `FailureCase` applies. If
     /// this is `None`, the driver name isn't considered.
     ///
-    /// [`AdapterInfo::driver`]: wgpu::AdapterInfo::driver
+    /// [`AdapterInfo::driver`]: etalon::AdapterInfo::driver
     pub driver: Option<&'static str>,
 
     /// Reason why the test is expected to fail.
@@ -96,13 +96,13 @@ impl FailureCase {
     /// This case applies to no tests.
     pub fn never() -> Self {
         FailureCase {
-            backends: Some(wgpu::Backends::empty()),
+            backends: Some(etalon::Backends::empty()),
             ..FailureCase::default()
         }
     }
 
     /// Tests running on any of the given backends.
-    pub fn backend(backends: wgpu::Backends) -> Self {
+    pub fn backend(backends: etalon::Backends) -> Self {
         FailureCase {
             backends: Some(backends),
             ..FailureCase::default()
@@ -115,7 +115,7 @@ impl FailureCase {
     /// of the adapter's [`AdapterInfo::name`]. The comparison is
     /// case-insensitive.
     ///
-    /// [`AdapterInfo::name`]: wgpu::AdapterInfo::name
+    /// [`AdapterInfo::name`]: etalon::AdapterInfo::name
     pub fn adapter(adapter: &'static str) -> Self {
         FailureCase {
             adapter: Some(adapter),
@@ -130,8 +130,8 @@ impl FailureCase {
     /// the adapter's [`AdapterInfo::name`]. The string comparison is
     /// case-insensitive.
     ///
-    /// [`AdapterInfo::name`]: wgpu::AdapterInfo::name
-    pub fn backend_adapter(backends: wgpu::Backends, adapter: &'static str) -> Self {
+    /// [`AdapterInfo::name`]: etalon::AdapterInfo::name
+    pub fn backend_adapter(backends: etalon::Backends, adapter: &'static str) -> Self {
         FailureCase {
             backends: Some(backends),
             adapter: Some(adapter),
@@ -142,7 +142,7 @@ impl FailureCase {
     /// Tests running under WebGL.
     pub fn webgl2() -> Self {
         #[cfg(target_arch = "wasm32")]
-        let case = FailureCase::backend(wgpu::Backends::GL);
+        let case = FailureCase::backend(etalon::Backends::GL);
         #[cfg(not(target_arch = "wasm32"))]
         let case = FailureCase::never();
         case
@@ -151,7 +151,7 @@ impl FailureCase {
     /// Tests running on the MoltenVK Vulkan driver on macOS.
     pub fn molten_vk() -> Self {
         FailureCase {
-            backends: Some(wgpu::Backends::VULKAN),
+            backends: Some(etalon::Backends::VULKAN),
             driver: Some("MoltenVK"),
             ..FailureCase::default()
         }
@@ -160,7 +160,7 @@ impl FailureCase {
     /// Tests running on the KosmicKrisp Vulkan driver on macOS.
     pub fn kosmic_krisp() -> Self {
         FailureCase {
-            backends: Some(wgpu::Backends::VULKAN),
+            backends: Some(etalon::Backends::VULKAN),
             driver: Some("KosmicKrisp"),
             ..FailureCase::default()
         }
@@ -174,14 +174,14 @@ impl FailureCase {
     /// Tests running on macOS (both Vulkan and Metal).
     pub fn mac() -> Vec<Self> {
         let mut cases = Self::mac_vulkan();
-        cases.push(FailureCase::backend(wgpu::Backends::METAL));
+        cases.push(FailureCase::backend(etalon::Backends::METAL));
         cases
     }
 
     pub fn lvp_poison_memory(message: &'static str) -> Self {
         if let Ok("true") = std::env::var("LVP_POISON_MEMORY").as_deref() {
             FailureCase {
-                backends: Some(wgpu::Backends::VULKAN),
+                backends: Some(etalon::Backends::VULKAN),
                 driver: Some("llvmpipe"),
                 reasons: vec![FailureReason::panic().with_message(message)],
                 ..FailureCase::default()
@@ -258,12 +258,12 @@ impl FailureCase {
     /// matching.
     pub(crate) fn applies_to_adapter(
         &self,
-        info: &wgpu::AdapterInfo,
+        info: &etalon::AdapterInfo,
     ) -> Option<FailureApplicationReasons> {
         let mut reasons = FailureApplicationReasons::empty();
 
         if let Some(backends) = self.backends {
-            if !backends.contains(wgpu::Backends::from(info.backend)) {
+            if !backends.contains(etalon::Backends::from(info.backend)) {
                 return None;
             }
             reasons.set(FailureApplicationReasons::BACKEND, true);
@@ -355,7 +355,7 @@ impl FailureReason {
         message: None,
     };
 
-    /// Match an error caught by [`wgpu_hal::VALIDATION_CANARY`].
+    /// Match an error caught by [`etalon_hal::VALIDATION_CANARY`].
     ///
     /// These are errors from platform debug/validation layers, _not_
     /// WebGPU validation errors.

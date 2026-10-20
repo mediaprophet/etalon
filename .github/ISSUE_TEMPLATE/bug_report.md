@@ -6,7 +6,7 @@ labels: bug
 assignees: ""
 ---
 
-<!-- Thank you for filing this! Please read the [debugging tips](https://docs.rs/wgpu/latest/wgpu/documentation/debugging/debugging_applications/index.html).
+<!-- Thank you for filing this! Please read the [debugging tips](https://docs.rs/etalon/latest/etalon/documentation/debugging/debugging_applications/index.html).
 That may let you investigate on your own, or provide additional information that helps us to assist.-->
 
 **Description**
@@ -24,4 +24,4 @@ Validation logs can be attached in case there are warnings and errors.
 Zip-compressed API traces and GPU captures can also land here.
 
 **Platform**
-Information about your OS, version of `wgpu`, your tech stack, etc.
+Information about your OS, version of `etalon`, your tech stack, etc.

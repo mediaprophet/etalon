@@ -1,4 +1,4 @@
-//! Test utilities for the wgpu repository.
+//! Test utilities for the etalon repository.
 
 #![allow(clippy::arc_with_non_send_sync, reason = "False positive on wasm")]
 
@@ -35,11 +35,11 @@ pub use run::{execute_test, TestingContext};
 /// cases should call `fail` with a closure that calls `finish()`, not with a
 /// closure that encodes the actual command.
 pub fn fail<T>(
-    device: &wgpu::Device,
+    device: &etalon::Device,
     callback: impl FnOnce() -> T,
     expected_msg_substring: Option<&str>,
 ) -> T {
-    let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
+    let scope = device.push_error_scope(etalon::ErrorFilter::Validation);
     let result = callback();
     let validation_error = pollster::block_on(scope.pop())
         .expect("expected validation error in callback, but no validation error was emitted");
@@ -62,12 +62,12 @@ pub fn fail<T>(
 
 /// Run some code in an error scope and assert that validation succeeds.
 #[track_caller]
-pub fn valid<T>(device: &wgpu::Device, callback: impl FnOnce() -> T) -> T {
-    let scope = device.push_error_scope(wgpu::ErrorFilter::Validation);
+pub fn valid<T>(device: &etalon::Device, callback: impl FnOnce() -> T) -> T {
+    let scope = device.push_error_scope(etalon::ErrorFilter::Validation);
     let result = callback();
     if let Some(error) = pollster::block_on(scope.pop()) {
         panic!(
-            "`valid` block at {} encountered wgpu error:\n{error}",
+            "`valid` block at {} encountered etalon error:\n{error}",
             std::panic::Location::caller()
         );
     }
@@ -78,7 +78,7 @@ pub fn valid<T>(device: &wgpu::Device, callback: impl FnOnce() -> T) -> T {
 /// Run some code in an error scope and assert that validation succeeds or fails depending on the
 /// provided `should_fail` boolean.
 pub fn fail_if<T>(
-    device: &wgpu::Device,
+    device: &etalon::Device,
     should_fail: bool,
     callback: impl FnOnce() -> T,
     expected_msg_substring: Option<&'static str>,
@@ -91,9 +91,9 @@ pub fn fail_if<T>(
 }
 
 fn did_fill_error_scope<T>(
-    device: &wgpu::Device,
+    device: &etalon::Device,
     callback: impl FnOnce() -> T,
-    filter: wgpu::ErrorFilter,
+    filter: etalon::ErrorFilter,
 ) -> (bool, T) {
     let scope = device.push_error_scope(filter);
     let result = callback();
@@ -104,18 +104,18 @@ fn did_fill_error_scope<T>(
 }
 
 /// Returns true if the provided callback fails validation.
-pub fn did_fail<T>(device: &wgpu::Device, callback: impl FnOnce() -> T) -> (bool, T) {
-    did_fill_error_scope(device, callback, wgpu::ErrorFilter::Validation)
+pub fn did_fail<T>(device: &etalon::Device, callback: impl FnOnce() -> T) -> (bool, T) {
+    did_fill_error_scope(device, callback, etalon::ErrorFilter::Validation)
 }
 
 /// Returns true if the provided callback encounters an out-of-memory error.
-pub fn did_oom<T>(device: &wgpu::Device, callback: impl FnOnce() -> T) -> (bool, T) {
-    did_fill_error_scope(device, callback, wgpu::ErrorFilter::OutOfMemory)
+pub fn did_oom<T>(device: &etalon::Device, callback: impl FnOnce() -> T) -> (bool, T) {
+    did_fill_error_scope(device, callback, etalon::ErrorFilter::OutOfMemory)
 }
 
 /// Adds the necessary main function for our gpu test harness.
 ///
-/// Takes a single argument which is an expression that evaluates to `Vec<wgpu_test::GpuTestInitializer>`.
+/// Takes a single argument which is an expression that evaluates to `Vec<etalon_test::GpuTestInitializer>`.
 #[macro_export]
 macro_rules! gpu_test_main {
     ($tests: expr) => {

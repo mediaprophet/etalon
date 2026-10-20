@@ -217,19 +217,19 @@ pub enum VertexFormat {
     Sint32x4 = 38,
     /// One double-precision float (f64). `f32` in shaders. Requires [`Features::VERTEX_ATTRIBUTE_64BIT`].
     ///
-    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../wgpu/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
+    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../etalon/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
     Float64 = 39,
     /// Two double-precision floats (f64). `vec2<f32>` in shaders. Requires [`Features::VERTEX_ATTRIBUTE_64BIT`].
     ///
-    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../wgpu/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
+    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../etalon/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
     Float64x2 = 40,
     /// Three double-precision floats (f64). `vec3<f32>` in shaders. Requires [`Features::VERTEX_ATTRIBUTE_64BIT`].
     ///
-    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../wgpu/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
+    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../etalon/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
     Float64x3 = 41,
     /// Four double-precision floats (f64). `vec4<f32>` in shaders. Requires [`Features::VERTEX_ATTRIBUTE_64BIT`].
     ///
-    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../wgpu/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
+    /// [`Features::VERTEX_ATTRIBUTE_64BIT`]: ../etalon/struct.Features.html#associatedconstant.VERTEX_ATTRIBUTE_64BIT
     Float64x4 = 42,
     /// Three unsigned 10-bit integers and one 2-bit integer, packed into a 32-bit integer (u32). [0, 1023] and [0, 3] converted to float [0, 1] `vec4<f32>` in shaders.
     #[cfg_attr(
@@ -317,7 +317,7 @@ impl VertexFormat {
         }
     }
 
-    /// Returns the alignment required for `wgpu::BlasTriangleGeometry::vertex_stride`
+    /// Returns the alignment required for `etalon::BlasTriangleGeometry::vertex_stride`
     #[must_use]
     pub const fn acceleration_structure_stride_alignment(&self) -> u64 {
         match self {

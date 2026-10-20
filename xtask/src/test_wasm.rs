@@ -120,12 +120,12 @@ fn run_tests(
 ) -> anyhow::Result<()> {
     let bins = [
         Bin {
-            name: "wgpu-test",
-            build_args: vec!["--package", "wgpu-test", "--test", "wgpu-gpu"],
+            name: "etalon-test",
+            build_args: vec!["--package", "etalon-test", "--test", "etalon-gpu"],
         },
         Bin {
-            name: "wgpu-examples",
-            build_args: vec!["--package", "wgpu-examples"],
+            name: "etalon-examples",
+            build_args: vec!["--package", "etalon-examples"],
         },
     ];
 

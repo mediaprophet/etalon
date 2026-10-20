@@ -3,7 +3,7 @@
 ## To Run
 
 ```
-cargo run --bin wgpu-examples bunnymark
+cargo run --bin etalon-examples bunnymark
 ```
 
 ## Example output

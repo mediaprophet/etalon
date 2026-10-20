@@ -1,4 +1,4 @@
-This is an overview of how to run wgpu releases.
+This is an overview of how to run etalon releases.
 
 ## Structure
 
@@ -8,13 +8,13 @@ We do a patch releases as needed in the weeks between major releases. Once a new
 
 ## People
 
-Anyone in the @gfx-rs/wgpu team can perform these steps.
+Anyone in the @gfx-rs/etalon team can perform these steps.
 
 ## Major Release Process
 
 Approx 1 Week Before:
 
-- Determine if `glow` (@groves), `rspirv` (@gfx-rs/wgpu) or any other dependant crates will need a release. If so, coordinate with their maintainers.
+- Determine if `glow` (@groves), `rspirv` (@gfx-rs/etalon) or any other dependant crates will need a release. If so, coordinate with their maintainers.
 - Go through the changelog:
   - Re-categorize miscategorized items.
   - Edit major changes so a user can easily understand what they need to do.
@@ -24,7 +24,7 @@ Approx 1 Week Before:
 Day of Release:
 
 - Update the version number in the root `Cargo.toml` to the new version, this will update all crates to the new version.
-- Bump the wgpu dependency numbers in the following places:
+- Bump the etalon dependency numbers in the following places:
   - `Cargo.toml`
   - `examples/standalone/*`
   - `examples/bug-repro/*`
@@ -43,10 +43,10 @@ Day of Release:
   ```bash
     cargo publish --workspace --all-features --exclude deno_webgpu
   ```
-- If there were any newly published crates, ensure `github:gfx-rs:wgpu` is added as an owner of that crate.
+- If there were any newly published crates, ensure `github:gfx-rs:etalon` is added as an owner of that crate.
 - Create a new signed tag called `vX.Y.Z` and push it to the repo.
   - For each crate being released (viz., every `publish`-able crate that is not `deno*`), create a new tag of the form `{crate_name}-vX.Y.X`.
-- Create a new release on the `wgpu` repo with the changelog from this version, targeting that tag
+- Create a new release on the `etalon` repo with the changelog from this version, targeting that tag
 - Create a branch with the with the new version `vX` and push it to the repo.
   - On this branch, remove the [!NOTE] at the top of [examples/README.md].
 - Complete the release's milestone on GitHub.
@@ -58,15 +58,15 @@ Day of Release:
   - Crosspost to [r/rust_gamedev](https://www.reddit.com/r/rust_gamedev/).
     - Add an AMA comment.
   - Include the r/rust post shortlink in the following posts as well:
-  - [wgpu matrix](https://matrix.to/#/#wgpu:matrix.org)
-  - [Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ) in the #crates and #wgpu channel
+  - [etalon matrix](https://matrix.to/#/#etalon:matrix.org)
+  - [Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ) in the #crates and #etalon channel
   - [Bevy Discord](https://discord.com/invite/bevy) in the #rendering-dev channel
   - [Graphics Programming Discord](https://discord.gg/6mgNGk7) in the #webgpu channel
   - [Rust Community Discord](https://discord.gg/rust-lang-community) in the #games-and-graphics channel
 
 ## Patch Release Process
 
-- Enumerate all PRs that haven't been backported yet. These use the `PR: needs back-porting` label. [GH Link](https://github.com/gfx-rs/wgpu/pulls?q=sort%3Aupdated-desc+is%3Apr+label%3A%22PR%3A+needs+back-porting%22)
+- Enumerate all PRs that haven't been backported yet. These use the `PR: needs back-porting` label. [GH Link](https://github.com/gfx-rs/etalon/pulls?q=sort%3Aupdated-desc+is%3Apr+label%3A%22PR%3A+needs+back-porting%22)
 - On _your own branch_ based on the latest release branch. Cherry-pick the PRs that need to be backported. When modifying the commits, use --append to retain their original authorship.
 - Remove the `needs-backport` label from the PRs.
 - Fix the changelogs items and add a new header for the patch release with the release version and date.
@@ -81,7 +81,7 @@ Day of Release:
   ```bash
     cargo publish --workspace --all-features --exclude deno_webgpu
   ```
-- Create a new release on the `wgpu` repo with the relevant changelog included, based on a new tag called `vX.Y.Z` in the release branch.
+- Create a new release on the `etalon` repo with the relevant changelog included, based on a new tag called `vX.Y.Z` in the release branch.
   - For each crate released, also create a tag `{crate_name}-vX.Y.Z`.
 - Backport the changelog and version bumps to the `trunk` branch.
   - Ensure that any items in the newly-released changelog don't appear in the "unreleased" section of the trunk changelog.

@@ -34,7 +34,7 @@ const int shr_iaiai = 0;
 const int shr_iai_u_1 = 0;
 const uint shr_uaiai = 0u;
 const uint shr_uai_u = 0u;
-const int wgpu_4492_ = -2147483648;
+const int etalon_4492_ = -2147483648;
 
 shared uint a[64];
 
@@ -94,11 +94,11 @@ void runtime_values() {
     return;
 }
 
-void wgpu_4445_() {
+void etalon_4445_() {
     return;
 }
 
-void wgpu_4435_() {
+void etalon_4435_() {
     uint y = a[(1 - 1)];
     return;
 }
@@ -110,8 +110,8 @@ void main() {
     memoryBarrierShared();
     barrier();
     runtime_values();
-    wgpu_4445_();
-    wgpu_4435_();
+    etalon_4445_();
+    etalon_4435_();
     return;
 }
 

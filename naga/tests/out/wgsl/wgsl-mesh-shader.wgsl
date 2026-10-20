@@ -1,4 +1,4 @@
-enable wgpu_mesh_shader;
+enable etalon_mesh_shader;
 
 struct TaskPayload {
     colorMask: vec4<f32>,

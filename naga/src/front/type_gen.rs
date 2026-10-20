@@ -389,7 +389,7 @@ impl crate::Module {
         );
         self.special_types.external_texture_transfer_function = Some(transfer_fn_handle);
 
-        // This definition must match [`wgpu_core::device::resource::ExternalTextureParams`].
+        // This definition must match [`etalon_core::device::resource::ExternalTextureParams`].
         let members: Box<[_; P::COUNT]> = Box::new([
             crate::StructMember {
                 name: Some(P::YuvConversionMatrix.name().to_string()),

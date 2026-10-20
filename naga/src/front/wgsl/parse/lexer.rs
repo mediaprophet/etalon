@@ -807,10 +807,10 @@ fn test_numbers() {
             Token::Number(Ok(Number::AbstractFloat(43.75))),
             Token::Number(Ok(Number::F32(16.))),
             Token::Number(Ok(Number::AbstractFloat(0.1875))),
-            // https://github.com/gfx-rs/wgpu/issues/7046
+            // https://github.com/mediaprophet/etalon/issues/7046
             Token::Number(Err(NumberError::NotRepresentable)), // Should be 0.75
             Token::Number(Ok(Number::AbstractFloat(0.12109375))),
-            // https://github.com/gfx-rs/wgpu/issues/7046
+            // https://github.com/mediaprophet/etalon/issues/7046
             Token::Number(Err(NumberError::NotRepresentable)), // Should be 12.5
         ],
     );

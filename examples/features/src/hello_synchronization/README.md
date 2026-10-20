@@ -8,7 +8,7 @@ This example is
 ## To Run
 
 ```
-cargo run --bin wgpu-examples hello_synchronization
+cargo run --bin etalon-examples hello_synchronization
 ```
 
 ## A Primer on WGSL Synchronization Functions

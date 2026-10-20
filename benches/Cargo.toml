@@ -1,8 +1,8 @@
 [package]
-name = "wgpu-benchmark"
+name = "etalon-benchmark"
 version.workspace = true
 edition.workspace = true
-description = "wgpu benchmarking suite"
+description = "etalon benchmarking suite"
 homepage.workspace = true
 repository.workspace = true
 keywords.workspace = true
@@ -11,7 +11,7 @@ rust-version.workspace = true
 publish = false
 
 [[bench]]
-name = "wgpu-benchmark"
+name = "etalon-benchmark"
 harness = false
 
 [features]
@@ -53,4 +53,4 @@ naga-test = { workspace = true, features = [] }
 nanorand.workspace = true
 pollster.workspace = true
 rayon.workspace = true
-wgpu.workspace = true
+etalon.workspace = true

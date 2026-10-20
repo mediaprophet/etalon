@@ -67,6 +67,6 @@ jobs:
         with:
           token: ${{ secrets.WEB_DEPLOY }}
           folder: target/doc
-          repository-name: gfx-rs/wgpu-rs.github.io
+          repository-name: mediaprophet/etalon-rs.github.io
           branch: master
           target-folder: doc

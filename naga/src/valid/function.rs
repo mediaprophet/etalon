@@ -785,7 +785,7 @@ impl super::Validator {
         Ok(())
     }
 
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/gfx-rs/wgpu/issues/9456)
+    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
     fn validate_block_impl(
         &mut self,
         statements: &crate::Block,

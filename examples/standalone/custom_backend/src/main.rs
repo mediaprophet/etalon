@@ -1,7 +1,7 @@
 use std::marker::PhantomData;
 
 use custom::{Counter, CustomShaderModule};
-use wgpu::{DeviceDescriptor, RequestAdapterOptions};
+use etalon::{DeviceDescriptor, RequestAdapterOptions};
 
 mod custom;
 
@@ -10,8 +10,8 @@ async fn main() {
     let counter = Counter::new();
     {
         let custom_instance = custom::CustomInstance(counter.clone());
-        // wrap custom instance into wgpu abstraction
-        let instance = wgpu::Instance::from_custom(custom_instance);
+        // wrap custom instance into etalon abstraction
+        let instance = etalon::Instance::from_custom(custom_instance);
         assert_eq!(counter.count(), 2);
         // do work on instance (usually by passing it to other libs)
 
@@ -31,9 +31,9 @@ async fn main() {
             .unwrap();
         assert_eq!(counter.count(), 5);
 
-        let module = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let module = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("shader"),
-            source: wgpu::ShaderSource::Dummy(PhantomData),
+            source: etalon::ShaderSource::Dummy(PhantomData),
         });
 
         let custom_module = module.as_custom::<CustomShaderModule>().unwrap();
@@ -41,7 +41,7 @@ async fn main() {
         let _module_clone = module.clone();
         assert_eq!(counter.count(), 6);
 
-        let _pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let _pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: None,
             layout: None,
             module: &module,

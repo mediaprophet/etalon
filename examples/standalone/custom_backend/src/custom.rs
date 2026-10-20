@@ -2,7 +2,7 @@
 use std::pin::Pin;
 use std::sync::Arc;
 
-use wgpu::custom::{
+use etalon::custom::{
     AdapterInterface, ComputePipelineInterface, DeviceInterface, DispatchAdapter, DispatchBlas,
     DispatchDevice, DispatchQueue, DispatchShaderModule, DispatchSurface, InstanceInterface,
     QueueInterface, RequestAdapterFuture, ShaderModuleInterface,
@@ -25,7 +25,7 @@ impl Counter {
 pub struct CustomInstance(pub Counter);
 
 impl InstanceInterface for CustomInstance {
-    fn new(__desc: wgpu::InstanceDescriptor) -> Self
+    fn new(__desc: etalon::InstanceDescriptor) -> Self
     where
         Self: Sized,
     {
@@ -34,14 +34,14 @@ impl InstanceInterface for CustomInstance {
 
     unsafe fn create_surface(
         &self,
-        _target: wgpu::SurfaceTargetUnsafe,
-    ) -> Result<DispatchSurface, wgpu::CreateSurfaceError> {
+        _target: etalon::SurfaceTargetUnsafe,
+    ) -> Result<DispatchSurface, etalon::CreateSurfaceError> {
         unimplemented!()
     }
 
     fn request_adapter(
         &self,
-        _options: &wgpu::RequestAdapterOptions<'_, '_>,
+        _options: &etalon::RequestAdapterOptions<'_, '_>,
     ) -> std::pin::Pin<Box<dyn RequestAdapterFuture>> {
         Box::pin(std::future::ready(Ok(DispatchAdapter::custom(
             CustomAdapter(self.0.clone()),
@@ -52,14 +52,14 @@ impl InstanceInterface for CustomInstance {
         unimplemented!()
     }
 
-    fn wgsl_language_features(&self) -> wgpu::WgslLanguageFeatures {
+    fn wgsl_language_features(&self) -> etalon::WgslLanguageFeatures {
         unimplemented!()
     }
 
     fn enumerate_adapters(
         &self,
-        _backends: wgpu::Backends,
-    ) -> Pin<Box<dyn wgpu::custom::EnumerateAdapterFuture>> {
+        _backends: etalon::Backends,
+    ) -> Pin<Box<dyn etalon::custom::EnumerateAdapterFuture>> {
         unimplemented!()
     }
 }
@@ -70,17 +70,17 @@ struct CustomAdapter(Counter);
 impl AdapterInterface for CustomAdapter {
     fn request_device(
         &self,
-        desc: &wgpu::DeviceDescriptor<'_>,
-    ) -> Pin<Box<dyn wgpu::custom::RequestDeviceFuture>> {
+        desc: &etalon::DeviceDescriptor<'_>,
+    ) -> Pin<Box<dyn etalon::custom::RequestDeviceFuture>> {
         assert_eq!(desc.label, Some("device"));
-        let res: Result<_, wgpu::RequestDeviceError> = Ok((
+        let res: Result<_, etalon::RequestDeviceError> = Ok((
             DispatchDevice::custom(CustomDevice(self.0.clone())),
             DispatchQueue::custom(CustomQueue(self.0.clone())),
         ));
         Box::pin(std::future::ready(res))
     }
 
-    fn cooperative_matrix_properties(&self) -> Vec<wgpu::CooperativeMatrixProperties> {
+    fn cooperative_matrix_properties(&self) -> Vec<etalon::CooperativeMatrixProperties> {
         Vec::new()
     }
 
@@ -88,30 +88,30 @@ impl AdapterInterface for CustomAdapter {
         unimplemented!()
     }
 
-    fn features(&self) -> wgpu::Features {
+    fn features(&self) -> etalon::Features {
         unimplemented!()
     }
 
-    fn limits(&self) -> wgpu::Limits {
+    fn limits(&self) -> etalon::Limits {
         unimplemented!()
     }
 
-    fn downlevel_capabilities(&self) -> wgpu::DownlevelCapabilities {
+    fn downlevel_capabilities(&self) -> etalon::DownlevelCapabilities {
         unimplemented!()
     }
 
-    fn get_info(&self) -> wgpu::AdapterInfo {
+    fn get_info(&self) -> etalon::AdapterInfo {
         unimplemented!()
     }
 
     fn get_texture_format_features(
         &self,
-        _format: wgpu::TextureFormat,
-    ) -> wgpu::TextureFormatFeatures {
+        _format: etalon::TextureFormat,
+    ) -> etalon::TextureFormatFeatures {
         unimplemented!()
     }
 
-    fn get_presentation_timestamp(&self) -> wgpu::PresentationTimestamp {
+    fn get_presentation_timestamp(&self) -> etalon::PresentationTimestamp {
         unimplemented!()
     }
 }
@@ -120,22 +120,22 @@ impl AdapterInterface for CustomAdapter {
 struct CustomDevice(Counter);
 
 impl DeviceInterface for CustomDevice {
-    fn features(&self) -> wgpu::Features {
+    fn features(&self) -> etalon::Features {
         unimplemented!()
     }
 
-    fn limits(&self) -> wgpu::Limits {
+    fn limits(&self) -> etalon::Limits {
         unimplemented!()
     }
 
-    fn adapter_info(&self) -> wgpu::AdapterInfo {
+    fn adapter_info(&self) -> etalon::AdapterInfo {
         unimplemented!()
     }
 
     fn create_shader_module(
         &self,
-        desc: wgpu::ShaderModuleDescriptor<'_>,
-        _shader_bound_checks: wgpu::ShaderRuntimeChecks,
+        desc: etalon::ShaderModuleDescriptor<'_>,
+        _shader_bound_checks: etalon::ShaderRuntimeChecks,
     ) -> DispatchShaderModule {
         assert_eq!(desc.label, Some("shader"));
         DispatchShaderModule::custom(CustomShaderModule(self.0.clone()))
@@ -143,127 +143,127 @@ impl DeviceInterface for CustomDevice {
 
     unsafe fn create_shader_module_passthrough(
         &self,
-        _desc: &wgpu::ShaderModuleDescriptorPassthrough<'_>,
+        _desc: &etalon::ShaderModuleDescriptorPassthrough<'_>,
     ) -> DispatchShaderModule {
         unimplemented!()
     }
 
     fn create_bind_group_layout(
         &self,
-        _desc: &wgpu::BindGroupLayoutDescriptor<'_>,
-    ) -> wgpu::custom::DispatchBindGroupLayout {
+        _desc: &etalon::BindGroupLayoutDescriptor<'_>,
+    ) -> etalon::custom::DispatchBindGroupLayout {
         unimplemented!()
     }
 
     fn create_bind_group(
         &self,
-        _desc: &wgpu::BindGroupDescriptor<'_>,
-    ) -> wgpu::custom::DispatchBindGroup {
+        _desc: &etalon::BindGroupDescriptor<'_>,
+    ) -> etalon::custom::DispatchBindGroup {
         unimplemented!()
     }
 
     fn create_pipeline_layout(
         &self,
-        _desc: &wgpu::PipelineLayoutDescriptor<'_>,
-    ) -> wgpu::custom::DispatchPipelineLayout {
+        _desc: &etalon::PipelineLayoutDescriptor<'_>,
+    ) -> etalon::custom::DispatchPipelineLayout {
         unimplemented!()
     }
 
     fn create_render_pipeline(
         &self,
-        _desc: &wgpu::RenderPipelineDescriptor<'_>,
-    ) -> wgpu::custom::DispatchRenderPipeline {
+        _desc: &etalon::RenderPipelineDescriptor<'_>,
+    ) -> etalon::custom::DispatchRenderPipeline {
         unimplemented!()
     }
 
     fn create_mesh_pipeline(
         &self,
-        _desc: &wgpu::MeshPipelineDescriptor<'_>,
-    ) -> wgpu::custom::DispatchRenderPipeline {
+        _desc: &etalon::MeshPipelineDescriptor<'_>,
+    ) -> etalon::custom::DispatchRenderPipeline {
         unimplemented!()
     }
 
     fn create_compute_pipeline(
         &self,
-        desc: &wgpu::ComputePipelineDescriptor<'_>,
-    ) -> wgpu::custom::DispatchComputePipeline {
+        desc: &etalon::ComputePipelineDescriptor<'_>,
+    ) -> etalon::custom::DispatchComputePipeline {
         let module = desc.module.as_custom::<CustomShaderModule>().unwrap();
-        wgpu::custom::DispatchComputePipeline::custom(CustomComputePipeline(module.0.clone()))
+        etalon::custom::DispatchComputePipeline::custom(CustomComputePipeline(module.0.clone()))
     }
 
     unsafe fn create_pipeline_cache(
         &self,
-        _desc: &wgpu::PipelineCacheDescriptor<'_>,
-    ) -> wgpu::custom::DispatchPipelineCache {
+        _desc: &etalon::PipelineCacheDescriptor<'_>,
+    ) -> etalon::custom::DispatchPipelineCache {
         unimplemented!()
     }
 
-    fn create_buffer(&self, _desc: &wgpu::BufferDescriptor<'_>) -> wgpu::custom::DispatchBuffer {
+    fn create_buffer(&self, _desc: &etalon::BufferDescriptor<'_>) -> etalon::custom::DispatchBuffer {
         unimplemented!()
     }
 
-    fn create_texture(&self, _desc: &wgpu::TextureDescriptor<'_>) -> wgpu::custom::DispatchTexture {
+    fn create_texture(&self, _desc: &etalon::TextureDescriptor<'_>) -> etalon::custom::DispatchTexture {
         unimplemented!()
     }
 
     fn create_external_texture(
         &self,
-        _desc: &wgpu::ExternalTextureDescriptor<'_>,
-        _planes: &[&wgpu::TextureView],
-    ) -> wgpu::custom::DispatchExternalTexture {
+        _desc: &etalon::ExternalTextureDescriptor<'_>,
+        _planes: &[&etalon::TextureView],
+    ) -> etalon::custom::DispatchExternalTexture {
         unimplemented!()
     }
 
     fn create_blas(
         &self,
-        _desc: &wgpu::CreateBlasDescriptor<'_>,
-        _sizes: wgpu::BlasGeometrySizeDescriptors,
-    ) -> (Option<u64>, wgpu::custom::DispatchBlas) {
+        _desc: &etalon::CreateBlasDescriptor<'_>,
+        _sizes: etalon::BlasGeometrySizeDescriptors,
+    ) -> (Option<u64>, etalon::custom::DispatchBlas) {
         unimplemented!()
     }
 
-    fn create_tlas(&self, _desc: &wgpu::CreateTlasDescriptor<'_>) -> wgpu::custom::DispatchTlas {
+    fn create_tlas(&self, _desc: &etalon::CreateTlasDescriptor<'_>) -> etalon::custom::DispatchTlas {
         unimplemented!()
     }
 
-    fn create_sampler(&self, _desc: &wgpu::SamplerDescriptor<'_>) -> wgpu::custom::DispatchSampler {
+    fn create_sampler(&self, _desc: &etalon::SamplerDescriptor<'_>) -> etalon::custom::DispatchSampler {
         unimplemented!()
     }
 
     fn create_query_set(
         &self,
-        _desc: &wgpu::QuerySetDescriptor<'_>,
-    ) -> wgpu::custom::DispatchQuerySet {
+        _desc: &etalon::QuerySetDescriptor<'_>,
+    ) -> etalon::custom::DispatchQuerySet {
         unimplemented!()
     }
 
     fn create_command_encoder(
         &self,
-        _desc: &wgpu::CommandEncoderDescriptor<'_>,
-    ) -> wgpu::custom::DispatchCommandEncoder {
+        _desc: &etalon::CommandEncoderDescriptor<'_>,
+    ) -> etalon::custom::DispatchCommandEncoder {
         unimplemented!()
     }
 
     fn create_render_bundle_encoder(
         &self,
-        _desc: &wgpu::RenderBundleEncoderDescriptor<'_>,
-    ) -> wgpu::custom::DispatchRenderBundleEncoder {
+        _desc: &etalon::RenderBundleEncoderDescriptor<'_>,
+    ) -> etalon::custom::DispatchRenderBundleEncoder {
         unimplemented!()
     }
 
-    fn set_device_lost_callback(&self, _device_lost_callback: wgpu::custom::BoxDeviceLostCallback) {
+    fn set_device_lost_callback(&self, _device_lost_callback: etalon::custom::BoxDeviceLostCallback) {
         unimplemented!()
     }
 
-    fn on_uncaptured_error(&self, _handler: Arc<dyn wgpu::UncapturedErrorHandler>) {
+    fn on_uncaptured_error(&self, _handler: Arc<dyn etalon::UncapturedErrorHandler>) {
         unimplemented!()
     }
 
-    fn push_error_scope(&self, _filter: wgpu::ErrorFilter) -> u32 {
+    fn push_error_scope(&self, _filter: etalon::ErrorFilter) -> u32 {
         unimplemented!()
     }
 
-    fn pop_error_scope(&self, _index: u32) -> Pin<Box<dyn wgpu::custom::PopErrorScopeFuture>> {
+    fn pop_error_scope(&self, _index: u32) -> Pin<Box<dyn etalon::custom::PopErrorScopeFuture>> {
         unimplemented!()
     }
 
@@ -277,16 +277,16 @@ impl DeviceInterface for CustomDevice {
 
     fn poll(
         &self,
-        _maintain: wgpu::wgt::PollType<u64>,
-    ) -> Result<wgpu::PollStatus, wgpu::PollError> {
+        _maintain: etalon::wgt::PollType<u64>,
+    ) -> Result<etalon::PollStatus, etalon::PollError> {
         unimplemented!()
     }
 
-    fn get_internal_counters(&self) -> wgpu::InternalCounters {
+    fn get_internal_counters(&self) -> etalon::InternalCounters {
         unimplemented!()
     }
 
-    fn generate_allocator_report(&self) -> Option<wgpu::AllocatorReport> {
+    fn generate_allocator_report(&self) -> Option<etalon::AllocatorReport> {
         unimplemented!()
     }
 
@@ -299,7 +299,7 @@ impl DeviceInterface for CustomDevice {
 pub struct CustomShaderModule(pub Counter);
 
 impl ShaderModuleInterface for CustomShaderModule {
-    fn get_compilation_info(&self) -> Pin<Box<dyn wgpu::custom::ShaderCompilationInfoFuture>> {
+    fn get_compilation_info(&self) -> Pin<Box<dyn etalon::custom::ShaderCompilationInfoFuture>> {
         unimplemented!()
     }
 }
@@ -310,8 +310,8 @@ struct CustomQueue(Counter);
 impl QueueInterface for CustomQueue {
     fn write_buffer(
         &self,
-        _buffer: &wgpu::custom::DispatchBuffer,
-        _offset: wgpu::BufferAddress,
+        _buffer: &etalon::custom::DispatchBuffer,
+        _offset: etalon::BufferAddress,
         _data: &[u8],
     ) {
         unimplemented!()
@@ -319,42 +319,42 @@ impl QueueInterface for CustomQueue {
 
     fn create_staging_buffer(
         &self,
-        _size: wgpu::BufferSize,
-    ) -> Option<wgpu::custom::DispatchQueueWriteBuffer> {
+        _size: etalon::BufferSize,
+    ) -> Option<etalon::custom::DispatchQueueWriteBuffer> {
         unimplemented!()
     }
 
     fn validate_write_buffer(
         &self,
-        _buffer: &wgpu::custom::DispatchBuffer,
-        _offset: wgpu::BufferAddress,
-        _size: wgpu::BufferSize,
+        _buffer: &etalon::custom::DispatchBuffer,
+        _offset: etalon::BufferAddress,
+        _size: etalon::BufferSize,
     ) -> Option<()> {
         unimplemented!()
     }
 
     fn write_staging_buffer(
         &self,
-        _buffer: &wgpu::custom::DispatchBuffer,
-        _offset: wgpu::BufferAddress,
-        _staging_buffer: wgpu::custom::DispatchQueueWriteBuffer,
+        _buffer: &etalon::custom::DispatchBuffer,
+        _offset: etalon::BufferAddress,
+        _staging_buffer: etalon::custom::DispatchQueueWriteBuffer,
     ) {
         unimplemented!()
     }
 
     fn write_texture(
         &self,
-        _texture: wgpu::TexelCopyTextureInfo<'_>,
+        _texture: etalon::TexelCopyTextureInfo<'_>,
         _data: &[u8],
-        _data_layout: wgpu::TexelCopyBufferLayout,
-        _size: wgpu::Extent3d,
+        _data_layout: etalon::TexelCopyBufferLayout,
+        _size: etalon::Extent3d,
     ) {
         unimplemented!()
     }
 
     fn submit(
         &self,
-        _command_buffers: &mut dyn Iterator<Item = wgpu::custom::DispatchCommandBuffer>,
+        _command_buffers: &mut dyn Iterator<Item = etalon::custom::DispatchCommandBuffer>,
     ) -> u64 {
         unimplemented!()
     }
@@ -363,16 +363,16 @@ impl QueueInterface for CustomQueue {
         unimplemented!()
     }
 
-    fn on_submitted_work_done(&self, _callback: wgpu::custom::BoxSubmittedWorkDoneCallback) {
+    fn on_submitted_work_done(&self, _callback: etalon::custom::BoxSubmittedWorkDoneCallback) {
         unimplemented!()
     }
 
     #[cfg(all(target_arch = "wasm32", feature = "web"))]
     fn copy_external_image_to_texture(
         &self,
-        _source: &wgpu::CopyExternalImageSourceInfo,
-        _dest: wgpu::CopyExternalImageDestInfo<&wgpu::Texture>,
-        _size: wgpu::Extent3d,
+        _source: &etalon::CopyExternalImageSourceInfo,
+        _dest: etalon::CopyExternalImageDestInfo<&etalon::Texture>,
+        _size: etalon::Extent3d,
     ) {
         unimplemented!()
     }
@@ -381,7 +381,7 @@ impl QueueInterface for CustomQueue {
         unimplemented!()
     }
 
-    fn present(&self, _detail: &wgpu::custom::DispatchSurfaceOutputDetail) {
+    fn present(&self, _detail: &etalon::custom::DispatchSurfaceOutputDetail) {
         unimplemented!()
     }
 }
@@ -390,7 +390,7 @@ impl QueueInterface for CustomQueue {
 pub struct CustomComputePipeline(pub Counter);
 
 impl ComputePipelineInterface for CustomComputePipeline {
-    fn get_bind_group_layout(&self, _index: u32) -> wgpu::custom::DispatchBindGroupLayout {
+    fn get_bind_group_layout(&self, _index: u32) -> etalon::custom::DispatchBindGroupLayout {
         unimplemented!()
     }
 }

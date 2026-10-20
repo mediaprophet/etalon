@@ -5,11 +5,11 @@ This example shows blending in sRGB or linear space.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples srgb_blend linear
+cargo run --bin etalon-examples srgb_blend linear
 ```
 
 ```
-cargo run --bin wgpu-examples srgb_blend
+cargo run --bin etalon-examples srgb_blend
 ```
 
 ## Screenshots

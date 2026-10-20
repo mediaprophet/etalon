@@ -209,7 +209,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         let loop_bound_name = self.namer.call("loop_bound");
         let max = u32::MAX;
         // Count down from u32::MAX rather than up from 0 to avoid hang on
-        // certain Intel drivers. See <https://github.com/gfx-rs/wgpu/issues/7319>.
+        // certain Intel drivers. See <https://github.com/mediaprophet/etalon/issues/7319>.
         let decl = format!("{level}uint2 {loop_bound_name} = uint2({max}u, {max}u);");
         let level = level.next();
         let break_and_inc = format!(
@@ -1140,7 +1140,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 TypeInner::Struct { .. } => {}
                 _ => {
                     return Err(Error::Unimplemented(format!(
-                        "push-constant '{name}' has non-struct type; tracked by: https://github.com/gfx-rs/wgpu/issues/5683"
+                        "push-constant '{name}' has non-struct type; tracked by: https://github.com/mediaprophet/etalon/issues/5683"
                     )));
                 }
             }
@@ -4091,7 +4091,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                         // HLSL for any vector behind a value pointer, FXC completely miscompiles
                         // it and generates completely nonsensical DXBC.
                         //
-                        // See https://github.com/gfx-rs/naga/issues/2095 for more details.
+                        // See https://github.com/mediaprophet/naga/issues/2095 for more details.
                         TypeInner::Vector { .. } | TypeInner::ValuePointer { .. } => {
                             // Write vector access as a swizzle
                             write!(self.out, ".{}", back::COMPONENTS[index as usize])?

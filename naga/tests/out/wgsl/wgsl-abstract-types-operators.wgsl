@@ -27,7 +27,7 @@ const shr_iaiai: i32 = 0i;
 const shr_iai_u_1: i32 = 0i;
 const shr_uaiai: u32 = 0u;
 const shr_uai_u: u32 = 0u;
-const wgpu_4492_: i32 = i32(-2147483648);
+const etalon_4492_: i32 = i32(-2147483648);
 
 var<workgroup> a: array<u32, 64>;
 
@@ -87,11 +87,11 @@ fn runtime_values() {
     return;
 }
 
-fn wgpu_4445_() {
+fn etalon_4445_() {
     return;
 }
 
-fn wgpu_4435_() {
+fn etalon_4435_() {
     let y = a[(1i - 1i)];
     return;
 }
@@ -99,7 +99,7 @@ fn wgpu_4435_() {
 @compute @workgroup_size(1, 1, 1)
 fn main() {
     runtime_values();
-    wgpu_4445_();
-    wgpu_4435_();
+    etalon_4445_();
+    etalon_4435_();
     return;
 }

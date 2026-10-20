@@ -1,0 +1,80 @@
+// Copyright 2018-2025 the Deno authors. MIT license.
+
+use std::sync::Arc;
+
+use deno_core::cppgc::Ptr;
+use deno_core::op2;
+use deno_core::webidl::WebIdlInterfaceConverter;
+use deno_core::GarbageCollected;
+use deno_core::WebIDL;
+use indexmap::IndexMap;
+use etalon_core::resource::Labeled as _;
+
+use crate::bind_group_layout::GPUBindGroupLayout;
+use crate::error::GPUGenericError;
+use crate::shader::GPUShaderModule;
+use crate::webidl::GPUPipelineLayoutOrGPUAutoLayoutMode;
+
+pub struct GPUComputePipeline {
+  pub etalon_compute_pipeline: Arc<etalon_core::pipeline::ComputePipeline>,
+}
+
+impl WebIdlInterfaceConverter for GPUComputePipeline {
+  const NAME: &'static str = "GPUComputePipeline";
+}
+
+impl GarbageCollected for GPUComputePipeline {
+  fn get_name(&self) -> &'static std::ffi::CStr {
+    c"GPUComputePipeline"
+  }
+}
+
+#[op2]
+impl GPUComputePipeline {
+  #[constructor]
+  #[cppgc]
+  fn constructor(_: bool) -> Result<GPUComputePipeline, GPUGenericError> {
+    Err(GPUGenericError::InvalidConstructor)
+  }
+
+  #[getter]
+  #[string]
+  fn label(&self) -> String {
+    self.etalon_compute_pipeline.label().to_string()
+  }
+  #[setter]
+  #[string]
+  fn label(&self, #[webidl] _label: String) {
+    // TODO(@crowlKats): no-op, needs wpgu to implement changing the label
+  }
+
+  #[cppgc]
+  fn get_bind_group_layout(&self, #[webidl] index: u32) -> GPUBindGroupLayout {
+    let etalon_bind_group_layout =
+      self.etalon_compute_pipeline.get_bind_group_layout(index);
+
+    // TODO(etalon): needs to support retrieving the label
+    GPUBindGroupLayout {
+      etalon_bind_group_layout,
+    }
+  }
+}
+
+#[derive(WebIDL)]
+#[webidl(dictionary)]
+pub(crate) struct GPUComputePipelineDescriptor {
+  #[webidl(default = String::new())]
+  pub label: String,
+
+  pub compute: GPUProgrammableStage,
+  pub layout: GPUPipelineLayoutOrGPUAutoLayoutMode,
+}
+
+#[derive(WebIDL)]
+#[webidl(dictionary)]
+pub(crate) struct GPUProgrammableStage {
+  pub module: Ptr<GPUShaderModule>,
+  pub entry_point: Option<String>,
+  #[webidl(default = Default::default())]
+  pub constants: IndexMap<String, f64>,
+}

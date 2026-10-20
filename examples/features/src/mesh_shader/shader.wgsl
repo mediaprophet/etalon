@@ -1,4 +1,4 @@
-enable wgpu_mesh_shader;
+enable etalon_mesh_shader;
 
 const positions = array(
     vec4(0., 1., 0., 1.),

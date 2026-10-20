@@ -241,14 +241,14 @@ impl Capabilities {
             Self::DUAL_SOURCE_BLENDING => Some(Ext::DualSourceBlending),
             // NOTE: `SHADER_FLOAT16_IN_FLOAT32` _does not_ require the `f16` extension
             Self::SHADER_FLOAT16 => Some(Ext::F16),
-            Self::SHADER_INT16 => Some(Ext::WgpuInt16),
+            Self::SHADER_INT16 => Some(Ext::etalonInt16),
             Self::CLIP_DISTANCES => Some(Ext::ClipDistances),
-            Self::MESH_SHADER => Some(Ext::WgpuMeshShader),
-            Self::RAY_QUERY => Some(Ext::WgpuRayQuery),
-            Self::RAY_HIT_VERTEX_POSITION => Some(Ext::WgpuRayQueryVertexReturn),
-            Self::COOPERATIVE_MATRIX => Some(Ext::WgpuCooperativeMatrix),
-            Self::RAY_TRACING_PIPELINE => Some(Ext::WgpuRayTracingPipeline),
-            Self::PER_VERTEX => Some(Ext::WgpuPerVertex),
+            Self::MESH_SHADER => Some(Ext::etalonMeshShader),
+            Self::RAY_QUERY => Some(Ext::etalonRayQuery),
+            Self::RAY_HIT_VERTEX_POSITION => Some(Ext::etalonRayQueryVertexReturn),
+            Self::COOPERATIVE_MATRIX => Some(Ext::etalonCooperativeMatrix),
+            Self::RAY_TRACING_PIPELINE => Some(Ext::etalonRayTracingPipeline),
+            Self::PER_VERTEX => Some(Ext::etalonPerVertex),
             Self::BUFFER_BINDING_ARRAY
             | Self::BUFFER_BINDING_ARRAY_NON_UNIFORM_INDEXING
             | Self::STORAGE_BUFFER_BINDING_ARRAY
@@ -257,9 +257,9 @@ impl Capabilities {
             | Self::STORAGE_TEXTURE_BINDING_ARRAY_NON_UNIFORM_INDEXING
             | Self::TEXTURE_AND_SAMPLER_BINDING_ARRAY
             | Self::TEXTURE_AND_SAMPLER_BINDING_ARRAY_NON_UNIFORM_INDEXING => {
-                Some(Ext::WgpuBindingArray)
+                Some(Ext::etalonBindingArray)
             }
-            Self::DEBUG_PRINTF => Some(Ext::WgpuDebugPrintf),
+            Self::DEBUG_PRINTF => Some(Ext::etalonDebugPrintf),
             _ => None,
         }
     }
@@ -279,7 +279,7 @@ bitflags::bitflags! {
     pub struct SubgroupOperationSet: u8 {
         /// Barriers
         // Possibly elections, when that is supported.
-        // https://github.com/gfx-rs/wgpu/issues/6042#issuecomment-3272603431
+        // https://github.com/mediaprophet/etalon/issues/6042#issuecomment-3272603431
         // Contrary to what the name "basic" suggests, HLSL/DX12 support the
         // other subgroup operations, but do not support subgroup barriers.
         const BASIC = 1 << 0;
@@ -645,13 +645,13 @@ impl Validator {
         }
     }
 
-    // TODO(https://github.com/gfx-rs/wgpu/issues/8207): Consider removing this
+    // TODO(https://github.com/mediaprophet/etalon/issues/8207): Consider removing this
     pub const fn subgroup_stages(&mut self, stages: ShaderStages) -> &mut Self {
         self.subgroup_stages = stages;
         self
     }
 
-    // TODO(https://github.com/gfx-rs/wgpu/issues/8207): Consider removing this
+    // TODO(https://github.com/mediaprophet/etalon/issues/8207): Consider removing this
     pub const fn subgroup_operations(&mut self, operations: SubgroupOperationSet) -> &mut Self {
         self.subgroup_operations = operations;
         self

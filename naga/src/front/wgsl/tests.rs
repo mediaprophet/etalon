@@ -900,7 +900,7 @@ error: `@diagnostic(…)` attribute(s) not yet implemented
 3 │     if (true) @diagnostic(off, my.lint) {
   │               ^^^^^^^^^^^^^^^^^^^^^^^^^ can't use this on compound statements (yet)
   │
-  = note: Let Naga maintainers know that you ran into this at <https://github.com/gfx-rs/wgpu/issues/5320>, so they can prioritize it!
+  = note: Let Naga maintainers know that you ran into this at <https://github.com/mediaprophet/etalon/issues/5320>, so they can prioritize it!
 
 ");
         }
@@ -921,7 +921,7 @@ error: `@diagnostic(…)` attribute(s) not yet implemented
 3 │     if (true) @diagnostic(off, wat_is_this) {
   │               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ can't use this on compound statements (yet)
   │
-  = note: Let Naga maintainers know that you ran into this at <https://github.com/gfx-rs/wgpu/issues/5320>, so they can prioritize it!
+  = note: Let Naga maintainers know that you ran into this at <https://github.com/mediaprophet/etalon/issues/5320>, so they can prioritize it!
 
 ");
         }

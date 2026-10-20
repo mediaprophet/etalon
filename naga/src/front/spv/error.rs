@@ -107,7 +107,7 @@ pub enum Error {
     InvalidImageExpression(crate::Expression),
     #[error("cannot create a OpTypeImage as both a depth and storage image")]
     InvalidImageDepthStorage,
-    #[error("image read/write without format is not currently supported. See https://github.com/gfx-rs/wgpu/issues/6797")]
+    #[error("image read/write without format is not currently supported. See https://github.com/mediaprophet/etalon/issues/6797")]
     InvalidStorageImageWithoutFormat,
     #[error("invalid image base type {0:?}")]
     InvalidImageBaseType(Handle<crate::Type>),
