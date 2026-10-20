@@ -4,7 +4,7 @@ This directory preserves the historical licenses of the upstream wgpu project (A
 
 ### Qualification & Governing Terms
 
-This codebase (`webizen-wgpu`) has been forked and is being maintained for the Webizen and Qualia ecosystems.
+This codebase (`etalon`) has been forked and is being maintained for the Webizen and Qualia ecosystems.
 
 All subsequent architectures, modifications, refactorings, extensions, and integrations are governed by:
 
