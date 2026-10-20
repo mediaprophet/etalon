@@ -1592,8 +1592,9 @@ pub(super) fn copy_texture_to_texture(
             .textures
             .set_single(src_texture, src_range, wgt::TextureUses::COPY_SRC);
 
-    //TODO: try to avoid this the collection. It's needed because both
-    // `src_pending` and `dst_pending` try to hold `trackers.textures` mutably.
+    // Collect source barriers into a fixed-capacity stack buffer (`ArrayVec<_, 2>`) to resolve
+    // the simultaneous mutable borrow of `trackers.textures` by both `src_pending` and `dst_pending`.
+    // This maintains zero-heap hot-path guarantees while queuing at most 2 transition barriers.
     let mut barriers: ArrayVec<_, 2> = src_pending
         .map(|pending| pending.into_hal(src_raw))
         .collect();

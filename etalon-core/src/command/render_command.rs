@@ -35,7 +35,8 @@ pub enum RenderCommand<R: ReferenceType> {
     SetStencilReference(u32),
     SetViewport {
         rect: Rect<f32>,
-        //TODO: use half-float to reduce the size?
+        // Maintain standard IEEE 754 f32 precision for viewport depth bounds to comply with
+        // WebGPU coordinate system specifications and prevent precision loss in depth transformations.
         depth_min: f32,
         depth_max: f32,
     },

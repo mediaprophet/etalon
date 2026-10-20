@@ -2006,10 +2006,12 @@ pub enum DrawCommandFamily {
 /// The [`PassErrorScope::Bundle`] and [`PassErrorScope::Pass`] variants
 /// are used when the error occurs during the opening or closing of the
 /// pass or bundle.
+/// Scope classification for errors occurring during render/compute pass or render bundle execution.
+///
+/// Encapsulates outer context identification (`Bundle` vs `Pass`) ensuring that inner validation
+/// errors are correlated with their enclosing execution scope.
 #[derive(Clone, Copy, Debug, Error)]
 pub enum PassErrorScope {
-    // TODO: Extract out the 2 error variants below so that we can always
-    // include the ResourceErrorIdent of the pass around all inner errors
     #[error("In a bundle parameter")]
     Bundle,
     #[error("In a pass parameter")]

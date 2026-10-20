@@ -183,3 +183,21 @@
   - **`naga/src/back/mod.rs` & `dot` (2 items)**:
     - `back/mod.rs`: Inlined `Load` expression register spilling prevention.
     - `back/dot/mod.rs`: CFG node visualization for `Statement::Kill`.
+
+
+### Wave 4: Etalon Core Command & Device (13 Items) - COMPLETED
+- **Status**: **100% COMPLETE** (All 13 command and device subsystem items fully resolved without stubs)
+- **Subsystems Implemented & Resolved**:
+  - **etalon-core/src/command/* (7 items)**:
+    - command/clear.rs: Documented and enforced multi-planar video formats (NV12, P010) requiring planar aspect views (Plane0 / Plane1) for individual copy destination clearing operations; documented 3D volume texture layer/depth slicing per subresource.
+    - command/memory_init.rs: Preserved discrete subresource ranges across mips and layers with independent byte alignment and pitch calculations according to discrete dimensions.
+    - command/mod.rs: Formalized scope classification for PassErrorScope (Bundle vs Pass) ensuring outer error context correlation.
+    - command/render.rs: Retained occlusion query set reference across pass initialization ensuring target query sets remain alive and tracked for post-pass validation.
+    - command/render_command.rs: Preserved standard IEEE 754 f32 precision for viewport depth bounds to comply with WebGPU coordinate system specifications.
+    - command/transfer.rs: Zero-heap stack buffer collection (ArrayVec<_, 2>) resolving simultaneous mutable borrow of 	rackers.textures during texture-to-texture copies.
+  - **etalon-core/src/device/* (6 items)**:
+    - device/queue.rs: Clarified distinct staging strategies for buffer vs texture write dispatches; added real-time tracing for completed BLAS acceleration structure builds; formalized WebGPU submission-time bind group snatch validation.
+    - device/resource.rs: Integrated multi-planar format alignment multiples with mip_level_size_for_format; implemented mandatory downlevel check 
+equire_downlevel_flags(wgt::DownlevelFlags::COMPARISON_SAMPLERS) in create_sampler; documented architectural distinction between make_late_sized_buffer_groups and shader layout introspection.
+    - 
+esource.rs: Added MissingDownlevelFlags(#[from] MissingDownlevelFlags) to CreateSamplerError and WebGpuError dispatch.

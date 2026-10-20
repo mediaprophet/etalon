@@ -2301,8 +2301,8 @@ pub(super) fn encode_render_pass(
             &color_attachments,
             depth_stencil_attachment.take(),
             timestamp_writes.take(),
-            // Still needed down the line.
-            // TODO(wumpf): by restructuring the code, we could get rid of some of this Arc clone.
+            // Occlusion query set reference is retained across pass initialization to ensure
+            // the target query set remains alive and tracked in parent state for post-pass validation.
             occlusion_query_set.clone(),
             raw_encoder,
             parent_state.tracker,

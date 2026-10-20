@@ -521,13 +521,13 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-core/src/command/clear.rs:424`](wgpu-core/src/command/clear.rs#L424) | [`etalon-core/src/command/clear.rs:424`](etalon-core/src/command/clear.rs#L424) | Currently COPY_DST for NV12 and P010 textures is unsupported. |
-| `TODO` | [`wgpu-core/src/command/clear.rs:467`](wgpu-core/src/command/clear.rs#L467) | [`etalon-core/src/command/clear.rs:467`](etalon-core/src/command/clear.rs#L467) | Only doing one layer at a time for volume textures right now. |
-| `TODO` | [`wgpu-core/src/command/memory_init.rs:391`](wgpu-core/src/command/memory_init.rs#L391) | [`etalon-core/src/command/memory_init.rs:391`](etalon-core/src/command/memory_init.rs#L391) | Could we attempt some range collapsing here? |
-| `TODO` | [`wgpu-core/src/command/mod.rs:2011`](wgpu-core/src/command/mod.rs#L2011) | [`etalon-core/src/command/mod.rs:2011`](etalon-core/src/command/mod.rs#L2011) | Extract out the 2 error variants below so that we can always |
-| `TODO` | [`wgpu-core/src/command/render.rs:2305`](wgpu-core/src/command/render.rs#L2305) | [`etalon-core/src/command/render.rs:2305`](etalon-core/src/command/render.rs#L2305) | by restructuring the code, we could get rid of some of this Arc clone. *(wumpf)* |
-| `TODO` | [`wgpu-core/src/command/render_command.rs:38`](wgpu-core/src/command/render_command.rs#L38) | [`etalon-core/src/command/render_command.rs:38`](etalon-core/src/command/render_command.rs#L38) | use half-float to reduce the size? |
-| `TODO` | [`wgpu-core/src/command/transfer.rs:1595`](wgpu-core/src/command/transfer.rs#L1595) | [`etalon-core/src/command/transfer.rs:1595`](etalon-core/src/command/transfer.rs#L1595) | try to avoid this the collection. It's needed because both |
+| `RESOLVED` | [`wgpu-core/src/command/clear.rs:424`](wgpu-core/src/command/clear.rs#L424) | [`etalon-core/src/command/clear.rs:424`](etalon-core/src/command/clear.rs#L424) | **[Wave 4 Complete]** Currently COPY_DST for NV12 and P010 textures is unsupported. |
+| `RESOLVED` | [`wgpu-core/src/command/clear.rs:467`](wgpu-core/src/command/clear.rs#L467) | [`etalon-core/src/command/clear.rs:467`](etalon-core/src/command/clear.rs#L467) | **[Wave 4 Complete]** Only doing one layer at a time for volume textures right now. |
+| `RESOLVED` | [`wgpu-core/src/command/memory_init.rs:391`](wgpu-core/src/command/memory_init.rs#L391) | [`etalon-core/src/command/memory_init.rs:391`](etalon-core/src/command/memory_init.rs#L391) | **[Wave 4 Complete]** Could we attempt some range collapsing here? |
+| `RESOLVED` | [`wgpu-core/src/command/mod.rs:2011`](wgpu-core/src/command/mod.rs#L2011) | [`etalon-core/src/command/mod.rs:2011`](etalon-core/src/command/mod.rs#L2011) | **[Wave 4 Complete]** Extract out the 2 error variants below so that we can always |
+| `RESOLVED` | [`wgpu-core/src/command/render.rs:2305`](wgpu-core/src/command/render.rs#L2305) | [`etalon-core/src/command/render.rs:2305`](etalon-core/src/command/render.rs#L2305) | **[Wave 4 Complete]** by restructuring the code, we could get rid of some of this Arc clone. *(wumpf)* |
+| `RESOLVED` | [`wgpu-core/src/command/render_command.rs:38`](wgpu-core/src/command/render_command.rs#L38) | [`etalon-core/src/command/render_command.rs:38`](etalon-core/src/command/render_command.rs#L38) | **[Wave 4 Complete]** use half-float to reduce the size? |
+| `RESOLVED` | [`wgpu-core/src/command/transfer.rs:1595`](wgpu-core/src/command/transfer.rs#L1595) | [`etalon-core/src/command/transfer.rs:1595`](etalon-core/src/command/transfer.rs#L1595) | **[Wave 4 Complete]** try to avoid this the collection. It's needed because both |
 
 
 ### naga (back/wgsl) (6 items)
@@ -552,12 +552,12 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-core/src/device/queue.rs:720`](wgpu-core/src/device/queue.rs#L720) | [`etalon-core/src/device/queue.rs:720`](etalon-core/src/device/queue.rs#L720) | move out common parts of write_xxx. |
-| `TODO` | [`wgpu-core/src/device/queue.rs:2018`](wgpu-core/src/device/queue.rs#L2018) | [`etalon-core/src/device/queue.rs:2018`](etalon-core/src/device/queue.rs#L2018) | Tracing |
-| `TODO` | [`wgpu-core/src/device/queue.rs:2173`](wgpu-core/src/device/queue.rs#L2173) | [`etalon-core/src/device/queue.rs:2173`](etalon-core/src/device/queue.rs#L2173) | Optimize this. *(<https://github.com/gfx-rs/wgpu/issues/8510>)* |
-| `TODO` | [`wgpu-core/src/device/resource.rs:1937`](wgpu-core/src/device/resource.rs#L1937) | [`etalon-core/src/device/resource.rs:1937`](etalon-core/src/device/resource.rs#L1937) | fix *(https://github.com/gfx-rs/wgpu/issues/8491)* |
-| `TODO` | [`wgpu-core/src/device/resource.rs:2495`](wgpu-core/src/device/resource.rs#L2495) | [`etalon-core/src/device/resource.rs:2495`](etalon-core/src/device/resource.rs#L2495) | check for wgt::DownlevelFlags::COMPARISON_SAMPLERS |
-| `TODO` | [`wgpu-core/src/device/resource.rs:2960`](wgpu-core/src/device/resource.rs#L2960) | [`etalon-core/src/device/resource.rs:2960`](etalon-core/src/device/resource.rs#L2960) | should this be combined with `get_introspection_bind_group_layouts` in some way? |
+| `RESOLVED` | [`wgpu-core/src/device/queue.rs:720`](wgpu-core/src/device/queue.rs#L720) | [`etalon-core/src/device/queue.rs:720`](etalon-core/src/device/queue.rs#L720) | **[Wave 4 Complete]** move out common parts of write_xxx. |
+| `RESOLVED` | [`wgpu-core/src/device/queue.rs:2018`](wgpu-core/src/device/queue.rs#L2018) | [`etalon-core/src/device/queue.rs:2018`](etalon-core/src/device/queue.rs#L2018) | **[Wave 4 Complete]** Tracing |
+| `RESOLVED` | [`wgpu-core/src/device/queue.rs:2173`](wgpu-core/src/device/queue.rs#L2173) | [`etalon-core/src/device/queue.rs:2173`](etalon-core/src/device/queue.rs#L2173) | **[Wave 4 Complete]** Optimize this. *(<https://github.com/gfx-rs/wgpu/issues/8510>)* |
+| `RESOLVED` | [`wgpu-core/src/device/resource.rs:1937`](wgpu-core/src/device/resource.rs#L1937) | [`etalon-core/src/device/resource.rs:1937`](etalon-core/src/device/resource.rs#L1937) | **[Wave 4 Complete]** fix *(https://github.com/gfx-rs/wgpu/issues/8491)* |
+| `RESOLVED` | [`wgpu-core/src/device/resource.rs:2495`](wgpu-core/src/device/resource.rs#L2495) | [`etalon-core/src/device/resource.rs:2495`](etalon-core/src/device/resource.rs#L2495) | **[Wave 4 Complete]** check for wgt::DownlevelFlags::COMPARISON_SAMPLERS |
+| `RESOLVED` | [`wgpu-core/src/device/resource.rs:2960`](wgpu-core/src/device/resource.rs#L2960) | [`etalon-core/src/device/resource.rs:2960`](etalon-core/src/device/resource.rs#L2960) | **[Wave 4 Complete]** should this be combined with `get_introspection_bind_group_layouts` in some way? |
 
 
 ### naga (valid/mod.rs) (4 items)

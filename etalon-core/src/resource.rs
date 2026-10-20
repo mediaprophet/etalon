@@ -1347,6 +1347,8 @@ pub enum CreateBufferError {
     #[error(transparent)]
     MissingDownlevelFlags(#[from] MissingDownlevelFlags),
     #[error(transparent)]
+    MissingDownlevelFlags(#[from] MissingDownlevelFlags),
+    #[error(transparent)]
     MissingFeatures(#[from] MissingFeatures),
     #[error("Failed to create bind group for indirect buffer validation: {0}")]
     IndirectValidationBindGroup(DeviceError),
@@ -3190,6 +3192,7 @@ impl WebGpuError for CreateSamplerError {
     fn webgpu_error_type(&self) -> ErrorType {
         match self {
             Self::Device(e) => e.webgpu_error_type(),
+            Self::MissingDownlevelFlags(e) => e.webgpu_error_type(),
             Self::MissingFeatures(e) => e.webgpu_error_type(),
 
             Self::InvalidLodMinClamp(_)

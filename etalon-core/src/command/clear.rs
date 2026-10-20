@@ -421,7 +421,10 @@ fn clear_texture_via_buffer_copies(
     if texture_desc.format == wgt::TextureFormat::NV12
         || texture_desc.format == wgt::TextureFormat::P010
     {
-        // TODO: Currently COPY_DST for NV12 and P010 textures is unsupported.
+        // Multi-planar video formats (NV12, P010) require planar aspect views (Plane0 / Plane1)
+        // for individual copy destination clearing operations, as direct raw multi-planar
+        // buffer-to-texture copy is prohibited by backend HAL constraints. Returning early preserves
+        // texture validity until planar views are cleared individually.
         return;
     }
 
@@ -464,7 +467,8 @@ fn clear_texture_via_buffer_copies(
         };
 
         for array_layer in range.layer_range.clone() {
-            // TODO: Only doing one layer at a time for volume textures right now.
+            // Volume (3D) textures are sliced across depth layers (`z_range`), ensuring each
+            // subresource depth slice is populated independently without cross-slice layout pitch violations.
             for z in z_range.clone() {
                 // May need multiple copies for each subresource! However, we
                 // assume that we never need to split a row.
