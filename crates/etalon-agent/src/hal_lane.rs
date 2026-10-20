@@ -77,7 +77,7 @@ impl ComputeLane for HalComputeLane {
             });
             cpass.set_pipeline(&plan.pipeline);
             for (idx, bg) in submission.bind_groups.iter().enumerate() {
-                cpass.set_bind_group(idx as u32, bg, &[]);
+                cpass.set_bind_group(idx as u32, &**bg, &[]);
             }
             let wg = submission.workgroups_override.unwrap_or(plan.default_workgroups);
             cpass.dispatch_workgroups(wg[0], wg[1], wg[2]);

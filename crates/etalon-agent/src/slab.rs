@@ -2,7 +2,7 @@
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MemoryTopology {
-    Unified { zero_copy: true },
+    Unified { zero_copy: bool },
     Discrete { staging_required: bool },
 }
 

@@ -15,6 +15,6 @@ naga-validate = ["dep:naga"]
 [dependencies]
 naga = { workspace = true, optional = true }
 blake3 = "1.5"
-bytemuck = { workspace = true }
+bytemuck = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 thiserror = "2"

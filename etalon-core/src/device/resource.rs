@@ -5962,7 +5962,7 @@ impl Device {
     pub fn get_internal_counters(&self) -> wgt::InternalCounters {
         wgt::InternalCounters {
             hal: self.get_hal_counters(),
-            core: wgt::CoreCounters {},
+            core: wgt::CoreCounters::default(),
         }
     }
 

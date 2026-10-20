@@ -2019,7 +2019,7 @@ impl Queue {
 
         log::trace!(
             "BLAS build completed: handle={:?}, error={:?}",
-            blas.as_ref().map(|b| &b.raw),
+            blas.handle,
             error
         );
 

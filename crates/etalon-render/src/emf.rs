@@ -360,8 +360,8 @@ impl EmfPipeline {
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("etalon-emf-pipeline-layout"),
-            bind_group_layouts: &[&params_layout, &field_layout],
-            push_constant_ranges: &[],
+            bind_group_layouts: &[Some(&params_layout), Some(&field_layout)],
+            immediate_size: 0,
         });
 
         let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
@@ -394,7 +394,7 @@ impl EmfPipeline {
             },
             depth_stencil: None,
             multisample: etalon::MultisampleState::default(),
-            multiview: None,
+            multiview_mask: None,
             cache: None,
         });
 

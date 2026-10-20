@@ -1347,8 +1347,6 @@ pub enum CreateBufferError {
     #[error(transparent)]
     MissingDownlevelFlags(#[from] MissingDownlevelFlags),
     #[error(transparent)]
-    MissingDownlevelFlags(#[from] MissingDownlevelFlags),
-    #[error(transparent)]
     MissingFeatures(#[from] MissingFeatures),
     #[error("Failed to create bind group for indirect buffer validation: {0}")]
     IndirectValidationBindGroup(DeviceError),
@@ -3178,6 +3176,8 @@ pub enum CreateSamplerError {
         filter_mode: wgt::MipmapFilterMode,
         anisotropic_clamp: u16,
     },
+    #[error(transparent)]
+    MissingDownlevelFlags(#[from] MissingDownlevelFlags),
     #[error(transparent)]
     MissingFeatures(#[from] MissingFeatures),
 }

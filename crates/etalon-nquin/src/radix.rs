@@ -243,7 +243,7 @@ impl GpuRadixSorter {
             let _ = device.poll(etalon::PollType::wait_or_timeout(core::time::Duration::from_millis(5000)));
             rx.recv().ok()?.ok()?;
 
-            let raw = slice.get_mapped_range();
+            let raw = slice.get_mapped_range().ok()?;
             let hist: &[u32] = bytemuck::cast_slice(&raw);
             let mut offsets = vec![0u32; 256 * wg as usize];
             let mut sum = 0u32;
@@ -331,7 +331,7 @@ impl GpuRadixSorter {
         let _ = device.poll(etalon::PollType::wait_or_timeout(core::time::Duration::from_millis(5000)));
         rx.recv().ok()?.ok()?;
 
-        let raw = slice.get_mapped_range();
+        let raw = slice.get_mapped_range().ok()?;
         let result: Vec<u32> = bytemuck::cast_slice(&raw).to_vec();
         drop(raw);
         out_stage.unmap();

@@ -110,7 +110,7 @@ impl ForwardArena {
         let _ = device.poll(etalon::PollType::wait_or_timeout(core::time::Duration::from_millis(5000)));
         rx.recv().ok()?.ok()?;
 
-        let raw = slice.get_mapped_range();
+        let raw = slice.get_mapped_range().ok()?;
         let token = if raw.len() >= 4 {
             let bytes = [raw[0], raw[1], raw[2], raw[3]];
             Some(u32::from_le_bytes(bytes))

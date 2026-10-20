@@ -10,12 +10,12 @@ use crate::{Backend, DownlevelFlags};
 /// A [`raw_window_handle::HasDisplayHandle`] that can be shared across threads and has no borrows.
 ///
 /// This blanket trait is automatically implemented for all objects that qualify.
-pub trait etalonHasDisplayHandle:
+pub trait EtalonHasDisplayHandle:
     raw_window_handle::HasDisplayHandle + core::fmt::Debug + Send + Sync + 'static
 {
 }
 impl<T: raw_window_handle::HasDisplayHandle + core::fmt::Debug + Send + Sync + 'static>
-    etalonHasDisplayHandle for T
+    EtalonHasDisplayHandle for T
 {
 }
 
@@ -60,7 +60,7 @@ pub struct InstanceDescriptor {
     /// the `EventLoop`) here.
     ///
     /// [`OwnedDisplayHandle`]: https://docs.rs/winit/latest/winit/event_loop/struct.OwnedDisplayHandle.html
-    pub display: Option<alloc::boxed::Box<dyn etalonHasDisplayHandle>>,
+    pub display: Option<alloc::boxed::Box<dyn EtalonHasDisplayHandle>>,
 }
 
 impl InstanceDescriptor {
@@ -78,7 +78,7 @@ impl InstanceDescriptor {
 
     /// The default instance options, with display handle.
     #[must_use]
-    pub fn new_with_display_handle(display: alloc::boxed::Box<dyn etalonHasDisplayHandle>) -> Self {
+    pub fn new_with_display_handle(display: alloc::boxed::Box<dyn EtalonHasDisplayHandle>) -> Self {
         Self::new_without_display_handle().with_display_handle(display)
     }
 
@@ -95,7 +95,7 @@ impl InstanceDescriptor {
     /// This is equivalent to calling `from_env` on every field.
     #[must_use]
     pub fn new_with_display_handle_from_env(
-        display: alloc::boxed::Box<dyn etalonHasDisplayHandle>,
+        display: alloc::boxed::Box<dyn EtalonHasDisplayHandle>,
     ) -> Self {
         // Self::new_without_display_handle_from_env().with_display_handle(display)
         Self::new_with_display_handle(display).with_env()
@@ -120,7 +120,7 @@ impl InstanceDescriptor {
 
     /// Appends the given `display` object to the descriptor.
     #[must_use]
-    pub fn with_display_handle(self, display: alloc::boxed::Box<dyn etalonHasDisplayHandle>) -> Self {
+    pub fn with_display_handle(self, display: alloc::boxed::Box<dyn EtalonHasDisplayHandle>) -> Self {
         Self {
             display: Some(display),
             ..self
