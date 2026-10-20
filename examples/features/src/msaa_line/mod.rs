@@ -227,8 +227,7 @@ impl crate::framework::Example for Example {
                     },
                 ..
             } => match logical_key {
-                // TODO: Switch back to full scans of possible options when we expose
-                //       supported sample counts to the user.
+                // Cycle supported MSAA sample counts (1 vs max)
                 Key::Named(NamedKey::ArrowLeft) if self.sample_count == self.max_sample_count => {
                     self.sample_count = 1;
                     self.rebuild_bundle = true;

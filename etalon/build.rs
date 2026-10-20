@@ -53,9 +53,7 @@ fn main() {
         custom: {any(feature = "custom")},
         std: { any(
             feature = "std",
-            // TODO: Remove this when an alternative Mutex implementation is available for `no_std`.
-            // send_sync requires an appropriate Mutex implementation, which is only currently
-            // possible with `std` enabled.
+            // Mutex synchronization requirement for send_sync in std environments
             send_sync,
             // Unwinding panics necessitate access to `std` to determine if a thread is panicking
             panic = "unwind"

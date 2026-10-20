@@ -163,7 +163,6 @@ renderdoc = [
 drm = ["etalon-core-deps-windows/drm", "etalon-core-deps-linux-android-bsd/drm"]
 
 ## Enable the `noop` backend.
-# TODO(https://github.com/mediaprophet/etalon/issues/7120): there should be a hal feature
 noop = []
 
 # The target limitation here isn't needed, but prevents more than one of these

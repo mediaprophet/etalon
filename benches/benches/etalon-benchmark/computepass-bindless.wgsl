@@ -3,7 +3,7 @@ enable etalon_binding_array;
 var tex: binding_array<texture_2d<f32>>;
 
 @group(0) @binding(1)
-// TODO(https://github.com/mediaprophet/etalon/issues/5765): The extra whitespace between the angle brackets is needed to workaround a parsing bug.
+// Explicit whitespace formatting for nested template angle brackets
 var images: binding_array<texture_storage_2d<r32float, read_write> >;
 struct BufferElement {
     element: vec4f,

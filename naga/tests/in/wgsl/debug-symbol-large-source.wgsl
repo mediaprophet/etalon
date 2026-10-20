@@ -7307,7 +7307,6 @@ fn gen_terrain_vertex(@builtin(vertex_index) vindex: u32) -> GenVertexOutput {
 
     let position = vec4<f32>(-1.0 + uv * 2.0, 0.0, 1.0);
 
-    // TODO: maybe replace this with u32(dot(uv, vec2(f32(gen_data.texture_dim.x))))
     let index = u32(uv.x * f32(gen_data.texture_size) + uv.y * f32(gen_data.texture_size)) + gen_data.start_index;
 
     return GenVertexOutput(index, position, uv);

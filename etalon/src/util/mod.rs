@@ -3,8 +3,7 @@
 //! Nothing in this module is a part of the WebGPU API specification;
 //! they are unique to the `etalon` library.
 
-// TODO: For [`belt::StagingBelt`] to be available in `no_std` its usage of [`std::sync::mpsc`]
-// must be replaced with an appropriate alternative.
+// StagingBelt utility available in std environments
 #[cfg(std)]
 mod belt;
 mod device;

@@ -1,2 +1,1 @@
-# TODO(https://github.com/mediaprophet/etalon/issues/8154): enable only `DUAL_SOURCE_BLENDING` capability
 capabilities = "DUAL_SOURCE_BLENDING"

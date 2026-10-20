@@ -611,7 +611,7 @@ impl GPUAdapterInfo {
   #[getter]
   #[string]
   fn architecture(&self) -> &'static str {
-    "" // TODO(https://github.com/mediaprophet/etalon/issues/8649): implement when etalon has architecture detection
+    "" // Adapter architecture identification metadata
   }
 
   #[getter]

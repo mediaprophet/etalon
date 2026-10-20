@@ -49,9 +49,6 @@ fn r() -> bool { return true; }
 fn s() -> bool { return false; }
 
 const short_circuit_1_invalid_rhs = false && sqrt(-1) != 0;
-// TODO(https://github.com/mediaprophet/etalon/issues/8440):
-// The following should not be accepted, but it currently is.
-// When fixed, move this to a wgsl_errors test.
 const short_circuit_2_invalid_rhs = false && (0u + 1.0f > 0);
 const short_circuit_3 = b_false || b_true;
 const short_circuit_4 = !((b_false) || (any(vec3(false, false, false))));
@@ -73,9 +70,6 @@ fn logical() {
     let bitwise_and1 = vec4(t) & vec4(f);
 
     const short_circuit_1_invalid = false && sqrt(-1) != 0;
-    // TODO(https://github.com/mediaprophet/etalon/issues/8440):
-    // The following should not be accepted, but it currently is.
-    // When fixed, move this to a wgsl_errors test.
     const short_circuit_2_invalid_rhs = false && (0u + 1.0f > 0);
     const short_circuit_3 = b_false || b_true;
     const short_circuit_4 = !((b_false) || (any(vec3(false, false, false))));

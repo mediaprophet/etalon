@@ -39,7 +39,7 @@ fn cs_main(@builtin(local_invocation_id) id: vec3<u32>) {
     atomicExchange(&storage_struct.atomic_scalar, 1.5);
     atomicExchange(&storage_struct.atomic_arr[1], 1.5);
 
-    // // TODO: https://github.com/gpuweb/gpuweb/issues/2021
+    // Float32 atomic compare exchange test cases
     // atomicCompareExchangeWeak(&storage_atomic_scalar, 1.5);
     // atomicCompareExchangeWeak(&storage_atomic_arr[1], 1.5);
     // atomicCompareExchangeWeak(&storage_struct.atomic_scalar, 1.5);

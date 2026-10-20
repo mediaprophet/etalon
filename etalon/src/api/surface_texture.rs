@@ -87,10 +87,7 @@ fn thread_panicking() -> bool {
             // If `panic = "abort"` then a thread _cannot_ be observably panicking by definition.
             false
         } else {
-            // TODO: This is potentially overly pessimistic; it may be appropriate to instead allow a
-            // texture to not be discarded.
-            // Alternatively, this could _also_ be a `panic!`, since we only care if the thread is panicking
-            // when the surface has not been presented.
+            // Unwinding guard: surface texture discard safety on panic
             compile_error!(
                 "cannot determine if a thread is panicking without either `panic = \"abort\"` or `std`"
             );

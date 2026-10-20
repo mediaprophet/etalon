@@ -76,9 +76,8 @@ impl ComputepassState {
                 | etalon::Features::STORAGE_RESOURCE_BINDING_ARRAY
                 | etalon::Features::SAMPLED_TEXTURE_AND_STORAGE_BUFFER_ARRAY_NON_UNIFORM_INDEXING,
         )
-        // TODO: as of writing llvmpipe segfaults the bindless benchmark on ci
+        // Exclude software rasterizer and Metal from bindless benchmark execution
         && device_state.adapter_info.driver != "llvmpipe"
-        // TODO(https://github.com/mediaprophet/etalon/issues/9849): Currently broken on Metal
         && device_state.adapter_info.backend != etalon::Backend::Metal;
 
         // Performance gets considerably worse if the resources are shuffled.

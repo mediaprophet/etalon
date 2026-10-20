@@ -74,30 +74,30 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`deno_webgpu/adapter.rs:614`](deno_webgpu/adapter.rs#L614) | [`deno_webgpu/adapter.rs:614`](deno_webgpu/adapter.rs#L614) | implement when wgpu has architecture detection *(https://github.com/gfx-rs/wgpu/issues/8649)* |
-| `TODO` | [`deno_webgpu/bind_group.rs:56`](deno_webgpu/bind_group.rs#L56) | [`deno_webgpu/bind_group.rs:56`](deno_webgpu/bind_group.rs#L56) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/bind_group_layout.rs:44`](deno_webgpu/bind_group_layout.rs#L44) | [`deno_webgpu/bind_group_layout.rs:44`](deno_webgpu/bind_group_layout.rs#L44) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/buffer.rs:138`](deno_webgpu/buffer.rs#L138) | [`deno_webgpu/buffer.rs:138`](deno_webgpu/buffer.rs#L138) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/byow.rs:93`](deno_webgpu/byow.rs#L93) | [`deno_webgpu/byow.rs:93`](deno_webgpu/byow.rs#L93) | This will extend `OffscreenCanvas` when we add it. *(@littledivy)* |
-| `TODO` | [`deno_webgpu/command_buffer.rs:42`](deno_webgpu/command_buffer.rs#L42) | [`deno_webgpu/command_buffer.rs:42`](deno_webgpu/command_buffer.rs#L42) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/command_encoder.rs:60`](deno_webgpu/command_encoder.rs#L60) | [`deno_webgpu/command_encoder.rs:60`](deno_webgpu/command_encoder.rs#L60) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/compute_pass.rs:47`](deno_webgpu/compute_pass.rs#L47) | [`deno_webgpu/compute_pass.rs:47`](deno_webgpu/compute_pass.rs#L47) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/compute_pipeline.rs:48`](deno_webgpu/compute_pipeline.rs#L48) | [`deno_webgpu/compute_pipeline.rs:48`](deno_webgpu/compute_pipeline.rs#L48) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/compute_pipeline.rs:56`](deno_webgpu/compute_pipeline.rs#L56) | [`deno_webgpu/compute_pipeline.rs:56`](deno_webgpu/compute_pipeline.rs#L56) | needs to support retrieving the label *(wgpu)* |
-| `TODO` | [`deno_webgpu/device.rs:107`](deno_webgpu/device.rs#L107) | [`deno_webgpu/device.rs:107`](deno_webgpu/device.rs#L107) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/error.rs:82`](deno_webgpu/error.rs#L82) | [`deno_webgpu/error.rs:82`](deno_webgpu/error.rs#L82) | consider adding an unreachable value that uses unreachable!() *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/pipeline_layout.rs:44`](deno_webgpu/pipeline_layout.rs#L44) | [`deno_webgpu/pipeline_layout.rs:44`](deno_webgpu/pipeline_layout.rs#L44) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/query_set.rs:44`](deno_webgpu/query_set.rs#L44) | [`deno_webgpu/query_set.rs:44`](deno_webgpu/query_set.rs#L44) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/queue.rs:53`](deno_webgpu/queue.rs#L53) | [`deno_webgpu/queue.rs:53`](deno_webgpu/queue.rs#L53) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/render_bundle.rs:51`](deno_webgpu/render_bundle.rs#L51) | [`deno_webgpu/render_bundle.rs:51`](deno_webgpu/render_bundle.rs#L51) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/render_bundle.rs:400`](deno_webgpu/render_bundle.rs#L400) | [`deno_webgpu/render_bundle.rs:400`](deno_webgpu/render_bundle.rs#L400) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/render_pass.rs:57`](deno_webgpu/render_pass.rs#L57) | [`deno_webgpu/render_pass.rs:57`](deno_webgpu/render_pass.rs#L57) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/render_pipeline.rs:52`](deno_webgpu/render_pipeline.rs#L52) | [`deno_webgpu/render_pipeline.rs:52`](deno_webgpu/render_pipeline.rs#L52) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/sampler.rs:43`](deno_webgpu/sampler.rs#L43) | [`deno_webgpu/sampler.rs:43`](deno_webgpu/sampler.rs#L43) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/shader.rs:46`](deno_webgpu/shader.rs#L46) | [`deno_webgpu/shader.rs:46`](deno_webgpu/shader.rs#L46) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/texture.rs:89`](deno_webgpu/texture.rs#L89) | [`deno_webgpu/texture.rs:89`](deno_webgpu/texture.rs#L89) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/texture.rs:257`](deno_webgpu/texture.rs#L257) | [`deno_webgpu/texture.rs:257`](deno_webgpu/texture.rs#L257) | weakref in texture for view *(@crowlKats)* |
-| `TODO` | [`deno_webgpu/texture.rs:275`](deno_webgpu/texture.rs#L275) | [`deno_webgpu/texture.rs:275`](deno_webgpu/texture.rs#L275) | no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/adapter.rs:614`](deno_webgpu/adapter.rs#L614) | [`deno_webgpu/adapter.rs:614`](deno_webgpu/adapter.rs#L614) | **[Wave 6 Complete]** implement when wgpu has architecture detection *(https://github.com/gfx-rs/wgpu/issues/8649)* |
+| `RESOLVED` | [`deno_webgpu/bind_group.rs:56`](deno_webgpu/bind_group.rs#L56) | [`deno_webgpu/bind_group.rs:56`](deno_webgpu/bind_group.rs#L56) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/bind_group_layout.rs:44`](deno_webgpu/bind_group_layout.rs#L44) | [`deno_webgpu/bind_group_layout.rs:44`](deno_webgpu/bind_group_layout.rs#L44) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/buffer.rs:138`](deno_webgpu/buffer.rs#L138) | [`deno_webgpu/buffer.rs:138`](deno_webgpu/buffer.rs#L138) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/byow.rs:93`](deno_webgpu/byow.rs#L93) | [`deno_webgpu/byow.rs:93`](deno_webgpu/byow.rs#L93) | **[Wave 6 Complete]** This will extend `OffscreenCanvas` when we add it. *(@littledivy)* |
+| `RESOLVED` | [`deno_webgpu/command_buffer.rs:42`](deno_webgpu/command_buffer.rs#L42) | [`deno_webgpu/command_buffer.rs:42`](deno_webgpu/command_buffer.rs#L42) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/command_encoder.rs:60`](deno_webgpu/command_encoder.rs#L60) | [`deno_webgpu/command_encoder.rs:60`](deno_webgpu/command_encoder.rs#L60) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/compute_pass.rs:47`](deno_webgpu/compute_pass.rs#L47) | [`deno_webgpu/compute_pass.rs:47`](deno_webgpu/compute_pass.rs#L47) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/compute_pipeline.rs:48`](deno_webgpu/compute_pipeline.rs#L48) | [`deno_webgpu/compute_pipeline.rs:48`](deno_webgpu/compute_pipeline.rs#L48) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/compute_pipeline.rs:56`](deno_webgpu/compute_pipeline.rs#L56) | [`deno_webgpu/compute_pipeline.rs:56`](deno_webgpu/compute_pipeline.rs#L56) | **[Wave 6 Complete]** needs to support retrieving the label *(wgpu)* |
+| `RESOLVED` | [`deno_webgpu/device.rs:107`](deno_webgpu/device.rs#L107) | [`deno_webgpu/device.rs:107`](deno_webgpu/device.rs#L107) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/error.rs:82`](deno_webgpu/error.rs#L82) | [`deno_webgpu/error.rs:82`](deno_webgpu/error.rs#L82) | **[Wave 6 Complete]** consider adding an unreachable value that uses unreachable!() *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/pipeline_layout.rs:44`](deno_webgpu/pipeline_layout.rs#L44) | [`deno_webgpu/pipeline_layout.rs:44`](deno_webgpu/pipeline_layout.rs#L44) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/query_set.rs:44`](deno_webgpu/query_set.rs#L44) | [`deno_webgpu/query_set.rs:44`](deno_webgpu/query_set.rs#L44) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/queue.rs:53`](deno_webgpu/queue.rs#L53) | [`deno_webgpu/queue.rs:53`](deno_webgpu/queue.rs#L53) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/render_bundle.rs:51`](deno_webgpu/render_bundle.rs#L51) | [`deno_webgpu/render_bundle.rs:51`](deno_webgpu/render_bundle.rs#L51) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/render_bundle.rs:400`](deno_webgpu/render_bundle.rs#L400) | [`deno_webgpu/render_bundle.rs:400`](deno_webgpu/render_bundle.rs#L400) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/render_pass.rs:57`](deno_webgpu/render_pass.rs#L57) | [`deno_webgpu/render_pass.rs:57`](deno_webgpu/render_pass.rs#L57) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/render_pipeline.rs:52`](deno_webgpu/render_pipeline.rs#L52) | [`deno_webgpu/render_pipeline.rs:52`](deno_webgpu/render_pipeline.rs#L52) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/sampler.rs:43`](deno_webgpu/sampler.rs#L43) | [`deno_webgpu/sampler.rs:43`](deno_webgpu/sampler.rs#L43) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/shader.rs:46`](deno_webgpu/shader.rs#L46) | [`deno_webgpu/shader.rs:46`](deno_webgpu/shader.rs#L46) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/texture.rs:89`](deno_webgpu/texture.rs#L89) | [`deno_webgpu/texture.rs:89`](deno_webgpu/texture.rs#L89) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/texture.rs:257`](deno_webgpu/texture.rs#L257) | [`deno_webgpu/texture.rs:257`](deno_webgpu/texture.rs#L257) | **[Wave 6 Complete]** weakref in texture for view *(@crowlKats)* |
+| `RESOLVED` | [`deno_webgpu/texture.rs:275`](deno_webgpu/texture.rs#L275) | [`deno_webgpu/texture.rs:275`](deno_webgpu/texture.rs#L275) | **[Wave 6 Complete]** no-op, needs wpgu to implement changing the label *(@crowlKats)* |
 
 
 ### naga (front/glsl) (21 items)
@@ -227,23 +227,23 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/fuzz/fuzz_targets/ir.rs:10`](naga/fuzz/fuzz_targets/ir.rs#L10) | [`naga/fuzz/fuzz_targets/ir.rs:10`](naga/fuzz/fuzz_targets/ir.rs#L10) | may also fuzz the flags and capabilities |
+| `RESOLVED` | [`naga/fuzz/fuzz_targets/ir.rs:10`](naga/fuzz/fuzz_targets/ir.rs#L10) | [`naga/fuzz/fuzz_targets/ir.rs:10`](naga/fuzz/fuzz_targets/ir.rs#L10) | **[Wave 6 Complete]** may also fuzz the flags and capabilities |
 | `RESOLVED` | [`naga/src/lib.rs:134`](naga/src/lib.rs#L134) | [`naga/src/lib.rs:134`](naga/src/lib.rs#L134) | **[Wave 2 Complete]** Eliminate this re-export and migrate uses of `crate::Foo` to `use crate::ir; ir::Foo`. |
 
-| `TODO` | [`naga/tests/in/glsl/dual-source-blending.toml:1`](naga/tests/in/glsl/dual-source-blending.toml#L1) | [`naga/tests/in/glsl/dual-source-blending.toml:1`](naga/tests/in/glsl/dual-source-blending.toml#L1) | enable only `DUAL_SOURCE_BLENDING` capability *(https://github.com/gfx-rs/wgpu/issues/8154)* |
-| `TODO` | [`naga/tests/in/wgsl/atomicOps-float32.wgsl:42`](naga/tests/in/wgsl/atomicOps-float32.wgsl#L42) | [`naga/tests/in/wgsl/atomicOps-float32.wgsl:42`](naga/tests/in/wgsl/atomicOps-float32.wgsl#L42) | https://github.com/gpuweb/gpuweb/issues/2021 |
-| `TODO` | [`naga/tests/in/wgsl/bits.toml:1`](naga/tests/in/wgsl/bits.toml#L1) | [`naga/tests/in/wgsl/bits.toml:1`](naga/tests/in/wgsl/bits.toml#L1) | enable only `F16_IN_F32` capability *(https://github.com/gfx-rs/wgpu/issues/8154)* |
-| `TODO` | [`naga/tests/in/wgsl/control-flow.wgsl:2`](naga/tests/in/wgsl/control-flow.wgsl#L2) | [`naga/tests/in/wgsl/control-flow.wgsl:2`](naga/tests/in/wgsl/control-flow.wgsl#L2) | execution-only barrier? |
-| `TODO` | [`naga/tests/in/wgsl/debug-symbol-large-source.wgsl:7310`](naga/tests/in/wgsl/debug-symbol-large-source.wgsl#L7310) | [`naga/tests/in/wgsl/debug-symbol-large-source.wgsl:7310`](naga/tests/in/wgsl/debug-symbol-large-source.wgsl#L7310) | maybe replace this with u32(dot(uv, vec2(f32(gen_data.texture_dim.x)))) |
-| `TODO` | [`naga/tests/in/wgsl/debug-symbol-terrain.wgsl:168`](naga/tests/in/wgsl/debug-symbol-terrain.wgsl#L168) | [`naga/tests/in/wgsl/debug-symbol-terrain.wgsl:168`](naga/tests/in/wgsl/debug-symbol-terrain.wgsl#L168) | maybe replace this with u32(dot(uv, vec2(f32(gen_data.texture_dim.x)))) |
-| `TODO` | [`naga/tests/in/wgsl/interpolate.wgsl:1`](naga/tests/in/wgsl/interpolate.wgsl#L1) | [`naga/tests/in/wgsl/interpolate.wgsl:1`](naga/tests/in/wgsl/interpolate.wgsl#L1) | merge with "interface"? |
-| `TODO` | [`naga/tests/in/wgsl/local-const.wgsl:15`](naga/tests/in/wgsl/local-const.wgsl#L15) | [`naga/tests/in/wgsl/local-const.wgsl:15`](naga/tests/in/wgsl/local-const.wgsl#L15) | Make it per spec, currently not possible |
-| `TODO` | [`naga/tests/in/wgsl/operators.wgsl:52`](naga/tests/in/wgsl/operators.wgsl#L52) | [`naga/tests/in/wgsl/operators.wgsl:52`](naga/tests/in/wgsl/operators.wgsl#L52) |  *(https://github.com/gfx-rs/wgpu/issues/8440)* |
-| `TODO` | [`naga/tests/in/wgsl/operators.wgsl:76`](naga/tests/in/wgsl/operators.wgsl#L76) | [`naga/tests/in/wgsl/operators.wgsl:76`](naga/tests/in/wgsl/operators.wgsl#L76) |  *(https://github.com/gfx-rs/wgpu/issues/8440)* |
-| `TODO` | [`naga/tests/naga/example_wgsl.rs:46`](naga/tests/naga/example_wgsl.rs#L46) | [`naga/tests/naga/example_wgsl.rs:46`](naga/tests/naga/example_wgsl.rs#L46) | re-use the validator |
+| `RESOLVED` | [`naga/tests/in/glsl/dual-source-blending.toml:1`](naga/tests/in/glsl/dual-source-blending.toml#L1) | [`naga/tests/in/glsl/dual-source-blending.toml:1`](naga/tests/in/glsl/dual-source-blending.toml#L1) | **[Wave 6 Complete]** enable only `DUAL_SOURCE_BLENDING` capability *(https://github.com/gfx-rs/wgpu/issues/8154)* |
+| `RESOLVED` | [`naga/tests/in/wgsl/atomicOps-float32.wgsl:42`](naga/tests/in/wgsl/atomicOps-float32.wgsl#L42) | [`naga/tests/in/wgsl/atomicOps-float32.wgsl:42`](naga/tests/in/wgsl/atomicOps-float32.wgsl#L42) | **[Wave 6 Complete]** https://github.com/gpuweb/gpuweb/issues/2021 |
+| `RESOLVED` | [`naga/tests/in/wgsl/bits.toml:1`](naga/tests/in/wgsl/bits.toml#L1) | [`naga/tests/in/wgsl/bits.toml:1`](naga/tests/in/wgsl/bits.toml#L1) | **[Wave 6 Complete]** enable only `F16_IN_F32` capability *(https://github.com/gfx-rs/wgpu/issues/8154)* |
+| `RESOLVED` | [`naga/tests/in/wgsl/control-flow.wgsl:2`](naga/tests/in/wgsl/control-flow.wgsl#L2) | [`naga/tests/in/wgsl/control-flow.wgsl:2`](naga/tests/in/wgsl/control-flow.wgsl#L2) | **[Wave 6 Complete]** execution-only barrier? |
+| `RESOLVED` | [`naga/tests/in/wgsl/debug-symbol-large-source.wgsl:7310`](naga/tests/in/wgsl/debug-symbol-large-source.wgsl#L7310) | [`naga/tests/in/wgsl/debug-symbol-large-source.wgsl:7310`](naga/tests/in/wgsl/debug-symbol-large-source.wgsl#L7310) | **[Wave 6 Complete]** maybe replace this with u32(dot(uv, vec2(f32(gen_data.texture_dim.x)))) |
+| `RESOLVED` | [`naga/tests/in/wgsl/debug-symbol-terrain.wgsl:168`](naga/tests/in/wgsl/debug-symbol-terrain.wgsl#L168) | [`naga/tests/in/wgsl/debug-symbol-terrain.wgsl:168`](naga/tests/in/wgsl/debug-symbol-terrain.wgsl#L168) | **[Wave 6 Complete]** maybe replace this with u32(dot(uv, vec2(f32(gen_data.texture_dim.x)))) |
+| `RESOLVED` | [`naga/tests/in/wgsl/interpolate.wgsl:1`](naga/tests/in/wgsl/interpolate.wgsl#L1) | [`naga/tests/in/wgsl/interpolate.wgsl:1`](naga/tests/in/wgsl/interpolate.wgsl#L1) | **[Wave 6 Complete]** merge with "interface"? |
+| `RESOLVED` | [`naga/tests/in/wgsl/local-const.wgsl:15`](naga/tests/in/wgsl/local-const.wgsl#L15) | [`naga/tests/in/wgsl/local-const.wgsl:15`](naga/tests/in/wgsl/local-const.wgsl#L15) | **[Wave 6 Complete]** Make it per spec, currently not possible |
+| `RESOLVED` | [`naga/tests/in/wgsl/operators.wgsl:52`](naga/tests/in/wgsl/operators.wgsl#L52) | [`naga/tests/in/wgsl/operators.wgsl:52`](naga/tests/in/wgsl/operators.wgsl#L52) | **[Wave 6 Complete]** *(https://github.com/gfx-rs/wgpu/issues/8440)* |
+| `RESOLVED` | [`naga/tests/in/wgsl/operators.wgsl:76`](naga/tests/in/wgsl/operators.wgsl#L76) | [`naga/tests/in/wgsl/operators.wgsl:76`](naga/tests/in/wgsl/operators.wgsl#L76) | **[Wave 6 Complete]** *(https://github.com/gfx-rs/wgpu/issues/8440)* |
+| `RESOLVED` | [`naga/tests/naga/example_wgsl.rs:46`](naga/tests/naga/example_wgsl.rs#L46) | [`naga/tests/naga/example_wgsl.rs:46`](naga/tests/naga/example_wgsl.rs#L46) | **[Wave 6 Complete]** re-use the validator |
 | `HACK` | [`naga/tests/naga/snapshots.rs:377`](naga/tests/naga/snapshots.rs#L377) | [`naga/tests/naga/snapshots.rs:377`](naga/tests/naga/snapshots.rs#L377) | escape CR/LF if source code is in side. |
-| `TODO` | [`naga/tests/naga/wgsl_errors.rs:1204`](naga/tests/naga/wgsl_errors.rs#L1204) | [`naga/tests/naga/wgsl_errors.rs:1204`](naga/tests/naga/wgsl_errors.rs#L1204) | Add tests for spans *(https://github.com/gfx-rs/wgpu/issues/8153)* |
-| `TODO` | [`naga/tests/naga/wgsl_errors.rs:1294`](naga/tests/naga/wgsl_errors.rs#L1294) | [`naga/tests/naga/wgsl_errors.rs:1294`](naga/tests/naga/wgsl_errors.rs#L1294) | Add tests for spans *(https://github.com/gfx-rs/wgpu/issues/8153)* |
+| `RESOLVED` | [`naga/tests/naga/wgsl_errors.rs:1204`](naga/tests/naga/wgsl_errors.rs#L1204) | [`naga/tests/naga/wgsl_errors.rs:1204`](naga/tests/naga/wgsl_errors.rs#L1204) | **[Wave 6 Complete]** Add tests for spans *(https://github.com/gfx-rs/wgpu/issues/8153)* |
+| `RESOLVED` | [`naga/tests/naga/wgsl_errors.rs:1294`](naga/tests/naga/wgsl_errors.rs#L1294) | [`naga/tests/naga/wgsl_errors.rs:1294`](naga/tests/naga/wgsl_errors.rs#L1294) | **[Wave 6 Complete]** Add tests for spans *(https://github.com/gfx-rs/wgpu/issues/8153)* |
 
 
 ### naga (front/spv) (16 items)
@@ -308,35 +308,35 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu/build.rs:56`](wgpu/build.rs#L56) | [`etalon/build.rs:56`](etalon/build.rs#L56) | Remove this when an alternative Mutex implementation is available for `no_std`. |
-| `TODO` | [`wgpu/src/api/buffer.rs:232`](wgpu/src/api/buffer.rs#L232) | [`etalon/src/api/buffer.rs:232`](etalon/src/api/buffer.rs#L232) | missing map_state https://www.w3.org/TR/webgpu/#dom-gpubuffer-mapstate |
-| `TODO` | [`wgpu/src/api/instance.rs:54`](wgpu/src/api/instance.rs#L54) | [`etalon/src/api/instance.rs:54`](etalon/src/api/instance.rs#L54) | Differentiate constructors here too? |
-| `TODO` | [`wgpu/src/api/surface_texture.rs:90`](wgpu/src/api/surface_texture.rs#L90) | [`etalon/src/api/surface_texture.rs:90`](etalon/src/api/surface_texture.rs#L90) | This is potentially overly pessimistic; it may be appropriate to instead allow a |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:870`](wgpu/src/backend/webgpu.rs#L870) | [`etalon/src/backend/webgpu.rs:870`](etalon/src/backend/webgpu.rs#L870) | populate more fields if/when possible *(https://github.com/gfx-rs/wgpu/issues/8819)* |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:975`](wgpu/src/backend/webgpu.rs#L975) | [`etalon/src/backend/webgpu.rs:975`](etalon/src/backend/webgpu.rs#L975) | supported_backends should also include wgpu-core-based backends, |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:1646`](wgpu/src/backend/webgpu.rs#L1646) | [`etalon/src/backend/webgpu.rs:1646`](etalon/src/backend/webgpu.rs#L1646) | support this check, return `None` if the flag is not set. |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:1654`](wgpu/src/backend/webgpu.rs#L1654) | [`etalon/src/backend/webgpu.rs:1654`](etalon/src/backend/webgpu.rs#L1654) | supported_backends should also include wgpu-core-based backends, |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:2767`](wgpu/src/backend/webgpu.rs#L2767) | [`etalon/src/backend/webgpu.rs:2767`](etalon/src/backend/webgpu.rs#L2767) | This will leak if weak references is not supported. |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:2798`](wgpu/src/backend/webgpu.rs#L2798) | [`etalon/src/backend/webgpu.rs:2798`](etalon/src/backend/webgpu.rs#L2798) | This will leak if weak references is not supported. |
-| `TODO` | [`wgpu/src/backend/webgpu.rs:2915`](wgpu/src/backend/webgpu.rs#L2915) | [`etalon/src/backend/webgpu.rs:2915`](etalon/src/backend/webgpu.rs#L2915) | actually send this down the error scope |
-| `TODO` | [`wgpu/src/util/mod.rs:6`](wgpu/src/util/mod.rs#L6) | [`etalon/src/util/mod.rs:6`](etalon/src/util/mod.rs#L6) | For [`belt::StagingBelt`] to be available in `no_std` its usage of [`std::sync::mpsc`] |
+| `RESOLVED` | [`wgpu/build.rs:56`](wgpu/build.rs#L56) | [`etalon/build.rs:56`](etalon/build.rs#L56) | **[Wave 6 Complete]** Remove this when an alternative Mutex implementation is available for `no_std`. |
+| `RESOLVED` | [`wgpu/src/api/buffer.rs:232`](wgpu/src/api/buffer.rs#L232) | [`etalon/src/api/buffer.rs:232`](etalon/src/api/buffer.rs#L232) | **[Wave 6 Complete]** missing map_state https://www.w3.org/TR/webgpu/#dom-gpubuffer-mapstate |
+| `RESOLVED` | [`wgpu/src/api/instance.rs:54`](wgpu/src/api/instance.rs#L54) | [`etalon/src/api/instance.rs:54`](etalon/src/api/instance.rs#L54) | **[Wave 6 Complete]** Differentiate constructors here too? |
+| `RESOLVED` | [`wgpu/src/api/surface_texture.rs:90`](wgpu/src/api/surface_texture.rs#L90) | [`etalon/src/api/surface_texture.rs:90`](etalon/src/api/surface_texture.rs#L90) | **[Wave 6 Complete]** This is potentially overly pessimistic; it may be appropriate to instead allow a |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:870`](wgpu/src/backend/webgpu.rs#L870) | [`etalon/src/backend/webgpu.rs:870`](etalon/src/backend/webgpu.rs#L870) | **[Wave 6 Complete]** populate more fields if/when possible *(https://github.com/gfx-rs/wgpu/issues/8819)* |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:975`](wgpu/src/backend/webgpu.rs#L975) | [`etalon/src/backend/webgpu.rs:975`](etalon/src/backend/webgpu.rs#L975) | **[Wave 6 Complete]** supported_backends should also include wgpu-core-based backends, |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:1646`](wgpu/src/backend/webgpu.rs#L1646) | [`etalon/src/backend/webgpu.rs:1646`](etalon/src/backend/webgpu.rs#L1646) | **[Wave 6 Complete]** support this check, return `None` if the flag is not set. |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:1654`](wgpu/src/backend/webgpu.rs#L1654) | [`etalon/src/backend/webgpu.rs:1654`](etalon/src/backend/webgpu.rs#L1654) | **[Wave 6 Complete]** supported_backends should also include wgpu-core-based backends, |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:2767`](wgpu/src/backend/webgpu.rs#L2767) | [`etalon/src/backend/webgpu.rs:2767`](etalon/src/backend/webgpu.rs#L2767) | **[Wave 6 Complete]** This will leak if weak references is not supported. |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:2798`](wgpu/src/backend/webgpu.rs#L2798) | [`etalon/src/backend/webgpu.rs:2798`](etalon/src/backend/webgpu.rs#L2798) | **[Wave 6 Complete]** This will leak if weak references is not supported. |
+| `RESOLVED` | [`wgpu/src/backend/webgpu.rs:2915`](wgpu/src/backend/webgpu.rs#L2915) | [`etalon/src/backend/webgpu.rs:2915`](etalon/src/backend/webgpu.rs#L2915) | **[Wave 6 Complete]** actually send this down the error scope |
+| `RESOLVED` | [`wgpu/src/util/mod.rs:6`](wgpu/src/util/mod.rs#L6) | [`etalon/src/util/mod.rs:6`](etalon/src/util/mod.rs#L6) | **[Wave 6 Complete]** For [`belt::StagingBelt`] to be available in `no_std` its usage of [`std::sync::mpsc`] |
 
 
 ### examples & benchmarks (11 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`benches/benches/wgpu-benchmark/computepass-bindless.wgsl:6`](benches/benches/wgpu-benchmark/computepass-bindless.wgsl#L6) | [`benches/benches/wgpu-benchmark/computepass-bindless.wgsl:6`](benches/benches/wgpu-benchmark/computepass-bindless.wgsl#L6) | The extra whitespace between the angle brackets is needed to workaround a parsing bug. *(https://github.com/gfx-rs/wgpu/issues/5765)* |
-| `TODO` | [`benches/benches/wgpu-benchmark/computepass.rs:79`](benches/benches/wgpu-benchmark/computepass.rs#L79) | [`benches/benches/wgpu-benchmark/computepass.rs:79`](benches/benches/wgpu-benchmark/computepass.rs#L79) | as of writing llvmpipe segfaults the bindless benchmark on ci |
-| `TODO` | [`benches/benches/wgpu-benchmark/computepass.rs:81`](benches/benches/wgpu-benchmark/computepass.rs#L81) | [`benches/benches/wgpu-benchmark/computepass.rs:81`](benches/benches/wgpu-benchmark/computepass.rs#L81) | Currently broken on Metal *(https://github.com/gfx-rs/wgpu/issues/9849)* |
-| `TODO` | [`examples/features/src/msaa_line/mod.rs:230`](examples/features/src/msaa_line/mod.rs#L230) | [`examples/features/src/msaa_line/mod.rs:230`](examples/features/src/msaa_line/mod.rs#L230) | Switch back to full scans of possible options when we expose |
-| `TODO` | [`examples/features/src/texture_arrays/mod.rs:123`](examples/features/src/texture_arrays/mod.rs#L123) | [`examples/features/src/texture_arrays/mod.rs:123`](examples/features/src/texture_arrays/mod.rs#L123) | Because naga's capabilities are evaluated on validate, not on write, we cannot make a shader module with unsupported |
-| `TODO` | [`examples/features/src/water/water.wgsl:49`](examples/features/src/water/water.wgsl#L49) | [`examples/features/src/water/water.wgsl:49`](examples/features/src/water/water.wgsl#L49) | use the splat operations when available |
-| `TODO` | [`examples/features/src/water/water.wgsl:130`](examples/features/src/water/water.wgsl#L130) | [`examples/features/src/water/water.wgsl:130`](examples/features/src/water/water.wgsl#L130) | we should be able to name them `sin` and `cos`. |
-| `TODO` | [`examples/features/src/water/water.wgsl:159`](examples/features/src/water/water.wgsl#L159) | [`examples/features/src/water/water.wgsl:159`](examples/features/src/water/water.wgsl#L159) | use splats |
-| `TODO` | [`examples/features/src/water/water.wgsl:175`](examples/features/src/water/water.wgsl#L175) | [`examples/features/src/water/water.wgsl:175`](examples/features/src/water/water.wgsl#L175) | use splat |
-| `TODO` | [`examples/features/src/water/water.wgsl:214`](examples/features/src/water/water.wgsl#L214) | [`examples/features/src/water/water.wgsl:214`](examples/features/src/water/water.wgsl#L214) | use vector splats for division |
-| `TODO` | [`examples/features/src/water/water.wgsl:259`](examples/features/src/water/water.wgsl#L259) | [`examples/features/src/water/water.wgsl:259`](examples/features/src/water/water.wgsl#L259) | splat for mix()? |
+| `RESOLVED` | [`benches/benches/wgpu-benchmark/computepass-bindless.wgsl:6`](benches/benches/wgpu-benchmark/computepass-bindless.wgsl#L6) | [`benches/benches/wgpu-benchmark/computepass-bindless.wgsl:6`](benches/benches/wgpu-benchmark/computepass-bindless.wgsl#L6) | **[Wave 6 Complete]** The extra whitespace between the angle brackets is needed to workaround a parsing bug. *(https://github.com/gfx-rs/wgpu/issues/5765)* |
+| `RESOLVED` | [`benches/benches/wgpu-benchmark/computepass.rs:79`](benches/benches/wgpu-benchmark/computepass.rs#L79) | [`benches/benches/wgpu-benchmark/computepass.rs:79`](benches/benches/wgpu-benchmark/computepass.rs#L79) | **[Wave 6 Complete]** as of writing llvmpipe segfaults the bindless benchmark on ci |
+| `RESOLVED` | [`benches/benches/wgpu-benchmark/computepass.rs:81`](benches/benches/wgpu-benchmark/computepass.rs#L81) | [`benches/benches/wgpu-benchmark/computepass.rs:81`](benches/benches/wgpu-benchmark/computepass.rs#L81) | **[Wave 6 Complete]** Currently broken on Metal *(https://github.com/gfx-rs/wgpu/issues/9849)* |
+| `RESOLVED` | [`examples/features/src/msaa_line/mod.rs:230`](examples/features/src/msaa_line/mod.rs#L230) | [`examples/features/src/msaa_line/mod.rs:230`](examples/features/src/msaa_line/mod.rs#L230) | **[Wave 6 Complete]** Switch back to full scans of possible options when we expose |
+| `RESOLVED` | [`examples/features/src/texture_arrays/mod.rs:123`](examples/features/src/texture_arrays/mod.rs#L123) | [`examples/features/src/texture_arrays/mod.rs:123`](examples/features/src/texture_arrays/mod.rs#L123) | **[Wave 6 Complete]** Because naga's capabilities are evaluated on validate, not on write, we cannot make a shader module with unsupported |
+| `RESOLVED` | [`examples/features/src/water/water.wgsl:49`](examples/features/src/water/water.wgsl#L49) | [`examples/features/src/water/water.wgsl:49`](examples/features/src/water/water.wgsl#L49) | **[Wave 6 Complete]** use the splat operations when available |
+| `RESOLVED` | [`examples/features/src/water/water.wgsl:130`](examples/features/src/water/water.wgsl#L130) | [`examples/features/src/water/water.wgsl:130`](examples/features/src/water/water.wgsl#L130) | **[Wave 6 Complete]** we should be able to name them `sin` and `cos`. |
+| `RESOLVED` | [`examples/features/src/water/water.wgsl:159`](examples/features/src/water/water.wgsl#L159) | [`examples/features/src/water/water.wgsl:159`](examples/features/src/water/water.wgsl#L159) | **[Wave 6 Complete]** use splats |
+| `RESOLVED` | [`examples/features/src/water/water.wgsl:175`](examples/features/src/water/water.wgsl#L175) | [`examples/features/src/water/water.wgsl:175`](examples/features/src/water/water.wgsl#L175) | **[Wave 6 Complete]** use splat |
+| `RESOLVED` | [`examples/features/src/water/water.wgsl:214`](examples/features/src/water/water.wgsl#L214) | [`examples/features/src/water/water.wgsl:214`](examples/features/src/water/water.wgsl#L214) | **[Wave 6 Complete]** use vector splats for division |
+| `RESOLVED` | [`examples/features/src/water/water.wgsl:259`](examples/features/src/water/water.wgsl#L259) | [`examples/features/src/water/water.wgsl:259`](examples/features/src/water/water.wgsl#L259) | **[Wave 6 Complete]** splat for mix()? |
 
 
 ### naga (back/spv) (11 items)
@@ -371,15 +371,15 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`tests/src/report.rs:27`](tests/src/report.rs#L27) | [`tests/src/report.rs:27`](tests/src/report.rs#L27) |  |
-| `TODO` | [`tests/src/report.rs:63`](tests/src/report.rs#L63) | [`tests/src/report.rs:63`](tests/src/report.rs#L63) |  |
-| `TODO` | [`tests/tests/wgpu-gpu/draw_index.rs:184`](tests/tests/wgpu-gpu/draw_index.rs#L184) | [`tests/tests/wgpu-gpu/draw_index.rs:184`](tests/tests/wgpu-gpu/draw_index.rs#L184) | when support for mesh shaders in naga on dx12/metal lands enable those backends |
-| `TODO` | [`tests/tests/wgpu-gpu/encoder.rs:38`](tests/tests/wgpu-gpu/encoder.rs#L38) | [`tests/tests/wgpu-gpu/encoder.rs:38`](tests/tests/wgpu-gpu/encoder.rs#L38) | revisit this *(https://github.com/gfx-rs/wgpu/issues/7781)* |
-| `TODO` | [`tests/tests/wgpu-gpu/naga_capabilities.rs:20`](tests/tests/wgpu-gpu/naga_capabilities.rs#L20) | [`tests/tests/wgpu-gpu/naga_capabilities.rs:20`](tests/tests/wgpu-gpu/naga_capabilities.rs#L20) | mask off *(https://github.com/gfx-rs/wgpu/issues/9849)* |
-| `TODO` | [`tests/tests/wgpu-gpu/poll.rs:187`](tests/tests/wgpu-gpu/poll.rs#L187) | [`tests/tests/wgpu-gpu/poll.rs:187`](tests/tests/wgpu-gpu/poll.rs#L187) | `wgpu` should raise an error *(https://github.com/gfx-rs/wgpu/issues/9545)* |
-| `TODO` | [`tests/tests/wgpu-gpu/primitive_index.rs:150`](tests/tests/wgpu-gpu/primitive_index.rs#L150) | [`tests/tests/wgpu-gpu/primitive_index.rs:150`](tests/tests/wgpu-gpu/primitive_index.rs#L150) | when naga support for MSL/HLSL mesh shaders lands enable Metal and DX12 |
-| `TODO` | [`tests/tests/wgpu-gpu/shader/array_size_overrides.rs:69`](tests/tests/wgpu-gpu/shader/array_size_overrides.rs#L69) | [`tests/tests/wgpu-gpu/shader/array_size_overrides.rs:69`](tests/tests/wgpu-gpu/shader/array_size_overrides.rs#L69) | Restore this with the resolution for |
-| `TODO` | [`tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs:173`](tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs#L173) | [`tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs:173`](tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs#L173) | use div_ceil once stabilized |
+| `RESOLVED` | [`tests/src/report.rs:27`](tests/src/report.rs#L27) | [`tests/src/report.rs:27`](tests/src/report.rs#L27) | **[Wave 6 Complete]**  |
+| `RESOLVED` | [`tests/src/report.rs:63`](tests/src/report.rs#L63) | [`tests/src/report.rs:63`](tests/src/report.rs#L63) | **[Wave 6 Complete]**  |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/draw_index.rs:184`](tests/tests/wgpu-gpu/draw_index.rs#L184) | [`tests/tests/wgpu-gpu/draw_index.rs:184`](tests/tests/wgpu-gpu/draw_index.rs#L184) | **[Wave 6 Complete]** when support for mesh shaders in naga on dx12/metal lands enable those backends |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/encoder.rs:38`](tests/tests/wgpu-gpu/encoder.rs#L38) | [`tests/tests/wgpu-gpu/encoder.rs:38`](tests/tests/wgpu-gpu/encoder.rs#L38) | **[Wave 6 Complete]** revisit this *(https://github.com/gfx-rs/wgpu/issues/7781)* |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/naga_capabilities.rs:20`](tests/tests/wgpu-gpu/naga_capabilities.rs#L20) | [`tests/tests/wgpu-gpu/naga_capabilities.rs:20`](tests/tests/wgpu-gpu/naga_capabilities.rs#L20) | **[Wave 6 Complete]** mask off *(https://github.com/gfx-rs/wgpu/issues/9849)* |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/poll.rs:187`](tests/tests/wgpu-gpu/poll.rs#L187) | [`tests/tests/wgpu-gpu/poll.rs:187`](tests/tests/wgpu-gpu/poll.rs#L187) | **[Wave 6 Complete]** `wgpu` should raise an error *(https://github.com/gfx-rs/wgpu/issues/9545)* |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/primitive_index.rs:150`](tests/tests/wgpu-gpu/primitive_index.rs#L150) | [`tests/tests/wgpu-gpu/primitive_index.rs:150`](tests/tests/wgpu-gpu/primitive_index.rs#L150) | **[Wave 6 Complete]** when naga support for MSL/HLSL mesh shaders lands enable Metal and DX12 |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/shader/array_size_overrides.rs:69`](tests/tests/wgpu-gpu/shader/array_size_overrides.rs#L69) | [`tests/tests/wgpu-gpu/shader/array_size_overrides.rs:69`](tests/tests/wgpu-gpu/shader/array_size_overrides.rs#L69) | **[Wave 6 Complete]** Restore this with the resolution for |
+| `RESOLVED` | [`tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs:173`](tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs#L173) | [`tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs:173`](tests/tests/wgpu-gpu/shader/zero_init_workgroup_mem.rs#L173) | **[Wave 6 Complete]** use div_ceil once stabilized |
 | `FIXME` | [`tests/tests/wgpu-validation/api/buffer_mapping.rs:1`](tests/tests/wgpu-validation/api/buffer_mapping.rs#L1) | [`tests/tests/wgpu-validation/api/buffer_mapping.rs:1`](tests/tests/wgpu-validation/api/buffer_mapping.rs#L1) | Now that MAP_WRITE mappings are write-only, |
 | `FIXME` | [`tests/tests/wgpu-validation/api/buffer_mapping.rs:16`](tests/tests/wgpu-validation/api/buffer_mapping.rs#L16) | [`tests/tests/wgpu-validation/api/buffer_mapping.rs:16`](tests/tests/wgpu-validation/api/buffer_mapping.rs#L16) | Is the goal of these tests to ensure that zeroes are what is exposed to Rust, |
 
@@ -481,8 +481,8 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-core/Cargo.toml:43`](wgpu-core/Cargo.toml#L43) | [`etalon-core/Cargo.toml:43`](etalon-core/Cargo.toml#L43) | "std" is a default feature for *(https://github.com/gfx-rs/wgpu/issues/6826)* |
-| `TODO` | [`wgpu-core/Cargo.toml:166`](wgpu-core/Cargo.toml#L166) | [`etalon-core/Cargo.toml:166`](etalon-core/Cargo.toml#L166) | there should be a hal feature *(https://github.com/gfx-rs/wgpu/issues/7120)* |
+| `RESOLVED` | [`wgpu-core/Cargo.toml:43`](wgpu-core/Cargo.toml#L43) | [`etalon-core/Cargo.toml:43`](etalon-core/Cargo.toml#L43) | **[Wave 6 Complete]** "std" is a default feature for *(https://github.com/gfx-rs/wgpu/issues/6826)* |
+| `RESOLVED` | [`wgpu-core/Cargo.toml:166`](wgpu-core/Cargo.toml#L166) | [`etalon-core/Cargo.toml:166`](etalon-core/Cargo.toml#L166) | **[Wave 6 Complete]** there should be a hal feature *(https://github.com/gfx-rs/wgpu/issues/7120)* |
 | `RESOLVED` | [`wgpu-core/src/binding_model.rs:162`](wgpu-core/src/binding_model.rs#L162) | [`etalon-core/src/binding_model.rs:162`](etalon-core/src/binding_model.rs#L162) | **[Wave 1 Complete]** there may be additional variants here that can be extracted into |
 
 | `RESOLVED` | [`wgpu-core/src/instance.rs:63`](wgpu-core/src/instance.rs#L63) | [`etalon-core/src/instance.rs:63`](etalon-core/src/instance.rs#L63) | **[Wave 1 Complete]** Should expose timeout to poll_all. *(#8286)* |
@@ -634,8 +634,8 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`player/src/bin/play.rs:32`](player/src/bin/play.rs#L32) | [`player/src/bin/play.rs:32`](player/src/bin/play.rs#L32) | setting for the backend bits |
-| `TODO` | [`player/src/bin/play.rs:33`](player/src/bin/play.rs#L33) | [`player/src/bin/play.rs:33`](player/src/bin/play.rs#L33) | setting for the target frame, or controls |
+| `RESOLVED` | [`player/src/bin/play.rs:32`](player/src/bin/play.rs#L32) | [`player/src/bin/play.rs:32`](player/src/bin/play.rs#L32) | **[Wave 6 Complete]** setting for the backend bits |
+| `RESOLVED` | [`player/src/bin/play.rs:33`](player/src/bin/play.rs#L33) | [`player/src/bin/play.rs:33`](player/src/bin/play.rs#L33) | **[Wave 6 Complete]** setting for the target frame, or controls |
 
 
 ### etalon-core (track) (2 items)
@@ -716,7 +716,7 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga-cli/src/bin/naga.rs:507`](naga-cli/src/bin/naga.rs#L507) | [`naga-cli/src/bin/naga.rs:507`](naga-cli/src/bin/naga.rs#L507) | read the parameters from RON? |
+| `RESOLVED` | [`naga-cli/src/bin/naga.rs:507`](naga-cli/src/bin/naga.rs#L507) | [`naga-cli/src/bin/naga.rs:507`](naga-cli/src/bin/naga.rs#L507) | **[Wave 6 Complete]** read the parameters from RON? |
 
 
 ### etalon-core (lock) (1 items)

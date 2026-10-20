@@ -51,7 +51,7 @@ impl Default for Instance {
     /// If no backend feature for the active target platform is enabled,
     /// this method will panic, see [`Instance::enabled_backend_features()`].
     fn default() -> Self {
-        // TODO: Differentiate constructors here too?
+        // Default instance initialized with display-less configuration
         Self::new(InstanceDescriptor::new_without_display_handle())
     }
 }

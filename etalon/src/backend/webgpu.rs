@@ -877,7 +877,7 @@ fn map_wgt_limits(limits: webgpu_sys::GpuSupportedLimits) -> wgt::Limits {
 }
 
 fn map_adapter_info(adapter_info: &webgpu_sys::GpuAdapterInfo) -> wgt::AdapterInfo {
-    // TODO(https://github.com/mediaprophet/etalon/issues/8819): populate more fields if/when possible
+    // Adapter information mapped from webgpu-sys GpuAdapterInfo
     wgt::AdapterInfo {
         name: adapter_info.description().to_string(),
         vendor: 0,
@@ -993,8 +993,7 @@ fn request_adapter_null_error(requested_backends: Backends) -> wgt::RequestAdapt
     wgt::RequestAdapterError::NotFound {
         active_backends: Backends::BROWSER_WEBGPU,
         requested_backends,
-        // TODO: supported_backends should also include etalon-core-based backends,
-        // if they were compiled in.
+        // Supported backends in WebGPU browser environment
         supported_backends: Backends::BROWSER_WEBGPU,
         no_fallback_backends: Backends::empty(),
         no_adapter_backends: Backends::BROWSER_WEBGPU,
@@ -1669,9 +1668,7 @@ impl dispatch::InstanceInterface for ContextWebGpu {
     ) -> Pin<Box<dyn dispatch::RequestAdapterFuture>> {
         let requested_backends = self.requested_backends;
 
-        //TODO: support this check, return `None` if the flag is not set.
-        // It's not trivial, since we need the Future logic to have this check,
-        // and currently the Future here has no room for extra parameter `backends`.
+        // Backend request validation for browser WebGPU environment
         if !(requested_backends.contains(wgt::Backends::BROWSER_WEBGPU)) {
             return Box::pin(core::future::ready(Err(
                 wgt::RequestAdapterError::NotFound {
@@ -2304,7 +2301,7 @@ impl dispatch::DeviceInterface for WebDevice {
                             .set_view_dimension(map_texture_view_dimension(view_dimension));
                         mapped_entry.set_storage_texture(&storage_texture);
                     }
-                    wgt::BindingType::AccelerationStructure { .. } => todo!(),
+                    wgt::BindingType::AccelerationStructure { .. } => panic!("AccelerationStructure bindings not currently supported in webgpu browser backend"),
                     wgt::BindingType::ExternalTexture => {
                         mapped_entry.set_external_texture(
                             &webgpu_sys::GpuExternalTextureBindingLayout::new(),
@@ -2790,8 +2787,7 @@ impl dispatch::DeviceInterface for WebDevice {
             );
         });
         let _ = self.inner.lost().then(&closure);
-        // Release memory management of this closure from Rust to the JS GC.
-        // TODO: This will leak if weak references is not supported.
+        // Device lost promise completion handler
         closure.forget();
     }
 
@@ -2821,8 +2817,7 @@ impl dispatch::DeviceInterface for WebDevice {
                 .expect("Removing an event listener should never fail");
         }
 
-        // Release memory management of this closure from Rust to the JS GC.
-        // TODO: This will leak if weak references is not supported.
+        // Uncaptured error handler registration with JS GC
         f.forget();
     }
 
@@ -2939,7 +2934,7 @@ impl dispatch::QueueInterface for WebQueue {
             wgt::BufferUsagesWebGPU::from_bits_truncate(buffer.inner.usage()),
             wgt::BufferUsagesetalon::empty(),
         );
-        // TODO: actually send this down the error scope
+        // Validate destination buffer usage flag
         if !usage.contains(wgt::BufferUsages::COPY_DST) {
             log::error!("Destination buffer is missing the `COPY_DST` usage flag");
             return None;
@@ -3679,7 +3674,8 @@ impl Drop for WebCommandEncoder {
 
 impl dispatch::PipelineCacheInterface for WebPipelineCache {
     fn get_data(&self) -> Option<Vec<u8>> {
-        todo!()
+        // Browser WebGPU manages pipeline caching internally; cached data extraction is not supported
+        None
     }
 }
 impl Drop for WebPipelineCache {

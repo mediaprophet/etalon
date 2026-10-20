@@ -120,8 +120,7 @@ impl crate::framework::Example for Example {
             }
         };
         let non_uniform_shader_module;
-        // TODO: Because naga's capabilities are evaluated on validate, not on write, we cannot make a shader module with unsupported
-        // capabilities even if we don't use it. So for now put it in a separate module.
+        // Non-uniform indexing shader module isolated for capability-gated validation
         let fragment_shader_module = if !uniform_workaround {
             non_uniform_shader_module =
                 device.create_shader_module(etalon::include_wgsl!("non_uniform_indexing.wgsl"));

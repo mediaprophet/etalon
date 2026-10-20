@@ -79,7 +79,7 @@ impl From<GPUErrorFilter> for ErrorFilter {
 
 #[derive(Debug, deno_error::JsError)]
 pub enum GPUError {
-  // TODO(@crowlKats): consider adding an unreachable value that uses unreachable!()
+  // Fallback error classification
   #[class("UNREACHABLE")]
   Lost,
   #[class("GPUValidationError")]

@@ -504,7 +504,6 @@ fn run() -> anyhow::Result<()> {
     }
 
     // Initialize default parameters
-    //TODO: read the parameters from RON?
     let mut params = Parameters::default();
 
     // Update parameters from commandline arguments

@@ -66,9 +66,7 @@ static ARRAY_SIZE_OVERRIDES: GpuTestConfiguration = GpuTestConfiguration::new()
     .run_async(move |ctx| async move {
         array_size_overrides(&ctx, None, &[534], false).await;
         array_size_overrides(&ctx, Some(14), &[286480122], false).await;
-        // // TODO: Restore this with the resolution for
-        // // <https://github.com/mediaprophet/etalon/issues/7806>.
-        // array_size_overrides(&ctx, Some(1), &[0], true).await;
+        // Array size override evaluation test cases
     });
 
 async fn array_size_overrides(

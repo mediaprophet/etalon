@@ -1201,7 +1201,7 @@ macro_rules! check_extension_validation {
         // `acceleration_structure`s) can be enabled by multiple extensions
         let error = naga::valid::Validator::new(naga::valid::ValidationFlags::all(), !(caps | other_caps))
             .validate(&module).map_err(|e|e.into_inner());
-        let error = error.as_ref(); // TODO(https://github.com/mediaprophet/etalon/issues/8153): Add tests for spans
+        let error = error.as_ref();
         #[allow(clippy::redundant_pattern_matching)]
         if !matches!(error, $val_err_pat) {
             eprintln!(
@@ -1291,7 +1291,7 @@ fn validation_error(
     };
     naga::valid::Validator::new(naga::valid::ValidationFlags::all(), caps)
         .validate(&module)
-        .map_err(|e| e.into_inner()) // TODO(https://github.com/mediaprophet/etalon/issues/8153): Add tests for spans
+        .map_err(|e| e.into_inner())
 }
 
 /// Check that a shader validates successfully.
