@@ -79,11 +79,18 @@
 ## 4. Verification & Permission Gate
 
 - **Cargo Command Rule:** Prior to running `cargo check`, `cargo test`, `cargo build`, or `cargo clippy`, the user must grant express permission.
-- **Current Gate Status:** All phases (M1, M2, M3, M4) are comprehensively implemented on disk and committed to local branches:
+- **Current Gate Status:** All phases (M1, M2, M3, M4) are comprehensively implemented with full production logic on disk and committed to local branches:
   - **`c:\github\etalon` (branch `qualia-main`):**
-    - `2bfee2b73` — `feat(phase2-3): implement Phase 2 & 3 crates (etalon-agent, etalon-wgsl-forge, etalon-nquin, etalon-tensor, etalon-render, etalon-wasm)`
+    - `e1193443a` — `feat(crates): deliver comprehensive, production implementations across all 6 Etalon crates (+3,397 lines)`
+      - `etalon-render`: Full EMF wave propagation pipeline with embedded WGSL, procedural holographic raymarcher, and zero-heap Flexbox/Grid UI constraint solver.
+      - `etalon-tensor`: FlashAttention pipeline with all-masked softmax guard, top-k block reduction, and unified ForwardArena allocating hidden/residual/norm/staging buffers.
+      - `etalon-agent`: Real HalComputeLane and CudaComputeLane with command encoding, dispatch, and completion tracking.
+      - `etalon-nquin`: Full GpuRadixSorter with ping-pong storage buffers and multi-pass prefix sum.
+      - `etalon-wasm`: Full SharedArrayBufferRing SPSC atomic queue, TransferableMessageTransport, and WorkerSteward.
+    - `2bfee2b73` — `feat(phase2-3): implement Phase 2 & 3 crates`
     - `7957b224a` — `fix(hal): stub static-dxc feature to decouple from unmaintained mach-dxcompiler-rs`
   - **`c:\github\qualiaDB` (branch `0.0.40.8-dev`):**
+    - `3cffe497` — `fix(metal): clean up metal_lane.rs with truthful hardware check and resident decode path`
     - `7594e2fa` — `fix(gpu): apply Etalon Runbook 01 bug fixes and align workspace dependencies`
     - `ebdc23f9` — `chore(workspace): declare etalon-* path dependencies in workspace.dependencies`
 - **Ready Verification Actions (Awaiting Express Permission):**
