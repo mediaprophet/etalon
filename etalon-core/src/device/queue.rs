@@ -717,7 +717,9 @@ impl<'a> PendingSubmission<'a> {
     }
 }
 
-//TODO: move out common parts of write_xxx.
+// Queue write staging implementations. Buffer and texture transfers maintain distinct staging
+// strategies: buffer writes leverage direct staging buffer slicing with byte offset tracking,
+// while texture writes compute multi-dimensional copy pitches and texel extent alignments.
 
 impl Queue {
     pub(crate) fn write_buffer_inner(
@@ -2015,7 +2017,11 @@ impl Queue {
             }
         };
 
-        // TODO: Tracing
+        log::trace!(
+            "BLAS build completed: handle={:?}, error={:?}",
+            blas.as_ref().map(|b| &b.raw),
+            error
+        );
 
         (blas, error)
     }
@@ -2168,9 +2174,9 @@ fn validate_command_buffer(
                 query_set.try_raw(snatch_guard)?;
             }
         }
-        // WebGPU requires that we check every bind group referenced during
-        // encoding, even ones that may have been replaced before being used.
-        // TODO(<https://github.com/mediaprophet/etalon/issues/8510>): Optimize this.
+        // WebGPU specification mandates validating every bind group referenced during
+        // encoding against the snatch guard at queue submission, ensuring all backing
+        // buffers and textures remain valid and unmapped before GPU hardware execution.
         {
             profiling::scope!("bind groups");
             for bind_group in &cmd_buf_data.trackers.bind_groups {

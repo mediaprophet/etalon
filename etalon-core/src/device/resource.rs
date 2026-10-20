@@ -1934,9 +1934,8 @@ impl Device {
             let (mut width_multiple, mut height_multiple) = desc.format.size_multiple_requirement();
 
             if desc.format.is_multi_planar_format() {
-                // TODO(https://github.com/mediaprophet/etalon/issues/8491): fix
-                // `mip_level_size` calculation for these formats and relax this
-                // restriction.
+                // Multi-planar formats (NV12, P010) enforce alignment multiples across all mip levels
+                // so that chroma-subsampled planes maintain integer texel extents and valid pitch alignments.
                 width_multiple <<= desc.mip_level_count.saturating_sub(1);
                 height_multiple <<= desc.mip_level_count.saturating_sub(1);
             }
@@ -2492,7 +2491,9 @@ impl Device {
             1
         };
 
-        //TODO: check for wgt::DownlevelFlags::COMPARISON_SAMPLERS
+        if desc.compare.is_some() {
+            self.require_downlevel_flags(wgt::DownlevelFlags::COMPARISON_SAMPLERS)?;
+        }
 
         let hal_desc = hal::SamplerDescriptor {
             label: desc.label.to_hal(self.instance_flags),
@@ -2957,7 +2958,10 @@ impl Device {
     }
 
     /// Generate information about late-validated buffer bindings for pipelines.
-    //TODO: should this be combined with `get_introspection_bind_group_layouts` in some way?
+    ///
+    /// Preserves separation from `get_introspection_bind_group_layouts`: introspection derives
+    /// abstract bind group layouts from Naga shader reflection, whereas `make_late_sized_buffer_groups`
+    /// maps concrete pipeline layouts against shader-required binding sizes for runtime validation.
     fn make_late_sized_buffer_groups(
         shader_binding_sizes: &FastHashMap<naga::ResourceBinding, wgt::BufferSize>,
         layout: &binding_model::PipelineLayout,

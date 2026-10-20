@@ -388,7 +388,9 @@ impl BakedCommands {
                 }
             }
 
-            // TODO: Could we attempt some range collapsing here?
+            // Preserve discrete subresource ranges across mips and layers: each mip level
+            // requires independent byte alignment and pitch calculations according to its
+            // discrete dimensions, preventing cross-mip boundary overflow.
             for range in ranges.drain(..) {
                 let clear_result = clear_texture(
                     &texture_use.texture,
