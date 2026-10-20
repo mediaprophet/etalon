@@ -962,6 +962,14 @@ impl PhysicalDeviceFeatures {
 
         features.set(F::DEPTH32FLOAT_STENCIL8, texture_d32_s8);
 
+        let supports_bda = caps.supports_extension(khr::buffer_device_address::NAME)
+            || caps.device_api_version >= vk::API_VERSION_1_2;
+        if supports_bda
+            && self.buffer_device_address.as_ref().is_some_and(|b| b.buffer_device_address == vk::TRUE)
+        {
+            features.insert(F::EXPERIMENTAL_BUFFER_DEVICE_ADDRESS);
+        }
+
         let supports_acceleration_structures = caps
             .supports_extension(khr::deferred_host_operations::NAME)
             && caps.supports_extension(khr::acceleration_structure::NAME)
@@ -1438,13 +1446,19 @@ impl PhysicalDeviceProperties {
             extensions.push(khr::draw_indirect_count::NAME);
         }
 
-        // Require `VK_KHR_deferred_host_operations`, `VK_KHR_acceleration_structure` `VK_KHR_buffer_device_address` (for acceleration structures) if either `EXPERIMENTAL_RAY_QUERY` or `EXPERIMENTAL_RAY_TRACING_PIPELINES` were requested.
+        // Require `VK_KHR_buffer_device_address` when requested directly or for acceleration structures
         if requested_features.intersects(
             wgt::Features::EXPERIMENTAL_RAY_QUERY
-                | wgt::Features::EXPERIMENTAL_RAY_TRACING_PIPELINES,
+                | wgt::Features::EXPERIMENTAL_RAY_TRACING_PIPELINES
+                | wgt::Features::EXPERIMENTAL_BUFFER_DEVICE_ADDRESS,
         ) {
-            extensions.push(khr::deferred_host_operations::NAME);
-            extensions.push(khr::acceleration_structure::NAME);
+            if requested_features.intersects(
+                wgt::Features::EXPERIMENTAL_RAY_QUERY
+                    | wgt::Features::EXPERIMENTAL_RAY_TRACING_PIPELINES,
+            ) {
+                extensions.push(khr::deferred_host_operations::NAME);
+                extensions.push(khr::acceleration_structure::NAME);
+            }
             extensions.push(khr::buffer_device_address::NAME);
         }
 
@@ -3554,7 +3568,10 @@ fn is_intel_igpu_outdated_for_robustness2(capabilities: &PhysicalDevicePropertie
 fn map_vk_component_type(ty: vk::ComponentTypeKHR) -> Option<wgt::CooperativeScalarType> {
     match ty {
         vk::ComponentTypeKHR::FLOAT16 => Some(wgt::CooperativeScalarType::F16),
+        vk::ComponentTypeKHR::BFLOAT16_KHR => Some(wgt::CooperativeScalarType::BF16),
         vk::ComponentTypeKHR::FLOAT32 => Some(wgt::CooperativeScalarType::F32),
+        vk::ComponentTypeKHR::SINT8 => Some(wgt::CooperativeScalarType::I8),
+        vk::ComponentTypeKHR::UINT8 => Some(wgt::CooperativeScalarType::U8),
         vk::ComponentTypeKHR::SINT32 => Some(wgt::CooperativeScalarType::I32),
         vk::ComponentTypeKHR::UINT32 => Some(wgt::CooperativeScalarType::U32),
         _ => None,
@@ -3564,7 +3581,7 @@ fn map_vk_component_type(ty: vk::ComponentTypeKHR) -> Option<wgt::CooperativeSca
 /// Convert Vulkan matrix size.
 fn map_vk_cooperative_size(size: u32) -> Option<u32> {
     match size {
-        8 | 16 => Some(size),
+        8 | 16 | 32 => Some(size),
         _ => None,
     }
 }

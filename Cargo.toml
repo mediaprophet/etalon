@@ -30,6 +30,8 @@ members = [
     "etalon-types",
     "etalon",
     "xtask",
+    "compat/*",
+    "crates/*",
 ]
 exclude = []
 default-members = [
@@ -103,6 +105,12 @@ etalon-naga-bridge = { version = "0.0.1", path = "./etalon-naga-bridge" }
 etalon-sync = { version = "0.0.1", path = "./etalon-sync", default-features = false }
 etalon-test = { version = "0.0.1", path = "./tests" }
 etalon-types = { version = "0.0.1", path = "./etalon-types", default-features = false }
+etalon-agent = { version = "0.0.1", path = "./crates/etalon-agent", default-features = false }
+etalon-wgsl-forge = { version = "0.0.1", path = "./crates/etalon-wgsl-forge", default-features = false }
+etalon-nquin = { version = "0.0.1", path = "./crates/etalon-nquin", default-features = false }
+etalon-tensor = { version = "0.0.1", path = "./crates/etalon-tensor", default-features = false }
+etalon-render = { version = "0.0.1", path = "./crates/etalon-render", default-features = false }
+etalon-wasm = { version = "0.0.1", path = "./crates/etalon-wasm", default-features = false }
 
 # These _cannot_ have a version specified. If it does, crates.io will look
 # for a version of the package on crates when we publish naga. Path dependencies
@@ -318,10 +326,10 @@ windows = { version = "0.62", default-features = false }
 # wasm dependencies
 console_error_panic_hook = "0.1.5"
 console_log = "1"
-js-sys = { version = "0.3.104", default-features = false }
-wasm-bindgen = { version = "0.2.127", default-features = false }
-wasm-bindgen-futures = { version = "0.4.77", default-features = false }
-web-sys = { version = "0.3.104", default-features = false }
+js-sys = { version = "0.3.102", default-features = false }
+wasm-bindgen = { version = "0.2.125", default-features = false }
+wasm-bindgen-futures = { version = "0.4.75", default-features = false }
+web-sys = { version = "0.3.102", default-features = false }
 web-time = "1.1.0"
 
 # deno dependencies

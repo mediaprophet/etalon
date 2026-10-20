@@ -333,6 +333,12 @@ pub enum CooperativeScalarType {
     F32,
     /// 16-bit floating point.
     F16,
+    /// 16-bit brain floating point.
+    BF16,
+    /// 8-bit signed integer.
+    I8,
+    /// 8-bit unsigned integer.
+    U8,
     /// 32-bit signed integer.
     I32,
     /// 32-bit unsigned integer.

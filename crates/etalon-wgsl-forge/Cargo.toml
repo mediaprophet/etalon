@@ -1,0 +1,20 @@
+[package]
+name = "etalon-wgsl-forge"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Deterministic shader generation, multi-target emission, and verification for Etalon"
+
+[features]
+default = ["std", "wgsl"]
+std = []
+wgsl = []
+naga-validate = ["dep:naga"]
+
+[dependencies]
+naga = { workspace = true, optional = true }
+blake3 = "1.5"
+bytemuck = { workspace = true }
+log = { workspace = true }
+thiserror = "2"

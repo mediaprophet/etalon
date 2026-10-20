@@ -1,0 +1,17 @@
+[package]
+name = "etalon-wasm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Dual-transport worker bridge and OffscreenCanvas steward for WebAssembly"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+etalon-types = { workspace = true }
+bytemuck = { workspace = true }
+log = { workspace = true }
+thiserror = "2"

@@ -567,6 +567,18 @@ pub fn map_predeclared_type(
             columns: crate::CooperativeSize::Sixteen,
             rows: crate::CooperativeSize::Sixteen,
         }.into(),
+        "coop_mat16x32" => TypeGenerator::CooperativeMatrix {
+            columns: crate::CooperativeSize::ThirtyTwo,
+            rows: crate::CooperativeSize::Sixteen,
+        }.into(),
+        "coop_mat32x16" => TypeGenerator::CooperativeMatrix {
+            columns: crate::CooperativeSize::Sixteen,
+            rows: crate::CooperativeSize::ThirtyTwo,
+        }.into(),
+        "coop_mat32x32" => TypeGenerator::CooperativeMatrix {
+            columns: crate::CooperativeSize::ThirtyTwo,
+            rows: crate::CooperativeSize::ThirtyTwo,
+        }.into(),
         _ => return Ok(None),
     };
 
