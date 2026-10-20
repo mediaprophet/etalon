@@ -1,0 +1,56 @@
+[package]
+name = "wgpu-benchmark"
+version.workspace = true
+edition.workspace = true
+description = "wgpu benchmarking suite"
+homepage.workspace = true
+repository.workspace = true
+keywords.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[[bench]]
+name = "wgpu-benchmark"
+harness = false
+
+[features]
+tracy = ["dep:tracy-client"]
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+    'cfg(feature, values("tracy"))',
+] }
+
+# Dependencies used by the library crate
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+anyhow.workspace = true
+env_logger.workspace = true
+pico-args.workspace = true
+profiling.workspace = true
+serde = { workspace = true, features = ["derive"] }
+serde_json.workspace = true
+termcolor.workspace = true
+tracy-client = { workspace = true, optional = true }
+
+# Dependencies used by the benchmark crates
+[target.'cfg(not(target_arch = "wasm32"))'.dev-dependencies]
+bincode = { workspace = true, features = ["serde"] }
+bytemuck.workspace = true
+naga = { workspace = true, features = [
+    "deserialize",
+    "serialize",
+    "wgsl-in",
+    "spv-in",
+    "glsl-in",
+    "spv-out",
+    "msl-out",
+    "hlsl-out",
+    "glsl-out",
+    "wgsl-out",
+] }
+naga-test = { workspace = true, features = [] }
+nanorand.workspace = true
+pollster.workspace = true
+rayon.workspace = true
+wgpu.workspace = true
