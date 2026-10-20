@@ -170,7 +170,7 @@ dx12 = [
 ### Misc Other Features ###
 ###########################
 
-static-dxc = ["dep:mach-dxcompiler-rs"]
+static-dxc = []
 renderdoc = ["dep:libloading", "dep:renderdoc-sys"]
 fragile-send-sync-non-atomic-wasm = [
     "etalon-types/fragile-send-sync-non-atomic-wasm",
@@ -285,7 +285,7 @@ glutin_wgl_sys = { workspace = true, optional = true }
 #
 # ⚠️ Keep in sync with static_dxc cfg in build.rs and cfg_alias in `etalon` crate ⚠️
 [target.'cfg(all(windows, not(target_arch = "aarch64"), target_env = "msvc"))'.dependencies]
-mach-dxcompiler-rs = { workspace = true, optional = true }
+# mach-dxcompiler-rs = { workspace = true, optional = true }
 
 #######################
 ### Platform: Apple ###
