@@ -1,169 +1,128 @@
-# wgpu
+# Webizen-WGPU — Sovereign WebGPU Engine for QualiaDB & Webizen
 
-<img align="right" width="20%" src="logo.png">
+> High-performance, memory-safe, cross-platform graphics and GPU compute engine hardened for QualiaDB cognitive pipelines, Aether spatial hosts, and Webizen OS-Shell.
 
-[![Build Status](https://img.shields.io/github/actions/workflow/status/gfx-rs/wgpu/ci.yml?branch=trunk&logo=github&label=CI)](https://github.com/gfx-rs/wgpu/actions)
-[![codecov.io](https://img.shields.io/codecov/c/github/gfx-rs/wgpu?logo=codecov&logoColor=fff&label=codecov&token=84qJTesmeS)](https://codecov.io/gh/gfx-rs/wgpu)
+[![CI](https://github.com/mediaprophet/webizen-wgpu/actions/workflows/ci.yml/badge.svg)](https://github.com/mediaprophet/webizen-wgpu/actions/workflows/ci.yml)
+[![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](LICENSE-QUALIA)
+[![Ecosystem: QualiaDB](https://img.shields.io/badge/Ecosystem-QualiaDB-blue.svg)](https://github.com/mediaprophet/qualiaDB)
+[![Platform: Vulkan_|_Metal_|_DX12_|_WebGPU](https://img.shields.io/badge/Backends-Vulkan_%7C_Metal_%7C_DX12_%7C_WebGPU-orange.svg)](#architecture--workspace-structure)
 
-`wgpu` is a cross-platform, safe, pure-Rust graphics API. It runs natively on Vulkan, Metal, D3D12, and OpenGL; and on top of WebGL2 and WebGPU on wasm.
+**Webizen-WGPU** is the sovereign GPU acceleration engine powering the spatial computing environment of [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), the [Aether](https://github.com/mediaprophet/rust-app-framework) sovereign application framework, and [QualiaDB](https://github.com/mediaprophet/qualiaDB)'s 10D manifold neural rendering and WGSL Forge compute kernels.
 
-The API is based on the [WebGPU standard][webgpu], but is a fully native Rust library. It serves as the core of the WebGPU integration in Firefox, Servo, and Deno.
+Maintained as an enhanced, hardened fork of `wgpu` 30, Webizen-WGPU addresses critical upstream edge cases, W3C specification churn, and browser/webview incompatibilities that disrupt production WebGPU and native graphics deployments.
 
-## Getting Started
+---
 
-See our examples online at <https://wgpu.rs/examples/>. You can see the Rust sources at [examples](examples) and run them directly with `cargo run --bin wgpu-examples <example>`.
+## Hardened Capabilities & Fixes
 
-### Learning `wgpu`
+### 1. Robust `pop_error_scope` Handling (Upstream Fix for Issue #7)
+- **The Issue**: In upstream `wgpu` 30.0.0, calling `device.pop_error_scope().await` on `wasm32` panicked with `"Unexpected error: constructor= value="` whenever the error scope caught *no* error. Modern `wasm-bindgen` (≥0.2.123) treats JS `null` as a present value in `into_option()`, turning `null` into `Some(null)` and triggering an internal panic that aborted the WebAssembly module and caused canvas viewports to hang or turn black.
+- **The Fix**: Webizen-WGPU inspects the resolved JS value in `future_pop_error_scope`, correctly returning `None` when the scope resolves to `null` or `undefined`.
+- **Defensive Error Mapping**: Replaced the `panic!` in `error_from_js` with a graceful `crate::Error::Internal` variant, ensuring that unexpected JavaScript exceptions surface as typed Rust errors rather than process aborts.
 
-If you are new to `wgpu` and graphics programming, we recommend starting with [Learn Wgpu].
+### 2. Automatic Adapter Limits Sanitization
+- **The Issue**: W3C WebGPU specification (§3.2.1) mandates that every key in `requiredLimits` passed to `requestDevice()` must exist in `adapter.limits`. When browsers deprecate or remove limits (e.g. `maxInterStageShaderComponents` removed by Chromium/Edge), or when running on constrained mobile/compatibility adapters, upstream unconditional limit serialization triggers a hard JavaScript `OperationError`.
+- **The Fix**: Webizen-WGPU queries the adapter's supported limits via `self.inner.limits()` and checks property presence (`Reflect::has`) before serializing each limit key into `requiredLimits`. Unrecognized or unsupported keys are omitted, eliminating device creation failures without requiring monkey-patching in host web pages.
 
-<!-- Note, "Learn Wgpu" is using the capitalization style in their header, NOT our styling -->
+### 3. Cooperative Matrix & Tensor-Core Support (#9741)
+- **Integrated Memory Model Fix**: Incorporates `vulkanMemoryModelDeviceScope` for Vulkan cooperative matrices, enabling robust compilation and execution of tiled tensor-core GEMM compute kernels across modern GPUs in Qualia's WGSL Forge.
 
-Additionally, [WebGPU Fundamentals] is a tutorial for WebGPU which is very similar to our API, minus differences between Rust and Javascript.
+### 4. Zero-Heap and Bounded Cognitive Integration
+- **Zero Allocations in Hot Paths**: Compatible with QualiaDB's Rule 0 (*Zero heap in hot paths*), allowing uniform belts, vertex/index staging buffers, and compute passes to stream directly from fixed-size memory arenas and stack arrays (`[NQuin; N]`).
+- **Unified Native & Browser Rendering**: Directly bridges native desktop surfaces (Vulkan, DirectX 12, Metal) and browser WebGPU contexts within a single cohesive API.
 
-[Learn Wgpu]: https://sotrh.github.io/learn-wgpu/
-[WebGPU Fundamentals]: https://webgpufundamentals.org/
+---
 
-### Documentation Guides
+## Architecture & Workspace Structure
 
-We ship a set of [documentation modules](https://docs.rs/wgpu/latest/wgpu/documentation/index.html) with information on useful architecture patterns, debugging tips, and more getting started information.
+```text
+webizen-wgpu/
+├── wgpu/                 # Safe, idiomatic Rust API for graphics and compute
+│   └── src/backend/      # Native (wgpu-core) and Browser (webgpu.rs) backends
+├── wgpu-core/            # Core state machine, validation, and resource management
+├── wgpu-hal/             # Hardware Abstraction Layer (Vulkan, DX12, Metal, GLES)
+├── wgpu-types/           # Common types, structures, flags, and device limits
+├── naga/                 # Shader translation and validation engine (WGSL, SPIR-V, MSL, HLSL)
+├── .github/workflows/    # Clean CI pipelines for multiplatform verification
+└── upstream-licenses/    # Upstream wgpu MIT and Apache-2.0 license texts
+```
 
-### Need Help? Want to Contribute?
+---
 
-The wgpu community uses Matrix and Discord to discuss.
+## Quickstart
 
-- [![`#wgpu:matrix.org`](https://img.shields.io/static/v1?label=wgpu-devs&message=%23wgpu&color=blueviolet&logo=matrix)](https://matrix.to/#/#wgpu:matrix.org) - discussion of wgpu's development.
-- [![`#wgpu-users:matrix.org`](https://img.shields.io/static/v1?label=wgpu-users&message=%23wgpu-users&color=blueviolet&logo=matrix)](https://matrix.to/#/#wgpu-users:matrix.org) - discussion of using the library and the surrounding ecosystem.
-- [![#wgpu on the Rust Gamedev Discord](https://img.shields.io/discord/676678179678715904?logo=discord&logoColor=E0E3FF&label=%23wgpu&color=5865F2)
-  ](https://discord.gg/X3MYBNXUMJ) - Dedicated support channel on the Rust Gamedev Discord.
+Add Webizen-WGPU to your `Cargo.toml`:
 
-### Other Languages
+```toml
+[dependencies]
+wgpu = { git = "https://github.com/mediaprophet/webizen-wgpu.git", branch = "qualia-main" }
+```
 
-To use wgpu in C or dozens of other languages, look at [wgpu-native](https://github.com/gfx-rs/wgpu-native). These are C bindings to wgpu and has an up-to-date list of libraries bringing support to other languages.
+Request an adapter and device with automatic limit filtering:
 
-[Learn WebGPU (for C++)] is a good resource for learning how to use wgpu-native from C++.
+```rust
+use wgpu::{Instance, Backends, InstanceDescriptor, RequestAdapterOptions, DeviceDescriptor};
 
-[Learn WebGPU (for C++)]: https://eliemichel.github.io/LearnWebGPU/
-[webgpu]: https://gpuweb.github.io/gpuweb/
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let instance = Instance::new(&InstanceDescriptor {
+        backends: Backends::all(),
+        ..Default::default()
+    });
 
-## Quick Links
+    let adapter = instance
+        .request_adapter(&RequestAdapterOptions {
+            power_preference: wgpu::PowerPreference::HighPerformance,
+            ..Default::default()
+        })
+        .await
+        .expect("Failed to find suitable GPU adapter");
 
-|         Docs          |         Examples          |        Changelog        |
-| :-------------------: | :-----------------------: | :---------------------: |
-|    [v30][rel-docs]    |    [v30][rel-examples]    |    [v30][rel-change]    |
-| [`trunk`][trunk-docs] | [`trunk`][trunk-examples] | [`trunk`][trunk-change] |
+    let (device, queue) = adapter
+        .request_device(&DeviceDescriptor {
+            label: Some("Webizen GPU Device"),
+            required_features: wgpu::Features::empty(),
+            // Automatically sanitized against adapter capabilities:
+            required_limits: adapter.limits(),
+            ..Default::default()
+        })
+        .await?;
 
-Contributors are welcome! See [CONTRIBUTING.md][contrib] for more information.
+    println!("Webizen-WGPU Device initialized: {:?}", device);
+    Ok(())
+}
+```
 
-[rel-docs]: https://docs.rs/wgpu/
-[rel-examples]: https://github.com/gfx-rs/wgpu/tree/v30/examples#readme
-[rel-change]: https://github.com/gfx-rs/wgpu/releases
-[trunk-docs]: https://wgpu.rs/doc/wgpu/
-[trunk-examples]: https://github.com/gfx-rs/wgpu/tree/trunk/examples#readme
-[trunk-change]: https://github.com/gfx-rs/wgpu/blob/trunk/CHANGELOG.md#unreleased
-[contrib]: CONTRIBUTING.md
+---
 
-## Supported Platforms
+## Verification & Build
 
-| API    | Windows             | Linux/Android   | macOS/iOS | Web (wasm)  |
-| ------ | ------------------- | --------------- | --------- | ----------- |
-| Vulkan | ✅                  | ✅              | 🌋        |             |
-| Metal  |                     |                 | ✅        |             |
-| DX12   | ✅                  |                 |           |             |
-| OpenGL | 🆗 (GL 3.3+), or 📐 | 🆗 (GL ES 3.0+) | 📐        | 🆗 (WebGL2) |
-| WebGPU |                     |                 |           | ✅          |
+### Desktop Build:
+```bash
+cargo build -p wgpu
+```
 
-✅ = First Class Support  
-🆗 = Downlevel/Best Effort Support  
-📐 = Requires the [ANGLE](https://docs.rs/wgpu/latest/wgpu/documentation/platforms/angle/index.html) translation layer (GL ES 3.0 only). On macOS/iOS, use the `angle` feature. On Windows, `gles` uses WGL by default; build with `cfg(windows_angle)` to use ANGLE instead.
-🌋 = Requires the [MoltenVK](https://vulkan.lunarg.com/sdk/home#mac) translation layer  
-🛠️ = Unsupported, though open to contributions
+### WASM / Browser Build:
+```bash
+cargo check -p wgpu --target wasm32-unknown-unknown
+```
 
-## Environment Variables
+### Run Naga Shader Test Suite:
+```bash
+cargo test -p naga
+```
 
-Testing, examples, and `::from_env()` methods use a standardized set of environment variables to control wgpu's behavior.
+---
 
-- `WGPU_BACKEND` with a comma-separated list of the backends you want to use (`vulkan`, `metal`, `dx12`, or `gl`).
-- `WGPU_ADAPTER_NAME` with a case-insensitive substring of the name of the adapter you want to use (ex. `1080` will match `NVIDIA GeForce 1080ti`).
-- `WGPU_DX12_COMPILER` with the DX12 shader compiler you wish to use (`dxc`, `static-dxc`, or `fxc`). Note that `dxc` requires `dxcompiler.dll` (min v1.8.2502) to be in the working directory, and `static-dxc` requires the `static-dxc` crate feature to be enabled. Otherwise, it will fall back to `fxc`.
+## Intellectual Property & Licensing Notice
 
-See the [documentation](https://docs.rs/wgpu/latest/wgpu/index.html?search=env) for more environment variables.
+QualiaDB, Webizen, Webizen-WGPU, and all Qualia-specific architectures, integrations, modifications, and extensions are governed by:
 
-When running the CTS, use the variables `DENO_WEBGPU_ADAPTER_NAME`, `DENO_WEBGPU_BACKEND`, `DENO_WEBGPU_POWER_PREFERENCE`, `DENO_WEBGPU_DX12_COMPILER`, and `DENO_WEBGPU_STRICT_COMPLIANCE`.
+**Copyright (c) 2026 Timothy Charles Holborn**  
+**[LinkedIn](https://www.linkedin.com/in/ubiquitous/) | [Email](mailto:timothy.holborn@gmail.com)**  
+**License:** Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)  
+Full terms: [`LICENSE-QUALIA`](LICENSE-QUALIA) and [Creative Commons Legal Code](https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode).  
 
-## Repo Overview
+Upstream wgpu framework code retains its respective Apache-2.0 and MIT licensing as documented in [`upstream-licenses/`](upstream-licenses/).
 
-For an overview of all the components in the gfx-rs ecosystem, see [the big picture](./wgpu/src/documentation/images/big-picture.webp).
-
-## MSRV policy
-
-TL;DR: If you're using `wgpu`, our MSRV is **1.87**. If you're running our tests or examples, our MSRV is **1.95**.
-
-We will avoid bumping the MSRV of `wgpu` without good reason, and such a change is considered breaking.
-
-<details>
-<summary> Specific Details </summary>
-
-Due to complex dependants, we have three MSRV policies:
-
-- `wgpu`'s MSRV is **1.87**
-- `wgpu-core` (and hence `wgpu-hal`, `naga`, `naga-types` and `wgpu-types`)'s MSRV is **1.87**.
-- The rest of the workspace has an MSRV of **1.95**.
-
-It is enforced on CI (in "/.github/workflows/ci.yml") with the `WGPU_MSRV`, `CORE_MSRV`, and `REPO_MSRV` variables, respectively.
-This version can only be upgraded in breaking releases, though we release a breaking version every three months.
-
-The following rules apply:
-
-- The `wgpu-core` crate should never require an MSRV ahead of Firefox's MSRV for nightly builds, as
-  determined by the value of `MINIMUM_RUST_VERSION` in [`python/mozboot/mozboot/util.py`][moz-msrv].
-- The `wgpu` crate should never require an MSRV ahead of Servo's MSRV, as determined by the value of
-  their rust-version declaration in [`Cargo.toml`][servo-msrv]
-- The repository MSRV should never require an MSRV higher than `stable - 3`. For example, if stable is
-  at 1.97, the repository MSRV should be no higher than 1.94. This is to allow people who are using a decently-updated
-  OS-provided rust to be able to build our repository. Consider cross checking with [NixOS][nixos-msrv], though this
-  is not required.
-
-[moz-msrv]: https://searchfox.org/mozilla-central/source/python/mozboot/mozboot/util.py
-[servo-msrv]: https://github.com/servo/servo/blob/main/Cargo.toml#L23
-[nixos-msrv]: https://search.nixos.org/packages?show=rustc
-
-</details>
-
-## Testing and Environment Variables
-
-[Information about testing](./docs/testing.md), including where tests of various kinds live, and how to run the tests.
-
-## Tracking the WebGPU and WGSL draft specifications
-
-The `wgpu` crate is meant to be an idiomatic Rust translation of the [WebGPU API][webgpu spec].
-That specification, along with its shading language, [WGSL][wgsl spec],
-are both still in the "Working Draft" phase,
-and while the general outlines are stable,
-details change frequently.
-Until the specification is stabilized, the `wgpu` crate and the version of WGSL it implements
-will likely differ from what is specified,
-as the implementation catches up.
-
-Exactly which WGSL features `wgpu` supports depends on how you are using it:
-
-- When running as native code, `wgpu` uses [Naga][naga]
-  to translate WGSL code into the shading language of your platform's native GPU API.
-  Naga is working on catching up to the WGSL specification,
-  with [bugs][naga bugs] tracking various issues,
-  but there is no concise summary of differences from the specification.
-
-- When running in a web browser (by compilation to WebAssembly)
-  without the `"webgl"` feature enabled,
-  `wgpu` relies on the browser's own WebGPU implementation.
-  WGSL shaders are simply passed through to the browser,
-  so that determines which WGSL features you can use.
-
-- When running in a web browser with `wgpu`'s `"webgl"` feature enabled,
-  `wgpu` uses Naga to translate WGSL programs into GLSL.
-  This uses the same version of Naga as if you were running `wgpu` as native code.
-
-[webgpu spec]: https://www.w3.org/TR/webgpu/
-[wgsl spec]: https://gpuweb.github.io/gpuweb/wgsl/
-[naga]: https://github.com/gfx-rs/wgpu/tree/trunk/naga/
-[naga bugs]: https://github.com/gfx-rs/wgpu/issues?q=is%3Aissue%20state%3Aopen%20label%3A%22naga%22
+All participating AI agents, contributors, and downstream integrators must strictly honor this copyright, moral rights, and non-commercial attribution. Unlawful extraction, stripping of provenance, or unauthorized commercial exploitation is strictly prohibited.

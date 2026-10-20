@@ -73,6 +73,13 @@ impl fmt::Debug for ContextWebGpu {
 
 fn error_from_js(js_error: js_sys::Object) -> crate::Error {
     let source = Box::<dyn core::error::Error + Send + Sync>::from("<WebGPU Error>");
+    let js_val: &wasm_bindgen::JsValue = js_error.as_ref();
+    if js_val.is_null() || js_val.is_undefined() {
+        return crate::Error::Internal {
+            source,
+            description: "Empty WebGPU error value".to_string(),
+        };
+    }
     if let Some(js_error) = js_error.dyn_ref::<webgpu_sys::GpuValidationError>() {
         crate::Error::Validation {
             source,
@@ -92,7 +99,10 @@ fn error_from_js(js_error: js_sys::Object) -> crate::Error {
             .as_string()
             .unwrap_or_default();
         let value = js_error.to_string().as_string().unwrap_or_default();
-        panic!("Unexpected error: constructor={constructor} value={value}");
+        crate::Error::Internal {
+            source,
+            description: format!("Unexpected WebGPU error: constructor={constructor} value={value}"),
+        }
     }
 }
 
@@ -888,22 +898,33 @@ fn map_adapter_info(adapter_info: &webgpu_sys::GpuAdapterInfo) -> wgt::AdapterIn
     }
 }
 
-fn map_js_sys_limits(limits: &wgt::Limits) -> js_sys::Object<js_sys::Number> {
+fn map_js_sys_limits(
+    limits: &wgt::Limits,
+    supported: Option<&webgpu_sys::GpuSupportedLimits>,
+) -> js_sys::Object<js_sys::Number> {
     let object = js_sys::Object::<js_sys::Number>::new_typed();
 
     macro_rules! set_properties {
         (($from:expr) => ($on:expr) : $(($js_ident:ident, $rs_ident:ident)),* $(,)?) => {
             $(
-                ::js_sys::Reflect::set(
-                    &$on,
-                    &::wasm_bindgen::JsValue::from(stringify!($js_ident)),
-                    // Numbers may be u64, however using `from` on a u64 yields
-                    // errors on the wasm side, since it uses an unsupported api.
-                    // Wasm sends us things that need to fit into u64s by sending
-                    // us f64s instead. So we just send them f64s back.
-                    &::wasm_bindgen::JsValue::from($from.$rs_ident as f64)
-                )
-                    .expect("Setting Object properties should never fail.");
+                let key_str = stringify!($js_ident);
+                let key_js = ::wasm_bindgen::JsValue::from(key_str);
+                let is_supported = match supported {
+                    Some(sup) => ::js_sys::Reflect::has(sup.as_ref(), &key_js).unwrap_or(true),
+                    None => true,
+                };
+                if is_supported {
+                    ::js_sys::Reflect::set(
+                        &$on,
+                        &key_js,
+                        // Numbers may be u64, however using `from` on a u64 yields
+                        // errors on the wasm side, since it uses an unsupported api.
+                        // Wasm sends us things that need to fit into u64s by sending
+                        // us f64s instead. So we just send them f64s back.
+                        &::wasm_bindgen::JsValue::from($from.$rs_ident as f64)
+                    )
+                        .expect("Setting Object properties should never fail.");
+                }
             )*
         }
     }
@@ -1018,7 +1039,12 @@ fn future_request_device(
 fn future_pop_error_scope(
     result: Result<js_sys::JsNullable<webgpu_sys::GpuError>, wasm_bindgen::JsValue>,
 ) -> Option<crate::Error> {
-    Some(error_from_js(result.ok()?.into_option()?.into()))
+    let error = result.ok()?.into_option()?;
+    let js_val: &wasm_bindgen::JsValue = error.as_ref();
+    if js_val.is_null() || js_val.is_undefined() {
+        return None;
+    }
+    Some(error_from_js(error.into()))
 }
 
 fn future_compilation_info(
@@ -1761,7 +1787,8 @@ impl dispatch::AdapterInterface for WebAdapter {
 
         let mapped_desc = webgpu_sys::GpuDeviceDescriptor::new();
 
-        let required_limits = map_js_sys_limits(&desc.required_limits);
+        let supported_limits = self.inner.limits();
+        let required_limits = map_js_sys_limits(&desc.required_limits, Some(&supported_limits));
         mapped_desc.set_required_limits(&required_limits);
 
         // Note that `ALLOWED_ON_WEB_BACKEND` may include bits in `FeaturesWGPU` for
