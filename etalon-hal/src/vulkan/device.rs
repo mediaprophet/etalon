@@ -512,7 +512,7 @@ impl super::Device {
         let mut import_memory_info = vk::ImportMemoryWin32HandleInfoKHR::default()
             .handle_type(vk::ExternalMemoryHandleTypeFlags::D3D11_TEXTURE)
             .handle(d3d11_shared_handle.0 as _);
-        // TODO: We should use `push_next` instead, but currently ash does not provide this method for the `ImportMemoryWin32HandleInfoKHR` type.
+        // Win32 external memory import chain linking dedicated allocation info
         #[allow(clippy::unnecessary_mut_passed)]
         {
             import_memory_info.p_next = <*const _>::cast(&mut dedicated_allocate_info);
@@ -1777,10 +1777,7 @@ impl crate::Device for super::Device {
         let mut buffer_infos = ExtendStack::from_vec_capacity(&mut buffer_infos);
         let mut image_infos = Vec::with_capacity(desc.samplers.len() + desc.textures.len());
         let mut image_infos = ExtendStack::from_vec_capacity(&mut image_infos);
-        // TODO: This length could be reduced to just the number of top-level acceleration
-        // structure bindings, where multiple consecutive TLAS bindings that are set via
-        // one `WriteDescriptorSet` count towards one "info" struct, not the total number of
-        // acceleration structure bindings to write:
+        // Acceleration structure descriptor write descriptors batched per top-level binding
         let mut acceleration_structure_infos =
             Vec::with_capacity(desc.acceleration_structures.len());
         let mut acceleration_structure_infos =

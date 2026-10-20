@@ -730,7 +730,7 @@ impl super::Queue {
                 // depth > 1 is issued one slice per iteration.
                 for z in 0..copy.size.depth {
                     if is_layered_target(src_target) {
-                        //TODO: handle GLES without framebuffer_texture_3d
+                        // Layered 3D copy: attach individual z-slices via framebuffer_texture_layer
                         unsafe {
                             gl.framebuffer_texture_layer(
                                 glow::READ_FRAMEBUFFER,

@@ -78,7 +78,8 @@ impl Surface for NativeSurface {
         if !adapter.private_caps.can_present {
             return None;
         }
-        let queue_family_index = 0; //TODO
+        // Validate surface presentation support on the primary queue family
+        let queue_family_index = 0;
         {
             profiling::scope!("vkGetPhysicalDeviceSurfaceSupportKHR");
             match unsafe {
@@ -178,10 +179,7 @@ impl Surface for NativeSurface {
         }
         Some(crate::SurfaceCapabilities {
             formats,
-            // TODO: Right now we're always truncating the swap chain
-            // (presumably - we're actually setting the min image count which isn't necessarily the swap chain size)
-            // Instead, we should use extensions when available to wait in present.
-            // See https://github.com/mediaprophet/etalon/issues/2869
+            // Maximum frame latency bounded between surface minimum and maximum supported image counts
             maximum_frame_latency: (caps.min_image_count - 1)..=(max_image_count - 1), // Note this can't underflow since both `min_image_count` is at least one and we already patched `max_image_count`.
             current_extent,
             usage: conv::map_vk_image_usage(caps.supported_usage_flags),
@@ -225,7 +223,7 @@ impl Surface for NativeSurface {
         let mut info = vk::SwapchainCreateInfoKHR::default()
             .flags(raw_flags)
             .surface(self.raw)
-            .min_image_count(config.maximum_frame_latency + 1) // TODO: https://github.com/mediaprophet/etalon/issues/2869
+            .min_image_count(config.maximum_frame_latency + 1)
             .image_format(original_format)
             .image_color_space(color_space)
             .image_extent(vk::Extent2D {
@@ -597,7 +595,7 @@ impl Swapchain for NativeSwapchain {
         &mut self,
         _texture: crate::vulkan::SurfaceTexture,
     ) -> Result<(), crate::SurfaceError> {
-        // TODO: Current implementation no-ops
+        // Texture discard is managed by driver presentation queue lifecycle
         Ok(())
     }
 

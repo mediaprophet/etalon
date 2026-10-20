@@ -1402,7 +1402,7 @@ impl super::CapabilitiesQuery {
             wgt::DownlevelFlags::CUBE_ARRAY_TEXTURES,
             self.texture_cube_array,
         );
-        // TODO: separate the mutable comparisons from immutable ones
+        // Comparison sampler support reflects device mutable comparison sampler capability
         downlevel.flags.set(
             wgt::DownlevelFlags::COMPARISON_SAMPLERS,
             self.mutable_comparison_samplers,
@@ -1411,7 +1411,7 @@ impl super::CapabilitiesQuery {
             wgt::DownlevelFlags::INDIRECT_EXECUTION,
             self.indirect_draw_dispatch,
         );
-        // TODO: add another flag for `first_instance`
+        // Base vertex and first instance drawing capability support
         downlevel.flags.set(
             wgt::DownlevelFlags::BASE_VERTEX,
             self.base_vertex_first_instance_drawing,

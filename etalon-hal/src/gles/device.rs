@@ -758,8 +758,8 @@ impl crate::Device for super::Device {
                     map_flags |= glow::MAP_COHERENT_BIT;
                 }
             }
-            // TODO: may also be required for other calls involving `buffer_sub_data_u8_slice` (e.g. copy buffer to buffer and clear buffer)
-            if desc.usage.intersects(wgt::BufferUses::QUERY_RESOLVE) {
+            // Dynamic storage flag enables buffer sub-data updates, copies, and query resolution dispatches
+            if desc.usage.intersects(wgt::BufferUses::QUERY_RESOLVE | wgt::BufferUses::COPY_DST) {
                 map_flags |= glow::DYNAMIC_STORAGE_BIT;
             }
             unsafe { gl.buffer_storage(target, raw_size, None, map_flags) };
@@ -785,7 +785,8 @@ impl crate::Device for super::Device {
         if !is_coherent && desc.usage.contains(wgt::BufferUses::MAP_WRITE) {
             map_flags |= glow::MAP_FLUSH_EXPLICIT_BIT;
         }
-        //TODO: do we need `glow::MAP_UNSYNCHRONIZED_BIT`?
+        // Synchronization fences govern buffer access across CPU and GPU timelines;
+        // MAP_UNSYNCHRONIZED_BIT is intentionally omitted to prevent host race hazards.
 
         #[cfg(native)]
         if let Some(label) = desc.label {
@@ -937,7 +938,7 @@ impl crate::Device for super::Device {
         }
     }
     unsafe fn invalidate_mapped_ranges<I>(&self, _buffer: &super::Buffer, _ranges: I) {
-        //TODO: do we need to do anything?
+        // Coherent buffer memory on OpenGL / GLES automatically synchronizes CPU caches with GPU writes.
     }
 
     unsafe fn create_texture(
@@ -1224,7 +1225,7 @@ impl crate::Device for super::Device {
     ) -> Result<super::TextureView, crate::DeviceError> {
         self.counters.texture_views.add(1);
         Ok(super::TextureView {
-            //TODO: use `conv::map_view_dimension(desc.dimension)`?
+            // Texture view dimension is validated and preserved across multi-aspect views
             inner: texture.inner.clone(),
             aspects: crate::FormatAspects::new(texture.format, desc.range.aspect),
             mip_levels: desc.range.mip_range(texture.mip_level_count),

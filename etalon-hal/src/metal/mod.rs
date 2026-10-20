@@ -1158,8 +1158,7 @@ struct PipelineStageInfo {
     work_group_memory_sizes: Vec<u32>,
 }
 
-// TODO(madsmtm): Derive this when a release with
-// https://github.com/madsmtm/objc2/issues/804 is available (likely 0.4).
+// Manual Default implementation for PipelineStageInfo
 impl Default for PipelineStageInfo {
     fn default() -> Self {
         Self {

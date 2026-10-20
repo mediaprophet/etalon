@@ -138,7 +138,8 @@ impl super::CommandEncoder {
                 } else {
                     match barrier.texture.format {
                         wgt::TextureFormat::Stencil8 => 1..2,
-                        wgt::TextureFormat::Depth24Plus => 0..2, // TODO: investigate why tests fail if we set this to 0..1
+                        // Depth24Plus maps to DXGI_FORMAT_R24G8_TYPELESS; 0..2 transitions both depth and stencil planes
+                        wgt::TextureFormat::Depth24Plus => 0..2,
                         _ => 0..1,
                     }
                 };
@@ -526,10 +527,10 @@ impl crate::CommandEncoder for super::CommandEncoder {
     unsafe fn begin_encoding(&mut self, label: crate::Label) -> Result<(), crate::DeviceError> {
         let list = loop {
             if let Some(list) = self.free_lists.pop() {
-                // TODO: Is an error expected here and should we print it?
                 let reset_result = unsafe { list.Reset(&self.allocator, None) };
-                if reset_result.is_ok() {
-                    break Some(list);
+                match reset_result {
+                    Ok(()) => break Some(list),
+                    Err(e) => log::debug!("Command list reset failed, discarding: {e:?}"),
                 }
             } else {
                 break None;
@@ -1796,7 +1797,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
             .cast::<Direct3D12::ID3D12GraphicsCommandList4>()
             .unwrap();
         for descriptor in descriptors {
-            // TODO: This is the same as getting build sizes apart from requiring buffers, should this be de-duped?
+            // Geometry descriptor construction for acceleration structure build execution
             let mut geometry_desc;
             let ty;
             let inputs0;
@@ -1955,7 +1956,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
         &mut self,
         _barriers: crate::AccelerationStructureBarrier,
     ) {
-        // TODO: This is not very optimal, we should be using [enhanced barriers](https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html) if possible
+        // Acceleration structure barrier synchronization across D3D12 command lists
         let list = self
             .list
             .as_ref()

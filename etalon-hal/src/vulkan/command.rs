@@ -617,9 +617,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
         for desc in descriptors {
             let (geometries, ranges) = match *desc.entries {
                 crate::AccelerationStructureEntries::Instances(ref instances) => {
-                    let instance_data = vk::AccelerationStructureGeometryInstancesDataKHR::default(
-                    // TODO: Code is so large that rustfmt refuses to treat this... :(
-                    )
+                    let instance_data = vk::AccelerationStructureGeometryInstancesDataKHR::default()
                     .data(vk::DeviceOrHostAddressConstKHR {
                         device_address: get_device_address(instances.buffer),
                     });

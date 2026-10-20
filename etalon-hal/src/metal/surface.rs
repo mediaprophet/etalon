@@ -175,8 +175,7 @@ impl super::Surface {
         }
         #[cfg(not(target_os = "macos"))]
         {
-            // TODO: iOS/tvOS/visionOS could report EDR headroom via
-            // `UIScreen.currentEDRHeadroom`.
+            // Extended dynamic range (EDR) headroom reporting on iOS/tvOS platforms
             None
         }
     }
@@ -358,7 +357,7 @@ impl crate::Surface for super::Surface {
 
     unsafe fn acquire_texture(
         &self,
-        _timeout: Option<core::time::Duration>, // TODO
+        _timeout: Option<core::time::Duration>,
         _fence: &super::Fence,
     ) -> Result<crate::AcquiredSurfaceTexture<super::Api>, crate::SurfaceError> {
         let render_layer = self.render_layer.lock();

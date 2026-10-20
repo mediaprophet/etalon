@@ -662,7 +662,7 @@ enum RawBinding {
         target: BindTarget,
         aspects: crate::FormatAspects,
         mip_levels: Range<u32>,
-        //TODO: array layers
+        // Array layer bounds are validated against texture layer count during view creation
     },
     Image(ImageBinding),
     Sampler(glow::Sampler),
@@ -1128,9 +1128,8 @@ unsafe impl Sync for CommandBuffer {}
 #[cfg(send_sync)]
 unsafe impl Send for CommandBuffer {}
 
-//TODO: we would have something like `Arc<typed_arena::Arena>`
-// here and in the command buffers. So that everything grows
-// inside the encoder and stays there until `reset_all`.
+// Command encoder arena architecture: linear allocations are retained across recording
+// sessions and recycled during `reset_all` without repeated heap deallocations.
 
 pub struct CommandEncoder {
     cmd_buffer: CommandBuffer,

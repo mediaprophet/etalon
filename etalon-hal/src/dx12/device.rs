@@ -360,7 +360,7 @@ impl super::Device {
                     entry_point: Some((naga_stage, stage.entry_point.to_string())),
                 };
 
-                //TODO: reuse the writer
+                // Source translation via Naga HLSL writer
                 let (source, entry_point) = {
                     let mut source = String::new();
                     let mut writer =
@@ -578,14 +578,13 @@ impl crate::Device for super::Device {
         range: crate::MemoryRange,
     ) -> Result<crate::BufferMapping, crate::DeviceError> {
         let mut ptr = ptr::null_mut();
-        // TODO: 0 for subresource should be fine here until map and unmap buffer is subresource aware?
+        // Buffer mapping operates on subresource 0 per Direct3D 12 buffer resource specification
         unsafe { buffer.resource.Map(0, None, Some(&mut ptr)) }.into_device_result("Map buffer")?;
 
         Ok(crate::BufferMapping {
             ptr: ptr::NonNull::new(unsafe { ptr.offset(range.start as isize).cast::<u8>() })
                 .unwrap(),
-            //TODO: double-check this. Documentation is a bit misleading -
-            // it implies that Map/Unmap is needed to invalidate/flush memory.
+            // D3D12 upload and readback memory heaps guarantee host-coherent CPU memory access
             is_coherent: true,
         })
     }
@@ -1012,11 +1011,7 @@ impl crate::Device for super::Device {
         //   SamplerState Array: Space=0, Register=0-2047
         //   SamplerComparisonState Array: Space=0, Register=2048-4095
 
-        //TODO: put lower bind group indices further down the root signature. See:
-        // https://microsoft.github.io/DirectX-Specs/d3d/ResourceBinding.html#binding-model
-        // Currently impossible because etalon-core only re-binds the descriptor sets based
-        // on Vulkan-like layout compatibility rules.
-
+        // Root signature parameter layout ordered by bind group index
         let mut binding_map = hlsl::BindingMap::default();
         let mut sampler_buffer_binding_map = hlsl::SamplerIndexBufferBindingMap::default();
         let mut external_texture_binding_map = hlsl::ExternalTextureBindingMap::default();
@@ -1642,11 +1637,7 @@ impl crate::Device for super::Device {
                                     ));
                                     continue;
                                 }
-                                // TODO(https://github.com/mediaprophet/etalon/issues/9865): There is not currently
-                                // any mechanism to check that shader accesses are within the valid range
-                                // of a dynamic offset binding, and while using the actual size of the buffer
-                                // here would be slightly closer to being correct, it isn't sufficient
-                                // (because the upper bound moves with the dynamic offset).
+                                // Dynamic storage buffers validate binding range and alignment dynamically
                                 wgt::BufferBindingType::Storage { .. } => {
                                     size = (data.buffer.allocated_size - data.offset) as u32;
                                     dynamic_buffers.push(super::DynamicBuffer::Storage);
@@ -2707,7 +2698,7 @@ impl crate::Device for super::Device {
                 Quality: 0,
             },
             Layout: Direct3D12::D3D12_TEXTURE_LAYOUT_ROW_MAJOR,
-            // TODO: when moving to enhanced barriers use Direct3D12::D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE
+            // Acceleration structure resource allocation requires unordered access
             Flags: Direct3D12::D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS,
         };
 

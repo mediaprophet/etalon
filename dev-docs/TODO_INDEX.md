@@ -152,75 +152,75 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-hal/src/gles/adapter.rs:91`](wgpu-hal/src/gles/adapter.rs#L91) | [`etalon-hal/src/gles/adapter.rs:91`](etalon-hal/src/gles/adapter.rs#L91) | make this even more lenient so that we can also accept |
-| `TODO` | [`wgpu-hal/src/gles/adapter.rs:145`](wgpu-hal/src/gles/adapter.rs#L145) | [`etalon-hal/src/gles/adapter.rs:145`](etalon-hal/src/gles/adapter.rs#L145) | handle Intel Iris XE as discreet |
-| `TODO` | [`wgpu-hal/src/gles/adapter.rs:1384`](wgpu-hal/src/gles/adapter.rs#L1384) | [`etalon-hal/src/gles/adapter.rs:1384`](etalon-hal/src/gles/adapter.rs#L1384) |  |
-| `TODO` | [`wgpu-hal/src/gles/adapter.rs:1386`](wgpu-hal/src/gles/adapter.rs#L1386) | [`etalon-hal/src/gles/adapter.rs:1386`](etalon-hal/src/gles/adapter.rs#L1386) |  |
-| `TODO` | [`wgpu-hal/src/gles/command.rs:277`](wgpu-hal/src/gles/command.rs#L277) | [`etalon-hal/src/gles/command.rs:277`](etalon-hal/src/gles/command.rs#L277) | could re-use the allocations in all these command buffers |
-| `TODO` | [`wgpu-hal/src/gles/command.rs:473`](wgpu-hal/src/gles/command.rs#L473) | [`etalon-hal/src/gles/command.rs:473`](etalon-hal/src/gles/command.rs#L473) | what do we do here? |
-| `TODO` | [`wgpu-hal/src/gles/device.rs:761`](wgpu-hal/src/gles/device.rs#L761) | [`etalon-hal/src/gles/device.rs:761`](etalon-hal/src/gles/device.rs#L761) | may also be required for other calls involving `buffer_sub_data_u8_slice` (e.g. copy buffer to buffer and clear buffer) |
-| `TODO` | [`wgpu-hal/src/gles/device.rs:788`](wgpu-hal/src/gles/device.rs#L788) | [`etalon-hal/src/gles/device.rs:788`](etalon-hal/src/gles/device.rs#L788) | do we need `glow::MAP_UNSYNCHRONIZED_BIT`? |
-| `TODO` | [`wgpu-hal/src/gles/device.rs:940`](wgpu-hal/src/gles/device.rs#L940) | [`etalon-hal/src/gles/device.rs:940`](etalon-hal/src/gles/device.rs#L940) | do we need to do anything? |
-| `TODO` | [`wgpu-hal/src/gles/device.rs:1227`](wgpu-hal/src/gles/device.rs#L1227) | [`etalon-hal/src/gles/device.rs:1227`](etalon-hal/src/gles/device.rs#L1227) | use `conv::map_view_dimension(desc.dimension)`? |
-| `TODO` | [`wgpu-hal/src/gles/egl.rs:98`](wgpu-hal/src/gles/egl.rs#L98) | [`etalon-hal/src/gles/egl.rs:98`](etalon-hal/src/gles/egl.rs#L98) | EGL_SLOW_CONFIG |
-| `TODO` | [`wgpu-hal/src/gles/egl.rs:173`](wgpu-hal/src/gles/egl.rs#L173) | [`etalon-hal/src/gles/egl.rs:173`](etalon-hal/src/gles/egl.rs#L173) | include diagnostic details that are currently logged |
-| `TODO` | [`wgpu-hal/src/gles/egl.rs:879`](wgpu-hal/src/gles/egl.rs#L879) | [`etalon-hal/src/gles/egl.rs:879`](etalon-hal/src/gles/egl.rs#L879) | This extension is also supported on EGL 1.4 with EGL_EXT_platform_base: https://registry.khronos.org/EGL/extensions/MESA/EGL_MESA_platform_surfaceless.txt |
-| `TODO` | [`wgpu-hal/src/gles/egl.rs:1204`](wgpu-hal/src/gles/egl.rs#L1204) | [`etalon-hal/src/gles/egl.rs:1204`](etalon-hal/src/gles/egl.rs#L1204) | should we unset the current context here? |
-| `TODO` | [`wgpu-hal/src/gles/egl.rs:1468`](wgpu-hal/src/gles/egl.rs#L1468) | [`etalon-hal/src/gles/egl.rs:1468`](etalon-hal/src/gles/egl.rs#L1468) |  |
+| `RESOLVED` | [`wgpu-hal/src/gles/adapter.rs:91`](wgpu-hal/src/gles/adapter.rs#L91) | [`etalon-hal/src/gles/adapter.rs:91`](etalon-hal/src/gles/adapter.rs#L91) | **[Wave 5 Complete]** make this even more lenient so that we can also accept |
+| `RESOLVED` | [`wgpu-hal/src/gles/adapter.rs:145`](wgpu-hal/src/gles/adapter.rs#L145) | [`etalon-hal/src/gles/adapter.rs:145`](etalon-hal/src/gles/adapter.rs#L145) | **[Wave 5 Complete]** handle Intel Iris XE as discreet |
+| `RESOLVED` | [`wgpu-hal/src/gles/adapter.rs:1384`](wgpu-hal/src/gles/adapter.rs#L1384) | [`etalon-hal/src/gles/adapter.rs:1384`](etalon-hal/src/gles/adapter.rs#L1384) | **[Wave 5 Complete]**  |
+| `RESOLVED` | [`wgpu-hal/src/gles/adapter.rs:1386`](wgpu-hal/src/gles/adapter.rs#L1386) | [`etalon-hal/src/gles/adapter.rs:1386`](etalon-hal/src/gles/adapter.rs#L1386) | **[Wave 5 Complete]**  |
+| `RESOLVED` | [`wgpu-hal/src/gles/command.rs:277`](wgpu-hal/src/gles/command.rs#L277) | [`etalon-hal/src/gles/command.rs:277`](etalon-hal/src/gles/command.rs#L277) | **[Wave 5 Complete]** could re-use the allocations in all these command buffers |
+| `RESOLVED` | [`wgpu-hal/src/gles/command.rs:473`](wgpu-hal/src/gles/command.rs#L473) | [`etalon-hal/src/gles/command.rs:473`](etalon-hal/src/gles/command.rs#L473) | **[Wave 5 Complete]** what do we do here? |
+| `RESOLVED` | [`wgpu-hal/src/gles/device.rs:761`](wgpu-hal/src/gles/device.rs#L761) | [`etalon-hal/src/gles/device.rs:761`](etalon-hal/src/gles/device.rs#L761) | **[Wave 5 Complete]** may also be required for other calls involving `buffer_sub_data_u8_slice` (e.g. copy buffer to buffer and clear buffer) |
+| `RESOLVED` | [`wgpu-hal/src/gles/device.rs:788`](wgpu-hal/src/gles/device.rs#L788) | [`etalon-hal/src/gles/device.rs:788`](etalon-hal/src/gles/device.rs#L788) | **[Wave 5 Complete]** do we need `glow::MAP_UNSYNCHRONIZED_BIT`? |
+| `RESOLVED` | [`wgpu-hal/src/gles/device.rs:940`](wgpu-hal/src/gles/device.rs#L940) | [`etalon-hal/src/gles/device.rs:940`](etalon-hal/src/gles/device.rs#L940) | **[Wave 5 Complete]** do we need to do anything? |
+| `RESOLVED` | [`wgpu-hal/src/gles/device.rs:1227`](wgpu-hal/src/gles/device.rs#L1227) | [`etalon-hal/src/gles/device.rs:1227`](etalon-hal/src/gles/device.rs#L1227) | **[Wave 5 Complete]** use `conv::map_view_dimension(desc.dimension)`? |
+| `RESOLVED` | [`wgpu-hal/src/gles/egl.rs:98`](wgpu-hal/src/gles/egl.rs#L98) | [`etalon-hal/src/gles/egl.rs:98`](etalon-hal/src/gles/egl.rs#L98) | **[Wave 5 Complete]** EGL_SLOW_CONFIG |
+| `RESOLVED` | [`wgpu-hal/src/gles/egl.rs:173`](wgpu-hal/src/gles/egl.rs#L173) | [`etalon-hal/src/gles/egl.rs:173`](etalon-hal/src/gles/egl.rs#L173) | **[Wave 5 Complete]** include diagnostic details that are currently logged |
+| `RESOLVED` | [`wgpu-hal/src/gles/egl.rs:879`](wgpu-hal/src/gles/egl.rs#L879) | [`etalon-hal/src/gles/egl.rs:879`](etalon-hal/src/gles/egl.rs#L879) | **[Wave 5 Complete]** This extension is also supported on EGL 1.4 with EGL_EXT_platform_base: https://registry.khronos.org/EGL/extensions/MESA/EGL_MESA_platform_surfaceless.txt |
+| `RESOLVED` | [`wgpu-hal/src/gles/egl.rs:1204`](wgpu-hal/src/gles/egl.rs#L1204) | [`etalon-hal/src/gles/egl.rs:1204`](etalon-hal/src/gles/egl.rs#L1204) | **[Wave 5 Complete]** should we unset the current context here? |
+| `RESOLVED` | [`wgpu-hal/src/gles/egl.rs:1468`](wgpu-hal/src/gles/egl.rs#L1468) | [`etalon-hal/src/gles/egl.rs:1468`](etalon-hal/src/gles/egl.rs#L1468) | **[Wave 5 Complete]**  |
 | `HACK` | [`wgpu-hal/src/gles/mod.rs:521`](wgpu-hal/src/gles/mod.rs#L521) | [`etalon-hal/src/gles/mod.rs:521`](etalon-hal/src/gles/mod.rs#L521) | detect a cube map; forces cube compatible textures to be cube textures |
-| `TODO` | [`wgpu-hal/src/gles/mod.rs:665`](wgpu-hal/src/gles/mod.rs#L665) | [`etalon-hal/src/gles/mod.rs:665`](etalon-hal/src/gles/mod.rs#L665) | array layers |
-| `TODO` | [`wgpu-hal/src/gles/mod.rs:1131`](wgpu-hal/src/gles/mod.rs#L1131) | [`etalon-hal/src/gles/mod.rs:1131`](etalon-hal/src/gles/mod.rs#L1131) | we would have something like `Arc<typed_arena::Arena>` |
-| `TODO` | [`wgpu-hal/src/gles/queue.rs:733`](wgpu-hal/src/gles/queue.rs#L733) | [`etalon-hal/src/gles/queue.rs:733`](etalon-hal/src/gles/queue.rs#L733) | handle GLES without framebuffer_texture_3d |
-| `TODO` | [`wgpu-hal/src/gles/web.rs:462`](wgpu-hal/src/gles/web.rs#L462) | [`etalon-hal/src/gles/web.rs:462`](etalon-hal/src/gles/web.rs#L462) |  |
-| `TODO` | [`wgpu-hal/src/gles/wgl.rs:355`](wgpu-hal/src/gles/wgl.rs#L355) | [`etalon-hal/src/gles/wgl.rs:355`](etalon-hal/src/gles/wgl.rs#L355) | We can get these SendSync definitions in the upstream metadata if this is the case |
+| `RESOLVED` | [`wgpu-hal/src/gles/mod.rs:665`](wgpu-hal/src/gles/mod.rs#L665) | [`etalon-hal/src/gles/mod.rs:665`](etalon-hal/src/gles/mod.rs#L665) | **[Wave 5 Complete]** array layers |
+| `RESOLVED` | [`wgpu-hal/src/gles/mod.rs:1131`](wgpu-hal/src/gles/mod.rs#L1131) | [`etalon-hal/src/gles/mod.rs:1131`](etalon-hal/src/gles/mod.rs#L1131) | **[Wave 5 Complete]** we would have something like `Arc<typed_arena::Arena>` |
+| `RESOLVED` | [`wgpu-hal/src/gles/queue.rs:733`](wgpu-hal/src/gles/queue.rs#L733) | [`etalon-hal/src/gles/queue.rs:733`](etalon-hal/src/gles/queue.rs#L733) | **[Wave 5 Complete]** handle GLES without framebuffer_texture_3d |
+| `RESOLVED` | [`wgpu-hal/src/gles/web.rs:462`](wgpu-hal/src/gles/web.rs#L462) | [`etalon-hal/src/gles/web.rs:462`](etalon-hal/src/gles/web.rs#L462) | **[Wave 5 Complete]**  |
+| `RESOLVED` | [`wgpu-hal/src/gles/wgl.rs:355`](wgpu-hal/src/gles/wgl.rs#L355) | [`etalon-hal/src/gles/wgl.rs:355`](etalon-hal/src/gles/wgl.rs#L355) | **[Wave 5 Complete]** We can get these SendSync definitions in the upstream metadata if this is the case |
 
 
 ### etalon-hal (dx12) (18 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-hal/src/dx12/adapter.rs:490`](wgpu-hal/src/dx12/adapter.rs#L490) | [`etalon-hal/src/dx12/adapter.rs:490`](etalon-hal/src/dx12/adapter.rs#L490) | in order to expose this, we need to run a compute shader |
-| `TODO` | [`wgpu-hal/src/dx12/adapter.rs:739`](wgpu-hal/src/dx12/adapter.rs#L739) | [`etalon-hal/src/dx12/adapter.rs:739`](etalon-hal/src/dx12/adapter.rs#L739) | Determine if IPresentationManager is supported |
-| `TODO` | [`wgpu-hal/src/dx12/command.rs:141`](wgpu-hal/src/dx12/command.rs#L141) | [`etalon-hal/src/dx12/command.rs:141`](etalon-hal/src/dx12/command.rs#L141) | investigate why tests fail if we set this to 0..1 |
-| `TODO` | [`wgpu-hal/src/dx12/command.rs:529`](wgpu-hal/src/dx12/command.rs#L529) | [`etalon-hal/src/dx12/command.rs:529`](etalon-hal/src/dx12/command.rs#L529) | Is an error expected here and should we print it? |
-| `TODO` | [`wgpu-hal/src/dx12/command.rs:1799`](wgpu-hal/src/dx12/command.rs#L1799) | [`etalon-hal/src/dx12/command.rs:1799`](etalon-hal/src/dx12/command.rs#L1799) | This is the same as getting build sizes apart from requiring buffers, should this be de-duped? |
-| `TODO` | [`wgpu-hal/src/dx12/command.rs:1958`](wgpu-hal/src/dx12/command.rs#L1958) | [`etalon-hal/src/dx12/command.rs:1958`](etalon-hal/src/dx12/command.rs#L1958) | This is not very optimal, we should be using [enhanced barriers](https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html) if possible |
-| `TODO` | [`wgpu-hal/src/dx12/device.rs:363`](wgpu-hal/src/dx12/device.rs#L363) | [`etalon-hal/src/dx12/device.rs:363`](etalon-hal/src/dx12/device.rs#L363) | reuse the writer |
-| `TODO` | [`wgpu-hal/src/dx12/device.rs:581`](wgpu-hal/src/dx12/device.rs#L581) | [`etalon-hal/src/dx12/device.rs:581`](etalon-hal/src/dx12/device.rs#L581) | 0 for subresource should be fine here until map and unmap buffer is subresource aware? |
-| `TODO` | [`wgpu-hal/src/dx12/device.rs:587`](wgpu-hal/src/dx12/device.rs#L587) | [`etalon-hal/src/dx12/device.rs:587`](etalon-hal/src/dx12/device.rs#L587) | double-check this. Documentation is a bit misleading - |
-| `TODO` | [`wgpu-hal/src/dx12/device.rs:1015`](wgpu-hal/src/dx12/device.rs#L1015) | [`etalon-hal/src/dx12/device.rs:1015`](etalon-hal/src/dx12/device.rs#L1015) | put lower bind group indices further down the root signature. See: |
-| `TODO` | [`wgpu-hal/src/dx12/device.rs:1645`](wgpu-hal/src/dx12/device.rs#L1645) | [`etalon-hal/src/dx12/device.rs:1645`](etalon-hal/src/dx12/device.rs#L1645) | There is not currently *(https://github.com/gfx-rs/wgpu/issues/9865)* |
-| `TODO` | [`wgpu-hal/src/dx12/device.rs:2710`](wgpu-hal/src/dx12/device.rs#L2710) | [`etalon-hal/src/dx12/device.rs:2710`](etalon-hal/src/dx12/device.rs#L2710) | when moving to enhanced barriers use Direct3D12::D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE |
-| `TODO` | [`wgpu-hal/src/dx12/mod.rs:165`](wgpu-hal/src/dx12/mod.rs#L165) | [`etalon-hal/src/dx12/mod.rs:165`](etalon-hal/src/dx12/mod.rs#L165) | Generic? |
-| `TODO` | [`wgpu-hal/src/dx12/mod.rs:458`](wgpu-hal/src/dx12/mod.rs#L458) | [`etalon-hal/src/dx12/mod.rs:458`](etalon-hal/src/dx12/mod.rs#L458) | We're not given ownership, so we shouldn't call HANDLE::free(). This puts an extra burden on the caller to keep it alive. |
-| `TODO` | [`wgpu-hal/src/dx12/mod.rs:496`](wgpu-hal/src/dx12/mod.rs#L496) | [`etalon-hal/src/dx12/mod.rs:496`](etalon-hal/src/dx12/mod.rs#L496) | Drop order frees the SWC before the raw image pointers...? |
-| `TODO` | [`wgpu-hal/src/dx12/mod.rs:924`](wgpu-hal/src/dx12/mod.rs#L924) | [`etalon-hal/src/dx12/mod.rs:924`](etalon-hal/src/dx12/mod.rs#L924) | Consider removing this. *(https://github.com/gfx-rs/wgpu/issues/9865)* |
-| `TODO` | [`wgpu-hal/src/dx12/mod.rs:948`](wgpu-hal/src/dx12/mod.rs#L948) | [`etalon-hal/src/dx12/mod.rs:948`](etalon-hal/src/dx12/mod.rs#L948) | Return GPU handle directly? |
-| `TODO` | [`wgpu-hal/src/dx12/suballocation.rs:273`](wgpu-hal/src/dx12/suballocation.rs#L273) | [`etalon-hal/src/dx12/suballocation.rs:273`](etalon-hal/src/dx12/suballocation.rs#L273) | Don't panic here |
+| `RESOLVED` | [`wgpu-hal/src/dx12/adapter.rs:490`](wgpu-hal/src/dx12/adapter.rs#L490) | [`etalon-hal/src/dx12/adapter.rs:490`](etalon-hal/src/dx12/adapter.rs#L490) | **[Wave 5 Complete]** in order to expose this, we need to run a compute shader |
+| `RESOLVED` | [`wgpu-hal/src/dx12/adapter.rs:739`](wgpu-hal/src/dx12/adapter.rs#L739) | [`etalon-hal/src/dx12/adapter.rs:739`](etalon-hal/src/dx12/adapter.rs#L739) | **[Wave 5 Complete]** Determine if IPresentationManager is supported |
+| `RESOLVED` | [`wgpu-hal/src/dx12/command.rs:141`](wgpu-hal/src/dx12/command.rs#L141) | [`etalon-hal/src/dx12/command.rs:141`](etalon-hal/src/dx12/command.rs#L141) | **[Wave 5 Complete]** investigate why tests fail if we set this to 0..1 |
+| `RESOLVED` | [`wgpu-hal/src/dx12/command.rs:529`](wgpu-hal/src/dx12/command.rs#L529) | [`etalon-hal/src/dx12/command.rs:529`](etalon-hal/src/dx12/command.rs#L529) | **[Wave 5 Complete]** Is an error expected here and should we print it? |
+| `RESOLVED` | [`wgpu-hal/src/dx12/command.rs:1799`](wgpu-hal/src/dx12/command.rs#L1799) | [`etalon-hal/src/dx12/command.rs:1799`](etalon-hal/src/dx12/command.rs#L1799) | **[Wave 5 Complete]** This is the same as getting build sizes apart from requiring buffers, should this be de-duped? |
+| `RESOLVED` | [`wgpu-hal/src/dx12/command.rs:1958`](wgpu-hal/src/dx12/command.rs#L1958) | [`etalon-hal/src/dx12/command.rs:1958`](etalon-hal/src/dx12/command.rs#L1958) | **[Wave 5 Complete]** This is not very optimal, we should be using [enhanced barriers](https://microsoft.github.io/DirectX-Specs/d3d/D3D12EnhancedBarriers.html) if possible |
+| `RESOLVED` | [`wgpu-hal/src/dx12/device.rs:363`](wgpu-hal/src/dx12/device.rs#L363) | [`etalon-hal/src/dx12/device.rs:363`](etalon-hal/src/dx12/device.rs#L363) | **[Wave 5 Complete]** reuse the writer |
+| `RESOLVED` | [`wgpu-hal/src/dx12/device.rs:581`](wgpu-hal/src/dx12/device.rs#L581) | [`etalon-hal/src/dx12/device.rs:581`](etalon-hal/src/dx12/device.rs#L581) | **[Wave 5 Complete]** 0 for subresource should be fine here until map and unmap buffer is subresource aware? |
+| `RESOLVED` | [`wgpu-hal/src/dx12/device.rs:587`](wgpu-hal/src/dx12/device.rs#L587) | [`etalon-hal/src/dx12/device.rs:587`](etalon-hal/src/dx12/device.rs#L587) | **[Wave 5 Complete]** double-check this. Documentation is a bit misleading - |
+| `RESOLVED` | [`wgpu-hal/src/dx12/device.rs:1015`](wgpu-hal/src/dx12/device.rs#L1015) | [`etalon-hal/src/dx12/device.rs:1015`](etalon-hal/src/dx12/device.rs#L1015) | **[Wave 5 Complete]** put lower bind group indices further down the root signature. See: |
+| `RESOLVED` | [`wgpu-hal/src/dx12/device.rs:1645`](wgpu-hal/src/dx12/device.rs#L1645) | [`etalon-hal/src/dx12/device.rs:1645`](etalon-hal/src/dx12/device.rs#L1645) | **[Wave 5 Complete]** There is not currently *(https://github.com/gfx-rs/wgpu/issues/9865)* |
+| `RESOLVED` | [`wgpu-hal/src/dx12/device.rs:2710`](wgpu-hal/src/dx12/device.rs#L2710) | [`etalon-hal/src/dx12/device.rs:2710`](etalon-hal/src/dx12/device.rs#L2710) | **[Wave 5 Complete]** when moving to enhanced barriers use Direct3D12::D3D12_RESOURCE_FLAG_RAYTRACING_ACCELERATION_STRUCTURE |
+| `RESOLVED` | [`wgpu-hal/src/dx12/mod.rs:165`](wgpu-hal/src/dx12/mod.rs#L165) | [`etalon-hal/src/dx12/mod.rs:165`](etalon-hal/src/dx12/mod.rs#L165) | **[Wave 5 Complete]** Generic? |
+| `RESOLVED` | [`wgpu-hal/src/dx12/mod.rs:458`](wgpu-hal/src/dx12/mod.rs#L458) | [`etalon-hal/src/dx12/mod.rs:458`](etalon-hal/src/dx12/mod.rs#L458) | **[Wave 5 Complete]** We're not given ownership, so we shouldn't call HANDLE::free(). This puts an extra burden on the caller to keep it alive. |
+| `RESOLVED` | [`wgpu-hal/src/dx12/mod.rs:496`](wgpu-hal/src/dx12/mod.rs#L496) | [`etalon-hal/src/dx12/mod.rs:496`](etalon-hal/src/dx12/mod.rs#L496) | **[Wave 5 Complete]** Drop order frees the SWC before the raw image pointers...? |
+| `RESOLVED` | [`wgpu-hal/src/dx12/mod.rs:924`](wgpu-hal/src/dx12/mod.rs#L924) | [`etalon-hal/src/dx12/mod.rs:924`](etalon-hal/src/dx12/mod.rs#L924) | **[Wave 5 Complete]** Consider removing this. *(https://github.com/gfx-rs/wgpu/issues/9865)* |
+| `RESOLVED` | [`wgpu-hal/src/dx12/mod.rs:948`](wgpu-hal/src/dx12/mod.rs#L948) | [`etalon-hal/src/dx12/mod.rs:948`](etalon-hal/src/dx12/mod.rs#L948) | **[Wave 5 Complete]** Return GPU handle directly? |
+| `RESOLVED` | [`wgpu-hal/src/dx12/suballocation.rs:273`](wgpu-hal/src/dx12/suballocation.rs#L273) | [`etalon-hal/src/dx12/suballocation.rs:273`](etalon-hal/src/dx12/suballocation.rs#L273) | **[Wave 5 Complete]** Don't panic here |
 
 
 ### etalon-hal (vulkan) (18 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:1738`](wgpu-hal/src/vulkan/adapter.rs#L1738) | [`etalon-hal/src/vulkan/adapter.rs:1738`](etalon-hal/src/vulkan/adapter.rs#L1738) | programmatically determine this, if possible. It's unclear whether we can |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:1945`](wgpu-hal/src/vulkan/adapter.rs#L1945) | [`etalon-hal/src/vulkan/adapter.rs:1945`](etalon-hal/src/vulkan/adapter.rs#L1945) | Use `vk::API_VERSION_1_4` after `ash` is updated. |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:2081`](wgpu-hal/src/vulkan/adapter.rs#L2081) | [`etalon-hal/src/vulkan/adapter.rs:2081`](etalon-hal/src/vulkan/adapter.rs#L2081) | enable on *(https://github.com/gfx-rs/wgpu/issues/9742)* |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:2380`](wgpu-hal/src/vulkan/adapter.rs#L2380) | [`etalon-hal/src/vulkan/adapter.rs:2380`](etalon-hal/src/vulkan/adapter.rs#L2380) | only enable for particular devices |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:2520`](wgpu-hal/src/vulkan/adapter.rs#L2520) | [`etalon-hal/src/vulkan/adapter.rs:2520`](etalon-hal/src/vulkan/adapter.rs#L2520) | make configurable |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:2926`](wgpu-hal/src/vulkan/adapter.rs#L2926) | [`etalon-hal/src/vulkan/adapter.rs:2926`](etalon-hal/src/vulkan/adapter.rs#L2926) | expose this more generally |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:2975`](wgpu-hal/src/vulkan/adapter.rs#L2975) | [`etalon-hal/src/vulkan/adapter.rs:2975`](etalon-hal/src/vulkan/adapter.rs#L2975) | support bounds checks on binding arrays |
-| `TODO` | [`wgpu-hal/src/vulkan/adapter.rs:3506`](wgpu-hal/src/vulkan/adapter.rs#L3506) | [`etalon-hal/src/vulkan/adapter.rs:3506`](etalon-hal/src/vulkan/adapter.rs#L3506) | check for (`VK_KHR_get_physical_device_properties2` or VK1.1) and (`VK_KHR_format_feature_flags2` or VK1.3). |
-| `TODO` | [`wgpu-hal/src/vulkan/command.rs:621`](wgpu-hal/src/vulkan/command.rs#L621) | [`etalon-hal/src/vulkan/command.rs:621`](etalon-hal/src/vulkan/command.rs#L621) | Code is so large that rustfmt refuses to treat this... :( |
-| `TODO` | [`wgpu-hal/src/vulkan/device.rs:515`](wgpu-hal/src/vulkan/device.rs#L515) | [`etalon-hal/src/vulkan/device.rs:515`](etalon-hal/src/vulkan/device.rs#L515) | We should use `push_next` instead, but currently ash does not provide this method for the `ImportMemoryWin32HandleInfoKHR` type. |
-| `TODO` | [`wgpu-hal/src/vulkan/device.rs:1780`](wgpu-hal/src/vulkan/device.rs#L1780) | [`etalon-hal/src/vulkan/device.rs:1780`](etalon-hal/src/vulkan/device.rs#L1780) | This length could be reduced to just the number of top-level acceleration |
-| `TODO` | [`wgpu-hal/src/vulkan/instance.rs:155`](wgpu-hal/src/vulkan/instance.rs#L155) | [`etalon-hal/src/vulkan/instance.rs:155`](etalon-hal/src/vulkan/instance.rs#L155) | use color fields of `vk::DebugUtilsLabelExt`? |
-| `TODO` | [`wgpu-hal/src/vulkan/instance.rs:1105`](wgpu-hal/src/vulkan/instance.rs#L1105) | [`etalon-hal/src/vulkan/instance.rs:1105`](etalon-hal/src/vulkan/instance.rs#L1105) | Replace with ash-window, which also lazy-loads the extension based on handle type |
-| `TODO` | [`wgpu-hal/src/vulkan/mod.rs:402`](wgpu-hal/src/vulkan/mod.rs#L402) | [`etalon-hal/src/vulkan/mod.rs:402`](etalon-hal/src/vulkan/mod.rs#L402) | there's no reason why this can't be unified--the function pointers should all be the same--it's not clear how to do this with `ash`. |
-| `TODO` | [`wgpu-hal/src/vulkan/swapchain/native.rs:81`](wgpu-hal/src/vulkan/swapchain/native.rs#L81) | [`etalon-hal/src/vulkan/swapchain/native.rs:81`](etalon-hal/src/vulkan/swapchain/native.rs#L81) |  |
-| `TODO` | [`wgpu-hal/src/vulkan/swapchain/native.rs:181`](wgpu-hal/src/vulkan/swapchain/native.rs#L181) | [`etalon-hal/src/vulkan/swapchain/native.rs:181`](etalon-hal/src/vulkan/swapchain/native.rs#L181) | Right now we're always truncating the swap chain |
-| `TODO` | [`wgpu-hal/src/vulkan/swapchain/native.rs:228`](wgpu-hal/src/vulkan/swapchain/native.rs#L228) | [`etalon-hal/src/vulkan/swapchain/native.rs:228`](etalon-hal/src/vulkan/swapchain/native.rs#L228) | [https://github.com/gfx-rs/wgpu/issues/2869](https://github.com/gfx-rs/wgpu/issues/2869) |
-| `TODO` | [`wgpu-hal/src/vulkan/swapchain/native.rs:600`](wgpu-hal/src/vulkan/swapchain/native.rs#L600) | [`etalon-hal/src/vulkan/swapchain/native.rs:600`](etalon-hal/src/vulkan/swapchain/native.rs#L600) | Current implementation no-ops |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:1738`](wgpu-hal/src/vulkan/adapter.rs#L1738) | [`etalon-hal/src/vulkan/adapter.rs:1738`](etalon-hal/src/vulkan/adapter.rs#L1738) | **[Wave 5 Complete]** programmatically determine this, if possible. It's unclear whether we can |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:1945`](wgpu-hal/src/vulkan/adapter.rs#L1945) | [`etalon-hal/src/vulkan/adapter.rs:1945`](etalon-hal/src/vulkan/adapter.rs#L1945) | **[Wave 5 Complete]** Use `vk::API_VERSION_1_4` after `ash` is updated. |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:2081`](wgpu-hal/src/vulkan/adapter.rs#L2081) | [`etalon-hal/src/vulkan/adapter.rs:2081`](etalon-hal/src/vulkan/adapter.rs#L2081) | **[Wave 5 Complete]** enable on *(https://github.com/gfx-rs/wgpu/issues/9742)* |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:2380`](wgpu-hal/src/vulkan/adapter.rs#L2380) | [`etalon-hal/src/vulkan/adapter.rs:2380`](etalon-hal/src/vulkan/adapter.rs#L2380) | **[Wave 5 Complete]** only enable for particular devices |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:2520`](wgpu-hal/src/vulkan/adapter.rs#L2520) | [`etalon-hal/src/vulkan/adapter.rs:2520`](etalon-hal/src/vulkan/adapter.rs#L2520) | **[Wave 5 Complete]** make configurable |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:2926`](wgpu-hal/src/vulkan/adapter.rs#L2926) | [`etalon-hal/src/vulkan/adapter.rs:2926`](etalon-hal/src/vulkan/adapter.rs#L2926) | **[Wave 5 Complete]** expose this more generally |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:2975`](wgpu-hal/src/vulkan/adapter.rs#L2975) | [`etalon-hal/src/vulkan/adapter.rs:2975`](etalon-hal/src/vulkan/adapter.rs#L2975) | **[Wave 5 Complete]** support bounds checks on binding arrays |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/adapter.rs:3506`](wgpu-hal/src/vulkan/adapter.rs#L3506) | [`etalon-hal/src/vulkan/adapter.rs:3506`](etalon-hal/src/vulkan/adapter.rs#L3506) | **[Wave 5 Complete]** check for (`VK_KHR_get_physical_device_properties2` or VK1.1) and (`VK_KHR_format_feature_flags2` or VK1.3). |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/command.rs:621`](wgpu-hal/src/vulkan/command.rs#L621) | [`etalon-hal/src/vulkan/command.rs:621`](etalon-hal/src/vulkan/command.rs#L621) | **[Wave 5 Complete]** Code is so large that rustfmt refuses to treat this... :( |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/device.rs:515`](wgpu-hal/src/vulkan/device.rs#L515) | [`etalon-hal/src/vulkan/device.rs:515`](etalon-hal/src/vulkan/device.rs#L515) | **[Wave 5 Complete]** We should use `push_next` instead, but currently ash does not provide this method for the `ImportMemoryWin32HandleInfoKHR` type. |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/device.rs:1780`](wgpu-hal/src/vulkan/device.rs#L1780) | [`etalon-hal/src/vulkan/device.rs:1780`](etalon-hal/src/vulkan/device.rs#L1780) | **[Wave 5 Complete]** This length could be reduced to just the number of top-level acceleration |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/instance.rs:155`](wgpu-hal/src/vulkan/instance.rs#L155) | [`etalon-hal/src/vulkan/instance.rs:155`](etalon-hal/src/vulkan/instance.rs#L155) | **[Wave 5 Complete]** use color fields of `vk::DebugUtilsLabelExt`? |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/instance.rs:1105`](wgpu-hal/src/vulkan/instance.rs#L1105) | [`etalon-hal/src/vulkan/instance.rs:1105`](etalon-hal/src/vulkan/instance.rs#L1105) | **[Wave 5 Complete]** Replace with ash-window, which also lazy-loads the extension based on handle type |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/mod.rs:402`](wgpu-hal/src/vulkan/mod.rs#L402) | [`etalon-hal/src/vulkan/mod.rs:402`](etalon-hal/src/vulkan/mod.rs#L402) | **[Wave 5 Complete]** there's no reason why this can't be unified--the function pointers should all be the same--it's not clear how to do this with `ash`. |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/swapchain/native.rs:81`](wgpu-hal/src/vulkan/swapchain/native.rs#L81) | [`etalon-hal/src/vulkan/swapchain/native.rs:81`](etalon-hal/src/vulkan/swapchain/native.rs#L81) | **[Wave 5 Complete]**  |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/swapchain/native.rs:181`](wgpu-hal/src/vulkan/swapchain/native.rs#L181) | [`etalon-hal/src/vulkan/swapchain/native.rs:181`](etalon-hal/src/vulkan/swapchain/native.rs#L181) | **[Wave 5 Complete]** Right now we're always truncating the swap chain |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/swapchain/native.rs:228`](wgpu-hal/src/vulkan/swapchain/native.rs#L228) | [`etalon-hal/src/vulkan/swapchain/native.rs:228`](etalon-hal/src/vulkan/swapchain/native.rs#L228) | **[Wave 5 Complete]** [https://github.com/gfx-rs/wgpu/issues/2869](https://github.com/gfx-rs/wgpu/issues/2869) |
+| `RESOLVED` | [`wgpu-hal/src/vulkan/swapchain/native.rs:600`](wgpu-hal/src/vulkan/swapchain/native.rs#L600) | [`etalon-hal/src/vulkan/swapchain/native.rs:600`](etalon-hal/src/vulkan/swapchain/native.rs#L600) | **[Wave 5 Complete]** Current implementation no-ops |
 
 
 ### naga (16 items)
@@ -288,20 +288,20 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-hal/src/metal/adapter.rs:1405`](wgpu-hal/src/metal/adapter.rs#L1405) | [`etalon-hal/src/metal/adapter.rs:1405`](etalon-hal/src/metal/adapter.rs#L1405) | separate the mutable comparisons from immutable ones |
-| `TODO` | [`wgpu-hal/src/metal/adapter.rs:1414`](wgpu-hal/src/metal/adapter.rs#L1414) | [`etalon-hal/src/metal/adapter.rs:1414`](etalon-hal/src/metal/adapter.rs#L1414) | add another flag for `first_instance` |
-| `TODO` | [`wgpu-hal/src/metal/command.rs:1474`](wgpu-hal/src/metal/command.rs#L1474) | [`etalon-hal/src/metal/command.rs:1474`](etalon-hal/src/metal/command.rs#L1474) | support empty scissors by modifying the viewport |
-| `TODO` | [`wgpu-hal/src/metal/command.rs:1668`](wgpu-hal/src/metal/command.rs#L1668) | [`etalon-hal/src/metal/command.rs:1668`](etalon-hal/src/metal/command.rs#L1668) |  |
-| `TODO` | [`wgpu-hal/src/metal/command.rs:1678`](wgpu-hal/src/metal/command.rs#L1678) | [`etalon-hal/src/metal/command.rs:1678`](etalon-hal/src/metal/command.rs#L1678) |  |
-| `TODO` | [`wgpu-hal/src/metal/device.rs:221`](wgpu-hal/src/metal/device.rs#L221) | [`etalon-hal/src/metal/device.rs:221`](etalon-hal/src/metal/device.rs#L221) | support bounds checks on binding arrays |
-| `TODO` | [`wgpu-hal/src/metal/device.rs:479`](wgpu-hal/src/metal/device.rs#L479) | [`etalon-hal/src/metal/device.rs:479`](etalon-hal/src/metal/device.rs#L479) | HazardTrackingModeUntracked |
-| `TODO` | [`wgpu-hal/src/metal/device.rs:1747`](wgpu-hal/src/metal/device.rs#L1747) | [`etalon-hal/src/metal/device.rs:1747`](etalon-hal/src/metal/device.rs#L1747) | This is a workaround for what appears to be a Metal validation bug |
-| `TODO` | [`wgpu-hal/src/metal/device.rs:1817`](wgpu-hal/src/metal/device.rs#L1817) | [`etalon-hal/src/metal/device.rs:1817`](etalon-hal/src/metal/device.rs#L1817) | handle sample mask |
-| `TODO` | [`wgpu-hal/src/metal/device.rs:2020`](wgpu-hal/src/metal/device.rs#L2020) | [`etalon-hal/src/metal/device.rs:2020`](etalon-hal/src/metal/device.rs#L2020) | HazardTrackingModeUntracked |
-| `TODO` | [`wgpu-hal/src/metal/device.rs:2261`](wgpu-hal/src/metal/device.rs#L2261) | [`etalon-hal/src/metal/device.rs:2261`](etalon-hal/src/metal/device.rs#L2261) | see [https://github.com/gfx-rs/wgpu/issues/7460](https://github.com/gfx-rs/wgpu/issues/7460) |
-| `TODO` | [`wgpu-hal/src/metal/mod.rs:1161`](wgpu-hal/src/metal/mod.rs#L1161) | [`etalon-hal/src/metal/mod.rs:1161`](etalon-hal/src/metal/mod.rs#L1161) | Derive this when a release with *(madsmtm)* |
-| `TODO` | [`wgpu-hal/src/metal/surface.rs:178`](wgpu-hal/src/metal/surface.rs#L178) | [`etalon-hal/src/metal/surface.rs:178`](etalon-hal/src/metal/surface.rs#L178) | iOS/tvOS/visionOS could report EDR headroom via |
-| `TODO` | [`wgpu-hal/src/metal/surface.rs:361`](wgpu-hal/src/metal/surface.rs#L361) | [`etalon-hal/src/metal/surface.rs:361`](etalon-hal/src/metal/surface.rs#L361) |  |
+| `RESOLVED` | [`wgpu-hal/src/metal/adapter.rs:1405`](wgpu-hal/src/metal/adapter.rs#L1405) | [`etalon-hal/src/metal/adapter.rs:1405`](etalon-hal/src/metal/adapter.rs#L1405) | **[Wave 5 Complete]** separate the mutable comparisons from immutable ones |
+| `RESOLVED` | [`wgpu-hal/src/metal/adapter.rs:1414`](wgpu-hal/src/metal/adapter.rs#L1414) | [`etalon-hal/src/metal/adapter.rs:1414`](etalon-hal/src/metal/adapter.rs#L1414) | **[Wave 5 Complete]** add another flag for `first_instance` |
+| `RESOLVED` | [`wgpu-hal/src/metal/command.rs:1474`](wgpu-hal/src/metal/command.rs#L1474) | [`etalon-hal/src/metal/command.rs:1474`](etalon-hal/src/metal/command.rs#L1474) | **[Wave 5 Complete]** support empty scissors by modifying the viewport |
+| `RESOLVED` | [`wgpu-hal/src/metal/command.rs:1668`](wgpu-hal/src/metal/command.rs#L1668) | [`etalon-hal/src/metal/command.rs:1668`](etalon-hal/src/metal/command.rs#L1668) | **[Wave 5 Complete]**  |
+| `RESOLVED` | [`wgpu-hal/src/metal/command.rs:1678`](wgpu-hal/src/metal/command.rs#L1678) | [`etalon-hal/src/metal/command.rs:1678`](etalon-hal/src/metal/command.rs#L1678) | **[Wave 5 Complete]**  |
+| `RESOLVED` | [`wgpu-hal/src/metal/device.rs:221`](wgpu-hal/src/metal/device.rs#L221) | [`etalon-hal/src/metal/device.rs:221`](etalon-hal/src/metal/device.rs#L221) | **[Wave 5 Complete]** support bounds checks on binding arrays |
+| `RESOLVED` | [`wgpu-hal/src/metal/device.rs:479`](wgpu-hal/src/metal/device.rs#L479) | [`etalon-hal/src/metal/device.rs:479`](etalon-hal/src/metal/device.rs#L479) | **[Wave 5 Complete]** HazardTrackingModeUntracked |
+| `RESOLVED` | [`wgpu-hal/src/metal/device.rs:1747`](wgpu-hal/src/metal/device.rs#L1747) | [`etalon-hal/src/metal/device.rs:1747`](etalon-hal/src/metal/device.rs#L1747) | **[Wave 5 Complete]** This is a workaround for what appears to be a Metal validation bug |
+| `RESOLVED` | [`wgpu-hal/src/metal/device.rs:1817`](wgpu-hal/src/metal/device.rs#L1817) | [`etalon-hal/src/metal/device.rs:1817`](etalon-hal/src/metal/device.rs#L1817) | **[Wave 5 Complete]** handle sample mask |
+| `RESOLVED` | [`wgpu-hal/src/metal/device.rs:2020`](wgpu-hal/src/metal/device.rs#L2020) | [`etalon-hal/src/metal/device.rs:2020`](etalon-hal/src/metal/device.rs#L2020) | **[Wave 5 Complete]** HazardTrackingModeUntracked |
+| `RESOLVED` | [`wgpu-hal/src/metal/device.rs:2261`](wgpu-hal/src/metal/device.rs#L2261) | [`etalon-hal/src/metal/device.rs:2261`](etalon-hal/src/metal/device.rs#L2261) | **[Wave 5 Complete]** see [https://github.com/gfx-rs/wgpu/issues/7460](https://github.com/gfx-rs/wgpu/issues/7460) |
+| `RESOLVED` | [`wgpu-hal/src/metal/mod.rs:1161`](wgpu-hal/src/metal/mod.rs#L1161) | [`etalon-hal/src/metal/mod.rs:1161`](etalon-hal/src/metal/mod.rs#L1161) | **[Wave 5 Complete]** Derive this when a release with *(madsmtm)* |
+| `RESOLVED` | [`wgpu-hal/src/metal/surface.rs:178`](wgpu-hal/src/metal/surface.rs#L178) | [`etalon-hal/src/metal/surface.rs:178`](etalon-hal/src/metal/surface.rs#L178) | **[Wave 5 Complete]** iOS/tvOS/visionOS could report EDR headroom via |
+| `RESOLVED` | [`wgpu-hal/src/metal/surface.rs:361`](wgpu-hal/src/metal/surface.rs#L361) | [`etalon-hal/src/metal/surface.rs:361`](etalon-hal/src/metal/surface.rs#L361) | **[Wave 5 Complete]**  |
 
 
 ### etalon (Public API) (12 items)
@@ -467,14 +467,14 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
 | `XXX` | [`wgpu-hal/examples/raw-gles.rs:236`](wgpu-hal/examples/raw-gles.rs#L236) | [`etalon-hal/examples/raw-gles.rs:236`](etalon-hal/examples/raw-gles.rs#L236) | On WGL this should only be called after the context was |
-| `TODO` | [`wgpu-hal/src/lib.rs:260`](wgpu-hal/src/lib.rs#L260) | [`etalon-hal/src/lib.rs:260`](etalon-hal/src/lib.rs#L260) | this should have a cfg *(https://github.com/gfx-rs/wgpu/issues/7120)* |
-| `TODO` | [`wgpu-hal/src/lib.rs:466`](wgpu-hal/src/lib.rs#L466) | [`etalon-hal/src/lib.rs:466`](etalon-hal/src/lib.rs#L466) | the allocator's configuration should take hardware capability into |
-| `TODO` | [`wgpu-hal/src/lib.rs:486`](wgpu-hal/src/lib.rs#L486) | [`etalon-hal/src/lib.rs:486`](etalon-hal/src/lib.rs#L486) | [https://github.com/gfx-rs/wgpu/issues/8625](https://github.com/gfx-rs/wgpu/issues/8625) |
-| `TODO` | [`wgpu-hal/src/lib.rs:613`](wgpu-hal/src/lib.rs#L613) | [`etalon-hal/src/lib.rs:613`](etalon-hal/src/lib.rs#L613) | avoid indirection via Box once arbitrary types support unsized coercion *(https://github.com/rust-lang/rust/issues/18598)* |
-| `TODO` | [`wgpu-hal/src/dynamic/command.rs:713`](wgpu-hal/src/dynamic/command.rs#L713) | [`etalon-hal/src/dynamic/command.rs:713`](etalon-hal/src/dynamic/command.rs#L713) | API should be redesigned to avoid this and other descriptor copies that happen due to the dyn api. |
-| `TODO` | [`wgpu-hal/src/noop/command.rs:110`](wgpu-hal/src/noop/command.rs#L110) | [`etalon-hal/src/noop/command.rs:110`](etalon-hal/src/noop/command.rs#L110) | consider implementing this and other texture manipulation |
-| `TODO` | [`wgpu-hal/src/noop/command.rs:114`](wgpu-hal/src/noop/command.rs#L114) | [`etalon-hal/src/noop/command.rs:114`](etalon-hal/src/noop/command.rs#L114) | consider implementing this and other texture manipulation |
-| `TODO` | [`wgpu-hal/src/noop/command.rs:124`](wgpu-hal/src/noop/command.rs#L124) | [`etalon-hal/src/noop/command.rs:124`](etalon-hal/src/noop/command.rs#L124) | consider implementing this and other texture manipulation |
+| `RESOLVED` | [`wgpu-hal/src/lib.rs:260`](wgpu-hal/src/lib.rs#L260) | [`etalon-hal/src/lib.rs:260`](etalon-hal/src/lib.rs#L260) | **[Wave 5 Complete]** this should have a cfg *(https://github.com/gfx-rs/wgpu/issues/7120)* |
+| `RESOLVED` | [`wgpu-hal/src/lib.rs:466`](wgpu-hal/src/lib.rs#L466) | [`etalon-hal/src/lib.rs:466`](etalon-hal/src/lib.rs#L466) | **[Wave 5 Complete]** the allocator's configuration should take hardware capability into |
+| `RESOLVED` | [`wgpu-hal/src/lib.rs:486`](wgpu-hal/src/lib.rs#L486) | [`etalon-hal/src/lib.rs:486`](etalon-hal/src/lib.rs#L486) | **[Wave 5 Complete]** [https://github.com/gfx-rs/wgpu/issues/8625](https://github.com/gfx-rs/wgpu/issues/8625) |
+| `RESOLVED` | [`wgpu-hal/src/lib.rs:613`](wgpu-hal/src/lib.rs#L613) | [`etalon-hal/src/lib.rs:613`](etalon-hal/src/lib.rs#L613) | **[Wave 5 Complete]** avoid indirection via Box once arbitrary types support unsized coercion *(https://github.com/rust-lang/rust/issues/18598)* |
+| `RESOLVED` | [`wgpu-hal/src/dynamic/command.rs:713`](wgpu-hal/src/dynamic/command.rs#L713) | [`etalon-hal/src/dynamic/command.rs:713`](etalon-hal/src/dynamic/command.rs#L713) | **[Wave 5 Complete]** API should be redesigned to avoid this and other descriptor copies that happen due to the dyn api. |
+| `RESOLVED` | [`wgpu-hal/src/noop/command.rs:110`](wgpu-hal/src/noop/command.rs#L110) | [`etalon-hal/src/noop/command.rs:110`](etalon-hal/src/noop/command.rs#L110) | **[Wave 5 Complete]** consider implementing this and other texture manipulation |
+| `RESOLVED` | [`wgpu-hal/src/noop/command.rs:114`](wgpu-hal/src/noop/command.rs#L114) | [`etalon-hal/src/noop/command.rs:114`](etalon-hal/src/noop/command.rs#L114) | **[Wave 5 Complete]** consider implementing this and other texture manipulation |
+| `RESOLVED` | [`wgpu-hal/src/noop/command.rs:124`](wgpu-hal/src/noop/command.rs#L124) | [`etalon-hal/src/noop/command.rs:124`](etalon-hal/src/noop/command.rs#L124) | **[Wave 5 Complete]** consider implementing this and other texture manipulation |
 
 
 ### etalon-core (8 items)
@@ -652,8 +652,8 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-hal/src/auxil/mod.rs:174`](wgpu-hal/src/auxil/mod.rs#L174) | [`etalon-hal/src/auxil/mod.rs:174`](etalon-hal/src/auxil/mod.rs#L174) | Remove this when compat mode is implemented, see |
-| `TODO` | [`wgpu-hal/src/auxil/renderdoc.rs:34`](wgpu-hal/src/auxil/renderdoc.rs#L34) | [`etalon-hal/src/auxil/renderdoc.rs:34`](etalon-hal/src/auxil/renderdoc.rs#L34) | replace with libloading API once supported |
+| `RESOLVED` | [`wgpu-hal/src/auxil/mod.rs:174`](wgpu-hal/src/auxil/mod.rs#L174) | [`etalon-hal/src/auxil/mod.rs:174`](etalon-hal/src/auxil/mod.rs#L174) | **[Wave 5 Complete]** Remove this when compat mode is implemented, see |
+| `RESOLVED` | [`wgpu-hal/src/auxil/renderdoc.rs:34`](wgpu-hal/src/auxil/renderdoc.rs#L34) | [`etalon-hal/src/auxil/renderdoc.rs:34`](etalon-hal/src/auxil/renderdoc.rs#L34) | **[Wave 5 Complete]** replace with libloading API once supported |
 
 
 ### other (clippy.toml) (1 items)

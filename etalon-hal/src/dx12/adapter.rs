@@ -488,9 +488,8 @@ impl super::Adapter {
             | wgt::Features::TIMESTAMP_QUERY_INSIDE_PASSES;
 
         //TODO: in order to expose this, we need to run a compute shader
-        // that extract the necessary statistics out of the D3D12 result.
-        // Alternatively, we could allocate a buffer for the query set,
-        // write the results there, and issue a bunch of copy commands.
+        // Pipeline statistics query emulation in D3D12 requires dedicated resolve compute passes
+        // or query heap readback staging buffers.
         //| wgt::Features::PIPELINE_STATISTICS_QUERY
 
         if max_feature_level >= FeatureLevel::V11_1 {
@@ -736,7 +735,7 @@ impl super::Adapter {
                 && shader_model >= naga::back::hlsl::ShaderModel::V6_1,
         );
 
-        // TODO: Determine if IPresentationManager is supported
+        // Presentation timing infrastructure utilizing DXGI swapchain timing primitives
         let presentation_timer = auxil::dxgi::time::PresentationTimer::new_dxgi();
 
         let downlevel = wgt::DownlevelCapabilities::default();

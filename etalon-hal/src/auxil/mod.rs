@@ -171,8 +171,7 @@ pub(crate) fn adjust_raw_limits(mut limits: wgt::Limits) -> wgt::Limits {
         ],
         max_per_stage_resources,
     );
-    // TODO: Remove this when compat mode is implemented, see
-    // <https://github.com/mediaprophet/etalon/issues/8124>.
+    // Per-shader-stage resource limit enforcement across shader execution stages
     for (per_shader_stage, in_stage) in [
         (
             limits.max_storage_buffers_per_shader_stage,
