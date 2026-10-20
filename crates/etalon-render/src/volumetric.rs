@@ -1,10 +1,676 @@
 //! Volumetric ray-marcher and holographic projection pass.
+//!
+//! Evaluates procedural Signed Distance Fields (SDFs), constructive wave interference,
+//! and Beer-Lambert absorption directly along camera rays using instanced proxy bounding volumes.
 
-use super::scene_contract::FrameCameraPod;
+use bytemuck::{Pod, Zeroable};
 
-#[derive(Clone, Debug)]
-pub struct VolumetricPassDesc {
-    pub max_steps: u32,
-    pub step_size: f32,
-    pub absorption: f32,
+/// Raw WGSL shader source for the procedural holographic volumetric engine.
+pub const HOLOGRAPHIC_WGSL: &str = r#"// Holographic 3D Engine for Semantic Graphs — Procedural Volumetric Light Field.
+//
+// Architected per `docs/Holographic 3D Engine for Semantic Graphs.md`:
+// 1. Proxy Bounding Volumes: Instanced unit cuboids act as "projector lenses".
+//    The GPU processes the proxy instantly with zero CPU triangle meshing.
+// 2. SVG-like Procedural Shading: Resolution-independent mathematical functions
+//    calculate continuous contours, telemetry fringes, and density.
+// 3. Volumetric Raymarching via Signed Distance Fields (SDFs):
+//    Evaluates smooth-min organic primitives (spheres, capsules, rounded boxes,
+//    metaball harmonics) directly along camera rays.
+// 4. Wave Interference for N3Logic Reasoning:
+//    Constructive interference generates glowing focal cores and relational
+//    bridges where assertions align (high epistemic q). Destructive interference
+//    creates ethereal voids and transparency.
+// 5. EMF Frequency Emission:
+//    Direct mapping of semantic field frequency and phase into the CIE 1931
+//    XYZ -> linear sRGB spectrum via spectral.wgsl.
+//
+// @group(0) Camera + Observer standpoint · @group(1) Holographic node storage
+
+struct Camera {
+    view_projection: mat4x4<f32>,
+    yaw: f32,
+    pitch: f32,
+    zoom: f32,
+    tensor_mode: u32,
+    _padding0: vec4<f32>, // frame time, eye xyz
+    _padding1: vec4<f32>,
+    _padding2: vec4<f32>,
+};
+
+struct ObserverStandpoint {
+    standpoint_hash: vec2<u32>,
+    session_nonce: vec2<u32>,
+    epistemic_q: f32,
+    t_slice: f32,
+    t_window: f32,
+    deontic_lane: u32,
+    standpoint_class: u32,
+    fabric_gate: u32,
+    _padding0: vec2<f32>,
+    _padding1: vec4<f32>,
+    _padding2: vec4<f32>,
+    _padding3: vec4<f32>,
+    _padding4: vec4<f32>,
+    _padding5: vec4<f32>,
+};
+
+// 96-byte std140/std430 aligned GPU representation of a semantic holographic entity.
+struct HolographicNodeGpu {
+    // World space position xyz, bounding sphere / proxy scale w
+    position_scale: vec4<f32>,
+    // Half extents xyz, primitive type w (0: Sphere, 1: RoundedBox, 2: Capsule, 3: Metaball, 4: InterferenceBridge)
+    half_extents_primitive: vec4<f32>,
+    // Base frequency x, amplitude y, phase z, manifold curvature w
+    frequency_amplitude: vec4<f32>,
+    // 10D Manifold parameters: epistemic_q x, topological_spin y, temporal_decay z, density_threshold w
+    manifold_tensor: vec4<f32>,
+    // Target endpoint xyz (for relational bridges), coherence weight w
+    connection_endpoint: vec4<f32>,
+    // Emissive tint rgba
+    emissive_color: vec4<f32>,
+};
+
+@group(0) @binding(0) var<uniform> camera: Camera;
+@group(0) @binding(1) var<uniform> observer: ObserverStandpoint;
+@group(1) @binding(0) var<storage, read> nodes: array<HolographicNodeGpu>;
+
+struct VertexOutput {
+    @builtin(position) clip_position: vec4<f32>,
+    @location(0) world_pos: vec3<f32>,
+    @location(1) @interpolate(flat) node_index: u32,
+};
+
+const CUBE_VERTICES: array<vec3<f32>, 8> = array<vec3<f32>, 8>(
+    vec3<f32>(-1.0, -1.0, -1.0),
+    vec3<f32>( 1.0, -1.0, -1.0),
+    vec3<f32>( 1.0,  1.0, -1.0),
+    vec3<f32>(-1.0,  1.0, -1.0),
+    vec3<f32>(-1.0, -1.0,  1.0),
+    vec3<f32>( 1.0, -1.0,  1.0),
+    vec3<f32>( 1.0,  1.0,  1.0),
+    vec3<f32>(-1.0,  1.0,  1.0)
+);
+
+const CUBE_INDICES: array<u32, 36> = array<u32, 36>(
+    0u, 1u, 2u,  0u, 2u, 3u,
+    4u, 6u, 5u,  4u, 7u, 6u,
+    4u, 0u, 3u,  4u, 3u, 7u,
+    1u, 5u, 6u,  1u, 6u, 2u,
+    3u, 2u, 6u,  3u, 6u, 7u,
+    4u, 5u, 1u,  4u, 1u, 0u
+);
+
+const TWO_PI: f32 = 6.283185307;
+
+@vertex
+fn vertex_main(
+    @builtin(vertex_index) vertex_index: u32,
+    @builtin(instance_index) instance_index: u32
+) -> VertexOutput {
+    let node = nodes[instance_index];
+    let corner = CUBE_VERTICES[CUBE_INDICES[vertex_index]];
+    let proxy_extents = node.half_extents_primitive.xyz * 1.35 + vec3<f32>(0.08);
+    let world_pos = node.position_scale.xyz + corner * proxy_extents;
+
+    var output: VertexOutput;
+    output.clip_position = camera.view_projection * vec4<f32>(world_pos, 1.0);
+    output.world_pos = world_pos;
+    output.node_index = instance_index;
+    return output;
+}
+
+// ── Ray-Box Slab Intersection ───────────────────────────────────────────────
+
+fn ray_box_intersect(ro: vec3<f32>, rd: vec3<f32>, half_size: vec3<f32>) -> vec2<f32> {
+    let inv_d = 1.0 / rd;
+    let t0 = (-half_size - ro) * inv_d;
+    let t1 = (half_size - ro) * inv_d;
+    let tmin = min(t0, t1);
+    let tmax = max(t0, t1);
+    let t_near = max(max(tmin.x, tmin.y), tmin.z);
+    let t_far = min(min(tmax.x, tmax.y), tmax.z);
+    return vec2<f32>(t_near, t_far);
+}
+
+// ── Signed Distance Field Primitives (sdf_ops.rs GPU analogues) ─────────────
+
+fn sdf_sphere(p: vec3<f32>, r: f32) -> f32 {
+    return length(p) - r;
+}
+
+fn sdf_rounded_box(p: vec3<f32>, half_extents: vec3<f32>, r: f32) -> f32 {
+    let q = abs(p) - (half_extents - vec3<f32>(r));
+    return length(max(q, vec3<f32>(0.0))) + min(max(q.x, max(q.y, q.z)), 0.0) - r;
+}
+
+fn sdf_capsule(p: vec3<f32>, a: vec3<f32>, b: vec3<f32>, r: f32) -> f32 {
+    let pa = p - a;
+    let ba = b - a;
+    let h = clamp(dot(pa, ba) / max(dot(ba, ba), 1e-6), 0.0, 1.0);
+    return length(pa - ba * h) - r;
+}
+
+// Polynomial smooth-min (C¹ continuous blending from sdf_ops::sdf_smooth_union)
+fn sdf_smooth_union(d1: f32, d2: f32, k: f32) -> f32 {
+    if (k <= 0.0) {
+        return min(d1, d2);
+    }
+    let h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0);
+    return mix(d2, d1, h) - k * h * (1.0 - h);
+}
+
+// Evaluates the semantic SDF inside the local node coordinate frame.
+fn evaluate_node_sdf(local_p: vec3<f32>, node: HolographicNodeGpu, time: f32) -> f32 {
+    let prim_type = u32(round(node.half_extents_primitive.w));
+    let half_dim = node.half_extents_primitive.xyz;
+    let r = min(half_dim.x, min(half_dim.y, half_dim.z)) * 0.75;
+
+    switch (prim_type) {
+        case 0u: {
+            // Sphere primitive with harmonic pulsation
+            let pulse = 0.04 * sin(node.frequency_amplitude.x * time + node.frequency_amplitude.z);
+            return sdf_sphere(local_p, r + pulse);
+        }
+        case 1u: {
+            // Rounded box primitive (corridor structures, campsite platforms)
+            return sdf_rounded_box(local_p, half_dim, r * 0.4);
+        }
+        case 2u: {
+            // Segment capsule (fauna bones, tree trunks, guide poles)
+            let half_h = half_dim.y;
+            let a = vec3<f32>(0.0, -half_h, 0.0);
+            let b = vec3<f32>(0.0,  half_h, 0.0);
+            return sdf_capsule(local_p, a, b, r * 0.5);
+        }
+        case 3u: {
+            // Organic metaball field (foliage canopies, flora organ clusters)
+            let spin = node.manifold_tensor.y * time * 0.8;
+            let c0 = vec3<f32>(sin(spin) * r * 0.35, 0.0, cos(spin) * r * 0.35);
+            let c1 = vec3<f32>(-c0.x, r * 0.25, -c0.z);
+            let c2 = vec3<f32>(0.0, -r * 0.2, 0.0);
+            let d0 = sdf_sphere(local_p - c0, r * 0.65);
+            let d1 = sdf_sphere(local_p - c1, r * 0.55);
+            let d2 = sdf_sphere(local_p - c2, r * 0.70);
+            let blend_k = r * 0.6;
+            return sdf_smooth_union(sdf_smooth_union(d0, d1, blend_k), d2, blend_k);
+        }
+        default: {
+            // Relational interference bridge (waveguide linking this node to target endpoint)
+            let local_target = node.connection_endpoint.xyz - node.position_scale.xyz;
+            let bridge = sdf_capsule(local_p, vec3<f32>(0.0), local_target, r * 0.35);
+            let core = sdf_sphere(local_p, r * 0.5);
+            return sdf_smooth_union(core, bridge, r * 0.4);
+        }
+    }
+}
+
+// ── Surface Normal Calculation via Tetrahedron Gradients ────────────────────
+
+fn evaluate_normal(local_p: vec3<f32>, node: HolographicNodeGpu, time: f32) -> vec3<f32> {
+    let eps = 0.0035;
+    let k = vec2<f32>(1.0, -1.0);
+    let n = k.xyy * evaluate_node_sdf(local_p + k.xyy * eps, node, time)
+          + k.yyx * evaluate_node_sdf(local_p + k.yyx * eps, node, time)
+          + k.yxy * evaluate_node_sdf(local_p + k.yxy * eps, node, time)
+          + k.xxx * evaluate_node_sdf(local_p + k.xxx * eps, node, time);
+    return normalize(n);
+}
+
+// ── Wave Interference & Holographic Emission ────────────────────────────────
+
+fn evaluate_interference_field(
+    local_p: vec3<f32>,
+    node: HolographicNodeGpu,
+    time: f32
+) -> f32 {
+    let freq = node.frequency_amplitude.x;
+    let phase = node.frequency_amplitude.z;
+    let k_vec1 = vec3<f32>(freq * 1.8, freq * 2.4, freq * 1.5);
+    let wave1 = cos(dot(k_vec1, local_p) - freq * time * 2.0 + phase);
+
+    // Secondary wave driven by epistemic certainty q
+    let q = clamp(node.manifold_tensor.x, 0.0, 1.0);
+    let k_vec2 = vec3<f32>(-freq * 1.5, freq * 2.1, -freq * 1.9);
+    let wave2 = cos(dot(k_vec2, local_p) - freq * time * 3.14 + phase * 1.618);
+
+    // Coherence superposition: constructive alignment where assertions agree
+    let superposed = (wave1 + q * wave2) / (1.0 + q);
+    return superposed;
+}
+
+// Maps phase (radians) to σ in [0, 1) for spectral coloring.
+fn phase_to_sigma(phase: f32) -> f32 {
+    return fract(phase / TWO_PI);
+}
+
+// ── .10d PROC1 3D Cellular Voronoi Micro-Relief (evaluate_voronoi_cellular_f1 GPU counterpart) ──
+
+fn hash33_voronoi(p: vec3<f32>) -> vec3<f32> {
+    var q = vec3<f32>(
+        dot(p, vec3<f32>(127.1, 311.7, 74.7)),
+        dot(p, vec3<f32>(269.5, 183.3, 246.1)),
+        dot(p, vec3<f32>(113.5, 271.9, 124.6))
+    );
+    return fract(sin(q) * 43758.5453123);
+}
+
+fn proc_voronoi_f1_3d(p: vec3<f32>, cell_density: f32, jitter: f32) -> f32 {
+    let sp = p * max(cell_density, 0.001);
+    let ip = floor(sp);
+    let fp = fract(sp);
+    let clamped_jitter = clamp(jitter, 0.0, 1.0);
+    var min_dist_sq = 100.0;
+
+    for (var dz = -1; dz <= 1; dz = dz + 1) {
+        for (var dy = -1; dy <= 1; dy = dy + 1) {
+            for (var dx = -1; dx <= 1; dx = dx + 1) {
+                let neighbor = vec3<f32>(f32(dx), f32(dy), f32(dz));
+                let rnd = hash33_voronoi(ip + neighbor);
+                let offset = mix(vec3<f32>(0.5), rnd, clamped_jitter);
+                let diff = neighbor + offset - fp;
+                let d_sq = dot(diff, diff);
+                min_dist_sq = min(min_dist_sq, d_sq);
+            }
+        }
+    }
+    return clamp(sqrt(min_dist_sq), 0.0, 1.0);
+}
+
+struct HoloFragmentOut {
+    @location(0) color: vec4<f32>,
+    @builtin(frag_depth) depth: f32,
+};
+
+@fragment
+fn fragment_main(input: VertexOutput) -> HoloFragmentOut {
+    let node = nodes[input.node_index];
+    let time = camera._padding0.x;
+    let camera_eye = camera._padding0.yzw;
+
+    // Ray setup in local node coordinates
+    let ro_world = camera_eye;
+    let rd_world = normalize(input.world_pos - ro_world);
+    let local_ro = ro_world - node.position_scale.xyz;
+    let local_rd = rd_world;
+
+    let proxy_extents = node.half_extents_primitive.xyz * 1.35 + vec3<f32>(0.08);
+    let hit_bounds = ray_box_intersect(local_ro, local_rd, proxy_extents);
+    let t_near = max(hit_bounds.x, 0.0);
+    let t_far = hit_bounds.y;
+
+    if (t_far <= t_near) {
+        discard;
+    }
+
+    // Sphere-tracing ray march through the bounding volume
+    var t = t_near;
+    var hit_dist = 1e6;
+    var hit_p = vec3<f32>(0.0);
+    var hit = false;
+    let max_steps = 42u;
+    let threshold = 0.003;
+
+    for (var i = 0u; i < max_steps; i = i + 1u) {
+        let p = local_ro + local_rd * t;
+        let d = evaluate_node_sdf(p, node, time);
+        if (d < threshold) {
+            hit = true;
+            hit_p = p;
+            hit_dist = d;
+            break;
+        }
+        t = t + max(d * 0.85, 0.008);
+        if (t > t_far) {
+            break;
+        }
+    }
+
+    if (!hit) {
+        discard;
+    }
+
+    // Exact world-space hit position and clip-space depth for seamless B-Rep depth-interleaving
+    let hit_pos = node.position_scale.xyz + hit_p;
+    let clip_pos = camera.view_projection * vec4<f32>(hit_pos, 1.0);
+    let exact_depth = clamp(clip_pos.z / max(clip_pos.w, 1e-6), 0.0, 1.0);
+
+    // Surface normal & Fresnel rim glow
+    let normal = evaluate_normal(hit_p, node, time);
+    let view_dir = -local_rd;
+    let ndotv = abs(dot(normal, view_dir));
+    let curvature = clamp(node.frequency_amplitude.w, 0.1, 4.0);
+    let fresnel = pow(1.0 - ndotv, 2.2) * curvature;
+
+    // N3Logic Wave interference pattern + PROC1 cellular Voronoi micro-relief
+    let interference = evaluate_interference_field(hit_p, node, time);
+    let constructive = max(0.0, interference);
+    let voronoi_f1 = proc_voronoi_f1_3d(hit_p, max(node.frequency_amplitude.x * 2.0, 1.0), 0.85);
+    let cellular_relief = mix(1.0, 0.85 + 0.30 * (1.0 - voronoi_f1), clamp(node.manifold_tensor.w, 0.0, 1.0));
+
+    // SVG-like procedural telemetry scanlines & latitude rings
+    let scanline = 0.85 + 0.15 * sin(hit_p.y * 55.0 - time * 6.0);
+    let latitude_ring = smoothstep(0.04, 0.0, abs(fract(hit_p.y * 4.0) - 0.5));
+
+    // EMF spectral emission frequency
+    let sigma_val = phase_to_sigma(node.frequency_amplitude.z + constructive * 0.25 + time * 0.05);
+    let spectral_rgb = sigma_to_linear_rgb(sigma_val);
+
+    // Epistemic certainty q controls emission sharpness and transparency
+    let q = clamp(node.manifold_tensor.x, 0.0, 1.0);
+    let certainty_gain = mix(0.45, 1.35, q);
+    let amplitude = node.frequency_amplitude.y;
+
+    // Direct EMF radiant color output (HDR)
+    let base_rgb = mix(node.emissive_color.rgb, spectral_rgb, 0.65);
+    let emission_hdr = base_rgb * amplitude * (0.6 + fresnel * 1.5 + latitude_ring * 0.8)
+                     * (1.0 + constructive * 0.7) * scanline * certainty_gain * cellular_relief;
+
+    let alpha = clamp(0.35 + fresnel * 0.65 + latitude_ring * 0.35 + constructive * 0.25, 0.15, 1.0);
+
+    var out: HoloFragmentOut;
+    out.color = vec4<f32>(emission_hdr, alpha * node.emissive_color.a);
+    out.depth = exact_depth;
+    return out;
+}
+"#;
+
+/// 96-byte std140/std430 aligned GPU representation of a semantic holographic entity.
+#[repr(C, align(16))]
+#[derive(Debug, Clone, Copy, Pod, Zeroable, PartialEq)]
+pub struct HolographicNodeGpu {
+    /// World space position xyz, bounding sphere / proxy scale w
+    pub position_scale: [f32; 4],
+    /// Half extents xyz, primitive type w (0: Sphere, 1: RoundedBox, 2: Capsule, 3: Metaball, 4: InterferenceBridge)
+    pub half_extents_primitive: [f32; 4],
+    /// Base frequency x, amplitude y, phase z, manifold curvature w
+    pub frequency_amplitude: [f32; 4],
+    /// 10D Manifold parameters: epistemic_q x, topological_spin y, temporal_decay z, density_threshold w
+    pub manifold_tensor: [f32; 4],
+    /// Target endpoint xyz (for relational bridges), coherence weight w
+    pub connection_endpoint: [f32; 4],
+    /// Emissive tint rgba
+    pub emissive_color: [f32; 4],
+}
+
+const _: () = {
+    assert!(core::mem::size_of::<HolographicNodeGpu>() == 96);
+    assert!(core::mem::align_of::<HolographicNodeGpu>() == 16);
+};
+
+impl Default for HolographicNodeGpu {
+    fn default() -> Self {
+        Self {
+            position_scale: [0.0, 0.0, 0.0, 1.0],
+            half_extents_primitive: [0.5, 0.5, 0.5, 0.0],
+            frequency_amplitude: [1.0, 1.0, 0.0, 0.0],
+            manifold_tensor: [1.0, 0.0, 0.0, 0.5],
+            connection_endpoint: [0.0, 0.0, 0.0, 0.0],
+            emissive_color: [1.0, 1.0, 1.0, 1.0],
+        }
+    }
+}
+
+/// Camera uniform (128 bytes, std140-aligned).
+#[repr(C, align(16))]
+#[derive(Debug, Clone, Copy, Pod, Zeroable, PartialEq)]
+pub struct CameraUniform {
+    pub view_projection: [[f32; 4]; 4],
+    pub yaw: f32,
+    pub pitch: f32,
+    pub zoom: f32,
+    pub tensor_mode: u32,
+    pub _padding0: [f32; 4],
+    pub _padding1: [f32; 4],
+    pub _padding2: [f32; 4],
+}
+
+const _: () = {
+    assert!(core::mem::size_of::<CameraUniform>() == 128);
+    assert!(core::mem::align_of::<CameraUniform>() == 16);
+};
+
+impl Default for CameraUniform {
+    fn default() -> Self {
+        Self {
+            view_projection: [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.0, 1.0, 0.0, 0.0],
+                [0.0, 0.0, 1.0, 0.0],
+                [0.0, 0.0, 0.0, 1.0],
+            ],
+            yaw: 0.0,
+            pitch: 0.0,
+            zoom: 1.0,
+            tensor_mode: 0,
+            _padding0: [0.0; 4],
+            _padding1: [0.0; 4],
+            _padding2: [0.0; 4],
+        }
+    }
+}
+
+/// Observer standpoint uniform (128 bytes, std140-aligned).
+#[repr(C, align(16))]
+#[derive(Debug, Clone, Copy, Pod, Zeroable, PartialEq)]
+pub struct ObserverStandpointUniform {
+    pub standpoint_hash: [u32; 2],
+    pub session_nonce: [u32; 2],
+    pub epistemic_q: f32,
+    pub t_slice: f32,
+    pub t_window: f32,
+    pub deontic_lane: u32,
+    pub standpoint_class: u32,
+    pub fabric_gate: u32,
+    pub _padding0: [f32; 2],
+    pub _padding1: [f32; 4],
+    pub _padding2: [f32; 4],
+    pub _padding3: [f32; 4],
+    pub _padding4: [f32; 4],
+    pub _padding5: [f32; 4],
+}
+
+const _: () = {
+    assert!(core::mem::size_of::<ObserverStandpointUniform>() == 128);
+    assert!(core::mem::align_of::<ObserverStandpointUniform>() == 16);
+};
+
+impl Default for ObserverStandpointUniform {
+    fn default() -> Self {
+        Self {
+            standpoint_hash: [0, 0],
+            session_nonce: [0, 0],
+            epistemic_q: 1.0,
+            t_slice: 0.0,
+            t_window: 1.0,
+            deontic_lane: 0,
+            standpoint_class: 0,
+            fabric_gate: 0,
+            _padding0: [0.0; 2],
+            _padding1: [0.0; 4],
+            _padding2: [0.0; 4],
+            _padding3: [0.0; 4],
+            _padding4: [0.0; 4],
+            _padding5: [0.0; 4],
+        }
+    }
+}
+
+/// Complete GPU volumetric ray-marching pipeline.
+pub struct VolumetricPipeline {
+    pub camera_buf: etalon::Buffer,
+    pub observer_buf: etalon::Buffer,
+    pub uniforms_layout: etalon::BindGroupLayout,
+    pub nodes_layout: etalon::BindGroupLayout,
+    pub uniforms_bind_group: etalon::BindGroup,
+    pub pipeline: etalon::RenderPipeline,
+}
+
+impl VolumetricPipeline {
+    pub fn new(
+        device: &etalon::Device,
+        color_format: etalon::TextureFormat,
+        depth_format: Option<etalon::TextureFormat>,
+    ) -> Self {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
+            label: Some("etalon-holographic-shader"),
+            source: etalon::ShaderSource::Wgsl(HOLOGRAPHIC_WGSL.into()),
+        });
+
+        let camera_buf = device.create_buffer(&etalon::BufferDescriptor {
+            label: Some("etalon-holographic-camera"),
+            size: core::mem::size_of::<CameraUniform>() as u64,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let observer_buf = device.create_buffer(&etalon::BufferDescriptor {
+            label: Some("etalon-holographic-observer"),
+            size: core::mem::size_of::<ObserverStandpointUniform>() as u64,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
+            mapped_at_creation: false,
+        });
+
+        let uniforms_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+            label: Some("etalon-holographic-uniforms-layout"),
+            entries: &[
+                etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: core::num::NonZeroU64::new(
+                            core::mem::size_of::<CameraUniform>() as u64,
+                        ),
+                    },
+                    count: None,
+                },
+                etalon::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: core::num::NonZeroU64::new(
+                            core::mem::size_of::<ObserverStandpointUniform>() as u64,
+                        ),
+                    },
+                    count: None,
+                },
+            ],
+        });
+
+        let nodes_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+            label: Some("etalon-holographic-nodes-layout"),
+            entries: &[etalon::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: true },
+                    has_dynamic_offset: false,
+                    min_binding_size: core::num::NonZeroU64::new(
+                        core::mem::size_of::<HolographicNodeGpu>() as u64,
+                    ),
+                },
+                count: None,
+            }],
+        });
+
+        let uniforms_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
+            label: Some("etalon-holographic-uniforms-bind-group"),
+            layout: &uniforms_layout,
+            entries: &[
+                etalon::BindGroupEntry {
+                    binding: 0,
+                    resource: camera_buf.as_entire_binding(),
+                },
+                etalon::BindGroupEntry {
+                    binding: 1,
+                    resource: observer_buf.as_entire_binding(),
+                },
+            ],
+        });
+
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+            label: Some("etalon-holographic-pipeline-layout"),
+            bind_group_layouts: &[&uniforms_layout, &nodes_layout],
+            push_constant_ranges: &[],
+        });
+
+        let depth_stencil = depth_format.map(|format| etalon::DepthStencilState {
+            format,
+            depth_write_enabled: false,
+            depth_compare: etalon::CompareFunction::LessEqual,
+            stencil: etalon::StencilState::default(),
+            bias: etalon::DepthBiasState::default(),
+        });
+
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
+            label: Some("etalon-holographic-render-pipeline"),
+            layout: Some(&pipeline_layout),
+            vertex: etalon::VertexState {
+                module: &shader,
+                entry_point: Some("vs_main"),
+                compilation_options: Default::default(),
+                buffers: &[],
+            },
+            fragment: Some(etalon::FragmentState {
+                module: &shader,
+                entry_point: Some("fs_main"),
+                compilation_options: Default::default(),
+                targets: &[Some(etalon::ColorTargetState {
+                    format: color_format,
+                    blend: Some(etalon::BlendState::ALPHA_BLENDING),
+                    write_mask: etalon::ColorWrites::ALL,
+                })],
+            }),
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: etalon::FrontFace::Ccw,
+                cull_mode: Some(etalon::Face::Back),
+                unclipped_depth: false,
+                polygon_mode: etalon::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil,
+            multisample: etalon::MultisampleState::default(),
+            multiview: None,
+            cache: None,
+        });
+
+        Self {
+            camera_buf,
+            observer_buf,
+            uniforms_layout,
+            nodes_layout,
+            uniforms_bind_group,
+            pipeline,
+        }
+    }
+
+    pub fn update_camera(&self, queue: &etalon::Queue, camera: &CameraUniform) {
+        queue.write_buffer(&self.camera_buf, 0, bytemuck::bytes_of(camera));
+    }
+
+    pub fn update_observer(&self, queue: &etalon::Queue, observer: &ObserverStandpointUniform) {
+        queue.write_buffer(&self.observer_buf, 0, bytemuck::bytes_of(observer));
+    }
+
+    /// Draw instanced bounding cuboids for `node_count` entities.
+    pub fn render_nodes<'a>(
+        &'a self,
+        rpass: &mut etalon::RenderPass<'a>,
+        nodes_bind_group: &'a etalon::BindGroup,
+        node_count: u32,
+    ) {
+        if node_count == 0 {
+            return;
+        }
+        rpass.set_pipeline(&self.pipeline);
+        rpass.set_bind_group(0, &self.uniforms_bind_group, &[]);
+        rpass.set_bind_group(1, nodes_bind_group, &[]);
+        // 36 indices = 12 triangles for unit cuboid proxy
+        rpass.draw(0..36, 0..node_count);
+    }
 }

@@ -7,10 +7,12 @@ license.workspace = true
 description = "48-byte semantic datum, warp-scan sieve, and stable GPU LSD radix sort for Etalon"
 
 [features]
-default = ["std"]
+default = ["std", "gpu"]
 std = []
+gpu = ["dep:etalon"]
 
 [dependencies]
 bytemuck = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 thiserror = "2"
+etalon = { workspace = true, optional = true }
