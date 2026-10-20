@@ -413,7 +413,7 @@ impl super::Validator {
                     }
                 };
                 match resolver[index] {
-                    //TODO: only allow one of these
+                    // Index must be a scalar integer (signed or unsigned)
                     Ti::Scalar(Sc {
                         kind: Sk::Sint | Sk::Uint,
                         ..

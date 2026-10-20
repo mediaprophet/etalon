@@ -540,7 +540,7 @@ impl<'a> Context<'a> {
     }
 
     /// Internal implementation of [`lower`](Self::lower)
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
+    #[allow(clippy::large_stack_frames)] // Legitimate large stack frame for exhaustive HIR expression lowering.
     fn lower_inner(
         &mut self,
         stmt: &StmtContext,

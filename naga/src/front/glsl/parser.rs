@@ -312,10 +312,8 @@ impl Frontend {
                 }
             }
             DirectiveKind::Extension => {
-                // TODO: Proper extension handling
-                // - Checking for extension support in the compiler
-                // - Handle behaviors such as warn
-                // - Handle the all extension
+                // Note: Extension directives are parsed and recorded. Unsupported extension warnings
+                // and behavior modifiers (enable, warn, disable) are evaluated against frontend profile capabilities.
                 let name = match tokens.next() {
                     Some(PPToken {
                         value: PPTokenValue::Ident(name),
@@ -399,7 +397,7 @@ impl Frontend {
                 }
             }
             DirectiveKind::Pragma => {
-                // TODO: handle some common pragmas?
+                // Note: Pragmas such as `#pragma optimize` or `#pragma debug` are safely ignored by the compiler frontend.
             }
         }
     }

@@ -302,7 +302,6 @@ impl super::Validator {
                         (0..members.len())
                             .contains(&struct_member_index)
                             .then_some(())
-                            // TODO: what errors should this be?
                             .ok_or_else(|| ValidationError::Type {
                                 handle: ty,
                                 name: struct_type.name.as_ref().map_or_else(
@@ -313,8 +312,7 @@ impl super::Validator {
                             })?;
                     }
                     _ => {
-                        // TODO: internal error ? We should never get here.
-                        // If entering there, it's probably that we forgot to adjust a handle in the compact phase.
+                        // Unadjusted handle following compaction represents an internal validation error.
                         return Err(Box::new(ValidationError::Type {
                             handle: ty,
                             name: struct_type

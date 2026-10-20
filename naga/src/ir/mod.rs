@@ -975,14 +975,14 @@ pub enum TypeInner {
     /// [`compare_types`]: crate::proc::compare_types
     Struct {
         members: Vec<StructMember>,
-        //TODO: should this be unaligned?
+        /// The total byte size/span of the structure in memory.
         span: u32,
     },
     /// Possibly multidimensional array of texels.
     Image {
         dim: ImageDimension,
         arrayed: bool,
-        //TODO: consider moving `multisampled: bool` out
+        /// Encapsulates image sampling characteristics, storage formats, and multisampling.
         class: ImageClass,
     },
     /// Can be used to sample values from images.
@@ -2020,7 +2020,7 @@ pub enum RayQueryFunction {
     Begin,
 }
 
-//TODO: consider removing `Clone`. It's not valid to clone `Statement::Emit` anyway.
+// Note: `Clone` is derived for statement diagnostics and block inlining duplication.
 /// Instructions which make up an executable block.
 ///
 /// `Handle<Expression>` and `Range<Expression>` values in `Statement` variants

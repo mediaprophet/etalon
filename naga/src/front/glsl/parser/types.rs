@@ -445,8 +445,7 @@ fn map_image_format(word: &str) -> Option<crate::StorageFormat> {
         "r32ui" => Sf::R32Uint,
         "r16ui" => Sf::R16Uint,
         "r8ui" => Sf::R8Uint,
-        // TODO: These next ones seem incorrect to me
-        // "rgb10_a2ui" => Sf::Rgb10a2Unorm,
+        // rgb10_a2ui is not supported as a storage format in WebGPU or standard Naga IR.
         _ => return None,
     };
 

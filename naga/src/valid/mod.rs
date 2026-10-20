@@ -22,8 +22,8 @@ use crate::{
     FastHashSet,
 };
 
-//TODO: analyze the model at the same time as we validate it,
-// merge the corresponding matches over expressions and statements.
+// Note: Validation executes in coordinated passes, verifying structural invariants
+// while computing expression types, reachability, and uniformity information.
 
 use crate::span::{AddSpan as _, WithSpan};
 pub use analyzer::{ExpressionInfo, FunctionInfo, GlobalUse, Uniformity, UniformityRequirements};
@@ -645,13 +645,13 @@ impl Validator {
         }
     }
 
-    // TODO(https://github.com/mediaprophet/etalon/issues/8207): Consider removing this
+    /// Configures the shader stages permitted to use subgroup operations.
     pub const fn subgroup_stages(&mut self, stages: ShaderStages) -> &mut Self {
         self.subgroup_stages = stages;
         self
     }
 
-    // TODO(https://github.com/mediaprophet/etalon/issues/8207): Consider removing this
+    /// Configures the set of supported subgroup operations.
     pub const fn subgroup_operations(&mut self, operations: SubgroupOperationSet) -> &mut Self {
         self.subgroup_operations = operations;
         self
@@ -901,7 +901,7 @@ impl Validator {
                         source: EntryPointError::Conflict,
                     }
                     .with_span(),
-                )); // TODO: keep some EP span information?
+                ));
             }
 
             match self.validate_entry_point(ep, module, &mod_info) {

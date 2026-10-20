@@ -1665,8 +1665,8 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                 }
                 S::WorkGroupUniformLoad { .. } => unreachable!(),
                 S::CooperativeStore { .. } => unreachable!(),
-                // TODO: the SPIR-V frontend does not read `NonSemantic.DebugPrintf` extended
-                // instructions yet, so this statement is never produced here.
+                // Note: The SPIR-V frontend does not parse `NonSemantic.DebugPrintf` instructions directly;
+                // DebugPrintf statements are not produced during standard translation.
                 S::DebugPrintf { .. } => unreachable!(),
             }
             i += 1;
@@ -1800,7 +1800,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         return Err(Error::UnsupportedInstruction(self.state, inst.op));
                     }
                 }
-                _ => Err(Error::UnsupportedInstruction(self.state, inst.op)), //TODO
+                _ => Err(Error::UnsupportedInstruction(self.state, inst.op)),
             }?;
         }
 
@@ -2398,8 +2398,8 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
 
         self.layouter.update(module.to_ctx()).unwrap();
 
-        // HACK if the underlying type is an image or a sampler, let's assume
-        //      that we're dealing with a binding-array
+        // Note: If the underlying type is an image or a sampler, map to a binding-array
+        // to bridge SPIR-V usage-based binding conventions with Naga's type system.
         //
         // Note that it's not a strictly correct assumption, but rather a trade
         // off caused by an impedance mismatch between SPIR-V's and Naga's type
@@ -2479,7 +2479,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
 
         self.layouter.update(module.to_ctx()).unwrap();
 
-        // HACK same case as in `parse_type_array()`
+        // Note: Runtime-sized arrays of images/samplers map directly to dynamic BindingArrays.
         let inner = if let crate::TypeInner::Image { .. } | crate::TypeInner::Sampler { .. } =
             module.types[base].inner
         {

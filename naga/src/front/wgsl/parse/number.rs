@@ -383,8 +383,13 @@ fn parse_hex_float(input: &str, kind: Option<FloatKind>) -> Result<Number, Numbe
 
             Ok(Number::AbstractFloat(num))
         }
-        // TODO: f16 is not supported
-        Some(FloatKind::F16) => Err(NumberError::NotRepresentable),
+        Some(FloatKind::F16) => {
+            let (neg, mant, exp) = parse_hex_float_parts(input.as_bytes())?;
+            let bits = convert_hex_float(neg, mant, exp, F16)?;
+            let num = f16::from_bits(bits as u16);
+
+            Ok(Number::F16(num))
+        }
         Some(FloatKind::F32) => {
             let (neg, mant, exp) = parse_hex_float_parts(input.as_bytes())?;
             let bits = convert_hex_float(neg, mant, exp, F32)?;
@@ -411,6 +416,15 @@ struct HexFloatFormat {
     exp_bits: usize,   // number of bits in exponent
     min_norm_exp: i32, // smallest exponent for normalized numbers
 }
+
+const F16: HexFloatFormat = HexFloatFormat {
+    mant_bits: 10,
+    precision: 11,
+    bias: 15,
+    max_exp: 15,
+    exp_bits: 5,
+    min_norm_exp: -14,
+};
 
 const F32: HexFloatFormat = HexFloatFormat {
     mant_bits: 23,

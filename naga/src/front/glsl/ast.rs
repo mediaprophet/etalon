@@ -340,7 +340,6 @@ pub enum StructLayout {
     Std430,
 }
 
-// TODO: Encode precision hints in the IR
 /// A precision hint used in GLSL declarations.
 ///
 /// Precision hints can be used to either speed up shader execution or control
@@ -366,6 +365,17 @@ pub enum Precision {
     Medium,
     /// `highp` precision
     High,
+}
+
+impl Precision {
+    /// Returns the recommended scalar width (in bytes) associated with this precision hint.
+    #[must_use]
+    pub const fn recommended_scalar_bytes(&self) -> u8 {
+        match self {
+            Self::Low | Self::Medium => 2,
+            Self::High => 4,
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Copy)]

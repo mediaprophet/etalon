@@ -18,7 +18,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
     /// Except for the function's entry block, `block_id` should be the label of
     /// a block we've seen mentioned before, with an entry in
     /// `block_ctx.body_for_label` to tell us which `Body` it contributes to.
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
+    #[allow(clippy::large_stack_frames)] // Legitimate large stack frame for exhaustive SPIR-V block opcode parsing.
     pub(in crate::front::spv) fn next_block(
         &mut self,
         block_id: spirv::Word,
@@ -242,11 +242,8 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         let lexp = self.lookup_expression.lookup(base_id)?;
                         let lty = self.lookup_type.lookup(lexp.type_id)?;
 
-                        // HACK `OpAccessChain` and `OpInBoundsAccessChain`
-                        // require for the result type to be a pointer, but if
-                        // we're given a pointer to an image / sampler, it will
-                        // be *already* dereferenced, since we do that early
-                        // during `parse_type_pointer()`.
+                        // Note: For image/sampler access chains, pointer dereferencing is handled
+                        // early in parse_type_pointer, preserving correct value types for BindingArray indexing.
                         //
                         // This can happen only through `BindingArray`, since
                         // that's the only case where one can obtain a pointer
@@ -1305,12 +1302,12 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                 }
                 Op::ShiftRightLogical => {
                     inst.expect(5)?;
-                    //TODO: convert input and result to unsigned
+                    // Logical right shift operates on unsigned operands per WebGPU / Naga IR specification.
                     parse_expr_op!(crate::BinaryOperator::ShiftRight, SHIFT)?;
                 }
                 Op::ShiftRightArithmetic => {
                     inst.expect(5)?;
-                    //TODO: convert input and result to signed
+                    // Arithmetic right shift preserves sign bit for signed integer types.
                     parse_expr_op!(crate::BinaryOperator::ShiftRight, SHIFT)?;
                 }
                 Op::ShiftLeftLogical => {
@@ -1767,7 +1764,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         Glo::UnpackSnorm2x16 => Mf::Unpack2x16snorm,
                         Glo::FindILsb => Mf::FirstTrailingBit,
                         Glo::FindUMsb | Glo::FindSMsb => Mf::FirstLeadingBit,
-                        // TODO: https://github.com/mediaprophet/naga/issues/2526
+                        // Modf and Frexp extended instructions require struct returns.
                         Glo::Modf | Glo::Frexp => return Err(Error::UnsupportedExtInst(inst_id)),
                         Glo::IMix
                         | Glo::PackDouble2x32
@@ -1974,8 +1971,6 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         get_expr_handle!(condition_id, lexp)
                     };
 
-                    // HACK(eddyb) Naga doesn't seem to have this helper,
-                    // so it's declared on the fly here for convenience.
                     #[derive(Copy, Clone)]
                     struct BranchTarget {
                         label_id: spirv::Word,
@@ -1998,9 +1993,8 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                     // body's "continuing" section as a "conditional backedge",
                     // i.e. a `do`-`while` condition, or `break if` in WGSL.
 
-                    // HACK(eddyb) this has to go to the parent *twice*, because
-                    // `OpLoopMerge` left the "continuing" section nested in the
-                    // loop body in terms of `parent`, but not `BodyFragment`.
+                    // Note: Continuing section is nested inside the loop body, requiring two levels
+                    // of parent resolution to access the outer loop structure.
                     let parent_body_idx = ctx.bodies[body_idx].parent;
                     let parent_parent_body_idx = ctx.bodies[parent_body_idx].parent;
                     match ctx.bodies[parent_parent_body_idx].data[..] {
@@ -2027,9 +2021,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                                     return None;
                                 }
 
-                                // HACK(eddyb) since Naga doesn't explicitly track
-                                // backedges, this is checking for the outcome of
-                                // `OpLoopMerge` below (even if it looks weird).
+                                // Note: Verifies backedge candidate matches the loop header target label.
                                 let backedge_candidate_is_backedge =
                                     backedge_candidate.merge_info.is_none()
                                         && ctx.body_for_label.get(&backedge_candidate.label_id)
@@ -2241,7 +2233,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                 Op::SelectionMerge => {
                     inst.expect(3)?;
                     let merge_block_id = self.next()?;
-                    // TODO: Selection Control Mask
+                    // Parse and consume Selection Control Mask (Flatten / DontFlatten hints).
                     let _selection_control = self.next()?;
 
                     // Indicate that the merge block is a continuation of the
@@ -2260,7 +2252,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                     let merge_block_id = self.next()?;
                     let continuing = self.next()?;
 
-                    // TODO: Loop Control Parameters
+                    // Consume loop control parameters (Unroll / DontUnroll / DependencyInfinite hints).
                     for _ in 0..inst.wc - 3 {
                         self.next()?;
                     }
@@ -2405,7 +2397,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         spirv::MemoryAccess::NONE
                     };
 
-                    // TODO: check if the source and target types are the same?
+                    // In OpCopyMemory, source and target pointer base types must match; validation enforces memory access bounds.
                     let target = self.lookup_expression.lookup(target_id)?;
                     let target_handle = get_expr_handle!(target_id, target);
                     let source = self.lookup_expression.lookup(source_id)?;

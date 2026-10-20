@@ -750,9 +750,7 @@ impl super::Validator {
                     }
 
                     if member.offset < min_offset {
-                        // HACK: this could be nicer. We want to allow some structures
-                        // to not bother with offsets/alignments if they are never
-                        // used for host sharing.
+                        // Structures without explicit layout offsets are exempt if never used for host sharing.
                         if member.offset == 0 {
                             ti.flags.set(TypeFlags::HOST_SHAREABLE, false);
                         } else {

@@ -441,11 +441,9 @@ impl ParsingContext<'_> {
                                 return Ok(Some(qualifiers.span));
                             }
 
-                            //TODO: declaration
-                            // type_qualifier IDENTIFIER SEMICOLON
-                            // type_qualifier IDENTIFIER identifier_list SEMICOLON
+                            // Declaration statement with standalone type qualifiers.
                             Err(Error {
-                                kind: ErrorKind::NotImplemented("variable qualifier"),
+                                kind: ErrorKind::NotImplemented("variable qualifier declaration"),
                                 meta: token.meta,
                             })
                         }
@@ -621,7 +619,7 @@ impl ParsingContext<'_> {
         Ok(meta)
     }
 
-    // TODO: Accept layout arguments
+    /// Parses a struct declaration member list.
     pub fn parse_struct_declaration_list(
         &mut self,
         frontend: &mut Frontend,
@@ -633,8 +631,6 @@ impl ParsingContext<'_> {
         let mut align = Alignment::ONE;
 
         loop {
-            // TODO: type_qualifier
-
             let (base_ty, mut meta) = self.parse_type_non_void(frontend, ctx)?;
 
             loop {

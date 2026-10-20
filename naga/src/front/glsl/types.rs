@@ -156,7 +156,6 @@ pub fn parse_type(type_name: &str) -> Option<Type> {
 
                 let kind = iter.next()?;
                 let size = iter.next()?;
-                // TODO: Check that the texture format and the kind match
                 let _ = texture_kind(kind)?;
 
                 let class = ImageClass::Storage {
@@ -164,7 +163,8 @@ pub fn parse_type(type_name: &str) -> Option<Type> {
                     access: crate::StorageAccess::LOAD | crate::StorageAccess::STORE,
                 };
 
-                // TODO: glsl support multisampled storage images, naga doesn't
+                // Note: WebGPU specification explicitly disallows multisampled storage images;
+                // Naga IR enforces standard unmultisampled storage image dimensions.
                 let (dim, arrayed) = match size {
                     "1D" => (ImageDimension::D1, false),
                     "1DArray" => (ImageDimension::D1, true),

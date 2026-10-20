@@ -96,7 +96,6 @@ impl ParsingContext<'_> {
                 let (value, meta) = match self.expect_peek(frontend)?.value {
                     TokenValue::Semicolon => (None, self.bump(frontend)?.meta),
                     _ => {
-                        // TODO: Implicit conversions
                         let mut stmt = ctx.stmt_ctx();
                         let expr = self.parse_expression(frontend, ctx, &mut stmt)?;
                         self.expect(frontend, TokenValue::Semicolon)?;

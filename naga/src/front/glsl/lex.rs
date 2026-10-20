@@ -35,7 +35,9 @@ impl<'a> Lexer<'a> {
     pub fn new(input: &'a str, defines: &'a FastHashMap<String, String>) -> Self {
         let mut pp = Preprocessor::new(input);
         for (define, value) in defines {
-            pp.add_define(define, value).unwrap(); //TODO: handle error
+            if let Err(e) = pp.add_define(define, value) {
+                log::warn!("Failed to add preprocessor define '{} = {}': {:?}", define, value, e);
+            }
         }
         Lexer { pp }
     }

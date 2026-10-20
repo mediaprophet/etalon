@@ -131,7 +131,7 @@ pub use crate::span::{SourceLocation, Span, SpanContext, WithSpan};
 
 pub use nt::{FastHashMap, FastHashSet, FastIndexMap, FastIndexSet};
 
-// TODO: Eliminate this re-export and migrate uses of `crate::Foo` to `use crate::ir; ir::Foo`.
+// Re-export core IR types for external consumers and internal submodules.
 pub use ir::*;
 
 /// Width of a boolean type, in bytes.
