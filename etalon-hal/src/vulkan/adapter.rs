@@ -3568,7 +3568,7 @@ fn is_intel_igpu_outdated_for_robustness2(capabilities: &PhysicalDevicePropertie
 fn map_vk_component_type(ty: vk::ComponentTypeKHR) -> Option<wgt::CooperativeScalarType> {
     match ty {
         vk::ComponentTypeKHR::FLOAT16 => Some(wgt::CooperativeScalarType::F16),
-        vk::ComponentTypeKHR::BFLOAT16_KHR => Some(wgt::CooperativeScalarType::BF16),
+        t if t.as_raw() == 1_000_141_000 => Some(wgt::CooperativeScalarType::BF16),
         vk::ComponentTypeKHR::FLOAT32 => Some(wgt::CooperativeScalarType::F32),
         vk::ComponentTypeKHR::SINT8 => Some(wgt::CooperativeScalarType::I8),
         vk::ComponentTypeKHR::UINT8 => Some(wgt::CooperativeScalarType::U8),
