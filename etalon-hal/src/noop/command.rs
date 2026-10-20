@@ -102,26 +102,26 @@ impl crate::CommandEncoder for CommandBuffer {
 
     unsafe fn copy_texture_to_texture<T>(
         &mut self,
-        src: &Resource,
-        src_usage: wgt::TextureUses,
-        dst: &Resource,
-        regions: T,
+        _src: &Resource,
+        _src_usage: wgt::TextureUses,
+        _dst: &Resource,
+        _regions: T,
     ) {
-        // TODO: consider implementing this and other texture manipulation
+        // No-op execution path
     }
 
-    unsafe fn copy_buffer_to_texture<T>(&mut self, src: &Buffer, dst: &Resource, regions: T) {
-        // TODO: consider implementing this and other texture manipulation
+    unsafe fn copy_buffer_to_texture<T>(&mut self, _src: &Buffer, _dst: &Resource, _regions: T) {
+        // No-op execution path
     }
 
     unsafe fn copy_texture_to_buffer<T>(
         &mut self,
-        src: &Resource,
-        src_usage: wgt::TextureUses,
-        dst: &Buffer,
-        regions: T,
+        _src: &Resource,
+        _src_usage: wgt::TextureUses,
+        _dst: &Buffer,
+        _regions: T,
     ) {
-        // TODO: consider implementing this and other texture manipulation
+        // No-op execution path
     }
 
     unsafe fn begin_query(&mut self, set: &Resource, index: u32) {}

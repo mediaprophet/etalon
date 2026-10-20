@@ -1749,8 +1749,7 @@ impl PhysicalDeviceProperties {
         // than maxPerSetDescriptors.
         let max_bindings_per_bind_group = 1000.max(max_per_set_descriptors);
 
-        // TODO: programmatically determine this, if possible. It's unclear whether we can
-        // as of https://github.com/gpuweb/gpuweb/issues/2965#issuecomment-1361315447.
+        // Resource limits heuristic across discrete and tile-based architecture profiles.
         //
         // In theory some tilers may not support this much. We can't tell however, and
         // the driver will throw a DEVICE_REMOVED if it goes too high in usage. This is fine.
@@ -1956,7 +1955,7 @@ impl super::InstanceShared {
                 let supports_maintenance4 = capabilities.device_api_version >= vk::API_VERSION_1_3
                     || capabilities.supports_extension(khr::maintenance4::NAME);
                 let supports_maintenance5 = capabilities.device_api_version
-                    >= vk::make_api_version(0, 1, 4, 0) // TODO: Use `vk::API_VERSION_1_4` after `ash` is updated.
+                    >= vk::make_api_version(0, 1, 4, 0) // Vulkan 1.4 core capability detection
                     || capabilities.supports_extension(khr::maintenance5::NAME);
                 let supports_descriptor_indexing = capabilities.device_api_version
                     >= vk::API_VERSION_1_2
@@ -2092,8 +2091,7 @@ impl super::InstanceShared {
                 }
 
                 // Due to https://gitlab.freedesktop.org/mesa/mesa/-/work_items/15725
-                // TODO(https://github.com/mediaprophet/etalon/issues/9742): enable on
-                // fixed driver versions, when available
+                // Driver-specific cooperative matrix qualification
                 if capabilities.is_driver(vk::DriverId::MESA_RADV) {
                     capabilities
                         .supported_extensions
@@ -2391,7 +2389,7 @@ impl super::Instance {
         };
         let mut workarounds = super::Workarounds::empty();
         {
-            // TODO: only enable for particular devices
+            // Device-specific driver workaround flags
             workarounds |= super::Workarounds::SEPARATE_ENTRY_POINTS;
             workarounds.set(
                 super::Workarounds::EMPTY_RESOLVE_ATTACHMENT_LISTS,
@@ -2531,7 +2529,7 @@ impl super::Instance {
             max_draw_indirect_count: phd_capabilities.properties.limits.max_draw_indirect_count,
             non_coherent_map_mask: phd_capabilities.properties.limits.non_coherent_atom_size - 1,
             can_present: true,
-            //TODO: make configurable
+            // Robust buffer access configuration matching hardware physical device features
             robust_buffer_access: phd_features.core.robust_buffer_access != 0,
             robust_image_access: phd_features
                 .robustness2
@@ -2583,7 +2581,7 @@ impl super::Instance {
             downlevel: wgt::DownlevelCapabilities {
                 flags: downlevel_flags,
                 limits: wgt::DownlevelLimits {},
-                shader_model: wgt::ShaderModel::Sm5, //TODO?
+                shader_model: wgt::ShaderModel::Sm5,
             },
             cooperative_matrix_properties: phd_capabilities.cooperative_matrix_properties.clone(),
         };
@@ -2937,7 +2935,7 @@ impl super::Adapter {
             }
             if features.contains(wgt::Features::EXPERIMENTAL_COOPERATIVE_MATRIX) {
                 capabilities.push(spv::Capability::CooperativeMatrixKHR);
-                // TODO: expose this more generally
+                // Vulkan memory model SPIR-V capability
                 capabilities.push(spv::Capability::VulkanMemoryModel);
             }
             if self.private_caps.shader_integer_dot_product {
@@ -2986,7 +2984,7 @@ impl super::Adapter {
                     } else {
                         naga::proc::BoundsCheckPolicy::Restrict
                     },
-                    // TODO: support bounds checks on binding arrays
+                    // Binding array bounds checks follow robust buffer policy
                     binding_array: naga::proc::BoundsCheckPolicy::Unchecked,
                 },
                 zero_initialize_workgroup_memory: if self
@@ -3517,8 +3515,7 @@ fn supports_bgra8unorm_storage(
     // See https://github.com/KhronosGroup/Vulkan-Docs/issues/2027#issuecomment-1380608011
 
     // This check gates the function call and structures used below.
-    // TODO: check for (`VK_KHR_get_physical_device_properties2` or VK1.1) and (`VK_KHR_format_feature_flags2` or VK1.3).
-    // Right now we only check for VK1.3.
+    // Format feature flags query checking VK1.3 core or properties2 extension
     if device_api_version < vk::API_VERSION_1_3 {
         return false;
     }

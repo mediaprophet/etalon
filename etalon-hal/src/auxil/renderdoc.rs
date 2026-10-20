@@ -31,7 +31,7 @@ pub enum RenderDoc {
     },
 }
 
-// TODO: replace with libloading API once supported
+// RenderDoc module binding via native platform shared library loader
 #[cfg(unix)]
 const RTLD_NOLOAD: i32 = 0x4;
 

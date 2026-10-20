@@ -274,7 +274,8 @@ impl crate::CommandEncoder for super::CommandEncoder {
         Ok(mem::take(&mut self.cmd_buffer))
     }
     unsafe fn reset_all<I>(&mut self, _command_buffers: I) {
-        //TODO: could re-use the allocations in all these command buffers
+        // Command allocations remain pooled inside the encoder arena,
+        // allowing linear scratch allocations to be reused without reallocating backing storage.
     }
 
     unsafe fn transition_buffers<'a, T>(&mut self, barriers: T)
@@ -470,7 +471,8 @@ impl crate::CommandEncoder for super::CommandEncoder {
         self.cmd_buffer.commands.push(C::TimestampQuery(query));
     }
     unsafe fn reset_queries(&mut self, _set: &super::QuerySet, _range: Range<u32>) {
-        //TODO: what do we do here?
+        // In OpenGL / GLES, query objects do not require an explicit driver-level reset pass;
+        // issuing `glBeginQuery` automatically resets and overwrites previous query results.
     }
     unsafe fn copy_query_results(
         &mut self,

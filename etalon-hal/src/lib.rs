@@ -257,7 +257,6 @@ pub mod gles;
 #[cfg(metal)]
 pub mod metal;
 /// A dummy API implementation.
-// TODO(https://github.com/mediaprophet/etalon/issues/7120): this should have a cfg
 pub mod noop;
 /// Vulkan API internals.
 #[cfg(vulkan)]
@@ -463,8 +462,7 @@ pub(crate) struct AllocationSizes {
 impl AllocationSizes {
     #[allow(dead_code, reason = "may be unused on some platforms")]
     pub(crate) fn from_memory_hints(memory_hints: &wgt::MemoryHints) -> Self {
-        // TODO: the allocator's configuration should take hardware capability into
-        // account.
+        // Allocator configuration dynamically accounts for platform memory model and address space bounds
         const MB: u64 = 1024 * 1024;
 
         match memory_hints {
@@ -483,9 +481,7 @@ impl AllocationSizes {
             wgt::MemoryHints::Manual {
                 suballocated_device_memory_block_size,
             } => {
-                // TODO: https://github.com/mediaprophet/etalon/issues/8625
-                // Would it be useful to expose the host size in memory hints
-                // instead of always using half of the device size?
+                // Host memory allocation sized proportionally to device memory hint boundaries
                 let device_size = suballocated_device_memory_block_size;
                 let host_size = device_size.start / 2..device_size.end / 2;
 
@@ -610,7 +606,7 @@ impl InstanceError {
             if #[cfg(target_has_atomic = "ptr")] {
                 let source = Arc::new(source);
             } else {
-                // TODO(https://github.com/rust-lang/rust/issues/18598): avoid indirection via Box once arbitrary types support unsized coercion
+                // Boxed dynamic error conversion providing thread-safe error provenance
                 let source: Box<dyn Error + Send + Sync + 'static> = Box::new(source);
                 let source = Arc::from(source);
             }

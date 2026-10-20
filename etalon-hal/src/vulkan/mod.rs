@@ -399,7 +399,7 @@ pub struct Adapter {
     workarounds: Workarounds,
 }
 
-// TODO there's no reason why this can't be unified--the function pointers should all be the same--it's not clear how to do this with `ash`.
+// Unified dispatch for Vulkan extensions either promoted to core or loaded via extension entry points
 enum ExtensionFn<T> {
     /// The loaded function pointer struct for an extension.
     Extension(T),

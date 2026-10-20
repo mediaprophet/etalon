@@ -270,8 +270,7 @@ impl<'a> DeviceAllocationContext<'a> {
         if let AllocationInner::Placed { inner } = allocation.inner {
             match self.mem_allocator.inner.lock().free(inner) {
                 Ok(_) => (),
-                // TODO: Don't panic here
-                Err(e) => panic!("Failed to destroy dx12 {:?}, {e}", allocation.ty),
+                Err(e) => log::error!("Failed to destroy dx12 {:?}, {e}", allocation.ty),
             };
         }
     }

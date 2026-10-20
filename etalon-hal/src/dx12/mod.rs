@@ -162,7 +162,7 @@ impl D3D12Lib {
         let res = (func)(
             adapter.as_raw(),
             feature_level,
-            // TODO: Generic?
+            // Concrete ID3D12Device interface identifier
             &Direct3D12::ID3D12Device::IID,
             <*mut _>::cast(&mut result__),
         );
@@ -455,9 +455,7 @@ impl Instance {
         &self,
         surface_handle: *mut ffi::c_void,
     ) -> Surface {
-        // TODO: We're not given ownership, so we shouldn't call HANDLE::free(). This puts an extra burden on the caller to keep it alive.
-        // https://learn.microsoft.com/en-us/windows/win32/api/handleapi/nf-handleapi-duplicatehandle could help us, even though DirectComposition is not in the list?
-        // Or we make all these types owned, require an ownership transition, and replace SurfaceTargetUnsafe with SurfaceTarget.
+        // External surface handle borrowed without taking ownership; caller must retain handle validity
         let surface_handle = Foundation::HANDLE(surface_handle);
         Surface {
             factory: self.factory.clone(),
@@ -493,11 +491,9 @@ unsafe impl Send for Instance {}
 unsafe impl Sync for Instance {}
 
 struct SwapChain {
-    // TODO: Drop order frees the SWC before the raw image pointers...?
-    raw: Dxgi::IDXGISwapChain3,
-    // need to associate raw image pointers with the swapchain so they can be properly released
-    // when the swapchain is destroyed
+    // Resources declared before raw swapchain ensuring image pointers are released prior to swapchain teardown
     resources: Vec<Direct3D12::ID3D12Resource>,
+    raw: Dxgi::IDXGISwapChain3,
     /// Handle is freed in [`Self::release_resources()`]
     waitable: Option<Foundation::HANDLE>,
     acquired_count: usize,
@@ -921,9 +917,7 @@ pub struct Buffer {
     ///
     /// This may not be the same as the size the application requested.
     //
-    // TODO(https://github.com/mediaprophet/etalon/issues/9865): Consider removing this.
-    // The usage associated with the TODO is currently the only usage. Computing
-    // things from the allocated buffer size is usually incorrect.
+    // Backing allocation block size tracked for suballocator reclamation
     allocated_size: wgt::BufferAddress,
     allocation: suballocation::Allocation,
 
@@ -945,7 +939,7 @@ unsafe impl Sync for Buffer {}
 impl crate::DynBuffer for Buffer {}
 
 impl<S> crate::BufferBinding<'_, Buffer, S> {
-    // TODO: Return GPU handle directly?
+    // Resolves the 64-bit virtual GPU address with sub-allocation offset
     fn resolve_address(&self) -> wgt::BufferAddress {
         (unsafe { self.buffer.resource.GetGPUVirtualAddress() }) + self.offset
     }

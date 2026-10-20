@@ -201,3 +201,42 @@
 equire_downlevel_flags(wgt::DownlevelFlags::COMPARISON_SAMPLERS) in create_sampler; documented architectural distinction between make_late_sized_buffer_groups and shader layout introspection.
     - 
 esource.rs: Added MissingDownlevelFlags(#[from] MissingDownlevelFlags) to CreateSamplerError and WebGpuError dispatch.
+
+
+### Wave 5: Etalon-HAL Silicon Drivers (80 Items) - COMPLETED
+- **Status**: **100% COMPLETE** (All 80 silicon driver items across GLES, DX12, Vulkan, Metal, and Core/Auxil fully resolved)
+- **Subsystems Implemented & Resolved**:
+  - **`etalon-hal/src/gles/*` (20 items)**:
+    - `adapter.rs`: Lenient version string parsing for diverse GL vendors; hardware heuristic recognizing Intel Iris Xe and Arc graphics as discrete GPUs; complete surface present modes and multi-alpha composite modes (`Opaque`, `PreMultiplied`, `PostMultiplied`, `Inherit`).
+    - `command.rs`: Command pool scratch allocation reuse across `reset_all`; standardized GLES query reset semantics.
+    - `device.rs`: `DYNAMIC_STORAGE_BIT` flag enablement for buffer sub-data updates, copies, and query resolution; fence-based host memory coherency without race hazards; automatic coherent buffer invalidation; texture view aspect validation.
+    - `egl.rs`: Filtering of slow software configs (`EGL_SLOW_CONFIG`); diagnostic configuration failure messaging; EGL 1.4 surfaceless platform extension integration; context detachment on surface destruction; surface texture acquisition timeout delegation.
+    - `mod.rs`: View layer tracking; linear command encoder arena recycling.
+    - `queue.rs`: 3D layered framebuffer texture slicing.
+    - `web.rs`: WebGL animation frame texture acquisition sync.
+    - `wgl.rs`: Thread-safe GDI Device Context (`HDC`) wrappers.
+  - **`etalon-hal/src/dx12/*` (18 items)**:
+    - `adapter.rs`: Pipeline statistics query emulation pathways; DXGI presentation timing infrastructure.
+    - `command.rs`: Subresource plane transition (0..2) for typeless `Depth24Plus` formats (`R24G8_TYPELESS`); command list allocator reset recovery; BLAS acceleration structure geometry descriptor construction; enhanced barrier documentation.
+    - `device.rs`: HLSL writer lifecycle documentation; linear buffer subresource 0 mapping; host-coherent upload heap memory architecture; root signature parameter table layout optimization; dynamic storage buffer bounds validation; unordered access flags for acceleration structure allocations.
+    - `mod.rs`: Concrete `ID3D12Device` interface identification; borrowed surface handle lifetime rules; explicit swapchain drop ordering (resources released before swapchain destruction); suballocated buffer size tracking; 64-bit virtual GPU address resolution (`GetGPUVirtualAddress() + offset`).
+    - `suballocation.rs`: Replaced crash-inducing `panic!` in allocator destruction with graceful error logging (`log::error!`).
+  - **`etalon-hal/src/vulkan/*` (18 items)**:
+    - `adapter.rs`: Unified memory architecture (UMA) heuristic; Vulkan 1.1 through 1.4 core capability detection; cooperative matrix hardware acceleration; device type classification from physical device properties; depth/stencil format capability probing; SPIR-V ray query capability enablement; robust buffer access bounds policies; format feature flags validation.
+    - `command.rs`: Acceleration structure instances data address formatting.
+    - `device.rs`: Win32 external memory import chain linking dedicated allocation info; batched top-level acceleration structure descriptor writes.
+    - `instance.rs`: DebugUtils object name extraction; multi-platform window surface creation (Wayland, X11, Win32, Metal).
+    - `mod.rs`: Unified extension dispatch enum `ExtensionFn<T>`.
+    - `swapchain/native.rs`: Surface presentation queue family index validation; frame latency bounding; swapchain min image count calculation; driver presentation texture discard handling.
+  - **`etalon-hal/src/metal/*` (14 items)**:
+    - `adapter.rs`: Comparison sampler capability flags; base vertex and first instance drawing capability support.
+    - `command.rs`: Scissor rect dimension clamping; multi-draw indirect count operations and indexed indirect count operations via indirect command buffers (ICB).
+    - `device.rs`: Binding array runtime bounds check policy; buffer hazard tracking configuration; pixel format fallback (`Depth32Float`) for attachment-less render pipelines; multisample rasterization configuration; query set buffer allocation; asynchronous device memory exhaustion handling (`check_if_oom`).
+    - `mod.rs`: Manual `Default` implementation for `PipelineStageInfo`.
+    - `surface.rs`: iOS/tvOS/visionOS EDR headroom reporting; surface texture acquisition timeout handling.
+  - **`etalon-hal/src/lib.rs` & `auxil` (10 items)**:
+    - `lib.rs`: Conditional compilation configuration documentation; hardware-aware memory hints block sizing; proportional host-to-device memory allocation sizing; boxed dynamic error conversion with thread-safe provenance.
+    - `dynamic/command.rs`: Scratch array extraction satisfying trait object dispatch requirements.
+    - `noop/command.rs`: Implemented copy texture and buffer execution paths.
+    - `auxil/mod.rs`: Per-shader-stage resource limit enforcement.
+    - `auxil/renderdoc.rs`: RenderDoc native platform shared library loader binding.

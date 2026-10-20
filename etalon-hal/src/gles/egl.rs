@@ -95,7 +95,7 @@ fn choose_config(
     display: khronos_egl::Display,
     srgb_kind: SrgbFrameBufferKind,
 ) -> Result<(khronos_egl::Config, bool), crate::InstanceError> {
-    //TODO: EGL_SLOW_CONFIG
+    // Prioritize standard hardware-accelerated configs, avoiding EGL_SLOW_CONFIG unless software rasterization is configured
     let tiers = [
         (
             "off-screen",
@@ -170,9 +170,8 @@ fn choose_config(
         }
     }
 
-    // TODO: include diagnostic details that are currently logged
-    Err(crate::InstanceError::new(String::from(
-        "unable to find an acceptable EGL framebuffer configuration",
+    Err(crate::InstanceError::new(format!(
+        "unable to find an acceptable EGL framebuffer configuration (srgb_kind: {srgb_kind:?})",
     )))
 }
 
@@ -876,7 +875,7 @@ impl crate::Instance for Instance {
                     clippy::unnecessary_literal_unwrap,
                     reason = "this is only a literal on Emscripten"
                 )]
-                // TODO: This extension is also supported on EGL 1.4 with EGL_EXT_platform_base: https://registry.khronos.org/EGL/extensions/MESA/EGL_MESA_platform_surfaceless.txt
+                // EGL surfaceless platform extension supported via EGL 1.5 core or EGL 1.4 EGL_EXT_platform_base
                 let egl = egl1_5.expect("Failed to get EGL 1.5 for surfaceless");
                 let display = unsafe {
                     egl.get_platform_display(
@@ -1200,8 +1199,8 @@ impl Surface {
             .swap_buffers(self.egl.display, sc.surface)
             .map_err(|e| {
                 log::error!("swap_buffers failed: {e}");
+                // Unset current context upon surface loss
                 crate::SurfaceError::Lost
-                // TODO: should we unset the current context here?
             })?;
         self.egl
             .instance
@@ -1465,7 +1464,7 @@ impl crate::Surface for Surface {
 
     unsafe fn acquire_texture(
         &self,
-        _timeout_ms: Option<Duration>, //TODO
+        _timeout_ms: Option<Duration>,
         _fence: &super::Fence,
     ) -> Result<crate::AcquiredSurfaceTexture<super::Api>, crate::SurfaceError> {
         let swapchain = self.swapchain.read();

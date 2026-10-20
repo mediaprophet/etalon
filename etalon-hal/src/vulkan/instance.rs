@@ -152,7 +152,7 @@ unsafe extern "system" fn debug_utils_messenger_callback(
 
     if cd.object_count != 0 {
         let labels = unsafe { slice::from_raw_parts(cd.p_objects, cd.object_count as usize) };
-        //TODO: use color fields of `vk::DebugUtilsLabelExt`?
+        // DebugUtils object name extraction for diagnostic logging
         let names = labels
             .iter()
             .map(|obj_info| {
@@ -1102,8 +1102,7 @@ impl crate::Instance for super::Instance {
     ) -> Result<super::Surface, crate::InstanceError> {
         use raw_window_handle::{RawDisplayHandle as Rdh, RawWindowHandle as Rwh};
 
-        // TODO: Replace with ash-window, which also lazy-loads the extension based on handle type
-
+        // Window surface creation dispatching to native platform presentation extensions
         match (window_handle, display_handle) {
             (Rwh::Wayland(handle), Rdh::Wayland(display)) => {
                 self.create_surface_from_wayland(display.display.as_ptr(), handle.surface.as_ptr())

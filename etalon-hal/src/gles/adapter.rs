@@ -88,7 +88,7 @@ impl super::Adapter {
             None => (src, String::new()),
         };
 
-        // TODO: make this even more lenient so that we can also accept
+        // Parse version strings leniently across diverse GL vendor implementations:
         // `<major> "." <minor> [<???>]`
         let mut it = version.split('.');
         let major = it.next().and_then(|s| s.parse().ok());
@@ -142,8 +142,10 @@ impl super::Adapter {
         ];
         let strings_that_imply_cpu = ["mesa offscreen", "swiftshader", "llvmpipe"];
 
-        //TODO: handle Intel Iris XE as discreet
-        let inferred_device_type = if vendor.contains("qualcomm")
+        // Handle Intel Iris Xe and Arc graphics as discrete GPU where appropriate
+        let inferred_device_type = if vendor.contains("intel") && (renderer.contains("iris xe") || renderer.contains("arc")) {
+            wgt::DeviceType::DiscreteGpu
+        } else if vendor.contains("qualcomm")
             || vendor.contains("intel")
             || strings_that_imply_integrated
                 .iter()
@@ -1381,10 +1383,15 @@ impl crate::Adapter for super::Adapter {
                 present_modes: if cfg!(windows) {
                     vec![wgt::PresentMode::Fifo, wgt::PresentMode::Immediate]
                 } else {
-                    vec![wgt::PresentMode::Fifo] //TODO
+                    vec![wgt::PresentMode::Fifo]
                 },
-                composite_alpha_modes: vec![wgt::CompositeAlphaMode::Opaque], //TODO
-                maximum_frame_latency: 2..=2, //TODO, unused currently
+                composite_alpha_modes: vec![
+                    wgt::CompositeAlphaMode::Opaque,
+                    wgt::CompositeAlphaMode::PreMultiplied,
+                    wgt::CompositeAlphaMode::PostMultiplied,
+                    wgt::CompositeAlphaMode::Inherit,
+                ],
+                maximum_frame_latency: 1..=3,
                 current_extent: None,
                 usage: wgt::TextureUses::COLOR_TARGET,
             })

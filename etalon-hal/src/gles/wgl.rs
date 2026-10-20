@@ -352,7 +352,7 @@ struct InstanceDevice {
 
 fn create_instance_device() -> Result<InstanceDevice, crate::InstanceError> {
     #[derive(Clone, Copy)]
-    // TODO: We can get these SendSync definitions in the upstream metadata if this is the case
+    // Thread-safe wrapper for Windows GDI Device Contexts (HDC)
     struct SendDc(Gdi::HDC);
     unsafe impl Sync for SendDc {}
     unsafe impl Send for SendDc {}
