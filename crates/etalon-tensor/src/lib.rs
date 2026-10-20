@@ -11,4 +11,9 @@ pub mod dml_lane;
 pub use view::{QuantScheme, TensorView};
 pub use kv_cache::{KvCacheLayout, PagedKvBlockTable};
 pub use forward_arena::{ForwardArena, ForwardMode};
-pub use attention::online_softmax_rescale;
+pub use attention::{
+    online_softmax_rescale, AttentionParams, FusedAttentionPipeline, FUSED_ATTENTION_WGSL,
+};
+pub use gpu_sieve_topk::{
+    LogitMaskHeader, TopkParams, TopkReductionPipeline, TOPK_REDUCTION_WGSL,
+};
