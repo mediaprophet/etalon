@@ -1,0 +1,28 @@
+[package]
+name = "wgpu"
+version = "30.0.0"
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[features]
+default = ["etalon/default"]
+std = ["etalon/std"]
+serde = ["etalon/serde"]
+wgsl = ["etalon/wgsl"]
+vulkan = ["etalon/vulkan"]
+dx12 = ["etalon/dx12"]
+metal = ["etalon/metal"]
+gles = ["etalon/gles"]
+webgpu = ["etalon/webgpu"]
+webgl = ["etalon/webgl"]
+spirv = ["etalon/spirv"]
+glsl = ["etalon/glsl"]
+noop = ["etalon/noop"]
+static-dxc = ["etalon/static-dxc"]
+counters = ["etalon/counters"]
+fragile-send-sync-non-atomic-wasm = ["etalon/fragile-send-sync-non-atomic-wasm"]
+parking_lot = []
+
+[dependencies]
+etalon = { workspace = true }

@@ -1,0 +1,19 @@
+[package]
+name = "etalon-tensor"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Prepared tensor execution, unified forward arena, and fused attention for Etalon"
+
+[features]
+default = ["std"]
+std = []
+cuda = ["dep:cudarc"]
+
+[dependencies]
+etalon-types = { workspace = true }
+bytemuck = { workspace = true }
+log = { workspace = true }
+thiserror = "2"
+cudarc = { version = "0.18", optional = true }

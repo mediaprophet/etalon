@@ -582,6 +582,15 @@ features! {
         #[doc = link_to_etalon_docs!(["`RenderPass::multi_draw_indexed_indirect_count`"]: "struct.RenderPass.html#method.multi_draw_indexed_indirect_count")]
         #[name("etalon-multi-draw-indirect-count", "multi-draw-indirect-count")]
         const MULTI_DRAW_INDIRECT_COUNT = 1 << 15;
+
+        /// Allows querying buffer device addresses and using them in shaders (VK_KHR_buffer_device_address).
+        ///
+        /// Supported platforms:
+        /// - Vulkan (with VK_KHR_buffer_device_address or Vulkan 1.2+)
+        ///
+        /// This is a native only feature.
+        #[name("etalon-buffer-device-address")]
+        const EXPERIMENTAL_BUFFER_DEVICE_ADDRESS = 1 << 16;
         /// Allows the use of [`AddressMode::ClampToBorder`] with a border color
         /// of [`SamplerBorderColor::Zero`].
         ///
@@ -1111,14 +1120,12 @@ features! {
         /// matrix multiply-accumulate operations on small tiles of data, enabling
         /// hardware-accelerated matrix math.
         ///
-        /// **Current limitations:** The implementation currently only supports 8x8 f32 matrices.
-        /// On Vulkan, support is determined by querying `vkGetPhysicalDeviceCooperativeMatrixPropertiesKHR`
-        /// for configurations matching 8x8x8 f32. Most Vulkan implementations (NVIDIA, AMD) primarily
-        /// support f16 inputs at larger sizes (e.g., 16x16), so Vulkan support may be limited.
+        /// Supported tile dimensions (8x8, 16x16, 16x16x32) and scalar types (f16, bf16, f32, i8, u8, i32, u32)
+        /// are enumerated per adapter via `Adapter::cooperative_matrix_properties()`.
         ///
         /// Supported platforms:
         /// - Metal (with MSL 2.3+ and Apple7+/Mac2+, using simdgroup matrix operations)
-        /// - Vulkan (with [VK_KHR_cooperative_matrix](https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_cooperative_matrix.html), if 8x8 f32 is supported)
+        /// - Vulkan (with [VK_KHR_cooperative_matrix](https://registry.khronos.org/vulkan/specs/latest/man/html/VK_KHR_cooperative_matrix.html))
         ///
         /// This is a native only feature.
         #[name("etalon-cooperative-matrix")]
@@ -1186,6 +1193,15 @@ features! {
         /// Allows for constructing ray tracing pipelines.
         #[name("etalon-ray-tracing-pipelines")]
         const EXPERIMENTAL_RAY_TRACING_PIPELINES = 1 << 24;
+
+        /// Allows importing host memory allocations as external memory (VK_EXT_external_memory_host).
+        ///
+        /// Supported platforms:
+        /// - Vulkan (with VK_EXT_external_memory_host)
+        ///
+        /// This is a native only feature.
+        #[name("etalon-external-memory-host")]
+        const EXPERIMENTAL_EXTERNAL_MEMORY_HOST = 1 << 25;
 
         // Adding a new feature? All bits in the first u64 are used. Use the second u64 (bits 64+).
     }

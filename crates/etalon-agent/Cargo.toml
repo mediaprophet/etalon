@@ -1,0 +1,20 @@
+[package]
+name = "etalon-agent"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "Silicon steward, capability state machine, and safe resource lease manager for Etalon"
+
+[features]
+default = ["std"]
+std = []
+cuda = ["dep:cudarc"]
+
+[dependencies]
+etalon-types = { workspace = true }
+etalon-hal = { workspace = true, optional = true }
+log = { workspace = true }
+bytemuck = { workspace = true }
+cudarc = { version = "0.18", optional = true }
+thiserror = "2"

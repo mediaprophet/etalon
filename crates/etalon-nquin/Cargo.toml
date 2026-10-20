@@ -1,0 +1,16 @@
+[package]
+name = "etalon-nquin"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+description = "48-byte semantic datum, warp-scan sieve, and stable GPU LSD radix sort for Etalon"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+bytemuck = { workspace = true, features = ["derive"] }
+log = { workspace = true }
+thiserror = "2"
