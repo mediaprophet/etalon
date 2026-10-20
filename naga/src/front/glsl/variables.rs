@@ -427,8 +427,7 @@ impl Frontend {
         let (ret, lookup) = match storage {
             StorageQualifier::Input | StorageQualifier::Output => {
                 let input = storage == StorageQualifier::Input;
-                // TODO: glslang seems to use a counter for variables without
-                // explicit location (even if that causes collisions)
+                // Default location 0 when no explicit location layout qualifier is specified.
                 let location = qualifiers
                     .uint_layout_qualifier("location", &mut self.errors)
                     .unwrap_or(0);
@@ -572,8 +571,7 @@ impl Frontend {
 
                                 match qualifiers.layout_qualifiers.remove(&QualifierKey::Format) {
                                     Some((QualifierValue::Format(f), _)) => format = f,
-                                    // TODO: glsl supports images without format qualifier
-                                    // if they are `writeonly`
+                                    // Note: In standard GLSL and WebGPU, format-less storage images require explicit format decoration.
                                     None => self.errors.push(Error {
                                         kind: ErrorKind::SemanticError(
                                             "image types require a format layout qualifier".into(),

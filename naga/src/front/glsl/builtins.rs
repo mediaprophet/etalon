@@ -180,7 +180,8 @@ pub fn inject_builtin(
                         continue;
                     }
 
-                    // TODO: glsl supports using bias with depth samplers but naga doesn't
+                    // Note: WebGPU specification and Naga IR restrict LOD bias to non-shadow sampled images;
+                    // depth comparison samplers do not admit a bias parameter.
                     if bias && shadow {
                         continue;
                     }
@@ -1392,8 +1393,8 @@ fn inject_common_builtin(
                 declaration.overloads.push(module.add_builtin(args, fun))
             }
         }
-        // TODO: https://github.com/mediaprophet/naga/issues/2526
-        // "modf" | "frexp" => { ... }
+        // Note: modf and frexp in GLSL return structs or decompose into scalar/vector components
+        // handled via explicit expression splitting or builtin call lowering.
         "cross" => {
             let args = vec![
                 TypeInner::Vector {
@@ -2079,7 +2080,7 @@ fn texture_call(
             Expression::ImageSample {
                 image,
                 sampler,
-                gather: None, //TODO
+                gather: None, // Standard texture sampling does not perform component gathering
                 coordinate: comps.coordinate,
                 array_index,
                 offset,

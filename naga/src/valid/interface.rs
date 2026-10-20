@@ -1383,7 +1383,6 @@ impl super::Validator {
 
         self.location_mask.make_empty();
         let mut argument_built_ins = crate::FastHashSet::default();
-        // TODO: add span info to function arguments
         for (index, fa) in ep.function.arguments.iter().enumerate() {
             let mut ctx = VaryingContext {
                 stage: ep.stage,

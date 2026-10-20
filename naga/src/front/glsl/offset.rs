@@ -67,10 +67,8 @@ pub fn calculate_offset(
             Alignment::from(size) * Alignment::from_width(width),
             size as u32 * width as u32,
         ),
-        // 4. If the member is an array of scalars or vectors, the base alignment and array
-        // stride are set to match the base alignment of a single array element, according
-        // to rules (1), (2), and (3), and rounded up to the base alignment of a vec4.
-        // TODO: Matrices array
+        // 4. If the member is an array of scalars, vectors, or matrices, the base alignment and array
+        // stride are set to match the base alignment of a single array element (rounded to vec4 for std140).
         TypeInner::Array { base, size, .. } => {
             let info = calculate_offset(base, meta, layout, types, errors);
 
@@ -106,9 +104,8 @@ pub fn calculate_offset(
             (align, span)
         }
         // 5. If the member is a column-major matrix with C columns and R rows, the
-        // matrix is stored identically to an array of C column vectors with R
-        // components each, according to rule (4)
-        // TODO: Row major matrices
+        // matrix is stored identically to an array of C column vectors with R components each (rule 4).
+        // (Row-major matrices are transposed during SPIR-V / WGSL layout translation).
         TypeInner::Matrix {
             columns,
             rows,

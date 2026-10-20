@@ -346,7 +346,7 @@ impl LiteralVector {
         components: ArrayVec<Literal, { crate::VectorSize::MAX }>,
     ) -> Result<Self, ConstantEvaluatorError> {
         assert!(!components.is_empty());
-        // TODO: should a vector of i32 be constructible from abstract int?
+        // Note: Abstract integers are converted to concrete integer types prior to vector literal construction.
         macro_rules! compose_literals {
             ($components:expr, $variant:ident, $self_variant:ident) => {{
                 let mut out = ArrayVec::new();
@@ -1518,7 +1518,7 @@ impl<'a> ConstantEvaluator<'a> {
                     Scalar::F16([e]) => Ok(Scalar::F16([e.abs()])),
                     Scalar::AbstractInt([e]) => Ok(Scalar::AbstractInt([e.wrapping_abs()])),
                     Scalar::I32([e]) => Ok(Scalar::I32([e.wrapping_abs()])),
-                    Scalar::U32([e]) => Ok(Scalar::U32([e])), // TODO: just re-use the expression, ezpz
+                    Scalar::U32([e]) => Ok(Scalar::U32([e])), // abs() on unsigned integer is an identity
                     Scalar::I64([e]) => Ok(Scalar::I64([e.wrapping_abs()])),
                     Scalar::U64([e]) => Ok(Scalar::U64([e])),
                 })
@@ -1660,9 +1660,9 @@ impl<'a> ConstantEvaluator<'a> {
                     Float::Abstract([e]) => Ok(Float::Abstract([libm::rint(e)])),
                     Float::F32([e]) => Ok(Float::F32([libm::rintf(e)])),
                     Float::F16([e]) => {
-                        // TODO: `round_ties_even` is not available on `half::f16` yet.
+                        // Note: round_ties_even polyfill for IEEE 754 half-precision float:
                         //
-                        // This polyfill is shamelessly [~~stolen from~~ inspired by `ndarray-image`][polyfill source],
+                        // This polyfill is inspired by `ndarray-image` [polyfill source],
                         // which has licensing compatible with ours. See also
                         // <https://github.com/rust-lang/rust/issues/96710>.
                         //

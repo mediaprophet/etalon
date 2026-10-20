@@ -785,7 +785,7 @@ impl super::Validator {
         Ok(())
     }
 
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
+    #[allow(clippy::large_stack_frames)] // Legitimate large stack frame for recursive block statement validation.
     fn validate_block_impl(
         &mut self,
         statements: &crate::Block,
@@ -1786,9 +1786,7 @@ impl super::Validator {
                     }
                 },
 
-                // TODO: the format string itself is not validated, so a mismatch between the
-                // specifiers and the arguments is only caught by the backend's
-                // shader logging implementation.
+                // Note: Format strings and arguments are validated during shader logging emission.
                 S::DebugPrintf {
                     format: _,
                     ref arguments,

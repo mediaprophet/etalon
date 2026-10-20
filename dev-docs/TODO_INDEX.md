@@ -104,27 +104,48 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/front/glsl/ast.rs:343`](naga/src/front/glsl/ast.rs#L343) | [`naga/src/front/glsl/ast.rs:343`](naga/src/front/glsl/ast.rs#L343) | Encode precision hints in the IR |
-| `TODO` | [`naga/src/front/glsl/builtins.rs:183`](naga/src/front/glsl/builtins.rs#L183) | [`naga/src/front/glsl/builtins.rs:183`](naga/src/front/glsl/builtins.rs#L183) | glsl supports using bias with depth samplers but naga doesn't |
-| `TODO` | [`naga/src/front/glsl/builtins.rs:1395`](naga/src/front/glsl/builtins.rs#L1395) | [`naga/src/front/glsl/builtins.rs:1395`](naga/src/front/glsl/builtins.rs#L1395) | https://github.com/gfx-rs/naga/issues/2526 |
-| `TODO` | [`naga/src/front/glsl/builtins.rs:2082`](naga/src/front/glsl/builtins.rs#L2082) | [`naga/src/front/glsl/builtins.rs:2082`](naga/src/front/glsl/builtins.rs#L2082) |  |
-| `TODO` | [`naga/src/front/glsl/context.rs:543`](naga/src/front/glsl/context.rs#L543) | [`naga/src/front/glsl/context.rs:543`](naga/src/front/glsl/context.rs#L543) |  *(https://github.com/gfx-rs/wgpu/issues/9456)* |
-| `TODO` | [`naga/src/front/glsl/functions.rs:222`](naga/src/front/glsl/functions.rs#L222) | [`naga/src/front/glsl/functions.rs:222`](naga/src/front/glsl/functions.rs#L222) | casts |
-| `TODO` | [`naga/src/front/glsl/functions.rs:1416`](naga/src/front/glsl/functions.rs#L1416) | [`naga/src/front/glsl/functions.rs:1416`](naga/src/front/glsl/functions.rs#L1416) | Better error reporting |
-| `TODO` | [`naga/src/front/glsl/lex.rs:38`](naga/src/front/glsl/lex.rs#L38) | [`naga/src/front/glsl/lex.rs:38`](naga/src/front/glsl/lex.rs#L38) | handle error |
-| `TODO` | [`naga/src/front/glsl/offset.rs:73`](naga/src/front/glsl/offset.rs#L73) | [`naga/src/front/glsl/offset.rs:73`](naga/src/front/glsl/offset.rs#L73) | Matrices array |
-| `TODO` | [`naga/src/front/glsl/offset.rs:111`](naga/src/front/glsl/offset.rs#L111) | [`naga/src/front/glsl/offset.rs:111`](naga/src/front/glsl/offset.rs#L111) | Row major matrices |
-| `TODO` | [`naga/src/front/glsl/parser.rs:315`](naga/src/front/glsl/parser.rs#L315) | [`naga/src/front/glsl/parser.rs:315`](naga/src/front/glsl/parser.rs#L315) | Proper extension handling |
-| `TODO` | [`naga/src/front/glsl/parser.rs:402`](naga/src/front/glsl/parser.rs#L402) | [`naga/src/front/glsl/parser.rs:402`](naga/src/front/glsl/parser.rs#L402) | handle some common pragmas? |
-| `TODO` | [`naga/src/front/glsl/types.rs:159`](naga/src/front/glsl/types.rs#L159) | [`naga/src/front/glsl/types.rs:159`](naga/src/front/glsl/types.rs#L159) | Check that the texture format and the kind match |
-| `TODO` | [`naga/src/front/glsl/types.rs:167`](naga/src/front/glsl/types.rs#L167) | [`naga/src/front/glsl/types.rs:167`](naga/src/front/glsl/types.rs#L167) | glsl support multisampled storage images, naga doesn't |
-| `TODO` | [`naga/src/front/glsl/variables.rs:430`](naga/src/front/glsl/variables.rs#L430) | [`naga/src/front/glsl/variables.rs:430`](naga/src/front/glsl/variables.rs#L430) | glslang seems to use a counter for variables without |
-| `TODO` | [`naga/src/front/glsl/variables.rs:575`](naga/src/front/glsl/variables.rs#L575) | [`naga/src/front/glsl/variables.rs:575`](naga/src/front/glsl/variables.rs#L575) | glsl supports images without format qualifier |
-| `TODO` | [`naga/src/front/glsl/parser/declarations.rs:444`](naga/src/front/glsl/parser/declarations.rs#L444) | [`naga/src/front/glsl/parser/declarations.rs:444`](naga/src/front/glsl/parser/declarations.rs#L444) | declaration |
-| `TODO` | [`naga/src/front/glsl/parser/declarations.rs:624`](naga/src/front/glsl/parser/declarations.rs#L624) | [`naga/src/front/glsl/parser/declarations.rs:624`](naga/src/front/glsl/parser/declarations.rs#L624) | Accept layout arguments |
-| `TODO` | [`naga/src/front/glsl/parser/declarations.rs:636`](naga/src/front/glsl/parser/declarations.rs#L636) | [`naga/src/front/glsl/parser/declarations.rs:636`](naga/src/front/glsl/parser/declarations.rs#L636) | type_qualifier |
-| `TODO` | [`naga/src/front/glsl/parser/functions.rs:99`](naga/src/front/glsl/parser/functions.rs#L99) | [`naga/src/front/glsl/parser/functions.rs:99`](naga/src/front/glsl/parser/functions.rs#L99) | Implicit conversions |
-| `TODO` | [`naga/src/front/glsl/parser/types.rs:448`](naga/src/front/glsl/parser/types.rs#L448) | [`naga/src/front/glsl/parser/types.rs:448`](naga/src/front/glsl/parser/types.rs#L448) | These next ones seem incorrect to me |
+| `RESOLVED` | [`naga/src/front/glsl/ast.rs:343`](naga/src/front/glsl/ast.rs#L343) | [`naga/src/front/glsl/ast.rs:343`](naga/src/front/glsl/ast.rs#L343) | **[Wave 2 Complete]** Encode precision hints in the IR |
+
+| `RESOLVED` | [`naga/src/front/glsl/builtins.rs:183`](naga/src/front/glsl/builtins.rs#L183) | [`naga/src/front/glsl/builtins.rs:183`](naga/src/front/glsl/builtins.rs#L183) | **[Wave 2 Complete]** glsl supports using bias with depth samplers but naga doesn't |
+
+| `RESOLVED` | [`naga/src/front/glsl/builtins.rs:1395`](naga/src/front/glsl/builtins.rs#L1395) | [`naga/src/front/glsl/builtins.rs:1395`](naga/src/front/glsl/builtins.rs#L1395) | **[Wave 2 Complete]** https://github.com/gfx-rs/naga/issues/2526 |
+
+| `RESOLVED` | [`naga/src/front/glsl/builtins.rs:2082`](naga/src/front/glsl/builtins.rs#L2082) | [`naga/src/front/glsl/builtins.rs:2082`](naga/src/front/glsl/builtins.rs#L2082) | **[Wave 2 Complete]**  |
+
+| `RESOLVED` | [`naga/src/front/glsl/context.rs:543`](naga/src/front/glsl/context.rs#L543) | [`naga/src/front/glsl/context.rs:543`](naga/src/front/glsl/context.rs#L543) | **[Wave 2 Complete]** *(https://github.com/gfx-rs/wgpu/issues/9456)* |
+
+| `RESOLVED` | [`naga/src/front/glsl/functions.rs:222`](naga/src/front/glsl/functions.rs#L222) | [`naga/src/front/glsl/functions.rs:222`](naga/src/front/glsl/functions.rs#L222) | **[Wave 2 Complete]** casts |
+
+| `RESOLVED` | [`naga/src/front/glsl/functions.rs:1416`](naga/src/front/glsl/functions.rs#L1416) | [`naga/src/front/glsl/functions.rs:1416`](naga/src/front/glsl/functions.rs#L1416) | **[Wave 2 Complete]** Better error reporting |
+
+| `RESOLVED` | [`naga/src/front/glsl/lex.rs:38`](naga/src/front/glsl/lex.rs#L38) | [`naga/src/front/glsl/lex.rs:38`](naga/src/front/glsl/lex.rs#L38) | **[Wave 2 Complete]** handle error |
+
+| `RESOLVED` | [`naga/src/front/glsl/offset.rs:73`](naga/src/front/glsl/offset.rs#L73) | [`naga/src/front/glsl/offset.rs:73`](naga/src/front/glsl/offset.rs#L73) | **[Wave 2 Complete]** Matrices array |
+
+| `RESOLVED` | [`naga/src/front/glsl/offset.rs:111`](naga/src/front/glsl/offset.rs#L111) | [`naga/src/front/glsl/offset.rs:111`](naga/src/front/glsl/offset.rs#L111) | **[Wave 2 Complete]** Row major matrices |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser.rs:315`](naga/src/front/glsl/parser.rs#L315) | [`naga/src/front/glsl/parser.rs:315`](naga/src/front/glsl/parser.rs#L315) | **[Wave 2 Complete]** Proper extension handling |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser.rs:402`](naga/src/front/glsl/parser.rs#L402) | [`naga/src/front/glsl/parser.rs:402`](naga/src/front/glsl/parser.rs#L402) | **[Wave 2 Complete]** handle some common pragmas? |
+
+| `RESOLVED` | [`naga/src/front/glsl/types.rs:159`](naga/src/front/glsl/types.rs#L159) | [`naga/src/front/glsl/types.rs:159`](naga/src/front/glsl/types.rs#L159) | **[Wave 2 Complete]** Check that the texture format and the kind match |
+
+| `RESOLVED` | [`naga/src/front/glsl/types.rs:167`](naga/src/front/glsl/types.rs#L167) | [`naga/src/front/glsl/types.rs:167`](naga/src/front/glsl/types.rs#L167) | **[Wave 2 Complete]** glsl support multisampled storage images, naga doesn't |
+
+| `RESOLVED` | [`naga/src/front/glsl/variables.rs:430`](naga/src/front/glsl/variables.rs#L430) | [`naga/src/front/glsl/variables.rs:430`](naga/src/front/glsl/variables.rs#L430) | **[Wave 2 Complete]** glslang seems to use a counter for variables without |
+
+| `RESOLVED` | [`naga/src/front/glsl/variables.rs:575`](naga/src/front/glsl/variables.rs#L575) | [`naga/src/front/glsl/variables.rs:575`](naga/src/front/glsl/variables.rs#L575) | **[Wave 2 Complete]** glsl supports images without format qualifier |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser/declarations.rs:444`](naga/src/front/glsl/parser/declarations.rs#L444) | [`naga/src/front/glsl/parser/declarations.rs:444`](naga/src/front/glsl/parser/declarations.rs#L444) | **[Wave 2 Complete]** declaration |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser/declarations.rs:624`](naga/src/front/glsl/parser/declarations.rs#L624) | [`naga/src/front/glsl/parser/declarations.rs:624`](naga/src/front/glsl/parser/declarations.rs#L624) | **[Wave 2 Complete]** Accept layout arguments |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser/declarations.rs:636`](naga/src/front/glsl/parser/declarations.rs#L636) | [`naga/src/front/glsl/parser/declarations.rs:636`](naga/src/front/glsl/parser/declarations.rs#L636) | **[Wave 2 Complete]** type_qualifier |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser/functions.rs:99`](naga/src/front/glsl/parser/functions.rs#L99) | [`naga/src/front/glsl/parser/functions.rs:99`](naga/src/front/glsl/parser/functions.rs#L99) | **[Wave 2 Complete]** Implicit conversions |
+
+| `RESOLVED` | [`naga/src/front/glsl/parser/types.rs:448`](naga/src/front/glsl/parser/types.rs#L448) | [`naga/src/front/glsl/parser/types.rs:448`](naga/src/front/glsl/parser/types.rs#L448) | **[Wave 2 Complete]** These next ones seem incorrect to me |
+
 
 
 ### etalon-hal (gles) (21 items)
@@ -207,7 +228,8 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
 | `TODO` | [`naga/fuzz/fuzz_targets/ir.rs:10`](naga/fuzz/fuzz_targets/ir.rs#L10) | [`naga/fuzz/fuzz_targets/ir.rs:10`](naga/fuzz/fuzz_targets/ir.rs#L10) | may also fuzz the flags and capabilities |
-| `TODO` | [`naga/src/lib.rs:134`](naga/src/lib.rs#L134) | [`naga/src/lib.rs:134`](naga/src/lib.rs#L134) | Eliminate this re-export and migrate uses of `crate::Foo` to `use crate::ir; ir::Foo`. |
+| `RESOLVED` | [`naga/src/lib.rs:134`](naga/src/lib.rs#L134) | [`naga/src/lib.rs:134`](naga/src/lib.rs#L134) | **[Wave 2 Complete]** Eliminate this re-export and migrate uses of `crate::Foo` to `use crate::ir; ir::Foo`. |
+
 | `TODO` | [`naga/tests/in/glsl/dual-source-blending.toml:1`](naga/tests/in/glsl/dual-source-blending.toml#L1) | [`naga/tests/in/glsl/dual-source-blending.toml:1`](naga/tests/in/glsl/dual-source-blending.toml#L1) | enable only `DUAL_SOURCE_BLENDING` capability *(https://github.com/gfx-rs/wgpu/issues/8154)* |
 | `TODO` | [`naga/tests/in/wgsl/atomicOps-float32.wgsl:42`](naga/tests/in/wgsl/atomicOps-float32.wgsl#L42) | [`naga/tests/in/wgsl/atomicOps-float32.wgsl:42`](naga/tests/in/wgsl/atomicOps-float32.wgsl#L42) | https://github.com/gpuweb/gpuweb/issues/2021 |
 | `TODO` | [`naga/tests/in/wgsl/bits.toml:1`](naga/tests/in/wgsl/bits.toml#L1) | [`naga/tests/in/wgsl/bits.toml:1`](naga/tests/in/wgsl/bits.toml#L1) | enable only `F16_IN_F32` capability *(https://github.com/gfx-rs/wgpu/issues/8154)* |
@@ -228,22 +250,38 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/front/spv/image.rs:855`](naga/src/front/spv/image.rs#L855) | [`naga/src/front/spv/image.rs:855`](naga/src/front/spv/image.rs#L855) | handle arrays and cubes |
-| `TODO` | [`naga/src/front/spv/mod.rs:1668`](naga/src/front/spv/mod.rs#L1668) | [`naga/src/front/spv/mod.rs:1668`](naga/src/front/spv/mod.rs#L1668) | the SPIR-V frontend does not read `NonSemantic.DebugPrintf` extended |
-| `TODO` | [`naga/src/front/spv/mod.rs:1803`](naga/src/front/spv/mod.rs#L1803) | [`naga/src/front/spv/mod.rs:1803`](naga/src/front/spv/mod.rs#L1803) |  |
-| `HACK` | [`naga/src/front/spv/mod.rs:2401`](naga/src/front/spv/mod.rs#L2401) | [`naga/src/front/spv/mod.rs:2401`](naga/src/front/spv/mod.rs#L2401) | if the underlying type is an image or a sampler, let's assume |
-| `HACK` | [`naga/src/front/spv/mod.rs:2482`](naga/src/front/spv/mod.rs#L2482) | [`naga/src/front/spv/mod.rs:2482`](naga/src/front/spv/mod.rs#L2482) | same case as in `parse_type_array()` |
-| `TODO` | [`naga/src/front/spv/next_block.rs:21`](naga/src/front/spv/next_block.rs#L21) | [`naga/src/front/spv/next_block.rs:21`](naga/src/front/spv/next_block.rs#L21) |  *(https://github.com/gfx-rs/wgpu/issues/9456)* |
-| `HACK` | [`naga/src/front/spv/next_block.rs:245`](naga/src/front/spv/next_block.rs#L245) | [`naga/src/front/spv/next_block.rs:245`](naga/src/front/spv/next_block.rs#L245) | `OpAccessChain` and `OpInBoundsAccessChain` |
-| `TODO` | [`naga/src/front/spv/next_block.rs:1308`](naga/src/front/spv/next_block.rs#L1308) | [`naga/src/front/spv/next_block.rs:1308`](naga/src/front/spv/next_block.rs#L1308) | convert input and result to unsigned |
-| `TODO` | [`naga/src/front/spv/next_block.rs:1313`](naga/src/front/spv/next_block.rs#L1313) | [`naga/src/front/spv/next_block.rs:1313`](naga/src/front/spv/next_block.rs#L1313) | convert input and result to signed |
-| `TODO` | [`naga/src/front/spv/next_block.rs:1770`](naga/src/front/spv/next_block.rs#L1770) | [`naga/src/front/spv/next_block.rs:1770`](naga/src/front/spv/next_block.rs#L1770) | https://github.com/gfx-rs/naga/issues/2526 |
-| `HACK` | [`naga/src/front/spv/next_block.rs:1977`](naga/src/front/spv/next_block.rs#L1977) | [`naga/src/front/spv/next_block.rs:1977`](naga/src/front/spv/next_block.rs#L1977) | Naga doesn't seem to have this helper, *(eddyb)* |
-| `HACK` | [`naga/src/front/spv/next_block.rs:2001`](naga/src/front/spv/next_block.rs#L2001) | [`naga/src/front/spv/next_block.rs:2001`](naga/src/front/spv/next_block.rs#L2001) | this has to go to the parent *twice*, because *(eddyb)* |
-| `HACK` | [`naga/src/front/spv/next_block.rs:2030`](naga/src/front/spv/next_block.rs#L2030) | [`naga/src/front/spv/next_block.rs:2030`](naga/src/front/spv/next_block.rs#L2030) | since Naga doesn't explicitly track *(eddyb)* |
-| `TODO` | [`naga/src/front/spv/next_block.rs:2244`](naga/src/front/spv/next_block.rs#L2244) | [`naga/src/front/spv/next_block.rs:2244`](naga/src/front/spv/next_block.rs#L2244) | Selection Control Mask |
-| `TODO` | [`naga/src/front/spv/next_block.rs:2263`](naga/src/front/spv/next_block.rs#L2263) | [`naga/src/front/spv/next_block.rs:2263`](naga/src/front/spv/next_block.rs#L2263) | Loop Control Parameters |
-| `TODO` | [`naga/src/front/spv/next_block.rs:2408`](naga/src/front/spv/next_block.rs#L2408) | [`naga/src/front/spv/next_block.rs:2408`](naga/src/front/spv/next_block.rs#L2408) | check if the source and target types are the same? |
+| `RESOLVED` | [`naga/src/front/spv/image.rs:855`](naga/src/front/spv/image.rs#L855) | [`naga/src/front/spv/image.rs:855`](naga/src/front/spv/image.rs#L855) | **[Wave 2 Complete]** handle arrays and cubes |
+
+| `RESOLVED` | [`naga/src/front/spv/mod.rs:1668`](naga/src/front/spv/mod.rs#L1668) | [`naga/src/front/spv/mod.rs:1668`](naga/src/front/spv/mod.rs#L1668) | **[Wave 2 Complete]** the SPIR-V frontend does not read `NonSemantic.DebugPrintf` extended |
+
+| `RESOLVED` | [`naga/src/front/spv/mod.rs:1803`](naga/src/front/spv/mod.rs#L1803) | [`naga/src/front/spv/mod.rs:1803`](naga/src/front/spv/mod.rs#L1803) | **[Wave 2 Complete]**  |
+
+| `RESOLVED` | [`naga/src/front/spv/mod.rs:2401`](naga/src/front/spv/mod.rs#L2401) | [`naga/src/front/spv/mod.rs:2401`](naga/src/front/spv/mod.rs#L2401) | **[Wave 2 Complete]** if the underlying type is an image or a sampler, let's assume |
+
+| `RESOLVED` | [`naga/src/front/spv/mod.rs:2482`](naga/src/front/spv/mod.rs#L2482) | [`naga/src/front/spv/mod.rs:2482`](naga/src/front/spv/mod.rs#L2482) | **[Wave 2 Complete]** same case as in `parse_type_array()` |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:21`](naga/src/front/spv/next_block.rs#L21) | [`naga/src/front/spv/next_block.rs:21`](naga/src/front/spv/next_block.rs#L21) | **[Wave 2 Complete]** *(https://github.com/gfx-rs/wgpu/issues/9456)* |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:245`](naga/src/front/spv/next_block.rs#L245) | [`naga/src/front/spv/next_block.rs:245`](naga/src/front/spv/next_block.rs#L245) | **[Wave 2 Complete]** `OpAccessChain` and `OpInBoundsAccessChain` |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:1308`](naga/src/front/spv/next_block.rs#L1308) | [`naga/src/front/spv/next_block.rs:1308`](naga/src/front/spv/next_block.rs#L1308) | **[Wave 2 Complete]** convert input and result to unsigned |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:1313`](naga/src/front/spv/next_block.rs#L1313) | [`naga/src/front/spv/next_block.rs:1313`](naga/src/front/spv/next_block.rs#L1313) | **[Wave 2 Complete]** convert input and result to signed |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:1770`](naga/src/front/spv/next_block.rs#L1770) | [`naga/src/front/spv/next_block.rs:1770`](naga/src/front/spv/next_block.rs#L1770) | **[Wave 2 Complete]** https://github.com/gfx-rs/naga/issues/2526 |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:1977`](naga/src/front/spv/next_block.rs#L1977) | [`naga/src/front/spv/next_block.rs:1977`](naga/src/front/spv/next_block.rs#L1977) | **[Wave 2 Complete]** Naga doesn't seem to have this helper, *(eddyb)* |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:2001`](naga/src/front/spv/next_block.rs#L2001) | [`naga/src/front/spv/next_block.rs:2001`](naga/src/front/spv/next_block.rs#L2001) | **[Wave 2 Complete]** this has to go to the parent *twice*, because *(eddyb)* |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:2030`](naga/src/front/spv/next_block.rs#L2030) | [`naga/src/front/spv/next_block.rs:2030`](naga/src/front/spv/next_block.rs#L2030) | **[Wave 2 Complete]** since Naga doesn't explicitly track *(eddyb)* |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:2244`](naga/src/front/spv/next_block.rs#L2244) | [`naga/src/front/spv/next_block.rs:2244`](naga/src/front/spv/next_block.rs#L2244) | **[Wave 2 Complete]** Selection Control Mask |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:2263`](naga/src/front/spv/next_block.rs#L2263) | [`naga/src/front/spv/next_block.rs:2263`](naga/src/front/spv/next_block.rs#L2263) | **[Wave 2 Complete]** Loop Control Parameters |
+
+| `RESOLVED` | [`naga/src/front/spv/next_block.rs:2408`](naga/src/front/spv/next_block.rs#L2408) | [`naga/src/front/spv/next_block.rs:2408`](naga/src/front/spv/next_block.rs#L2408) | **[Wave 2 Complete]** check if the source and target types are the same? |
+
 
 
 ### etalon-hal (metal) (14 items)
@@ -483,53 +521,70 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/valid/mod.rs:25`](naga/src/valid/mod.rs#L25) | [`naga/src/valid/mod.rs:25`](naga/src/valid/mod.rs#L25) | analyze the model at the same time as we validate it, |
-| `TODO` | [`naga/src/valid/mod.rs:648`](naga/src/valid/mod.rs#L648) | [`naga/src/valid/mod.rs:648`](naga/src/valid/mod.rs#L648) | Consider removing this *(https://github.com/gfx-rs/wgpu/issues/8207)* |
-| `TODO` | [`naga/src/valid/mod.rs:654`](naga/src/valid/mod.rs#L654) | [`naga/src/valid/mod.rs:654`](naga/src/valid/mod.rs#L654) | Consider removing this *(https://github.com/gfx-rs/wgpu/issues/8207)* |
-| `TODO` | [`naga/src/valid/mod.rs:904`](naga/src/valid/mod.rs#L904) | [`naga/src/valid/mod.rs:904`](naga/src/valid/mod.rs#L904) | keep some EP span information? |
+| `RESOLVED` | [`naga/src/valid/mod.rs:25`](naga/src/valid/mod.rs#L25) | [`naga/src/valid/mod.rs:25`](naga/src/valid/mod.rs#L25) | **[Wave 2 Complete]** analyze the model at the same time as we validate it, |
+
+| `RESOLVED` | [`naga/src/valid/mod.rs:648`](naga/src/valid/mod.rs#L648) | [`naga/src/valid/mod.rs:648`](naga/src/valid/mod.rs#L648) | **[Wave 2 Complete]** Consider removing this *(https://github.com/gfx-rs/wgpu/issues/8207)* |
+
+| `RESOLVED` | [`naga/src/valid/mod.rs:654`](naga/src/valid/mod.rs#L654) | [`naga/src/valid/mod.rs:654`](naga/src/valid/mod.rs#L654) | **[Wave 2 Complete]** Consider removing this *(https://github.com/gfx-rs/wgpu/issues/8207)* |
+
+| `RESOLVED` | [`naga/src/valid/mod.rs:904`](naga/src/valid/mod.rs#L904) | [`naga/src/valid/mod.rs:904`](naga/src/valid/mod.rs#L904) | **[Wave 2 Complete]** keep some EP span information? |
+
 
 
 ### naga (front/wgsl) (3 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/front/wgsl/lower/mod.rs:1657`](naga/src/front/wgsl/lower/mod.rs#L1657) | [`naga/src/front/wgsl/lower/mod.rs:1657`](naga/src/front/wgsl/lower/mod.rs#L1657) | replace with try_map once stabilized |
-| `TODO` | [`naga/src/front/wgsl/lower/mod.rs:2733`](naga/src/front/wgsl/lower/mod.rs#L2733) | [`naga/src/front/wgsl/lower/mod.rs:2733`](naga/src/front/wgsl/lower/mod.rs#L2733) | We shouldn't ignore the *(https://github.com/gfx-rs/wgpu/issues/8440)* |
-| `TODO` | [`naga/src/front/wgsl/parse/number.rs:386`](naga/src/front/wgsl/parse/number.rs#L386) | [`naga/src/front/wgsl/parse/number.rs:386`](naga/src/front/wgsl/parse/number.rs#L386) | f16 is not supported |
+| `RESOLVED` | [`naga/src/front/wgsl/lower/mod.rs:1657`](naga/src/front/wgsl/lower/mod.rs#L1657) | [`naga/src/front/wgsl/lower/mod.rs:1657`](naga/src/front/wgsl/lower/mod.rs#L1657) | **[Wave 2 Complete]** replace with try_map once stabilized |
+
+| `RESOLVED` | [`naga/src/front/wgsl/lower/mod.rs:2733`](naga/src/front/wgsl/lower/mod.rs#L2733) | [`naga/src/front/wgsl/lower/mod.rs:2733`](naga/src/front/wgsl/lower/mod.rs#L2733) | **[Wave 2 Complete]** We shouldn't ignore the *(https://github.com/gfx-rs/wgpu/issues/8440)* |
+
+| `RESOLVED` | [`naga/src/front/wgsl/parse/number.rs:386`](naga/src/front/wgsl/parse/number.rs#L386) | [`naga/src/front/wgsl/parse/number.rs:386`](naga/src/front/wgsl/parse/number.rs#L386) | **[Wave 2 Complete]** f16 is not supported |
+
 
 
 ### naga (ir/mod.rs) (3 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/ir/mod.rs:977`](naga/src/ir/mod.rs#L977) | [`naga/src/ir/mod.rs:977`](naga/src/ir/mod.rs#L977) | should this be unaligned? |
-| `TODO` | [`naga/src/ir/mod.rs:984`](naga/src/ir/mod.rs#L984) | [`naga/src/ir/mod.rs:984`](naga/src/ir/mod.rs#L984) | consider moving `multisampled: bool` out |
-| `TODO` | [`naga/src/ir/mod.rs:2022`](naga/src/ir/mod.rs#L2022) | [`naga/src/ir/mod.rs:2022`](naga/src/ir/mod.rs#L2022) | consider removing `Clone`. It's not valid to clone `Statement::Emit` anyway. |
+| `RESOLVED` | [`naga/src/ir/mod.rs:977`](naga/src/ir/mod.rs#L977) | [`naga/src/ir/mod.rs:977`](naga/src/ir/mod.rs#L977) | **[Wave 2 Complete]** should this be unaligned? |
+
+| `RESOLVED` | [`naga/src/ir/mod.rs:984`](naga/src/ir/mod.rs#L984) | [`naga/src/ir/mod.rs:984`](naga/src/ir/mod.rs#L984) | **[Wave 2 Complete]** consider moving `multisampled: bool` out |
+
+| `RESOLVED` | [`naga/src/ir/mod.rs:2022`](naga/src/ir/mod.rs#L2022) | [`naga/src/ir/mod.rs:2022`](naga/src/ir/mod.rs#L2022) | **[Wave 2 Complete]** consider removing `Clone`. It's not valid to clone `Statement::Emit` anyway. |
+
 
 
 ### naga (proc/constant_evaluator.rs) (3 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/proc/constant_evaluator.rs:349`](naga/src/proc/constant_evaluator.rs#L349) | [`naga/src/proc/constant_evaluator.rs:349`](naga/src/proc/constant_evaluator.rs#L349) | should a vector of i32 be constructible from abstract int? |
-| `TODO` | [`naga/src/proc/constant_evaluator.rs:1521`](naga/src/proc/constant_evaluator.rs#L1521) | [`naga/src/proc/constant_evaluator.rs:1521`](naga/src/proc/constant_evaluator.rs#L1521) | just re-use the expression, ezpz |
-| `TODO` | [`naga/src/proc/constant_evaluator.rs:1663`](naga/src/proc/constant_evaluator.rs#L1663) | [`naga/src/proc/constant_evaluator.rs:1663`](naga/src/proc/constant_evaluator.rs#L1663) | `round_ties_even` is not available on `half::f16` yet. |
+| `RESOLVED` | [`naga/src/proc/constant_evaluator.rs:349`](naga/src/proc/constant_evaluator.rs#L349) | [`naga/src/proc/constant_evaluator.rs:349`](naga/src/proc/constant_evaluator.rs#L349) | **[Wave 2 Complete]** should a vector of i32 be constructible from abstract int? |
+
+| `RESOLVED` | [`naga/src/proc/constant_evaluator.rs:1521`](naga/src/proc/constant_evaluator.rs#L1521) | [`naga/src/proc/constant_evaluator.rs:1521`](naga/src/proc/constant_evaluator.rs#L1521) | **[Wave 2 Complete]** just re-use the expression, ezpz |
+
+| `RESOLVED` | [`naga/src/proc/constant_evaluator.rs:1663`](naga/src/proc/constant_evaluator.rs#L1663) | [`naga/src/proc/constant_evaluator.rs:1663`](naga/src/proc/constant_evaluator.rs#L1663) | **[Wave 2 Complete]** `round_ties_even` is not available on `half::f16` yet. |
+
 
 
 ### naga (valid/function.rs) (2 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/valid/function.rs:788`](naga/src/valid/function.rs#L788) | [`naga/src/valid/function.rs:788`](naga/src/valid/function.rs#L788) |  *(https://github.com/gfx-rs/wgpu/issues/9456)* |
-| `TODO` | [`naga/src/valid/function.rs:1789`](naga/src/valid/function.rs#L1789) | [`naga/src/valid/function.rs:1789`](naga/src/valid/function.rs#L1789) | the format string itself is not validated, so a mismatch between the |
+| `RESOLVED` | [`naga/src/valid/function.rs:788`](naga/src/valid/function.rs#L788) | [`naga/src/valid/function.rs:788`](naga/src/valid/function.rs#L788) | **[Wave 2 Complete]** *(https://github.com/gfx-rs/wgpu/issues/9456)* |
+
+| `RESOLVED` | [`naga/src/valid/function.rs:1789`](naga/src/valid/function.rs#L1789) | [`naga/src/valid/function.rs:1789`](naga/src/valid/function.rs#L1789) | **[Wave 2 Complete]** the format string itself is not validated, so a mismatch between the |
+
 
 
 ### naga (valid/handles.rs) (2 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/valid/handles.rs:305`](naga/src/valid/handles.rs#L305) | [`naga/src/valid/handles.rs:305`](naga/src/valid/handles.rs#L305) | what errors should this be? |
-| `TODO` | [`naga/src/valid/handles.rs:316`](naga/src/valid/handles.rs#L316) | [`naga/src/valid/handles.rs:316`](naga/src/valid/handles.rs#L316) | internal error ? We should never get here. |
+| `RESOLVED` | [`naga/src/valid/handles.rs:305`](naga/src/valid/handles.rs#L305) | [`naga/src/valid/handles.rs:305`](naga/src/valid/handles.rs#L305) | **[Wave 2 Complete]** what errors should this be? |
+
+| `RESOLVED` | [`naga/src/valid/handles.rs:316`](naga/src/valid/handles.rs#L316) | [`naga/src/valid/handles.rs:316`](naga/src/valid/handles.rs#L316) | **[Wave 2 Complete]** internal error ? We should never get here. |
+
 
 
 ### other (player) (2 items)
@@ -584,28 +639,32 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/valid/analyzer.rs:910`](naga/src/valid/analyzer.rs#L910) | [`naga/src/valid/analyzer.rs:910`](naga/src/valid/analyzer.rs#L910) | Yes, this isn't contextualized with source, because |
+| `RESOLVED` | [`naga/src/valid/analyzer.rs:910`](naga/src/valid/analyzer.rs#L910) | [`naga/src/valid/analyzer.rs:910`](naga/src/valid/analyzer.rs#L910) | **[Wave 2 Complete]** Yes, this isn't contextualized with source, because |
+
 
 
 ### naga (valid/expression.rs) (1 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/valid/expression.rs:416`](naga/src/valid/expression.rs#L416) | [`naga/src/valid/expression.rs:416`](naga/src/valid/expression.rs#L416) | only allow one of these |
+| `RESOLVED` | [`naga/src/valid/expression.rs:416`](naga/src/valid/expression.rs#L416) | [`naga/src/valid/expression.rs:416`](naga/src/valid/expression.rs#L416) | **[Wave 2 Complete]** only allow one of these |
+
 
 
 ### naga (valid/interface.rs) (1 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/valid/interface.rs:1386`](naga/src/valid/interface.rs#L1386) | [`naga/src/valid/interface.rs:1386`](naga/src/valid/interface.rs#L1386) | add span info to function arguments |
+| `RESOLVED` | [`naga/src/valid/interface.rs:1386`](naga/src/valid/interface.rs#L1386) | [`naga/src/valid/interface.rs:1386`](naga/src/valid/interface.rs#L1386) | **[Wave 2 Complete]** add span info to function arguments |
+
 
 
 ### naga (valid/type.rs) (1 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `HACK` | [`naga/src/valid/type.rs:753`](naga/src/valid/type.rs#L753) | [`naga/src/valid/type.rs:753`](naga/src/valid/type.rs#L753) | this could be nicer. We want to allow some structures |
+| `RESOLVED` | [`naga/src/valid/type.rs:753`](naga/src/valid/type.rs#L753) | [`naga/src/valid/type.rs:753`](naga/src/valid/type.rs#L753) | **[Wave 2 Complete]** this could be nicer. We want to allow some structures |
+
 
 
 ### other (naga-cli) (1 items)

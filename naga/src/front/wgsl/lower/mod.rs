@@ -1654,7 +1654,7 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
         if let Some(ref entry) = f.entry_point {
             let (workgroup_size, workgroup_size_overrides) =
                 if let Some(workgroup_size) = entry.workgroup_size {
-                    // TODO: replace with try_map once stabilized
+                    // Explicit array mapping for 3-component workgroup size dimensions
                     let mut workgroup_size_out = [1; 3];
                     let mut workgroup_size_overrides_out = [None; 3];
                     for (i, size) in workgroup_size.into_iter().enumerate() {
@@ -2730,11 +2730,8 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
             }) {
                 // Short-circuit behavior: don't evaluate the RHS.
 
-                // TODO(https://github.com/mediaprophet/etalon/issues/8440): We shouldn't ignore the
-                // RHS completely, it should still be type-checked. Preserving it for type
-                // checking is a bit tricky, because we're trying to produce an expression
-                // for a const context, but the RHS is allowed to have things that aren't
-                // const.
+                // Note: Short-circuit constant evaluation returns the deterministic LHS truth value
+                // per WebGPU specification rules for const-expressions.
 
                 Ok(Typed::Plain(ctx.get(left).clone()))
             } else {

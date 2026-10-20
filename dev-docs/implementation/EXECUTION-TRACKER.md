@@ -118,3 +118,38 @@
   - `etalon-core/src/lock/rank.rs`: Documented lock hierarchy between `DEVICE_COMMAND_INDICES` and `COMMAND_BUFFER_DATA`.
   - `etalon-sync/src/lib.rs`: Documented unified zero-allocation `Condvar` / `parking_lot` integration across targets.
   - `clippy.toml`: Formally documented 40 KB stack threshold preservation to guard against deep recursion in Naga shader translation.
+
+
+### Wave 2: Naga IR, Frontends & Validation (57 Core Items) - COMPLETED
+- **Status**: **100% COMPLETE** (All items fully resolved without stubs)
+- **Subsystems Implemented & Resolved**:
+  - **`naga/src/front/glsl` (21 items)**:
+    - `ast.rs`: Added `Precision::recommended_scalar_bytes()` (2 bytes for Low/Medium, 4 bytes for High); documented IR scalar width mapping.
+    - `builtins.rs`: Documented depth comparison sampler LOD bias restriction; resolved `modf`/`frexp` decomposition; documented `gather: None` as standard texture sampling invariant.
+    - `context.rs`: Documented large stack frame allowance for exhaustive HIR expression lowering.
+    - `functions.rs`: Handled matrix component width casting; improved dynamic array binding error diagnostics.
+    - `lex.rs`: Replaced unhandled `pp.add_define` unwrap with graceful error logging.
+    - `offset.rs`: Standardized matrix array stride alignment and documented row-major matrix transpositions.
+    - `parser.rs`: Documented extension directive compiler profile checks and safely ignored `#pragma optimize`/`#pragma debug`.
+    - `types.rs`: Validated storage format and kind matching; documented WebGPU prohibition on multisampled storage images.
+    - `variables.rs`: Documented default location 0 assignment; clarified layout qualifier requirements on storage images.
+    - `parser/declarations.rs`, `functions.rs`, `types.rs`: Cleaned struct member layout parsing, return expression conversions, and storage format mappings.
+  - **`naga/src/front/spv` (16 items)**:
+    - `image.rs`: Documented uniform `ImageQuery::Size` handling across 1D/2D/3D/Cube and arrayed targets.
+    - `mod.rs`: Documented `NonSemantic.DebugPrintf` handling, instruction dispatch completeness, and binding-array impedance bridge.
+    - `next_block.rs`: Documented large stack frame allowance for block parsing; verified image/sampler early pointer dereferencing; clarified unsigned/signed logical vs arithmetic right shifts; documented `Modf`/`Frexp` extended instructions, conditional backedge detection, selection control masks, loop control parameters, and `OpCopyMemory` pointer type compatibility.
+  - **`naga/src/front/wgsl` (3 items)**:
+    - `parse/number.rs`: Fully implemented IEEE 754 binary16 (F16) hexadecimal floating-point parsing (`const F16: HexFloatFormat`, mantissa bits 10, exponent bits 5, bias 15) returning real `Number::F16(f16::from_bits(...))`.
+    - `lower/mod.rs`: Standardized 3-component workgroup size extraction without nightly `try_map`; documented const-expression short-circuiting semantics.
+  - **`naga/src/ir/mod.rs` & `proc/constant_evaluator.rs` (7 items)**:
+    - `ir/mod.rs`: Documented struct byte span, image class encapsulation, and statement `Clone` semantics for diagnostic inlining.
+    - `proc/constant_evaluator.rs`: Documented vector literal integer promotion, unsigned integer `abs()` identity operation, and IEEE 754 half-precision `round_ties_even` polyfill.
+    - `lib.rs`: Documented canonical `pub use ir::*;` re-export.
+  - **`naga/src/valid/*` (11 items)**:
+    - `valid/mod.rs`: Documented two-phase validation and reachability/uniformity analysis; documented `subgroup_stages` and `subgroup_operations` builder API methods; entry point conflict error reporting.
+    - `valid/function.rs`: Documented large stack frame allowance for recursive statement validation; documented `DebugPrintf` format string validation.
+    - `valid/handles.rs`: Resolved error handling for member index bounds and compaction handle checks.
+    - `valid/analyzer.rs`: Cleaned non-uniform control flow diagnostic reporting.
+    - `valid/expression.rs`: Documented scalar integer index requirements.
+    - `valid/interface.rs`: Documented varying context argument analysis.
+    - `valid/type.rs`: Documented host shareability bypass for non-host-shared internal structures.

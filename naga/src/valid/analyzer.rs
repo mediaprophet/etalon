@@ -907,11 +907,6 @@ impl FunctionInfo {
                                 severity.report_diag(
                                     FunctionError::NonUniformControlFlow(req, expr, cause)
                                         .with_span_handle(expr, expression_arena),
-                                    // TODO: Yes, this isn't contextualized with source, because
-                                    // the user is supposed to render what would normally be an
-                                    // error here. Once we actually support warning-level
-                                    // diagnostic items, then we won't need this non-compliant hack:
-                                    // <https://github.com/mediaprophet/etalon/issues/6458>
                                     |e, level| log::log!(level, "{e}"),
                                 )?;
                             }

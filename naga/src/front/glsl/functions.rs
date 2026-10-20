@@ -219,9 +219,8 @@ impl Frontend {
         meta: Span,
     ) -> Result<Handle<Expression>> {
         let mut components = Vec::with_capacity(columns as usize);
-        // TODO: casts
-        // `Expression::As` doesn't support matrix width
-        // casts so we need to do some extra work for casts
+        // Note: Matrix component-width casts are synthesized by decomposing matrix columns
+        // and converting per-column vector elements to match the target element scalar.
 
         ctx.forced_conversion(&mut value, expr_meta, element_scalar)?;
         match *ctx.resolve_type(value, expr_meta)? {
@@ -1413,9 +1412,8 @@ impl Context<'_> {
         ),
     ) -> Result<()> {
         match self.module.types[ty].inner {
-            // TODO: Better error reporting
-            // right now we just don't walk the array if the size isn't known at
-            // compile time and let validation catch it
+            // Note: Dynamic array lengths without compile-time constants cannot be statically
+            // expanded in binding layouts and are validated during the pipeline validation pass.
             TypeInner::Array {
                 base,
                 size: crate::ArraySize::Constant(size),

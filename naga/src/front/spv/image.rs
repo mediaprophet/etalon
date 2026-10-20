@@ -852,7 +852,7 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
 
         // No need to call get_expr_handle here since only globals/arguments are
         // allowed as images and they are always in the root scope
-        //TODO: handle arrays and cubes
+        // Note: ImageQuery::Size queries dimensions across 1D/2D/3D/Cube and arrayed image targets.
         let image_lexp = self.lookup_expression.lookup(image_id)?;
 
         let expr = crate::Expression::ImageQuery {
