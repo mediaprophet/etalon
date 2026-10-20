@@ -1,10 +1,10 @@
-# **Optimizing WGPU for AI and QualiaDB**
+# **Optimizing etalon for AI and QualiaDB**
 
 [https\://gemini.google.com/app/d7826bde0510c020](https://gemini.google.com/app/d7826bde0510c020)
 
-*User prompt: I've forked the wgpu repo / library, i'm looking for comprehensive directions to significantly improve the library making it superior for AI, 3D and generally otherwise for qualiadb and its purposes.*
+*User prompt: I've forked the etalon repo / library, i'm looking for comprehensive directions to significantly improve the library making it superior for AI, 3D and generally otherwise for qualiadb and its purposes.*
 
-Response: Transforming your wgpu fork (e084b66a) into a premier compute, 3D, and database-reasoning engine requires stripping away browser-sandboxed conservatism on native targets while elevating hardware-level primitives to first-class citizens. Standard wgpu is architected first for untrusted web code safety; for **QualiaDB**, local AI harnesses, and high-throughput 3D, the priority shifts to **zero-copy memory access, pointer-based graph traversal, low-precision tensor math, and lock-free multi-queue execution**.
+Response: Transforming your etalon fork (e084b66a) into a premier compute, 3D, and database-reasoning engine requires stripping away browser-sandboxed conservatism on native targets while elevating hardware-level primitives to first-class citizens. Standard etalon is architected first for untrusted web code safety; for **QualiaDB**, local AI harnesses, and high-throughput 3D, the priority shifts to **zero-copy memory access, pointer-based graph traversal, low-precision tensor math, and lock-free multi-queue execution**.
 
 Below is the comprehensive architectural roadmap mapped directly to the crates and modules in your forked repository.
 
@@ -16,29 +16,29 @@ QualiaDB’s 48-byte nquin records, .q42 storage files, and N3Logic evaluation p
 
 Graph traversal, radix trees, and N3Logic unification over nquin quads are vastly faster when shaders can dereference memory pointers directly rather than indexing into bound descriptor arrays.
 
-> * **wgpu-types (src/features.rs, src/buffer.rs):** Introduce Features::BUFFER\_DEVICE\_ADDRESS and BufferUsages::SHADER\_DEVICE\_ADDRESS. Expose Buffer::device\_address(\&self) \-\> u64 on the public API.  
-> * **wgpu-hal (src/vulkan/, src/metal/, src/dx12/):**  
-  * **Vulkan:** Enable VK\_KHR\_buffer\_device\_address in wgpu-hal/src/vulkan/adapter.rs and wire vkGetBufferDeviceAddress in device.rs.  
-  * **Metal:** Map directly to MTLBuffer::gpuAddress (available natively in Metal 3\) in wgpu-hal/src/metal/device.rs.  
-  * **DX12:** Map to ID3D12Resource::GetGPUVirtualAddress() in wgpu-hal/src/dx12/device.rs.  
+> * **etalon-types (src/features.rs, src/buffer.rs):** Introduce Features::BUFFER\_DEVICE\_ADDRESS and BufferUsages::SHADER\_DEVICE\_ADDRESS. Expose Buffer::device\_address(\&self) \-\> u64 on the public API.  
+> * **etalon-hal (src/vulkan/, src/metal/, src/dx12/):**  
+  * **Vulkan:** Enable VK\_KHR\_buffer\_device\_address in etalon-hal/src/vulkan/adapter.rs and wire vkGetBufferDeviceAddress in device.rs.  
+  * **Metal:** Map directly to MTLBuffer::gpuAddress (available natively in Metal 3\) in etalon-hal/src/metal/device.rs.  
+  * **DX12:** Map to ID3D12Resource::GetGPUVirtualAddress() in etalon-hal/src/dx12/device.rs.  
 > * **naga (src/ir/mod.rs, src/front/wgsl/, src/back/spv/):** Extend TypeInner::Pointer in Naga's IR to support AddressSpace::PhysicalStorageBuffer. Allow casting u64 (requires Features::SHADER\_INT64, which is already in naga/tests/in/wgsl/int64.wgsl) to physical pointers so shaders can chase nquin pointers across .q42 memory pages without bind groups.
 
 ### **B. Zero-Copy mmap & External Host Memory Import**
 
-To stream .q42 files and HMC containers directly from disk or system RAM into the GPU without staging buffers (wgpu/src/util/belt.rs):
+To stream .q42 files and HMC containers directly from disk or system RAM into the GPU without staging buffers (etalon/src/util/belt.rs):
 
-> * **wgpu-hal:** Implement external host memory importation:  
-  * **Vulkan (wgpu-hal/src/vulkan/memory.rs):** Wire VK\_EXT\_external\_memory\_host (vkGetMemoryHostPointerPropertiesEXT) to wrap page-aligned mmap pointers directly into hal::Buffer.  
-  * **Metal (wgpu-hal/src/metal/device.rs):** Expose newBufferWithBytesNoCopy:length:options:deallocator: so Unified Memory on Apple Silicon shares the exact OS virtual memory pages of the .q42 file with zero copy latency.  
-  * **Linux/DRM (wgpu-hal/src/vulkan/drm.rs):** Extend the existing DRM/dmabuf scaffolding to support GPUDirect Storage / dmabuf direct buffer imports.  
-> * **UMA Fast-Path (wgpu-core/src/device/resource.rs):** When AdapterInfo detects a Unified Memory Architecture (Apple Silicon, integrated APUs) or ReBAR (Resizable BAR on discrete GPUs like your RTX A2000), allow BufferUsages::MAP\_WRITE | BufferUsages::STORAGE | BufferUsages::COPY\_DST simultaneously without failing validation in wgpu-core/src/validation.rs.
+> * **etalon-hal:** Implement external host memory importation:  
+  * **Vulkan (etalon-hal/src/vulkan/memory.rs):** Wire VK\_EXT\_external\_memory\_host (vkGetMemoryHostPointerPropertiesEXT) to wrap page-aligned mmap pointers directly into hal::Buffer.  
+  * **Metal (etalon-hal/src/metal/device.rs):** Expose newBufferWithBytesNoCopy:length:options:deallocator: so Unified Memory on Apple Silicon shares the exact OS virtual memory pages of the .q42 file with zero copy latency.  
+  * **Linux/DRM (etalon-hal/src/vulkan/drm.rs):** Extend the existing DRM/dmabuf scaffolding to support GPUDirect Storage / dmabuf direct buffer imports.  
+> * **UMA Fast-Path (etalon-core/src/device/resource.rs):** When AdapterInfo detects a Unified Memory Architecture (Apple Silicon, integrated APUs) or ReBAR (Resizable BAR on discrete GPUs like your RTX A2000), allow BufferUsages::MAP\_WRITE | BufferUsages::STORAGE | BufferUsages::COPY\_DST simultaneously without failing validation in etalon-core/src/validation.rs.
 
 ### **C. Bypassing Zero-Initialization & Bounds-Check Taxes**
 
-For trusted QualiaDB kernels and pre-verified .q42 payloads, wgpu's mandatory memory zeroing and Naga's index clamping burn up to 15–25% of compute bandwidth.
+For trusted QualiaDB kernels and pre-verified .q42 payloads, etalon's mandatory memory zeroing and Naga's index clamping burn up to 15–25% of compute bandwidth.
 
-> * **Skip Zero-Init (wgpu-core/src/init\_tracker/, wgpu-core/src/command/memory\_init.rs):** Add BufferDescriptor::uninitialized: bool (gated behind an unsafe/trusted feature flag) that bypasses init\_tracker range tracking and omits the clear\_buffer injections during command encoding.  
-> * **Unchecked Shader Indexing (naga/src/proc/index.rs, naga/src/back/):** While BoundsCheckPolicy::Unchecked exists internally in Naga (naga/tests/in/wgsl/int-div-unchecked.toml), wgpu-core often forces ReadZeroSkipWrite or Restrict. Expose a per-pipeline ShaderRuntimeChecks::none() flag in wgpu-types to emit raw, un-clamped array/pointer loads in SPIR-V, MSL, and HLSL.
+> * **Skip Zero-Init (etalon-core/src/init\_tracker/, etalon-core/src/command/memory\_init.rs):** Add BufferDescriptor::uninitialized: bool (gated behind an unsafe/trusted feature flag) that bypasses init\_tracker range tracking and omits the clear\_buffer injections during command encoding.  
+> * **Unchecked Shader Indexing (naga/src/proc/index.rs, naga/src/back/):** While BoundsCheckPolicy::Unchecked exists internally in Naga (naga/tests/in/wgsl/int-div-unchecked.toml), etalon-core often forces ReadZeroSkipWrite or Restrict. Expose a per-pipeline ShaderRuntimeChecks::none() flag in etalon-types to emit raw, un-clamped array/pointer loads in SPIR-V, MSL, and HLSL.
 
 ### **D. 64-Bit Bitwise & Atomic Intrinsics for Graph Bitsets**
 
@@ -46,7 +46,7 @@ For trusted QualiaDB kernels and pre-verified .q42 payloads, wgpu's mandatory me
 
 ## **2\. AI & Local Model Compute: Tensor & Subgroup Acceleration**
 
-Your fork already contains early scaffolding for cooperative matrices (examples/features/src/cooperative\_matrix/, naga/tests/in/wgsl/cooperative-matrix.wgsl, naga/tests/in/wgsl/cooperative-matrix-mixed-accumulator.wgsl) and subgroups (tests/tests/wgpu-gpu/subgroup\_operations/). Expanding this into a production-grade AI backend requires the following:
+Your fork already contains early scaffolding for cooperative matrices (examples/features/src/cooperative\_matrix/, naga/tests/in/wgsl/cooperative-matrix.wgsl, naga/tests/in/wgsl/cooperative-matrix-mixed-accumulator.wgsl) and subgroups (tests/tests/etalon-gpu/subgroup\_operations/). Expanding this into a production-grade AI backend requires the following:
 
 ### **A. Expand Cooperative Matrix & Low-Precision Quantization (BF16, FP8, INT8, INT4)**
 
@@ -69,102 +69,102 @@ In naga/src/back/spv/subgroup.rs and naga/tests/in/wgsl/subgroup-operations.wgsl
 
 Since you develop shaders in **Slang** alongside WGSL (and naga/tests/in/spv/ already includes .slang test cases like binding-arrays.runtime.slang and gather.slang):
 
-> * **Direct Backend Ingestion (wgpu/src/util/spirv.rs, wgpu-hal/src/metal/library\_from\_metallib.rs):** Expand Device::create\_shader\_module\_passthrough (tested in tests/tests/wgpu-gpu/passthrough/) so it is not just an unsafe escape hatch, but a validated, reflection-enabled primary pipeline path.  
-> * Allow Slang-compiled SPIR-V, DXIL, and .metallib binaries to bypass Naga's AST re-lowering entirely when targeting native backends, using a lightweight header/descriptor extractor to populate wgpu-core/src/binding\_model.rs layouts while preserving Slang's loop unrolling, wave intrinsics, and tensor optimizations.
+> * **Direct Backend Ingestion (etalon/src/util/spirv.rs, etalon-hal/src/metal/library\_from\_metallib.rs):** Expand Device::create\_shader\_module\_passthrough (tested in tests/tests/etalon-gpu/passthrough/) so it is not just an unsafe escape hatch, but a validated, reflection-enabled primary pipeline path.  
+> * Allow Slang-compiled SPIR-V, DXIL, and .metallib binaries to bypass Naga's AST re-lowering entirely when targeting native backends, using a lightweight header/descriptor extractor to populate etalon-core/src/binding\_model.rs layouts while preserving Slang's loop unrolling, wave intrinsics, and tensor optimizations.
 
 ## **3\. High-Performance 3D & Rendering Architecture**
 
-Your fork includes modern 3D features like mesh shaders (wgpu-core/src/command/draw.rs, naga/src/back/\*/mesh\_shader.rs) and ray tracing (wgpu-core/src/ray\_tracing.rs, wgpu-hal/src/vulkan/, dx12/, metal/). To make it a top-tier 3D engine foundation:
+Your fork includes modern 3D features like mesh shaders (etalon-core/src/command/draw.rs, naga/src/back/\*/mesh\_shader.rs) and ray tracing (etalon-core/src/ray\_tracing.rs, etalon-hal/src/vulkan/, dx12/, metal/). To make it a top-tier 3D engine foundation:
 
 ### **A. True Bindless Descriptor Heaps (Resource Indexing at Scale)**
 
-While wgpu supports binding\_array (tests/tests/wgpu-gpu/binding\_array/), it still routes through wgpu-core's per-resource reference-counted BindGroup validation.
+While etalon supports binding\_array (tests/tests/etalon-gpu/binding\_array/), it still routes through etalon-core's per-resource reference-counted BindGroup validation.
 
-> * **Global Descriptor Heap (wgpu-core/src/binding\_model.rs, wgpu-hal/src/\*/descriptor.rs):** Introduce a DescriptorHeap or BindlessTable API where textures, samplers, and buffers are registered once into a global, persistent GPU-visible table (VK\_EXT\_descriptor\_buffer on Vulkan, MTLArgumentBuffer Tier 2 on Metal, and direct ID3D12DescriptorHeap indexing on DX12) and referenced in shaders via a simple u32 handle.  
-> * This eliminates the CPU bottleneck seen in benches/benches/wgpu-benchmark/bind\_groups.rs and enables true GPU-driven rendering where a compute pass culls scenes and writes draw commands without CPU intervention.
+> * **Global Descriptor Heap (etalon-core/src/binding\_model.rs, etalon-hal/src/\*/descriptor.rs):** Introduce a DescriptorHeap or BindlessTable API where textures, samplers, and buffers are registered once into a global, persistent GPU-visible table (VK\_EXT\_descriptor\_buffer on Vulkan, MTLArgumentBuffer Tier 2 on Metal, and direct ID3D12DescriptorHeap indexing on DX12) and referenced in shaders via a simple u32 handle.  
+> * This eliminates the CPU bottleneck seen in benches/benches/etalon-benchmark/bind\_groups.rs and enables true GPU-driven rendering where a compute pass culls scenes and writes draw commands without CPU intervention.
 
 ### **B. GPU-Driven Indirect Execution (MultiDrawIndirectCount & Indirect Dispatch Chains)**
 
-> * **True GPU-Side Count Buffers:** Ensure multi\_draw\_indirect\_count and multi\_draw\_indexed\_indirect\_count bypass the compute-based validation pass in wgpu-core/src/indirect\_validation/draw.rs and dispatch.rs when running on trusted native contexts. Currently, indirect\_validation injects extra compute dispatches and pipeline barriers before every indirect call to clamp vertex/workgroup counts, which severely degrades GPU-driven 3D and dynamic AI graph execution.  
+> * **True GPU-Side Count Buffers:** Ensure multi\_draw\_indirect\_count and multi\_draw\_indexed\_indirect\_count bypass the compute-based validation pass in etalon-core/src/indirect\_validation/draw.rs and dispatch.rs when running on trusted native contexts. Currently, indirect\_validation injects extra compute dispatches and pipeline barriers before every indirect call to clamp vertex/workgroup counts, which severely degrades GPU-driven 3D and dynamic AI graph execution.  
 > * **Indirect Compute Chains:** Add dispatch\_workgroups\_indirect\_count (or expose Vulkan's VK\_NV\_device\_generated\_commands\_compute / DX12 ExecuteIndirect for compute) so a QualiaDB reasoning kernel or 3D culling pass can dynamically determine how many subsequent workgroups to launch without a CPU round-trip.
 
 ### **C. Ray Tracing & BVH Acceleration Upgrades**
 
-In wgpu-core/src/ray\_tracing.rs, wgpu-types/src/ray\_tracing.rs, and naga/src/back/\*/ray.rs:
+In etalon-core/src/ray\_tracing.rs, etalon-types/src/ray\_tracing.rs, and naga/src/back/\*/ray.rs:
 
-> * **Ray Tracing Pipelines & Shader Binding Tables (SBT):** The current implementation focuses heavily on inline ray\_query (examples/features/src/ray\_traced\_triangle/) and experimental pipeline validation (tests/tests/wgpu-validation/api/ray\_tracing\_pipeline.rs). Complete full SBT management, intersection shaders (critical for rendering non-triangle primitives like 3D Gaussian Splats, SDFs, or AABB graph nodes as seen in examples/features/src/ray\_aabb\_compute/), and callable shaders.  
+> * **Ray Tracing Pipelines & Shader Binding Tables (SBT):** The current implementation focuses heavily on inline ray\_query (examples/features/src/ray\_traced\_triangle/) and experimental pipeline validation (tests/tests/etalon-validation/api/ray\_tracing\_pipeline.rs). Complete full SBT management, intersection shaders (critical for rendering non-triangle primitives like 3D Gaussian Splats, SDFs, or AABB graph nodes as seen in examples/features/src/ray\_aabb\_compute/), and callable shaders.  
 > * **Micro-Maps & Fast BVH Compaction:** Expose asynchronous BLAS compaction without CPU readback stalls, and wire VK\_EXT\_opacity\_micromap for alpha-tested geometry.
 
-## **4\. Core Engine (wgpu-core & wgpu-hal) Latency & Concurrency Overhaul**
+## **4\. Core Engine (etalon-core & etalon-hal) Latency & Concurrency Overhaul**
 
-For a high-concurrency Rust database and AI engine, wgpu-core's internal synchronization and resource tracking are the primary sources of CPU overhead.
+For a high-concurrency Rust database and AI engine, etalon-core's internal synchronization and resource tracking are the primary sources of CPU overhead.
 
 ### **A. Multi-Queue Asynchronous Compute, Transfer, and Graphics**
 
-Currently, wgpu exposes a single Device and a single Queue (wgpu-core/src/device/queue.rs), serializing all compute, render, and DMA transfer work onto one hardware queue.
+Currently, etalon exposes a single Device and a single Queue (etalon-core/src/device/queue.rs), serializing all compute, render, and DMA transfer work onto one hardware queue.
 
-> * **Dedicated Queue Families (wgpu-core/src/device/, wgpu-hal/src/vulkan/adapter.rs):** Modify Adapter::request\_device to return multiple Queue handles mapped to distinct hardware queue families:  
-  1. **Graphics Queue:** 3D rendering and presentation (wgpu-core/src/present.rs).  
+> * **Dedicated Queue Families (etalon-core/src/device/, etalon-hal/src/vulkan/adapter.rs):** Modify Adapter::request\_device to return multiple Queue handles mapped to distinct hardware queue families:  
+  1. **Graphics Queue:** 3D rendering and presentation (etalon-core/src/present.rs).  
   2. **Async Compute Queue:** Background AI inference and QualiaDB N3Logic/SPARQL query evaluation.  
   3. **DMA Transfer Queue:** Asynchronous .q42 page streaming and buffer uploads/downloads using the GPU's dedicated copy engines (SDMA) without stalling compute or 3D frames.  
-> * **Timeline Semaphores (wgpu-hal/src/vulkan/semaphore\_list.rs):** Expose explicit TimelineSemaphore (or Fence with u64 payload) primitives in the public wgpu API so your Rust async runtime can await specific GPU timeline values (u64) directly via Futures, and synchronize across Compute, Transfer, and Graphics queues without CPU blocking.
+> * **Timeline Semaphores (etalon-hal/src/vulkan/semaphore\_list.rs):** Expose explicit TimelineSemaphore (or Fence with u64 payload) primitives in the public etalon API so your Rust async runtime can await specific GPU timeline values (u64) directly via Futures, and synchronize across Compute, Transfer, and Graphics queues without CPU blocking.
 
 ### **B. State Tracking & Lock Contention Reduction**
 
-Your repo includes a lock-analyzer/ crate and ranked locks (wgpu-core/src/lock/ranked.rs, rank.rs) specifically because lock contention in wgpu-core is a known bottleneck.
+Your repo includes a lock-analyzer/ crate and ranked locks (etalon-core/src/lock/ranked.rs, rank.rs) specifically because lock contention in etalon-core is a known bottleneck.
 
-> * **Explicit Barrier Mode (Opt-Out of wgpu-core/src/track/):** wgpu-core/src/track/buffer.rs and texture.rs maintain per-resource state machines and merge trackers on every command buffer submission. For QualiaDB and deterministic compute graphs, add an ExplicitSync command encoder mode that bypasses src/track/ entirely and allows the caller to emit lightweight MemoryBarrier transitions directly (similar to VK\_KHR\_synchronization2).  
-> * **SnatchLock & Registry Sharding (wgpu-core/src/snatch.rs, storage.rs, wgpu-core-remote/src/registry.rs):** The global SnatchLock used to guard resource destruction against concurrent command encoding can stall multi-threaded encoders. Replace global read-locks on hot paths with epoch-based reclamation (e.g., crossbeam-epoch or a custom frame-epoch ring buffer tied to device/life.rs submission indices) so command encoding on worker threads is 100% lock-free.
+> * **Explicit Barrier Mode (Opt-Out of etalon-core/src/track/):** etalon-core/src/track/buffer.rs and texture.rs maintain per-resource state machines and merge trackers on every command buffer submission. For QualiaDB and deterministic compute graphs, add an ExplicitSync command encoder mode that bypasses src/track/ entirely and allows the caller to emit lightweight MemoryBarrier transitions directly (similar to VK\_KHR\_synchronization2).  
+> * **SnatchLock & Registry Sharding (etalon-core/src/snatch.rs, storage.rs, etalon-core-remote/src/registry.rs):** The global SnatchLock used to guard resource destruction against concurrent command encoding can stall multi-threaded encoders. Replace global read-locks on hot paths with epoch-based reclamation (e.g., crossbeam-epoch or a custom frame-epoch ring buffer tied to device/life.rs submission indices) so command encoding on worker threads is 100% lock-free.
 
 ## **5\. Prioritized Implementation Roadmap**
 
 | Phase | Target Crates / Modules | Deliverable | Primary Benefit |
 | :---- | :---- | :---- | :---- |
-| **Phase 1: Fast-Path Compute** | wgpu-core/src/indirect\_validation/, wgpu-core/src/init\_tracker/, naga/src/proc/index.rs | Add TrustedCompute device flag to disable buffer zero-init, Naga bounds-checking, and indirect dispatch/draw validation shaders. | Immediate **15–30% speedup** for QualiaDB queries, AI kernels, and indirect 3D draws. |
-| **Phase 2: Zero-Copy & Pointers** | wgpu-hal/src/{vulkan,metal,dx12}, wgpu-types/src/features.rs, naga/src/ir/ | Implement BUFFER\_DEVICE\_ADDRESS (64-bit GPU pointers) and external mmap host-pointer buffer imports. | Zero-copy .q42 / nquin graph traversal directly from system/unified memory. |
-| **Phase 3: Multi-Queue & Async** | wgpu-core/src/device/queue.rs, wgpu-hal/src/vulkan/semaphore\_list.rs | Expose dedicated Compute, Transfer (DMA), and Graphics queues with u64 Timeline Semaphores. | Concurrent .q42 disk streaming, AI model execution, and 60/120Hz 3D rendering. |
-| **Phase 4: AI & Slang Native** | naga/src/back/{spv,msl,hlsl}, wgpu/src/util/spirv.rs | Expand Cooperative Matrix to bf16/i8/u8, add full subgroup shuffles, and make Slang SPIR-V/DXIL/Metallib passthrough a first-class reflected API. | Native-speed local LLM/embedding inference and seamless Slang shader workflows. |
-| **Phase 5: Bindless 3D** | wgpu-core/src/binding\_model.rs, wgpu-core/src/ray\_tracing.rs | Global DescriptorHeap (bindless table) \+ complete Ray Tracing SBT and custom intersection shaders. | Massive 3D scene scaling and hardware-accelerated spatial/graph ray-queries. |
+| **Phase 1: Fast-Path Compute** | etalon-core/src/indirect\_validation/, etalon-core/src/init\_tracker/, naga/src/proc/index.rs | Add TrustedCompute device flag to disable buffer zero-init, Naga bounds-checking, and indirect dispatch/draw validation shaders. | Immediate **15–30% speedup** for QualiaDB queries, AI kernels, and indirect 3D draws. |
+| **Phase 2: Zero-Copy & Pointers** | etalon-hal/src/{vulkan,metal,dx12}, etalon-types/src/features.rs, naga/src/ir/ | Implement BUFFER\_DEVICE\_ADDRESS (64-bit GPU pointers) and external mmap host-pointer buffer imports. | Zero-copy .q42 / nquin graph traversal directly from system/unified memory. |
+| **Phase 3: Multi-Queue & Async** | etalon-core/src/device/queue.rs, etalon-hal/src/vulkan/semaphore\_list.rs | Expose dedicated Compute, Transfer (DMA), and Graphics queues with u64 Timeline Semaphores. | Concurrent .q42 disk streaming, AI model execution, and 60/120Hz 3D rendering. |
+| **Phase 4: AI & Slang Native** | naga/src/back/{spv,msl,hlsl}, etalon/src/util/spirv.rs | Expand Cooperative Matrix to bf16/i8/u8, add full subgroup shuffles, and make Slang SPIR-V/DXIL/Metallib passthrough a first-class reflected API. | Native-speed local LLM/embedding inference and seamless Slang shader workflows. |
+| **Phase 5: Bindless 3D** | etalon-core/src/binding\_model.rs, etalon-core/src/ray\_tracing.rs | Global DescriptorHeap (bindless table) \+ complete Ray Tracing SBT and custom intersection shaders. | Massive 3D scene scaling and hardware-accelerated spatial/graph ray-queries. |
 
 Which of these layers—such as **Phase 1/2 (Zero-Copy & Raw Pointers for QualiaDB)** or **Phase 4 (Slang Passthrough & Cooperative Matrix expansion)**—would you like to dive into first for concrete code diffs against your fork?
 
 ---
 
-*User prompt: qualiadb has an array of shaders and other GPU components, i wonder if it would make more sense for development modularisation purposes to export those functions from the qualiadb repo and put it into the newly defined repo, where wgpu is being improved / redeveloped, etc. thereby also, incorporate the cuda, vulkan and other related libraries into that codebase.*
+*User prompt: qualiadb has an array of shaders and other GPU components, i wonder if it would make more sense for development modularisation purposes to export those functions from the qualiadb repo and put it into the newly defined repo, where etalon is being improved / redeveloped, etc. thereby also, incorporate the cuda, vulkan and other related libraries into that codebase.*
 
-Response: Extracting the GPU execution, shader compilation, and hardware-accelerated primitives out of QualiaDB and consolidating them into your forked wgpu workspace is a **massive architectural win**.
+Response: Extracting the GPU execution, shader compilation, and hardware-accelerated primitives out of QualiaDB and consolidating them into your forked etalon workspace is a **massive architectural win**.
 
-However, the key to making this succeed without creating a monolithic maintenance nightmare is **strict crate layering within the Cargo workspace**—specifically, keeping QualiaDB's domain logic (N3Logic rules, .q42 storage orchestration) cleanly separated from the low-level hardware abstraction (wgpu-hal) and general-purpose compute primitives.
+However, the key to making this succeed without creating a monolithic maintenance nightmare is **strict crate layering within the Cargo workspace**—specifically, keeping QualiaDB's domain logic (N3Logic rules, .q42 storage orchestration) cleanly separated from the low-level hardware abstraction (etalon-hal) and general-purpose compute primitives.
 
 ### **1\. Why Consolidating into the GPU Workspace Makes Sense**
 
-> * **Eliminating the "Double-Abstraction" Tax:** When QualiaDB's GPU kernels live in a separate repo, you are forced to program against wgpu's public, browser-safe API, or maintain brittle as\_hal / raw FFI glue across repository boundaries. By moving the GPU compute engine into the wgpu workspace, your kernels can directly leverage internal wgpu-hal traits, zero-copy mmap allocators, and raw Vulkan/CUDA/Metal pointers before you even finish stabilizing a public WebGPU-style API for them.  
-> * **Unified Multi-Backend Dispatch (Vulkan \+ CUDA \+ Metal \+ DX12):** Standard wgpu-hal supports Vulkan, Metal, DX12, and GLES (wgpu-hal/src/). By bringing your CUDA libraries into this workspace, you can implement **CUDA as a first-class wgpu-hal backend (wgpu-hal/src/cuda/)** (using cudarc or raw CUDA Driver API cu\* calls) alongside Vulkan and Metal. Slang already compiles to SPIR-V, PTX/CUDA, Metal, and DXIL—meaning a single workspace can compile and dispatch the exact same shader/kernel across all of them.  
+> * **Eliminating the "Double-Abstraction" Tax:** When QualiaDB's GPU kernels live in a separate repo, you are forced to program against etalon's public, browser-safe API, or maintain brittle as\_hal / raw FFI glue across repository boundaries. By moving the GPU compute engine into the etalon workspace, your kernels can directly leverage internal etalon-hal traits, zero-copy mmap allocators, and raw Vulkan/CUDA/Metal pointers before you even finish stabilizing a public WebGPU-style API for them.  
+> * **Unified Multi-Backend Dispatch (Vulkan \+ CUDA \+ Metal \+ DX12):** Standard etalon-hal supports Vulkan, Metal, DX12, and GLES (etalon-hal/src/). By bringing your CUDA libraries into this workspace, you can implement **CUDA as a first-class etalon-hal backend (etalon-hal/src/cuda/)** (using cudarc or raw CUDA Driver API cu\* calls) alongside Vulkan and Metal. Slang already compiles to SPIR-V, PTX/CUDA, Metal, and DXIL—meaning a single workspace can compile and dispatch the exact same shader/kernel across all of them.  
 > * **Compile-Time & CI Isolation:** GPU driver SDKs (Vulkan SDK, CUDA Toolkit, DirectX Agility SDK, Slang, Naga) are heavy dependencies with complex build.rs and FFI requirements. Isolating all hardware acceleration, shader pre-compilation, and CTS/GPU benchmarking into this dedicated compute/graphics repository keeps the core QualiaDB repository lightweight, fast to compile, and focused purely on database semantics, query planning, and storage state.  
 > * **Reusable Foundation for the Broader Ecosystem:** By housing 3D rendering, AI tensor kernels, and graph/nquin primitives in this unified GPU workspace, other applications in your stack (e.g., Dioxus/Webizen UI, Poet, or simulation environments) can consume the same hardware-accelerated runtime without pulling in the entire QualiaDB engine.
 
 ### **2\. Recommended Workspace Architecture**
 
-Rather than dumping QualiaDB-specific logic directly into wgpu-core, structure your forked Cargo workspace (Cargo.toml) into **four distinct tiers**:
+Rather than dumping QualiaDB-specific logic directly into etalon-core, structure your forked Cargo workspace (Cargo.toml) into **four distinct tiers**:
 
-`wgpu-fork-workspace/`  
+`etalon-fork-workspace/`  
 `├── Tier 1: Hardware & Compiler Foundation (Existing + CUDA/Slang)`  
-`│   ├── wgpu-types/            # Shared descriptors, features, 64-bit pointer types`  
+`│   ├── etalon-types/            # Shared descriptors, features, 64-bit pointer types`  
 `│   ├── naga/                  # WGSL/SPIR-V/MSL/HLSL + Slang & PTX bridge`  
-`│   └── wgpu-hal/`  
+`│   └── etalon-hal/`  
 `│       ├── src/vulkan/        # Vulkan (BDA, CooperativeMatrix, External Memory)`  
 `│       ├── src/metal/         # Metal 3 (Unified memory, simdgroup_matrix)`  
 `│       ├── src/dx12/          # DirectX 12 (WaveMatrix, ExecuteIndirect)`  
 `│       └── src/cuda/          # [NEW] Native CUDA Driver API backend (cuModuleLoad, cuLaunchKernel)`  
 `│`  
 `├── Tier 2: Runtime & Orchestration`  
-`│   ├── wgpu-core/             # Resource tracking, multi-queue (Graphics, Compute, DMA)`  
-`│   └── wgpu/                  # High-level safe & trusted-fast-path Rust API`  
+`│   ├── etalon-core/             # Resource tracking, multi-queue (Graphics, Compute, DMA)`  
+`│   └── etalon/                  # High-level safe & trusted-fast-path Rust API`  
 `│`  
 `├── Tier 3: Domain-Agnostic Compute & 3D Primitives [NEW CRATES]`  
-`│   ├── wgpu-tensor/           # AI/ML kernels: GEMM, FlashAttention, quantized (INT4/INT8/FP8/BF16) ops`  
-`│   ├── wgpu-radix/            # Parallel prefix-sum (scan), radix sort, BVH builders, hash tables`  
-`│   └── wgpu-3d/               # Bindless scene graph, mesh shader cullers, ray-tracing SBT helpers`  
+`│   ├── etalon-tensor/           # AI/ML kernels: GEMM, FlashAttention, quantized (INT4/INT8/FP8/BF16) ops`  
+`│   ├── etalon-radix/            # Parallel prefix-sum (scan), radix sort, BVH builders, hash tables`  
+`│   └── etalon-3d/               # Bindless scene graph, mesh shader cullers, ray-tracing SBT helpers`  
 `│`  
 `└── Tier 4: QualiaDB Hardware Acceleration Layer [MIGRATED FROM QUALIADB]`  
     ``└── qualiadb-gpu/          # (or `nquin-accel`)``  
@@ -174,25 +174,25 @@ Rather than dumping QualiaDB-specific logic directly into wgpu-core, structure y
 
 ### **3\. How to Integrate CUDA, Vulkan, and Slang Cleanly**
 
-#### **A. Adding CUDA to wgpu-hal vs. Side-by-Side Interop**
+#### **A. Adding CUDA to etalon-hal vs. Side-by-Side Interop**
 
 You have two choices for incorporating CUDA into this repo:
 
-> 1. **The wgpu-hal/src/cuda/ Backend (Recommended for Compute):** wgpu-hal already defines clean traits (Api, Instance, Adapter, Device, Queue, CommandEncoder, Buffer) in wgpu-hal/src/lib.rs. Implementing these traits over the CUDA Driver API (libcuda.so / nvcuda.dll loaded dynamically via wgpu-hal/src/auxil/dyn\_lib.rs, just like Vulkan and DXGI are loaded) allows compute pipelines, buffers, and timeline semaphores to run natively on CUDA streams (CUstream) while using the exact same Rust host code.  
-> 2. **Vulkan-CUDA External Interop (VK\_KHR\_external\_memory\_fd / Win32):** When you need 3D rendering (Vulkan/DX12) and CUDA AI/database kernels to share memory simultaneously (e.g., on your RTX A2000), wgpu-hal/src/vulkan/ can export a hal::Buffer's device memory handle (fd or HANDLE) directly to CUDA (cuImportExternalMemory) with zero copies, synchronized via shared Timeline Semaphores (cuImportExternalSemaphore).
+> 1. **The etalon-hal/src/cuda/ Backend (Recommended for Compute):** etalon-hal already defines clean traits (Api, Instance, Adapter, Device, Queue, CommandEncoder, Buffer) in etalon-hal/src/lib.rs. Implementing these traits over the CUDA Driver API (libcuda.so / nvcuda.dll loaded dynamically via etalon-hal/src/auxil/dyn\_lib.rs, just like Vulkan and DXGI are loaded) allows compute pipelines, buffers, and timeline semaphores to run natively on CUDA streams (CUstream) while using the exact same Rust host code.  
+> 2. **Vulkan-CUDA External Interop (VK\_KHR\_external\_memory\_fd / Win32):** When you need 3D rendering (Vulkan/DX12) and CUDA AI/database kernels to share memory simultaneously (e.g., on your RTX A2000), etalon-hal/src/vulkan/ can export a hal::Buffer's device memory handle (fd or HANDLE) directly to CUDA (cuImportExternalMemory) with zero copies, synchronized via shared Timeline Semaphores (cuImportExternalSemaphore).
 
 #### **B. Unified Shader Build System (xtask \+ Slang \+ Naga)**
 
 Your fork already has a shader management workflow (.github/workflows/shaders.yml and xtask/). You can upgrade this so that all your QualiaDB, AI, and 3D shaders live in this repo and are compiled/validated in one pass:
 
 > * Write compute-heavy kernels (like 48-byte nquin SIMD/SIMT scans, radix joins, and tensor math) in **Slang** or **WGSL**.  
-> * Have xtask compile Slang targets into **SPIR-V** (for Vulkan), **MetalLib** (for Apple Silicon via wgpu-hal/src/metal/library\_from\_metallib.rs), **DXIL** (for DX12), and **PTX/Cubin** (for CUDA), embedding the pre-validated bytecode or .q42-compatible shader bundles directly into the qualiadb-gpu crate.
+> * Have xtask compile Slang targets into **SPIR-V** (for Vulkan), **MetalLib** (for Apple Silicon via etalon-hal/src/metal/library\_from\_metallib.rs), **DXIL** (for DX12), and **PTX/Cubin** (for CUDA), embedding the pre-validated bytecode or .q42-compatible shader bundles directly into the qualiadb-gpu crate.
 
-### **4\. What Should Stay in QualiaDB vs. Move to the wgpu Repo?**
+### **4\. What Should Stay in QualiaDB vs. Move to the etalon Repo?**
 
 To keep the boundary clean so you don't create circular dependencies between your database and your graphics/compute engine:
 
-| Move to the Forked wgpu Workspace | Keep in the QualiaDB Repository |
+| Move to the Forked etalon Workspace | Keep in the QualiaDB Repository |
 | :---- | :---- |
 | **Low-level memory & DMA:** Zero-copy mmap buffer import, Resizable BAR / Unified Memory allocators, pinned host memory pools. | **File & Container Lifecycle:** .q42 file header parsing, HMC container management, transaction logs, and disk persistence. |
 | **Data-parallel primitives:** Radix sort, prefix scans, roaring bitmap GPU operations, hash-join kernels, BVH/spatial indexing. | **Query Planner & Optimizer:** Deciding *when* to offload a query to the GPU vs. CPU SIMD, cost estimation, and AST parsing. |
@@ -201,61 +201,61 @@ To keep the boundary clean so you don't create circular dependencies between you
 
 ### **Next Steps to Execute This Migration**
 
-> 1. **Create the Sub-Crates:** Add a crates/ directory (or top-level workspace members in Cargo.toml) for wgpu-cuda (or wgpu-hal/src/cuda), wgpu-tensor, and qualiadb-gpu (or a more generalized name like wgpu-graph / nquin-gpu).  
+> 1. **Create the Sub-Crates:** Add a crates/ directory (or top-level workspace members in Cargo.toml) for etalon-cuda (or etalon-hal/src/cuda), etalon-tensor, and qualiadb-gpu (or a more generalized name like etalon-graph / nquin-gpu).  
 > 2. **Inventory QualiaDB's GPU Surface:** List the exact shaders, buffer layouts, and Vulkan/CUDA dependencies currently sitting in QualiaDB.  
-> 3. **Define the Fast-Path Trait:** Design a TrustedComputeExt trait on wgpu::Device and wgpu::CommandEncoder that exposes raw device pointers (BDA), zero-copy host imports, and unvalidated indirect dispatches to those new crates.
+> 3. **Define the Fast-Path Trait:** Design a TrustedComputeExt trait on etalon::Device and etalon::CommandEncoder that exposes raw device pointers (BDA), zero-copy host imports, and unvalidated indirect dispatches to those new crates.
 
 If you'd like, share the current list of shaders/GPU modules you have in QualiaDB (or how they are structured), and we can design the exact Cargo workspace layout and module interfaces to migrate them cleanly.
 
 ---
 
-*User prompt: so, in-effect, the wgpu-hal becomes the agent for the GPU hardware*
+*User prompt: so, in-effect, the etalon-hal becomes the agent for the GPU hardware*
 
-Response: Framing wgpu-hal as the **dedicated hardware agent**—rather than just a passive FFI wrapper—is the exact architectural shift needed to unlock its full potential.
+Response: Framing etalon-hal as the **dedicated hardware agent**—rather than just a passive FFI wrapper—is the exact architectural shift needed to unlock its full potential.
 
-In upstream wgpu, the architecture is inverted to serve untrusted web browsers: wgpu-core acts as a heavy, paranoid "policeman" (enforcing state tracking, zero-initialization, lifetime locks, and WebGPU spec limits), while wgpu-hal is treated as a "dumb" translation layer that just forwards translated structs to Vulkan, Metal, DX12, or GLES.
+In upstream etalon, the architecture is inverted to serve untrusted web browsers: etalon-core acts as a heavy, paranoid "policeman" (enforcing state tracking, zero-initialization, lifetime locks, and WebGPU spec limits), while etalon-hal is treated as a "dumb" translation layer that just forwards translated structs to Vulkan, Metal, DX12, or GLES.
 
-By elevating wgpu-hal to be the **authoritative hardware steward** for your stack, the entire relationship between QualiaDB, AI inference, 3D rendering, and the silicon changes fundamentally.
+By elevating etalon-hal to be the **authoritative hardware steward** for your stack, the entire relationship between QualiaDB, AI inference, 3D rendering, and the silicon changes fundamentally.
 
-### **1\. The Architectural Inversion: Upstream wgpu vs. wgpu-hal as Hardware Agent**
+### **1\. The Architectural Inversion: Upstream etalon vs. etalon-hal as Hardware Agent**
 
-| Dimension | Upstream wgpu (Browser-Centric) | Your Fork (wgpu-hal as Hardware Agent) |
+| Dimension | Upstream etalon (Browser-Centric) | Your Fork (etalon-hal as Hardware Agent) |
 | :---- | :---- | :---- |
-| **Primary Authority** | wgpu-core (Enforces WebGPU spec limits, tracks every byte and barrier on the CPU). | **wgpu-hal** (Negotiates directly with physical silicon capabilities, queues, and memory controllers). |
+| **Primary Authority** | etalon-core (Enforces WebGPU spec limits, tracks every byte and barrier on the CPU). | **etalon-hal** (Negotiates directly with physical silicon capabilities, queues, and memory controllers). |
 | **Memory Model** | Isolated, opaque handles; mandatory zero-init; staging-buffer copies (Queue::write\_buffer). | **Unified Address Space:** 64-bit Buffer Device Addresses (BDA), zero-copy .q42 mmap imports, and ReBAR/UMA direct pointers. |
 | **Execution & Queues** | Single multiplexed queue; CPU-side lock contention (SnatchLock, Rank). | **Autonomous Multi-Queue:** Dedicated Graphics, Async Compute, and DMA Copy engines coordinated via hardware Timeline Semaphores. |
 | **Backend Scope** | Strictly graphics APIs (Vulkan, Metal, DX12, GLES). | **Heterogeneous Compute \+ Graphics:** Vulkan, Metal, DX12, **plus native CUDA** (CUstream/PTX) and direct interop. |
 | **Shader / Kernel Path** | Everything forced through WGSL → Naga AST → bounds-checked target code. | **Multi-Modal:** Naga for portable WGSL, plus zero-overhead passthrough for **Slang**, SPIR-V, MetalLib, DXIL, and PTX. |
 
-### **2\. Core Responsibilities of wgpu-hal as the Hardware Agent**
+### **2\. Core Responsibilities of etalon-hal as the Hardware Agent**
 
-When wgpu-hal acts as the agent representing the physical GPU(s) to QualiaDB and your higher-level crates, it takes ownership of four critical domains:
+When etalon-hal acts as the agent representing the physical GPU(s) to QualiaDB and your higher-level crates, it takes ownership of four critical domains:
 
 #### **A. Capability & Topology Discovery (Hardware Introspection)**
 
-Instead of clamping hardware capabilities down to a "lowest common denominator" WebGPU Limits struct (wgpu-types/src/limits.rs), the wgpu-hal agent queries and exposes the exact physical topology of the machine:
+Instead of clamping hardware capabilities down to a "lowest common denominator" WebGPU Limits struct (etalon-types/src/limits.rs), the etalon-hal agent queries and exposes the exact physical topology of the machine:
 
 > * **Compute Unit & Warp Geometry:** Exposing exact subgroup/warp sizes (e.g., 32 on your RTX A2000, 32/64 on AMD, 32 on Apple Silicon), L2 cache sizes, shared memory bank widths, and Tensor/Simdgroup matrix core dimensions.  
 > * **Memory Topology:** Detecting whether the agent is operating on Discrete PCIe with Resizable BAR (where the CPU can write directly to VRAM), Discrete PCIe requiring DMA staging, or Unified Memory (Apple Mac Studio/Mini), and automatically selecting the optimal zero-copy path for .q42 pages.
 
 #### **B. Sovereign Memory & Zero-Copy Stewardship**
 
-As the hardware's memory agent, wgpu-hal manages the physical address space:
+As the hardware's memory agent, etalon-hal manages the physical address space:
 
 > * **Virtual Address Pinning:** Registering host mmap regions (such as .q42 files or HMC containers) with the GPU's MMU (vkImportMemoryHostPointerEXT, cuMemHostRegister, MTLBuffer no-copy) and returning a 64-bit GPU virtual address (u64).  
-> * **Cross-API Memory Broker:** If a 48-byte nquin graph is mutated or queried by a CUDA kernel (or Slang-to-CUDA module) and immediately visualized in 3D via Vulkan or DX12, the wgpu-hal agent brokers the fd / Win32 HANDLE / IOSurface between the two backends without ever copying the data back to system RAM.
+> * **Cross-API Memory Broker:** If a 48-byte nquin graph is mutated or queried by a CUDA kernel (or Slang-to-CUDA module) and immediately visualized in 3D via Vulkan or DX12, the etalon-hal agent brokers the fd / Win32 HANDLE / IOSurface between the two backends without ever copying the data back to system RAM.
 
 #### **C. Multi-Queue Work Scheduling & Hardware Telemetrics**
 
-Rather than blocking the CPU thread to wait for GPU work, the wgpu-hal agent manages the hardware's asynchronous execution engines:
+Rather than blocking the CPU thread to wait for GPU work, the etalon-hal agent manages the hardware's asynchronous execution engines:
 
 > * **Hardware Timeline Semaphores:** Every operation submitted to the agent (a DMA page load, an N3Logic compute pass, a local LLM forward pass, or a 3D frame render) is tagged with a monotonically increasing u64 timeline value.  
 > * **Cross-Queue Chaining:** The DMA Transfer queue can signal timeline value T=101 when a .q42 chunk finishes streaming into VRAM; the Async Compute queue waits on T=101 in hardware, executes the nquin graph traversal, and signals T=102 for the 3D Graphics queue—all with **zero CPU wakeup or thread synchronization**.  
-> * **Hardware Telemetry:** Using wgpu-hal's timestamp and pipeline statistics queries (wgpu-core/src/command/query.rs) to feed real-time execution costs back to QualiaDB’s query planner.
+> * **Hardware Telemetry:** Using etalon-hal's timestamp and pipeline statistics queries (etalon-core/src/command/query.rs) to feed real-time execution costs back to QualiaDB’s query planner.
 
 #### **D. Pre-Compiled Kernel & ISA Registry**
 
-Because you are moving QualiaDB's shaders and GPU components into this workspace, the wgpu-hal layer (and a companion kernel-registry crate) can act as the **ISA loader**:
+Because you are moving QualiaDB's shaders and GPU components into this workspace, the etalon-hal layer (and a companion kernel-registry crate) can act as the **ISA loader**:
 
 > * It can ingest fat binaries or multi-target bundles compiled from **Slang** or **Naga** (containing SPIR-V for Vulkan, PTX/Cubin for CUDA, DXIL for DX12, and Metallib for Metal) and load the exact native instruction set directly into the driver (vkCreateComputePipelines, cuModuleLoadData, newLibraryWithData).
 
@@ -263,30 +263,30 @@ Because you are moving QualiaDB's shaders and GPU components into this workspace
 
 By structuring the repo this way, your workspace supports two complementary modes of operation:
 
-> 1. **The Direct Agent Track (wgpu-hal \+ qualiadb-gpu / wgpu-tensor):**  
+> 1. **The Direct Agent Track (etalon-hal \+ qualiadb-gpu / etalon-tensor):**  
    * Used by QualiaDB, local AI model runners, and trusted native 3D pipelines.  
-   * Talks directly to enhanced wgpu-hal traits (or a thin, lock-free TrustedDevice wrapper over wgpu-hal).  
+   * Talks directly to enhanced etalon-hal traits (or a thin, lock-free TrustedDevice wrapper over etalon-hal).  
    * Zero bounds-checking, zero-init bypassed, raw 64-bit BDA pointers, direct mmap imports, and native CUDA/Vulkan/Metal queue control.  
-> 2. **The Portable Standard Track (wgpu-core \+ wgpu):**  
+> 2. **The Portable Standard Track (etalon-core \+ etalon):**  
    * Used when compiling to wasm32 (WebGPU in the browser) or running untrusted third-party scripts/plugins.  
-   * Retains full wgpu-core validation, init\_tracker, and Naga bounds checking, while still benefiting from your fork's underlying wgpu-hal optimizations.
+   * Retains full etalon-core validation, init\_tracker, and Naga bounds checking, while still benefiting from your fork's underlying etalon-hal optimizations.
 
-### **Designing the Agent's Trait Extensions in wgpu-hal/src/lib.rs**
+### **Designing the Agent's Trait Extensions in etalon-hal/src/lib.rs**
 
-Currently, wgpu-hal/src/lib.rs defines the Api, Device, Queue, and CommandEncoder traits. To formalize wgpu-hal as this hardware agent, we can extend those traits (or add a ComputeAgent super-trait) with four foundational capabilities:
+Currently, etalon-hal/src/lib.rs defines the Api, Device, Queue, and CommandEncoder traits. To formalize etalon-hal as this hardware agent, we can extend those traits (or add a ComputeAgent super-trait) with four foundational capabilities:
 
 > 1. import\_external\_memory(\&self, host\_ptr: \*mut u8, size: u64) \-\> Result\<(A::Buffer, DeviceAddress), DeviceError\>  
 > 2. buffer\_device\_address(\&self, buffer: \&A::Buffer) \-\> DeviceAddress  
 > 3. create\_compute\_queues(\&self, count: usize) \-\> Vec\<A::Queue\> & create\_transfer\_queue(\&self) \-\> Option\<A::Queue\>  
 > 4. create\_timeline\_semaphore(\&self, initial\_value: u64) \-\> Result\<A::TimelineSemaphore, DeviceError\>
 
-Would you like to sketch out the exact trait additions to wgpu-hal/src/lib.rs for this agent model, or start by designing the crate structure for migrating QualiaDB's existing shaders and GPU components into the workspace?
+Would you like to sketch out the exact trait additions to etalon-hal/src/lib.rs for this agent model, or start by designing the crate structure for migrating QualiaDB's existing shaders and GPU components into the workspace?
 
 ---
 
 *User prompt: i'd like to rename it; and also, i imagine that may mean that the wgsl forge and shaders, etc. (from qualiadb); there both needs to be the ability to contribute and improve the core and then also have specific extensions, particularly in sensitive fields (health or survellience for example)*
 
-Response: Renaming the repository while separating the **upstream-compatible core** from your **WGSL Forge, nquin graph shaders, and policy-gated domain extensions** gives you the best of both worlds: you can cleanly cherry-pick upstream wgpu driver fixes (and submit patches back) while operating a human-centric, fiduciary hardware agent on top.
+Response: Renaming the repository while separating the **upstream-compatible core** from your **WGSL Forge, nquin graph shaders, and policy-gated domain extensions** gives you the best of both worlds: you can cleanly cherry-pick upstream etalon driver fixes (and submit patches back) while operating a human-centric, fiduciary hardware agent on top.
 
 Here is a complete naming framework, workspace topology, and architectural design for handling sensitive domain extensions (such as clinical/health informatics vs. anti-surveillance / human-rights safeguards) right at the shader and hardware dispatch boundary.
 
@@ -300,8 +300,8 @@ Aligns directly with your **WGSL Forge** concept and **TrustFactory**:
 
 > * **Repository / Umbrella Name:** **qforge** (Qualia Forge) or **forge-gpu**  
 > * **Core Crates:**  
-  * forge-hal (formerly wgpu-hal — the hardware agent for Vulkan, Metal, DX12, and CUDA)  
-  * forge-core & forge-types (formerly wgpu-core & wgpu-types)  
+  * forge-hal (formerly etalon-hal — the hardware agent for Vulkan, Metal, DX12, and CUDA)  
+  * forge-core & forge-types (formerly etalon-core & etalon-types)  
   * wgsl-forge (enhanced naga \+ Slang/PTX/SPIR-V pipeline & policy verifier)  
   * forge-nquin (QualiaDB 48-byte nquin & .q42 zero-copy kernels)
 
@@ -317,23 +317,23 @@ Draws on classical Greek terminology for physical craft, agency, and form:
 
 ### **Option C: The Prefix-Preserved Upstream Strategy (Easiest Git Merge Path)**
 
-Keep the top-level repository named **qualia-gpu** (or **webizen-gpu**), **keep the internal directory names wgpu-hal/, wgpu-core/, and naga/ untouched on disk** so git merge upstream/trunk never triggers path conflicts, and rename or re-export them in Cargo.toml alongside your new crates.
+Keep the top-level repository named **qualia-gpu** (or **webizen-gpu**), **keep the internal directory names etalon-hal/, etalon-core/, and naga/ untouched on disk** so git merge upstream/trunk never triggers path conflicts, and rename or re-export them in Cargo.toml alongside your new crates.
 
 ## **2\. Git & Workspace Topology: Upstream Core vs. The Forge & Extensions**
 
-To ensure you can always pull improvements from upstream gfx-rs/wgpu (and contribute back bug fixes to wgpu-hal or naga) without leaking proprietary, domain-specific, or sensitive extensions into upstream diffs, structure the repository into **Three Zones**:
+To ensure you can always pull improvements from upstream gfx-rs/etalon (and contribute back bug fixes to etalon-hal or naga) without leaking proprietary, domain-specific, or sensitive extensions into upstream diffs, structure the repository into **Three Zones**:
 
 `<new-repo-name>/`  
-`├── ZONE 1: Upstream-Synced Core (Keep directory paths identical to gfx-rs/wgpu)`  
-``│   ├── wgpu-hal/              # Hardware Agent (Vulkan, Metal, DX12 + modular `src/cuda/`)``  
-`│   ├── wgpu-core/             # Resource & queue orchestration`  
-`│   ├── wgpu-types/            # Shared types & feature flags`  
-`│   ├── wgpu/                  # Public standard API`  
+`├── ZONE 1: Upstream-Synced Core (Keep directory paths identical to gfx-rs/etalon)`  
+``│   ├── etalon-hal/              # Hardware Agent (Vulkan, Metal, DX12 + modular `src/cuda/`)``  
+`│   ├── etalon-core/             # Resource & queue orchestration`  
+`│   ├── etalon-types/            # Shared types & feature flags`  
+`│   ├── etalon/                  # Public standard API`  
 `│   └── naga/                  # Base AST & WGSL/SPIR-V/MSL/HLSL translators`  
 `│`  
 `├── ZONE 2: The WGSL Forge & General Compute Primitives (Open/Contributable Layer)`  
 `│   ├── crates/wgsl-forge/     # Shader metaprogramming, Slang/PTX bundler, static policy analyzer`  
-`│   ├── crates/forge-agent/    # Trusted fast-path over wgpu-hal (BDA pointers, mmap zero-copy, multi-queue)`  
+`│   ├── crates/forge-agent/    # Trusted fast-path over etalon-hal (BDA pointers, mmap zero-copy, multi-queue)`  
 `│   ├── crates/forge-nquin/    # QualiaDB 48-byte nquin scans, radix joins, N3Logic unification kernels`  
 `│   └── crates/forge-tensor/   # Local AI cooperative matrix (BF16/INT8/FP8) & subgroup attention kernels`  
 `│`  
@@ -344,14 +344,14 @@ To ensure you can always pull improvements from upstream gfx-rs/wgpu (and contri
 
 ### **Why This Separates Concerns Cleanly:**
 
-> 1. **Frictionless Upstream Contributions:** Because Zone 1 retains the exact folder structure of wgpu, any improvements you make to standard Vulkan BDA, Metal unified memory, or Naga WGSL parsing can be cherry-picked into a clean branch and submitted as a PR to upstream wgpu.  
+> 1. **Frictionless Upstream Contributions:** Because Zone 1 retains the exact folder structure of etalon, any improvements you make to standard Vulkan BDA, Metal unified memory, or Naga WGSL parsing can be cherry-picked into a clean branch and submitted as a PR to upstream etalon.  
 > 2. **Independent Licensing & Access Control:** Zone 1 and Zone 2 can remain permissive (MIT/Apache-2.0 or human-centric open source), while Zone 3 (extensions/) can be mounted via **Git Submodules**, separate Cargo workspace members, or conditional compilation features driven by human-rights / fiduciary licensing instruments.
 
 ## **3\. Architecting Sensitive Domain Extensions (Health, Anti-Surveillance, Fiduciary)**
 
 In sensitive domains like **healthcare** (e.g., Wellfair vaults, pathology/genomic data, biosignal processing) or **civic/surveillance-sensitive environments** (where visual, spatial, or biometric streams must *never* be weaponized for non-consensual tracking), the GPU is historically a massive security blind spot. Standard GPU drivers leave residual tensors in VRAM, allow shaders to read unallocated pages if bounds checks are off, and have no concept of **purpose-bound execution**.
 
-By owning both **wgsl-forge** (the compiler/bundler) and **wgpu-hal** (the hardware agent), you can enforce **Fiduciary Hardware Enclaves** directly in the GPU pipeline:
+By owning both **wgsl-forge** (the compiler/bundler) and **etalon-hal** (the hardware agent), you can enforce **Fiduciary Hardware Enclaves** directly in the GPU pipeline:
 
 ### **A. Compile-Time Capability Attestation in wgsl-forge**
 
@@ -360,13 +360,13 @@ Because wgsl-forge sits on top of naga's IR (naga::Module), you can inspect ever
 > * **Shader Capability Manifests:** Every shader module in the Forge carries a cryptographic hash and an N3Logic / RDF header (or custom WGSL @fiduciary\_scope(...) attribute) declaring:  
   * What data classes it may touch (e.g., urn:field:clinical-pathology, urn:field:spatial-civic).  
   * Whether it is permitted to write to external/host-mapped memory (MAP\_READ / network-accessible buffers).  
-> * **Anti-Surveillance Redaction & Privacy Gates:** For spatial, camera, or sensor compute pipelines, wgsl-forge can enforce that raw optical/biometric input buffers can *only* be bound to certified anonymization/redaction kernels (e.g., on-GPU face/gait scrubbing, differential privacy noise injection, or local ephemeral feature extraction) and are **statically barred** by wgpu-hal from ever being copied to host CPU memory or persistent .q42 storage.
+> * **Anti-Surveillance Redaction & Privacy Gates:** For spatial, camera, or sensor compute pipelines, wgsl-forge can enforce that raw optical/biometric input buffers can *only* be bound to certified anonymization/redaction kernels (e.g., on-GPU face/gait scrubbing, differential privacy noise injection, or local ephemeral feature extraction) and are **statically barred** by etalon-hal from ever being copied to host CPU memory or persistent .q42 storage.
 
-### **B. Ephemeral & Zero-Scrubbed VRAM Enclaves in wgpu-hal (Health & Sensitive Vaults)**
+### **B. Ephemeral & Zero-Scrubbed VRAM Enclaves in etalon-hal (Health & Sensitive Vaults)**
 
-Earlier we discussed turning *off* wgpu-core's zero-initialization for trusted public/indexed .q42 graph queries to gain 15–30% speed. However, for **Health / Clinical extensions**, you need the exact *opposite* guarantee—not on buffer creation, but **on buffer destruction and queue completion**:
+Earlier we discussed turning *off* etalon-core's zero-initialization for trusted public/indexed .q42 graph queries to gain 15–30% speed. However, for **Health / Clinical extensions**, you need the exact *opposite* guarantee—not on buffer creation, but **on buffer destruction and queue completion**:
 
-> * **Cryptographic VRAM Zeroing (Drop Scrubbing):** When a buffer is tagged with MemorySensitivity::FiduciaryHealth or EphemeralVault, the wgpu-hal agent guarantees that before the VRAM page or Unified Memory allocation is returned to the OS driver (vkFreeMemory / cuMemFree), the hardware DMA engine executes an immediate zero-fill scrub over the physical address range so no other process (or browser tab) can scrape residual health records or local LLM KV-caches from VRAM.  
+> * **Cryptographic VRAM Zeroing (Drop Scrubbing):** When a buffer is tagged with MemorySensitivity::FiduciaryHealth or EphemeralVault, the etalon-hal agent guarantees that before the VRAM page or Unified Memory allocation is returned to the OS driver (vkFreeMemory / cuMemFree), the hardware DMA engine executes an immediate zero-fill scrub over the physical address range so no other process (or browser tab) can scrape residual health records or local LLM KV-caches from VRAM.  
 > * **No-Readback Hardware Lock:** Buffers tagged as EphemeralInput can be processed by forge-nquin or forge-tensor on the GPU, with only the final aggregated boolean/proof or N3Logic inference result permitted across the PCIe bus back to the host.
 
 ### **C. Cryptographic Pipeline Sealing (.q42 Shader Bundles)**
@@ -374,7 +374,7 @@ Earlier we discussed turning *off* wgpu-core's zero-initialization for trusted p
 Instead of loading loose .wgsl text files at runtime in sensitive deployments:
 
 > * wgsl-forge compiles the WGSL/Slang shaders into signed, multi-target binary bundles (containing the SPIR-V, MetalLib, DXIL, and PTX bytecode alongside the N3Logic fiduciary policy descriptor).  
-> * The wgpu-hal agent verifies the signature and policy alignment of the shader bundle before invoking vkCreateComputePipelines or cuModuleLoadData. If an extension tries to load an unverified surveillance or data-exfiltration kernel, the hardware agent rejects it at the HAL boundary.
+> * The etalon-hal agent verifies the signature and policy alignment of the shader bundle before invoking vkCreateComputePipelines or cuModuleLoadData. If an extension tries to load an unverified surveillance or data-exfiltration kernel, the hardware agent rejects it at the HAL boundary.
 
 ## **4\. Concrete Implementation Blueprint for wgsl-forge**
 
@@ -393,7 +393,7 @@ By moving QualiaDB’s WGSL Forge into crates/wgsl-forge, it becomes the central
 >        `/// Inspect and validate the Naga IR / Slang AST before target lowering`  
 >        `fn verify_ir(&self, module: &naga::Module, policy: &ExecutionPolicy) -> Result<(), PolicyViolation>;`
 
->        `/// Configure wgpu-hal memory allocation & post-execution scrubbing flags`  
+>        `/// Configure etalon-hal memory allocation & post-execution scrubbing flags`  
 >        `fn hal_memory_flags(&self) -> HalSecurityFlags;`  
 >    `}`
 
@@ -514,13 +514,13 @@ If you want the name to reflect the **mathematical engine** that unifies 3D rend
 
 ### **4\. How This Reshapes the Repository Architecture**
 
-Because this repository is not just a database accelerator, but the **Unified Sensory & Field Compute Engine** (handling **EMF**, **Audio**, **Vision**, and **Numbers**), its internal crate layout naturally organizes around those physical domains above wgpu-hal:
+Because this repository is not just a database accelerator, but the **Unified Sensory & Field Compute Engine** (handling **EMF**, **Audio**, **Vision**, and **Numbers**), its internal crate layout naturally organizes around those physical domains above etalon-hal:
 
 ``<repo-name>/  (e.g., `etalon`, `phasor`, `helmholtz`, or `echelle`)``  
 `│`  
 `├── 1. Hardware & Compiler Core (Upstream-Compatible Base)`  
-`│   ├── wgpu-hal/                # The Silicon Steward (Vulkan, Metal, DX12, CUDA)`  
-`│   ├── wgpu-core/ & wgpu-types/ # Multi-queue & memory lifecycle`  
+`│   ├── etalon-hal/                # The Silicon Steward (Vulkan, Metal, DX12, CUDA)`  
+`│   ├── etalon-core/ & etalon-types/ # Multi-queue & memory lifecycle`  
 `│   └── naga/                    # Base shader AST`  
 `│`  
 `├── 2. The Shader & Policy Forge`  
@@ -541,8 +541,8 @@ Because this repository is not just a database accelerator, but the **Unified Se
 On the GPU hardware level, **EMF analysis**, **Audio DSP**, and **3D Vision** share the exact same underlying mathematical primitives:
 
 > 1. **Fast Fourier Transforms (FFT) & Wavelets:** Used simultaneously to decompose RF/EMF spectrum captures, process spatial audio frequencies, and perform spectral rendering/bloom in vision.  
-> 2. **Ray & Wavefront Tracing (wgpu-core/src/ray\_tracing.rs):** The exact same BVH hardware acceleration structures on your RTX A2000 or Apple Silicon can trace **visible light photons** for human vision, **acoustic bounce paths** for spatial audio, and **RF/EMF multipath propagation** (reflection/diffraction/attenuation) across a 3D environment.  
-> 3. **Synchronized Perceptual Framing:** Because wgpu-hal controls the hardware Timeline Semaphores, it can lock the **audio buffer synthesis**, **EMF waterfall telemetry**, and **120Hz visual display frame** to a single deterministic hardware clock.
+> 2. **Ray & Wavefront Tracing (etalon-core/src/ray\_tracing.rs):** The exact same BVH hardware acceleration structures on your RTX A2000 or Apple Silicon can trace **visible light photons** for human vision, **acoustic bounce paths** for spatial audio, and **RF/EMF multipath propagation** (reflection/diffraction/attenuation) across a 3D environment.  
+> 3. **Synchronized Perceptual Framing:** Because etalon-hal controls the hardware Timeline Semaphores, it can lock the **audio buffer synthesis**, **EMF waterfall telemetry**, and **120Hz visual display frame** to a single deterministic hardware clock.
 
 ### **Comparing the Top Functional Names for This Full Scope**
 
@@ -568,13 +568,13 @@ Here is the architectural layout, crate schema, and execution pipeline for the *
 
 ### **1\. Workspace Crate Topology (Cargo.toml)**
 
-To allow cherry-picking fixes from upstream gfx-rs/wgpu without merge conflicts, the core drivers retain upstream directory layouts, while Etalon's forge, domain engines, and fiduciary extensions sit cleanly in crates/ and extensions/.
+To allow cherry-picking fixes from upstream gfx-rs/etalon without merge conflicts, the core drivers retain upstream directory layouts, while Etalon's forge, domain engines, and fiduciary extensions sit cleanly in crates/ and extensions/.
 
 `etalon/`  
 `├── Cargo.toml                         # Top-level virtual workspace`  
-`├── wgpu-hal/                          # The Silicon & Photonic Steward (Vulkan, Metal, DX12, CUDA)`  
-`├── wgpu-core/                         # Multi-queue scheduling & memory lifecycle`  
-`├── wgpu-types/                        # Core descriptors & Etalon extended capabilities`  
+`├── etalon-hal/                          # The Silicon & Photonic Steward (Vulkan, Metal, DX12, CUDA)`  
+`├── etalon-core/                         # Multi-queue scheduling & memory lifecycle`  
+`├── etalon-types/                        # Core descriptors & Etalon extended capabilities`  
 `├── naga/                              # Core AST parser and code generator`  
 `│`  
 `├── crates/`  
@@ -614,7 +614,7 @@ Rather than duplicating math across the four domains, etalon-math provides share
 
 ### **3\. etalon-agent: The Hardware & Optical Steward Interface**
 
-etalon-agent wraps wgpu-hal to provide a lock-free, zero-overhead interface for native workloads, avoiding browser validation overhead.
+etalon-agent wraps etalon-hal to provide a lock-free, zero-overhead interface for native workloads, avoiding browser validation overhead.
 
 `// crates/etalon-agent/src/lib.rs`
 
@@ -712,10 +712,10 @@ etalon-forge compiles WGSL and Slang kernels into native SPIR-V, DXIL, MetalLib,
 `resolver = "2"`  
 `members = [`  
     `# Upstream-compatible core`  
-    `"wgpu-hal",`  
-    `"wgpu-core",`  
-    `"wgpu-types",`  
-    `"wgpu",`  
+    `"etalon-hal",`  
+    `"etalon-core",`  
+    `"etalon-types",`  
+    `"etalon",`  
     `"naga",`
 
     `# Etalon foundational crates`  
@@ -763,10 +763,10 @@ Standard SPDX identifiers (like MIT or Apache-2.0) cannot express ontological ag
 `[workspace]`  
 `resolver = "2"`  
 `members = [`  
-    `"wgpu-hal",`  
-    `"wgpu-core",`  
-    `"wgpu-types",`  
-    `"wgpu",`  
+    `"etalon-hal",`  
+    `"etalon-core",`  
+    `"etalon-types",`  
+    `"etalon",`  
     `"naga",`  
     `"crates/etalon-agent",`  
     `"crates/etalon-forge",`  
