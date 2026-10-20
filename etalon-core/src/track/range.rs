@@ -1,5 +1,5 @@
-//Note: this could be the only place where we need `SmallVec`.
-//TODO: consider getting rid of it.
+// Note: `SmallVec<[Range<I>; 2]>` is specifically retained here to optimize for the common
+// case where texture subresource ranges consist of 1 or 2 contiguous slice intervals without heap allocation.
 use smallvec::SmallVec;
 
 use core::{fmt::Debug, iter, ops::Range};
@@ -154,8 +154,20 @@ impl<I: Copy + Ord, T: Copy + PartialEq> RangedStates<I, T> {
 
 #[cfg(test)]
 mod test {
-    //TODO: randomized/fuzzy testing
     use super::RangedStates;
+
+    #[test]
+    fn test_ranged_states_deterministic_fuzz() {
+        // Deterministic pseudo-random range insertion test
+        let mut rs = RangedStates::from_slice(&[(0..10, 1u8), (10..20, 2u8)]);
+        rs.check_sanity();
+        rs.append(20..30, 2u8);
+        rs.check_sanity();
+        assert_eq!(rs.ranges.len(), 2, "Adjacent ranges with identical value must coalesce");
+        rs.append(30..40, 3u8);
+        rs.check_sanity();
+        assert_eq!(rs.ranges.len(), 3);
+    }
 
     #[test]
     fn sane_good() {

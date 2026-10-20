@@ -136,7 +136,16 @@ pub struct HalCounters {
 /// `etalon-core`'s part of [`InternalCounters`].
 #[derive(Clone, Debug, Default)]
 pub struct CoreCounters {
-    // TODO    #[cfg(features=)]
+    /// Number of active buffer resources tracked by `etalon-core`.
+    pub active_buffers: InternalCounter,
+    /// Number of active texture resources tracked by `etalon-core`.
+    pub active_textures: InternalCounter,
+    /// Number of active bind group resources tracked by `etalon-core`.
+    pub active_bind_groups: InternalCounter,
+    /// Number of active pipeline resources tracked by `etalon-core`.
+    pub active_pipelines: InternalCounter,
+    /// Number of active command encoders / command buffers.
+    pub active_command_buffers: InternalCounter,
 }
 
 /// All internal counters, exposed for debugging purposes.
@@ -182,8 +191,18 @@ pub struct AllocatorReport {
     /// Sum of the memory used by all allocations, in bytes.
     pub total_allocated_bytes: u64,
     /// Sum of the memory reserved by all memory blocks including unallocated regions, in bytes.
-    // XXX: Rename to total_capacity_bytes following the rename at https://github.com/Traverse-Research/gpu-allocator/pull/266?
     pub total_reserved_bytes: u64,
+}
+
+impl AllocatorReport {
+    /// Returns the total capacity of the allocator in bytes (sum of reserved memory across all blocks).
+    ///
+    /// Alias for [`total_reserved_bytes`](Self::total_reserved_bytes) matching the gpu-allocator convention.
+    #[inline]
+    #[must_use]
+    pub fn total_capacity_bytes(&self) -> u64 {
+        self.total_reserved_bytes
+    }
 }
 
 impl fmt::Debug for AllocationReport {

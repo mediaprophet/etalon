@@ -164,15 +164,12 @@ impl Extent3d {
 
     /// Calculates the extent at a given mip level.
     ///
-    /// This is a low-level helper for internal use.
-    ///
-    /// It does *not* account for memory size being a multiple of block size.
-    ///
-    /// TODO(<https://github.com/mediaprophet/etalon/issues/8491>): It also does not
-    /// consider whether an even dimension is required due to chroma
-    /// subsampling, but it probably should.
-    ///
+    /// This is a low-level helper for internal use following the WebGPU specification
+    /// logical mip level algorithm:
     /// <https://gpuweb.github.io/gpuweb/#logical-miplevel-specific-texture-extent>
+    ///
+    /// For formats requiring specific alignment (e.g. multi-planar chroma subsampling),
+    /// use [`mip_level_size_for_format`](Self::mip_level_size_for_format).
     #[doc(hidden)]
     #[must_use]
     pub fn mip_level_size(&self, level: u32, dim: TextureDimension) -> Self {
@@ -190,5 +187,24 @@ impl Extent3d {
                 }
             },
         }
+    }
+
+    /// Calculates the extent at a given mip level, enforcing chroma subsampling constraints
+    /// (e.g. even dimensions for multi-planar NV12/P010 formats) when applicable.
+    #[doc(hidden)]
+    #[must_use]
+    pub fn mip_level_size_for_format(
+        &self,
+        level: u32,
+        dim: TextureDimension,
+        format: crate::TextureFormat,
+    ) -> Self {
+        let mut size = self.mip_level_size(level, dim);
+        if format.is_multi_planar() {
+            let (req_w, req_h) = format.size_multiple_requirement();
+            size.width = size.width.div_ceil(req_w) * req_w;
+            size.height = size.height.div_ceil(req_h) * req_h;
+        }
+        size
     }
 }

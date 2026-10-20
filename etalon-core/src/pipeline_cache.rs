@@ -11,8 +11,9 @@ pub const HEADER_LENGTH: usize = size_of::<PipelineCacheHeader>();
 pub enum PipelineCacheValidationError {
     #[error("The pipeline cache data was truncated")]
     Truncated,
+    /// The pipeline cache data was longer than recorded in the header length field,
+    /// indicating trailing unvalidated bytes, an appended stream, or an incomplete overwrite.
     #[error("The pipeline cache data was longer than recorded")]
-    // TODO: Is it plausible that this would happen
     Extended,
     #[error("The pipeline cache data was corrupted (e.g. the hash didn't match)")]
     Corrupted,

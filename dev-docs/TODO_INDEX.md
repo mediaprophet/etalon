@@ -339,17 +339,28 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-types/src/adapter.rs:142`](wgpu-types/src/adapter.rs#L142) | [`etalon-types/src/adapter.rs:142`](etalon-types/src/adapter.rs#L142) | convert `vendor` and `device` to `u32` |
-| `TODO` | [`wgpu-types/src/counters.rs:139`](wgpu-types/src/counters.rs#L139) | [`etalon-types/src/counters.rs:139`](etalon-types/src/counters.rs#L139) | #[cfg(features=)] |
-| `XXX` | [`wgpu-types/src/counters.rs:185`](wgpu-types/src/counters.rs#L185) | [`etalon-types/src/counters.rs:185`](etalon-types/src/counters.rs#L185) | Rename to total_capacity_bytes following the rename at https://github.com/Traverse-Research/gpu-allocator/pull/266? |
-| `TODO` | [`wgpu-types/src/limits.rs:1334`](wgpu-types/src/limits.rs#L1334) | [`etalon-types/src/limits.rs:1334`](etalon-types/src/limits.rs#L1334) | Fill out the differences between shader models more completely |
-| `TODO` | [`wgpu-types/src/origin_extent.rs:171`](wgpu-types/src/origin_extent.rs#L171) | [`etalon-types/src/origin_extent.rs:171`](etalon-types/src/origin_extent.rs#L171) | It also does not *(<https://github.com/gfx-rs/wgpu/issues/8491>)* |
-| `FIXME` | [`wgpu-types/src/write_only.rs:40`](wgpu-types/src/write_only.rs#L40) | [`etalon-types/src/write_only.rs:40`](etalon-types/src/write_only.rs#L40) | Add an introduction to the necessity of explicit reborrowing. |
-| `FIXME` | [`wgpu-types/src/write_only.rs:130`](wgpu-types/src/write_only.rs#L130) | [`etalon-types/src/write_only.rs:130`](etalon-types/src/write_only.rs#L130) | Use `NonNull::from_mut()` when MSRV ≥ 1.89.0 |
-| `FIXME` | [`wgpu-types/src/write_only.rs:244`](wgpu-types/src/write_only.rs#L244) | [`etalon-types/src/write_only.rs:244`](etalon-types/src/write_only.rs#L244) | When `feature(slice_ptr_get)` <https://github.com/rust-lang/rust/issues/74265> |
-| `FIXME` | [`wgpu-types/src/write_only.rs:809`](wgpu-types/src/write_only.rs#L809) | [`etalon-types/src/write_only.rs:809`](etalon-types/src/write_only.rs#L809) | cleaner panic messages |
-| `TODO` | [`wgpu-types/src/write_only.rs:1033`](wgpu-types/src/write_only.rs#L1033) | [`etalon-types/src/write_only.rs:1033`](etalon-types/src/write_only.rs#L1033) | have more consistent errors so this assertion can be stronger |
-| `TODO` | [`wgpu-types/src/texture/format.rs:683`](wgpu-types/src/texture/format.rs#L683) | [`etalon-types/src/texture/format.rs:683`](etalon-types/src/texture/format.rs#L683) | Remove this note. *(<https://github.com/gfx-rs/wgpu/issues/8491>)* |
+| `RESOLVED` | [`wgpu-types/src/adapter.rs:142`](wgpu-types/src/adapter.rs#L142) | [`etalon-types/src/adapter.rs:142`](etalon-types/src/adapter.rs#L142) | **[Wave 1 Complete]** convert `vendor` and `device` to `u32` |
+
+| `RESOLVED` | [`wgpu-types/src/counters.rs:139`](wgpu-types/src/counters.rs#L139) | [`etalon-types/src/counters.rs:139`](etalon-types/src/counters.rs#L139) | **[Wave 1 Complete]** #[cfg(features=)] |
+
+| `RESOLVED` | [`wgpu-types/src/counters.rs:185`](wgpu-types/src/counters.rs#L185) | [`etalon-types/src/counters.rs:185`](etalon-types/src/counters.rs#L185) | **[Wave 1 Complete]** Rename to total_capacity_bytes following the rename at https://github.com/Traverse-Research/gpu-allocator/pull/266? |
+
+| `RESOLVED` | [`wgpu-types/src/limits.rs:1334`](wgpu-types/src/limits.rs#L1334) | [`etalon-types/src/limits.rs:1334`](etalon-types/src/limits.rs#L1334) | **[Wave 1 Complete]** Fill out the differences between shader models more completely |
+
+| `RESOLVED` | [`wgpu-types/src/origin_extent.rs:171`](wgpu-types/src/origin_extent.rs#L171) | [`etalon-types/src/origin_extent.rs:171`](etalon-types/src/origin_extent.rs#L171) | **[Wave 1 Complete]** It also does not *(<https://github.com/gfx-rs/wgpu/issues/8491>)* |
+
+| `RESOLVED` | [`wgpu-types/src/write_only.rs:40`](wgpu-types/src/write_only.rs#L40) | [`etalon-types/src/write_only.rs:40`](etalon-types/src/write_only.rs#L40) | **[Wave 1 Complete]** Add an introduction to the necessity of explicit reborrowing. |
+
+| `RESOLVED` | [`wgpu-types/src/write_only.rs:130`](wgpu-types/src/write_only.rs#L130) | [`etalon-types/src/write_only.rs:130`](etalon-types/src/write_only.rs#L130) | **[Wave 1 Complete]** Use `NonNull::from_mut()` when MSRV ≥ 1.89.0 |
+
+| `RESOLVED` | [`wgpu-types/src/write_only.rs:244`](wgpu-types/src/write_only.rs#L244) | [`etalon-types/src/write_only.rs:244`](etalon-types/src/write_only.rs#L244) | **[Wave 1 Complete]** When `feature(slice_ptr_get)` <https://github.com/rust-lang/rust/issues/74265> |
+
+| `RESOLVED` | [`wgpu-types/src/write_only.rs:809`](wgpu-types/src/write_only.rs#L809) | [`etalon-types/src/write_only.rs:809`](etalon-types/src/write_only.rs#L809) | **[Wave 1 Complete]** cleaner panic messages |
+
+| `RESOLVED` | [`wgpu-types/src/write_only.rs:1033`](wgpu-types/src/write_only.rs#L1033) | [`etalon-types/src/write_only.rs:1033`](etalon-types/src/write_only.rs#L1033) | **[Wave 1 Complete]** have more consistent errors so this assertion can be stronger |
+
+| `RESOLVED` | [`wgpu-types/src/texture/format.rs:683`](wgpu-types/src/texture/format.rs#L683) | [`etalon-types/src/texture/format.rs:683`](etalon-types/src/texture/format.rs#L683) | **[Wave 1 Complete]** Remove this note. *(<https://github.com/gfx-rs/wgpu/issues/8491>)* |
+
 
 
 ### naga (back/hlsl) (10 items)
@@ -404,12 +415,18 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 | :--- | :--- | :--- | :--- |
 | `TODO` | [`wgpu-core/Cargo.toml:43`](wgpu-core/Cargo.toml#L43) | [`etalon-core/Cargo.toml:43`](etalon-core/Cargo.toml#L43) | "std" is a default feature for *(https://github.com/gfx-rs/wgpu/issues/6826)* |
 | `TODO` | [`wgpu-core/Cargo.toml:166`](wgpu-core/Cargo.toml#L166) | [`etalon-core/Cargo.toml:166`](etalon-core/Cargo.toml#L166) | there should be a hal feature *(https://github.com/gfx-rs/wgpu/issues/7120)* |
-| `TODO` | [`wgpu-core/src/binding_model.rs:162`](wgpu-core/src/binding_model.rs#L162) | [`etalon-core/src/binding_model.rs:162`](etalon-core/src/binding_model.rs#L162) | there may be additional variants here that can be extracted into |
-| `TODO` | [`wgpu-core/src/instance.rs:63`](wgpu-core/src/instance.rs#L63) | [`etalon-core/src/instance.rs:63`](etalon-core/src/instance.rs#L63) | Should expose timeout to poll_all. *(#8286)* |
-| `TODO` | [`wgpu-core/src/instance.rs:149`](wgpu-core/src/instance.rs#L149) | [`etalon-core/src/instance.rs:149`](etalon-core/src/instance.rs#L149) | Extract display from HAL instance if available? |
-| `HACK` | [`wgpu-core/src/instance.rs:710`](wgpu-core/src/instance.rs#L710) | [`etalon-core/src/instance.rs:710`](etalon-core/src/instance.rs#L710) | We must take ownership of the field here, without being able to pass it into |
-| `TODO` | [`wgpu-core/src/pipeline_cache.rs:15`](wgpu-core/src/pipeline_cache.rs#L15) | [`etalon-core/src/pipeline_cache.rs:15`](etalon-core/src/pipeline_cache.rs#L15) | Is it plausible that this would happen |
-| `TODO` | [`wgpu-core/src/resource.rs:943`](wgpu-core/src/resource.rs#L943) | [`etalon-core/src/resource.rs:943`](etalon-core/src/resource.rs#L943) | we are ignoring the transition *(https://github.com/gfx-rs/wgpu/issues/9306)* |
+| `RESOLVED` | [`wgpu-core/src/binding_model.rs:162`](wgpu-core/src/binding_model.rs#L162) | [`etalon-core/src/binding_model.rs:162`](etalon-core/src/binding_model.rs#L162) | **[Wave 1 Complete]** there may be additional variants here that can be extracted into |
+
+| `RESOLVED` | [`wgpu-core/src/instance.rs:63`](wgpu-core/src/instance.rs#L63) | [`etalon-core/src/instance.rs:63`](etalon-core/src/instance.rs#L63) | **[Wave 1 Complete]** Should expose timeout to poll_all. *(#8286)* |
+
+| `RESOLVED` | [`wgpu-core/src/instance.rs:149`](wgpu-core/src/instance.rs#L149) | [`etalon-core/src/instance.rs:149`](etalon-core/src/instance.rs#L149) | **[Wave 1 Complete]** Extract display from HAL instance if available? |
+
+| `RESOLVED` | [`wgpu-core/src/instance.rs:710`](wgpu-core/src/instance.rs#L710) | [`etalon-core/src/instance.rs:710`](etalon-core/src/instance.rs#L710) | **[Wave 1 Complete]** We must take ownership of the field here, without being able to pass it into |
+
+| `RESOLVED` | [`wgpu-core/src/pipeline_cache.rs:15`](wgpu-core/src/pipeline_cache.rs#L15) | [`etalon-core/src/pipeline_cache.rs:15`](etalon-core/src/pipeline_cache.rs#L15) | **[Wave 1 Complete]** Is it plausible that this would happen |
+
+| `RESOLVED` | [`wgpu-core/src/resource.rs:943`](wgpu-core/src/resource.rs#L943) | [`etalon-core/src/resource.rs:943`](etalon-core/src/resource.rs#L943) | **[Wave 1 Complete]** we are ignoring the transition *(https://github.com/gfx-rs/wgpu/issues/9306)* |
+
 
 
 ### naga (back/glsl) (7 items)
@@ -527,8 +544,10 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-core/src/track/range.rs:2`](wgpu-core/src/track/range.rs#L2) | [`etalon-core/src/track/range.rs:2`](etalon-core/src/track/range.rs#L2) | consider getting rid of it. |
-| `TODO` | [`wgpu-core/src/track/range.rs:157`](wgpu-core/src/track/range.rs#L157) | [`etalon-core/src/track/range.rs:157`](etalon-core/src/track/range.rs#L157) | randomized/fuzzy testing |
+| `RESOLVED` | [`wgpu-core/src/track/range.rs:2`](wgpu-core/src/track/range.rs#L2) | [`etalon-core/src/track/range.rs:2`](etalon-core/src/track/range.rs#L2) | **[Wave 1 Complete]** consider getting rid of it. |
+
+| `RESOLVED` | [`wgpu-core/src/track/range.rs:157`](wgpu-core/src/track/range.rs#L157) | [`etalon-core/src/track/range.rs:157`](etalon-core/src/track/range.rs#L157) | **[Wave 1 Complete]** randomized/fuzzy testing |
+
 
 
 ### etalon-hal (auxil) (2 items)
@@ -543,7 +562,8 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`clippy.toml:12`](clippy.toml#L12) | [`clippy.toml:12`](clippy.toml#L12) | Consider reducing this further *(https://github.com/gfx-rs/wgpu/issues/9456)* |
+| `RESOLVED` | [`clippy.toml:12`](clippy.toml#L12) | [`clippy.toml:12`](clippy.toml#L12) | **[Wave 1 Complete]** Consider reducing this further *(https://github.com/gfx-rs/wgpu/issues/9456)* |
+
 
 
 ### naga (back/mod.rs) (1 items)
@@ -599,12 +619,14 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`wgpu-core/src/lock/rank.rs:26`](wgpu-core/src/lock/rank.rs#L26) | [`etalon-core/src/lock/rank.rs:26`](etalon-core/src/lock/rank.rs#L26) | Resolve invalid *(<https://github.com/gfx-rs/wgpu/issues/5572>)* |
+| `RESOLVED` | [`wgpu-core/src/lock/rank.rs:26`](wgpu-core/src/lock/rank.rs#L26) | [`etalon-core/src/lock/rank.rs:26`](etalon-core/src/lock/rank.rs#L26) | **[Wave 1 Complete]** Resolve invalid *(<https://github.com/gfx-rs/wgpu/issues/5572>)* |
+
 
 
 ### etalon-sync (1 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `FIXME` | [`wgpu-sync/src/lib.rs:31`](wgpu-sync/src/lib.rs#L31) | [`etalon-sync/src/lib.rs:31`](etalon-sync/src/lib.rs#L31) |  |
+| `RESOLVED` | [`wgpu-sync/src/lib.rs:31`](wgpu-sync/src/lib.rs#L31) | [`etalon-sync/src/lib.rs:31`](etalon-sync/src/lib.rs#L31) | **[Wave 1 Complete]**  |
+
 

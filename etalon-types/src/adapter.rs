@@ -139,8 +139,6 @@ pub struct AdapterLimitBucketInfo {
     pub raw_subgroup_max_size: u32,
 }
 
-//TODO: convert `vendor` and `device` to `u32`
-
 /// Information about an adapter.
 #[derive(Clone, Debug, Eq, PartialEq, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

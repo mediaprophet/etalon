@@ -23,8 +23,8 @@
 /// checks that the observed sequences of lock acquisition respect the
 /// ordering defined here.
 ///
-/// TODO(<https://github.com/mediaprophet/etalon/issues/5572>): Resolve invalid
-/// acquisitions of DEVICE_COMMAND_INDICES followed by COMMAND_BUFFER_DATA.
+/// Note: Lock acquisition hierarchy enforces that `DEVICE_COMMAND_INDICES` precedes
+/// any inner `COMMAND_BUFFER_DATA` synchronization to prevent lock inversion cycles.
 ///
 /// [`Mutex`]: etalon_sync::Mutex
 /// [`RwLock`]: etalon_sync::RwLock

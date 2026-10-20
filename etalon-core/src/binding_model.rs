@@ -159,8 +159,7 @@ impl WebGpuError for BindingError {
     }
 }
 
-// TODO: there may be additional variants here that can be extracted into
-// `BindingError`.
+/// Error occurred during bind group creation.
 #[derive(Clone, Debug, Error)]
 #[non_exhaustive]
 pub enum CreateBindGroupError {

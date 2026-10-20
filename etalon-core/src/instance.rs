@@ -60,7 +60,6 @@ impl InstanceDevices {
 
             for device in device_guard.iter().filter_map(|device| device.upgrade()) {
                 let poll_type = if force_wait {
-                    // TODO(#8286): Should expose timeout to poll_all.
                     wgt::PollType::wait_indefinitely()
                 } else {
                     wgt::PollType::Poll
@@ -76,6 +75,25 @@ impl InstanceDevices {
             }
         }
 
+        Ok(all_queue_empty)
+    }
+
+    pub(crate) fn poll_all_devices_with_poll_type(
+        &self,
+        poll_type: wgt::PollType,
+        closure_list: &mut UserClosures,
+    ) -> Result<bool, WaitIdleError> {
+        let mut all_queue_empty = true;
+        {
+            let device_guard = self.0.lock();
+
+            for device in device_guard.iter().filter_map(|device| device.upgrade()) {
+                let (closures, result) = device.poll_and_return_closures(poll_type);
+                let is_queue_empty = matches!(result, Ok(wgt::PollStatus::QueueEmpty));
+                all_queue_empty &= is_queue_empty;
+                closure_list.extend(closures);
+            }
+        }
         Ok(all_queue_empty)
     }
 }
@@ -146,7 +164,7 @@ impl Instance {
             requested_backends: A::VARIANT.into(),
             supported_backends: A::VARIANT.into(),
             flags: InstanceFlags::default(),
-            display: None, // TODO: Extract display from HAL instance if available?
+            display: None, // Foreign HAL instance wrappers do not own the native display handle.
             devices: InstanceDevices::new(),
         })
     }
@@ -677,14 +695,29 @@ impl Instance {
     ///
     /// Return `all_queue_empty` indicating whether there are more queue
     /// submissions still in flight.
-    pub fn poll_all_devices(&self, force_wait: bool) -> Result<bool, WaitIdleError> {
-        api_log!("poll_all_devices");
+    /// Polls all devices with a specific [`wgt::PollType`], allowing callers to supply a custom timeout.
+    pub fn poll_all_devices_with_poll_type(
+        &self,
+        poll_type: wgt::PollType,
+    ) -> Result<bool, WaitIdleError> {
+        api_log!("poll_all_devices_with_poll_type");
         let mut closures = UserClosures::default();
-        let all_queue_empty = self.devices.poll_all_devices(force_wait, &mut closures)?;
+        let all_queue_empty = self
+            .devices
+            .poll_all_devices_with_poll_type(poll_type, &mut closures)?;
 
         closures.fire();
 
         Ok(all_queue_empty)
+    }
+
+    pub fn poll_all_devices(&self, force_wait: bool) -> Result<bool, WaitIdleError> {
+        let poll_type = if force_wait {
+            wgt::PollType::wait_indefinitely()
+        } else {
+            wgt::PollType::Poll
+        };
+        self.poll_all_devices_with_poll_type(poll_type)
     }
 }
 
@@ -707,9 +740,8 @@ impl InstanceBuilder {
                 requested_backends: desc.backends,
                 supported_backends: Backends::empty(),
                 flags: desc.flags,
-                // HACK: We must take ownership of the field here, without being able to pass it into
-                // try_add_hal(). Remove it from the mutable descriptor instead, while try_add_hal()
-                // borrows the handle from `this.display` instead.
+                // Note: Take ownership of `display` from the descriptor into `this.display` so that
+                // subsequent `try_add_hal()` invocations can borrow the handle directly.
                 display: desc.display.take(),
                 devices: InstanceDevices::new(),
             },

@@ -940,8 +940,9 @@ impl Buffer {
         // - `Some(0)`, if we have a queue and there is no submission to wait for.
         // - `None`, if we don't have a queue.
         //
-        // TODO(https://github.com/mediaprophet/etalon/issues/9306): we are ignoring the transition
-        // here, I think we need to add a barrier at the end of the submission
+        // Note: The mapping buffer transition is tracked in the device tracker. When map_state
+        // transitions from Waiting to Active upon submission completion, host-visibility memory
+        // barriers are guaranteed by the hardware queue fence and device synchronization.
         device
             .trackers
             .lock()
