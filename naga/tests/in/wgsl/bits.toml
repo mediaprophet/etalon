@@ -1,4 +1,3 @@
-# TODO(https://github.com/mediaprophet/etalon/issues/8154): enable only `F16_IN_F32` capability
 capabilities = "SHADER_FLOAT16_IN_FLOAT32"
 
 [msl]

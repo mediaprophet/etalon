@@ -1,5 +1,5 @@
 fn control_flow() {
-    //TODO: execution-only barrier?
+    // Execution and memory barrier test sequence
     storageBarrier();
     workgroupBarrier();
     textureBarrier();

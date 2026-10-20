@@ -46,7 +46,6 @@ fn snoise(v: vec3<f32>) -> f32 {
     let D = vec4<f32>(0.0, 0.5, 1.0, 2.0);
 
     // First corner
-    //TODO: use the splat operations when available
     let vCy = dot(v, C.yyy);
     var i: vec3<f32> = floor(v + vec3<f32>(vCy, vCy, vCy));
     let iCx = dot(i, C.xxx);
@@ -127,7 +126,6 @@ fn apply_distortion(pos: vec3<f32>) -> vec3<f32> {
     //Do noise transformation to permit for smooth,
     //continuous movement.
 
-    //TODO: we should be able to name them `sin` and `cos`.
     let sn = uniforms.time_size_width.x;
     let cs = uniforms.time_size_width.y;
     let size = uniforms.time_size_width.z;
@@ -156,7 +154,6 @@ fn apply_distortion(pos: vec3<f32>) -> vec3<f32> {
 
     // Sample at different places for x/y/z to get random-looking water.
     return vec3<f32>(
-        //TODO: use splats
         pos.x + snoise(perlin_pos_x + 2.0*one.xxx) * 0.4,
         pos.y + snoise(perlin_pos_y - 2.0*one.xxx) * 1.8,
         pos.z + snoise(perlin_pos_z) * 0.4
@@ -172,7 +169,7 @@ fn make_position(original: vec2<f32>) -> vec4<f32> {
 // Create the normal, and apply the curve. Change the Curve Bias above.
 fn make_normal(a: vec3<f32>, b: vec3<f32>, c: vec3<f32>) -> vec3<f32> {
     let norm = normalize(cross(b - c, a - c));
-    let center = (a + b + c) * (1.0 / 3.0); //TODO: use splat
+    let center = (a + b + c) * (1.0 / 3.0);
     return (normalize(a - center) * CURVE_BIAS + norm) * INV_1_CURVE_BIAS;
 }
 
@@ -211,7 +208,6 @@ fn vs_main(
 
     let vm = uniforms.view;
     let transformed_pos = vm * a_pos;
-    //TODO: use vector splats for division
     let water_pos = transformed_pos.xyz * (1.0 / transformed_pos.w);
     let normal = make_normal((vm * a_pos).xyz, (vm * b_pos).xyz, (vm * c_pos).xyz);
     let eye = normalize(-water_pos);
@@ -256,7 +252,7 @@ fn fs_main(vertex: VertexOutput) -> @location(0) vec4<f32> {
     let clamped = pow(smoothstep(0.0, 1.5, dist), 4.8);
 
     let final_colour = vertex.f_Light + reflection_colour;
-    let t = smoothstep(1.0, 5.0, dist) * 0.2; //TODO: splat for mix()?
+    let t = smoothstep(1.0, 5.0, dist) * 0.2;
     let depth_colour = mix(final_colour, water_colour, vec3<f32>(t, t, t));
 
     return vec4<f32>(depth_colour, clamped * (1.0 - vertex.f_Fresnel));

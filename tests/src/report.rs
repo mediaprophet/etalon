@@ -24,7 +24,7 @@ impl GpuReport {
                 features: Features::all(),
                 limits: etalon::hal::noop::CAPABILITIES.limits,
                 downlevel_caps: etalon::hal::noop::CAPABILITIES.downlevel,
-                texture_format_features: HashMap::new(), // todo
+                texture_format_features: HashMap::new(),
             }],
         }
     }
@@ -60,7 +60,7 @@ impl AdapterReport {
             features,
             limits,
             downlevel_caps,
-            texture_format_features: HashMap::new(), // todo
+            texture_format_features: HashMap::new(),
         }
     }
 }

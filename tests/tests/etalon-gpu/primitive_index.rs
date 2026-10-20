@@ -147,7 +147,7 @@ fn fragment(FRAGMENT_PRIMITIVE_INDEX) -> @location(0) vec4<f32> {
 }
 
 fn mesh_params() -> TestParameters {
-    // TODO: when naga support for MSL/HLSL mesh shaders lands enable Metal and DX12
+    // Primitive index mesh shader test configuration
     TestParameters::default()
         .features(Features::PRIMITIVE_INDEX | Features::EXPERIMENTAL_MESH_SHADER)
         .limits(Limits::defaults().using_recommended_minimum_mesh_shader_values())

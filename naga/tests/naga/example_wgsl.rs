@@ -43,7 +43,6 @@ pub fn parse_example_wgsl() {
         let shader = fs::read_to_string(&example_path).unwrap();
 
         let module = wgsl::parse_str(&shader).unwrap();
-        //TODO: re-use the validator
         Validator::new(
             naga::valid::ValidationFlags::all(),
             naga::valid::Capabilities::all(),

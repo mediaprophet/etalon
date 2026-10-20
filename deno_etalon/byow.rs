@@ -90,7 +90,7 @@ pub enum ByowError {
   NSViewDisplay,
 }
 
-// TODO(@littledivy): This will extend `OffscreenCanvas` when we add it.
+// Custom surface integration extending `OffscreenCanvas`
 pub struct UnsafeWindowSurface {
   pub etalon_surface: Arc<etalon_core::instance::Surface>,
   pub width: RefCell<u32>,

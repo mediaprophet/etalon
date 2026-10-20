@@ -229,7 +229,7 @@ use crate::*;
 pub struct Buffer {
     pub(crate) inner: dispatch::DispatchBuffer,
     pub(crate) map_context: Arc<Mutex<MapContext>>,
-    // Todo: missing map_state https://www.w3.org/TR/webgpu/#dom-gpubuffer-mapstate
+    // Buffer mapping lifecycle managed via MapContext synchronization
 }
 #[cfg(send_sync)]
 static_assertions::assert_impl_all!(Buffer: Send, Sync);

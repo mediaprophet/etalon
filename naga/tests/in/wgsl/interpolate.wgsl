@@ -1,5 +1,3 @@
-//TODO: merge with "interface"?
-
 // NOTE: invalid combinations are tested in the
 // `validation::incompatible_interpolation_and_sampling_types` test.
 struct FragmentInput {

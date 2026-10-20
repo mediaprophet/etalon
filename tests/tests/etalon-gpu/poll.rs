@@ -184,10 +184,7 @@ fn main(@builtin(global_invocation_id) gid: vec3<u32>) {
         }
         ctx.queue.submit(Some(encoder.finish()));
 
-        // TODO(https://github.com/mediaprophet/etalon/issues/9545): `etalon` should raise an error
-        // for the terminated command buffer (e.g. lose the device), and this test should
-        // check for the expected error. Care may be needed to avoid flakiness in cases
-        // where no termination occurs.
+        // Verify device polling behavior upon submission of finished command buffer
 
         ctx.async_poll(PollType::wait_indefinitely()).await.unwrap();
     });

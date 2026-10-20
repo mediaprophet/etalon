@@ -17,9 +17,6 @@ pub fn validate_capabilities(ctx: TestingContext) {
         etalon::Backend::Dx12 => naga::back::hlsl::supported_capabilities(),
         etalon::Backend::Metal => {
             naga::back::msl::supported_capabilities()
-                // TODO(https://github.com/mediaprophet/etalon/issues/9849): mask off
-                // BUFFER_BINDING_ARRAY because it is not currently reported by
-                // naga's MSL backend.
                 | Caps::BUFFER_BINDING_ARRAY
         }
         etalon::Backend::Gl => naga::back::glsl::supported_capabilities(),

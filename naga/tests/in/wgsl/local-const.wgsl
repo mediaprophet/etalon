@@ -12,9 +12,6 @@ fn const_in_fn() {
     const d: f32 = 4;           // f32 with a value of 4.
     const e = vec3(a, a, a);    // vec3 of AbstractInt with a value of (4, 4, 4).
     const f = 2.0;              // AbstractFloat with a value of 2.
-    // TODO: Make it per spec, currently not possible
-    // because naga does not support automatic conversions
-    // of Abstract types
 
     // Check that we can access global constants
     const ag = ga;

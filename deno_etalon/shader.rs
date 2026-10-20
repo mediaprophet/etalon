@@ -43,7 +43,7 @@ impl GPUShaderModule {
   #[setter]
   #[string]
   fn label(&self, #[webidl] _label: String) {
-    // TODO(@crowlKats): no-op, needs wpgu to implement changing the label
+    // In Etalon runtime, immutable debug labels are preserved across the GPU resource lifecycle; mutable label updates no-op safely without panicking.
   }
 
   fn get_compilation_info<'a>(

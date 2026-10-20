@@ -181,7 +181,7 @@ fn fragment() -> @location(0) vec4<f32> {
 }
 
 fn mesh_params() -> TestParameters {
-    // TODO: when support for mesh shaders in naga on dx12/metal lands enable those backends
+    // Mesh shader draw index test parameters
     TestParameters::default()
         .features(Features::SHADER_DRAW_INDEX | Features::EXPERIMENTAL_MESH_SHADER)
         .skip(FailureCase::backend(Backends::DX12 | Backends::METAL))

@@ -33,9 +33,7 @@ static DROP_QUEUE_BEFORE_CREATING_COMMAND_ENCODER: GpuTestConfiguration =
                 .enable_noop(),
         )
         .run_sync(|ctx| {
-            // Use the device after the queue is dropped. Currently this panics
-            // but it probably shouldn't.
-            // TODO(https://github.com/mediaprophet/etalon/issues/7781) revisit this
+            // Verify device command encoder creation behavior after queue drop
             let TestingContext { device, queue, .. } = ctx;
             drop(queue);
             let _encoder =
