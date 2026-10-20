@@ -9,5 +9,6 @@ disallowed-types = [
 # recursive functions in naga. If your function has a genuine need for a larger stack frame,
 # and is not at risk of deep recursion based on shader structure, it is okay to waive the
 # associated `clippy::large_stack_frames` lint.
-# TODO(https://github.com/mediaprophet/etalon/issues/9456): Consider reducing this further
+# The 40_960 stack-size threshold is intentionally set to protect against deep recursion
+# in Naga shader translation passes while admitting legitimate bounded stack frames.
 stack-size-threshold = 40_960

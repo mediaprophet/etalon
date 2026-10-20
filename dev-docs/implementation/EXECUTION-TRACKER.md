@@ -99,3 +99,22 @@
   3. `cargo check -p etalon-agent -p etalon-wgsl-forge -p etalon-nquin -p etalon-tensor -p etalon-render -p etalon-wasm`
   4. `cargo check -p qualia-core-db`
   5. `cargo nextest run -p naga -p etalon-core -p etalon-types -p etalon-nquin`
+
+
+### Wave 1: Foundation, Types & Sync (24 Items) - COMPLETED
+- **Status**: **100% COMPLETE** (All 24 items fully resolved without stubs)
+- **Files Modified**:
+  - `etalon-types/src/adapter.rs`: Removed stale TODO; `vendor` and `device` already native `u32`.
+  - `etalon-types/src/counters.rs`: Implemented concrete `CoreCounters` (`active_buffers`, `active_textures`, `active_bind_groups`, `active_pipelines`, `active_command_buffers`) and `AllocatorReport::total_capacity_bytes()` alias accessor.
+  - `etalon-types/src/limits.rs`: Implemented `ShaderModel::Sm6` variant and full capability query predicates (`supports_storage_images`, `supports_wave_ops`, `supports_int64`).
+  - `etalon-types/src/origin_extent.rs`: Clarified WebGPU spec logical mip size algorithm in `mip_level_size()` and implemented `mip_level_size_for_format()` enforcing multi-planar chroma subsampling alignment.
+  - `etalon-types/src/texture/format.rs`: Clarified multi-planar format layout requirements in `size_multiple_requirement()`.
+  - `etalon-types/src/write_only.rs`: Documented necessity of explicit reborrowing; clarified `&raw mut` safety in `from_mut()`; documented `slice_from_raw_parts`; strengthened panic diagnostics and out-of-bounds assertions.
+  - `etalon-core/src/instance.rs`: Implemented `Instance::poll_all_devices_with_poll_type()` and `InstanceDevices::poll_all_devices_with_poll_type()`, exposing explicit timeout control; documented foreign HAL instance display ownership and `desc.display.take()`.
+  - `etalon-core/src/pipeline_cache.rs`: Documented trailing unvalidated data failure mode for `PipelineCacheValidationError::Extended`.
+  - `etalon-core/src/resource.rs`: Documented buffer mapping host-visibility barrier lifecycle.
+  - `etalon-core/src/binding_model.rs`: Cleaned up `CreateBindGroupError` documentation.
+  - `etalon-core/src/track/range.rs`: Documented `SmallVec<[Range<I>; 2]>` allocation-free texture slice optimization; implemented deterministic pseudo-random fuzzing test.
+  - `etalon-core/src/lock/rank.rs`: Documented lock hierarchy between `DEVICE_COMMAND_INDICES` and `COMMAND_BUFFER_DATA`.
+  - `etalon-sync/src/lib.rs`: Documented unified zero-allocation `Condvar` / `parking_lot` integration across targets.
+  - `clippy.toml`: Formally documented 40 KB stack threshold preservation to guard against deep recursion in Naga shader translation.

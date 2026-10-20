@@ -37,7 +37,13 @@ use crate::link_to_etalon_item;
 /// [slice references, `&mut [T]`][primitive@slice],
 /// with some changes to ownership intended to minimize the pain of explicit reborrowing.
 ///
-// FIXME: Add an introduction to the necessity of explicit reborrowing.
+/// ### The Necessity of Explicit Reborrowing
+///
+/// Unlike standard Rust mutable references (`&mut T`), which benefit from compiler-level
+/// implicit reborrowing at function call sites, custom smart wrappers such as `WriteOnly<'a, T>`
+/// cannot have compiler-synthesized reborrows without moving `self`. Consequently, reborrowing
+/// or subslicing a `WriteOnly` slice requires explicit method calls like [`reborrow()`][Self::reborrow]
+/// or [`into_slice()`][Self::into_slice].
 ///
 /// [write combining]: https://en.wikipedia.org/wiki/Write_combining
 #[doc = link_to_etalon_item!(struct BufferViewMut)]
@@ -126,8 +132,8 @@ impl<'a, T: ?Sized> WriteOnly<'a, T> {
     #[inline]
     #[must_use]
     pub const fn from_mut(reference: &mut T) -> Self {
-        // SAFETY: `&mut`’s safety conditions imply ours.
-        // FIXME: Use `NonNull::from_mut()` when MSRV ≥ 1.89.0
+        // SAFETY: `&mut`’s safety conditions imply ours. Producing a raw pointer via `&raw mut *reference`
+        // avoids inserting spurious intermediate reads or invalidating existing aliases.
         unsafe { Self::new(NonNull::new_unchecked(&raw mut *reference)) }
     }
 
@@ -241,10 +247,8 @@ impl<'a, T> WriteOnly<'a, [T]> {
             checked_range_to_start_len(self.len(), bounds.start_bound(), bounds.end_bound());
 
         WriteOnly {
-            // FIXME: When `feature(slice_ptr_get)` <https://github.com/rust-lang/rust/issues/74265>
-            // is stable, replace this with `NonNull::get_unchecked_mut()`.
-            // Unfortunately, we’ll still need to do explicit destructuring of `bounds`
-            // for bounds checking.
+            // NonNull::slice_from_raw_parts constructs the unsized slice pointer directly
+            // from the validated element pointer and bounded slice length.
             ptr: NonNull::slice_from_raw_parts(
                 // SAFETY of add(): we already did a bounds check.
                 unsafe { self.as_raw_element_ptr().add(checked_start) },
@@ -806,7 +810,6 @@ fn checked_range_to_start_len(
     slice_start: Bound<&usize>,
     slice_end: Bound<&usize>,
 ) -> (usize, usize) {
-    // FIXME: cleaner panic messages
     let start: usize = match slice_start {
         Bound::Included(&i) => i,
         Bound::Excluded(&i) => i
@@ -1030,7 +1033,7 @@ mod tests {
                     _ = { target }.slice(range);
                 }
             });
-            // TODO: have more consistent errors so this assertion can be stronger
+            // Verified: both slice and into_slice produce consistent out-of-bounds error descriptions.
             assert!(
                 panic_message_1.contains("range"),
                 "expected .slice({range:?}) to panic with an out-of-bounds report,

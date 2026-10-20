@@ -1331,7 +1331,6 @@ impl DownlevelFlags {
 }
 
 /// Collections of shader features a device supports if they support less than WebGPU normally allows.
-// TODO: Fill out the differences between shader models more completely
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum ShaderModel {
@@ -1341,6 +1340,34 @@ pub enum ShaderModel {
     Sm4,
     /// WebGPU supports shader module 5.
     Sm5,
+    /// Modern hardware supporting wave/subgroup ops and 64-bit integers.
+    Sm6,
+}
+
+impl ShaderModel {
+    /// Returns whether this shader model supports writable storage textures/images.
+    #[must_use]
+    pub const fn supports_storage_images(&self) -> bool {
+        match self {
+            Self::Sm2 | Self::Sm4 => false,
+            Self::Sm5 | Self::Sm6 => true,
+        }
+    }
+
+    /// Returns whether this shader model supports subgroup/wave-level operations.
+    #[must_use]
+    pub const fn supports_wave_ops(&self) -> bool {
+        match self {
+            Self::Sm2 | Self::Sm4 | Self::Sm5 => false,
+            Self::Sm6 => true,
+        }
+    }
+
+    /// Returns whether this shader model supports 64-bit integer types in arithmetic.
+    #[must_use]
+    pub const fn supports_int64(&self) -> bool {
+        matches!(self, Self::Sm6)
+    }
 }
 
 #[cfg(test)]

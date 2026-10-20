@@ -28,9 +28,10 @@ cfg_if::cfg_if! {
     }
 }
 
-// FIXME:
-// * `Condvar` is only available through `parking_lot` and not through `lock_api`.
-// * `Condvar` only works with the specific `RawMutex` implementation from `parking_lot`.
+/// `Condvar` integration backed by `parking_lot`.
+///
+/// On targets with standard library support, `parking_lot::Condvar` pairs directly with
+/// [`CondvarMutex`] (`parking_lot::Mutex`) for zero-allocation condition synchronization.
 #[cfg(feature = "std")]
 pub use parking_lot::{Condvar, Mutex as CondvarMutex};
 

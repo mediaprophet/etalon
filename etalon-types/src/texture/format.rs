@@ -678,9 +678,8 @@ impl TextureFormat {
 
     /// Returns the size multiple requirement for a texture using this format.
     ///
-    /// `create_texture` currently enforces a stricter restriction than this for
-    /// mipmapped multi-planar formats.
-    /// TODO(<https://github.com/mediaprophet/etalon/issues/8491>): Remove this note.
+    /// Multi-planar formats (NV12, P010) require dimensions to be multiples of (2, 2)
+    /// to satisfy 4:2:0 chroma subsampling layout constraints.
     #[must_use]
     pub fn size_multiple_requirement(&self) -> (u32, u32) {
         match *self {
