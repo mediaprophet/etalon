@@ -1,15 +1,15 @@
-# Webizen-WGPU — Sovereign WebGPU Engine for QualiaDB & Webizen
+# Etalon — Sovereign WebGPU & Graphics Standard for QualiaDB & Webizen
 
 > High-performance, memory-safe, cross-platform graphics and GPU compute engine hardened for QualiaDB cognitive pipelines, Aether spatial hosts, and Webizen OS-Shell.
 
-[![CI](https://github.com/mediaprophet/webizen-wgpu/actions/workflows/ci.yml/badge.svg)](https://github.com/mediaprophet/webizen-wgpu/actions/workflows/ci.yml)
+[![CI](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml/badge.svg)](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml)
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](LICENSE-QUALIA)
 [![Ecosystem: QualiaDB](https://img.shields.io/badge/Ecosystem-QualiaDB-blue.svg)](https://github.com/mediaprophet/qualiaDB)
 [![Platform: Vulkan_|_Metal_|_DX12_|_WebGPU](https://img.shields.io/badge/Backends-Vulkan_%7C_Metal_%7C_DX12_%7C_WebGPU-orange.svg)](#architecture--workspace-structure)
 
-**Webizen-WGPU** is the sovereign GPU acceleration engine powering the spatial computing environment of [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), the [Aether](https://github.com/mediaprophet/rust-app-framework) sovereign application framework, and [QualiaDB](https://github.com/mediaprophet/qualiaDB)'s 10D manifold neural rendering and WGSL Forge compute kernels.
+**Etalon** is the sovereign GPU acceleration and graphics standard powering the spatial computing environment of [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), the [Aether](https://github.com/mediaprophet/rust-app-framework) sovereign application framework, and [QualiaDB](https://github.com/mediaprophet/qualiaDB)'s 10D manifold neural rendering and WGSL Forge compute kernels.
 
-Maintained as an enhanced, hardened fork of `wgpu` 30, Webizen-WGPU addresses critical upstream edge cases, W3C specification churn, and browser/webview incompatibilities that disrupt production WebGPU and native graphics deployments.
+Named after the optical Fabry-Pérot etalon—the scientific archetype of precision measurement and wave interferometry—Etalon is maintained as an enhanced, hardened fork of `wgpu` 30. It provides an authoritative reference implementation that resolves critical upstream edge cases, W3C specification churn, and browser/webview incompatibilities that disrupt production WebGPU and native graphics deployments.
 
 ---
 
@@ -17,12 +17,12 @@ Maintained as an enhanced, hardened fork of `wgpu` 30, Webizen-WGPU addresses cr
 
 ### 1. Robust `pop_error_scope` Handling (Upstream Fix for Issue #7)
 - **The Issue**: In upstream `wgpu` 30.0.0, calling `device.pop_error_scope().await` on `wasm32` panicked with `"Unexpected error: constructor= value="` whenever the error scope caught *no* error. Modern `wasm-bindgen` (≥0.2.123) treats JS `null` as a present value in `into_option()`, turning `null` into `Some(null)` and triggering an internal panic that aborted the WebAssembly module and caused canvas viewports to hang or turn black.
-- **The Fix**: Webizen-WGPU inspects the resolved JS value in `future_pop_error_scope`, correctly returning `None` when the scope resolves to `null` or `undefined`.
+- **The Fix**: Etalon inspects the resolved JS value in `future_pop_error_scope`, correctly returning `None` when the scope resolves to `null` or `undefined`.
 - **Defensive Error Mapping**: Replaced the `panic!` in `error_from_js` with a graceful `crate::Error::Internal` variant, ensuring that unexpected JavaScript exceptions surface as typed Rust errors rather than process aborts.
 
 ### 2. Automatic Adapter Limits Sanitization
 - **The Issue**: W3C WebGPU specification (§3.2.1) mandates that every key in `requiredLimits` passed to `requestDevice()` must exist in `adapter.limits`. When browsers deprecate or remove limits (e.g. `maxInterStageShaderComponents` removed by Chromium/Edge), or when running on constrained mobile/compatibility adapters, upstream unconditional limit serialization triggers a hard JavaScript `OperationError`.
-- **The Fix**: Webizen-WGPU queries the adapter's supported limits via `self.inner.limits()` and checks property presence (`Reflect::has`) before serializing each limit key into `requiredLimits`. Unrecognized or unsupported keys are omitted, eliminating device creation failures without requiring monkey-patching in host web pages.
+- **The Fix**: Etalon queries the adapter's supported limits via `self.inner.limits()` and checks property presence (`Reflect::has`) before serializing each limit key into `requiredLimits`. Unrecognized or unsupported keys are omitted, eliminating device creation failures without requiring monkey-patching in host web pages.
 
 ### 3. Cooperative Matrix & Tensor-Core Support (#9741)
 - **Integrated Memory Model Fix**: Incorporates `vulkanMemoryModelDeviceScope` for Vulkan cooperative matrices, enabling robust compilation and execution of tiled tensor-core GEMM compute kernels across modern GPUs in Qualia's WGSL Forge.
@@ -36,7 +36,7 @@ Maintained as an enhanced, hardened fork of `wgpu` 30, Webizen-WGPU addresses cr
 ## Architecture & Workspace Structure
 
 ```text
-webizen-wgpu/
+etalon/
 ├── wgpu/                 # Safe, idiomatic Rust API for graphics and compute
 │   └── src/backend/      # Native (wgpu-core) and Browser (webgpu.rs) backends
 ├── wgpu-core/            # Core state machine, validation, and resource management
@@ -51,11 +51,11 @@ webizen-wgpu/
 
 ## Quickstart
 
-Add Webizen-WGPU to your `Cargo.toml`:
+Add Etalon to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-wgpu = { git = "https://github.com/mediaprophet/webizen-wgpu.git", branch = "qualia-main" }
+wgpu = { git = "https://github.com/mediaprophet/etalon.git", branch = "qualia-main" }
 ```
 
 Request an adapter and device with automatic limit filtering:
@@ -80,7 +80,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let (device, queue) = adapter
         .request_device(&DeviceDescriptor {
-            label: Some("Webizen GPU Device"),
+            label: Some("Etalon GPU Device"),
             required_features: wgpu::Features::empty(),
             // Automatically sanitized against adapter capabilities:
             required_limits: adapter.limits(),
@@ -88,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
         .await?;
 
-    println!("Webizen-WGPU Device initialized: {:?}", device);
+    println!("Etalon Device initialized: {:?}", device);
     Ok(())
 }
 ```
@@ -116,7 +116,7 @@ cargo test -p naga
 
 ## Intellectual Property & Licensing Notice
 
-QualiaDB, Webizen, Webizen-WGPU, and all Qualia-specific architectures, integrations, modifications, and extensions are governed by:
+QualiaDB, Webizen, Etalon, and all Qualia-specific architectures, integrations, modifications, and extensions are governed by:
 
 **Copyright (c) 2026 Timothy Charles Holborn**  
 **[LinkedIn](https://www.linkedin.com/in/ubiquitous/) | [Email](mailto:timothy.holborn@gmail.com)**  
