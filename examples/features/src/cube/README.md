@@ -5,7 +5,7 @@ This example renders a textured cube.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples cube
+cargo run --bin etalon-examples cube
 ```
 
 ## Screenshots

@@ -1729,7 +1729,7 @@ impl<'a, W: Write> Writer<'a, W> {
             } => {
                 let l2 = level.next();
                 // Some GLSL consumers may not handle switches with a single
-                // body correctly: See wgpu#4514. Write such switch statements
+                // body correctly: See etalon#4514. Write such switch statements
                 // as a `do {} while(false);` loop instead.
                 //
                 // Since doing so may inadvertently capture `continue`
@@ -2421,7 +2421,7 @@ impl<'a, W: Write> Writer<'a, W> {
     ///
     /// # Notes
     /// Doesn't add any newlines or leading/trailing spaces
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/gfx-rs/wgpu/issues/9456)
+    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
     fn write_expr(
         &mut self,
         expr: Handle<crate::Expression>,
@@ -2619,7 +2619,7 @@ impl<'a, W: Write> Writer<'a, W> {
                 write!(self.out, ", ")?;
 
                 // TODO: handle clamp_to_edge
-                // https://github.com/gfx-rs/wgpu/issues/7791
+                // https://github.com/mediaprophet/etalon/issues/7791
 
                 // We need to get the coordinates vector size to later build a vector that's `size + 1`
                 // if `depth_ref` is some, if it isn't a vector we panic as that's not a valid expression

@@ -7,7 +7,7 @@
 //!
 //! Only parts specific to this example will be commented.
 
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 async fn run() {
     let mut local_a = [0i32; 100];
@@ -21,61 +21,61 @@ async fn run() {
     }
     log::info!("Input b: {local_b:?}");
 
-    let instance = wgpu::Instance::default();
+    let instance = etalon::Instance::default();
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions::default())
+        .request_adapter(&etalon::RequestAdapterOptions::default())
         .await
         .unwrap();
     let (device, queue) = adapter
-        .request_device(&wgpu::DeviceDescriptor {
+        .request_device(&etalon::DeviceDescriptor {
             label: None,
-            required_features: wgpu::Features::empty(),
-            required_limits: wgpu::Limits::downlevel_defaults(),
-            default_queue: wgpu::QueueDescriptor { label: None },
-            experimental_features: wgpu::ExperimentalFeatures::disabled(),
-            memory_hints: wgpu::MemoryHints::MemoryUsage,
-            trace: wgpu::Trace::Off,
+            required_features: etalon::Features::empty(),
+            required_limits: etalon::Limits::downlevel_defaults(),
+            default_queue: etalon::QueueDescriptor { label: None },
+            experimental_features: etalon::ExperimentalFeatures::disabled(),
+            memory_hints: etalon::MemoryHints::MemoryUsage,
+            trace: etalon::Trace::Off,
         })
         .await
         .unwrap();
 
-    let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+    let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
-    let storage_buffer_a = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let storage_buffer_a = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
         label: None,
         contents: bytemuck::cast_slice(&local_a[..]),
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+        usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_SRC,
     });
-    let storage_buffer_b = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let storage_buffer_b = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
         label: None,
         contents: bytemuck::cast_slice(&local_b[..]),
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_SRC,
+        usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_SRC,
     });
-    let output_staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+    let output_staging_buffer = device.create_buffer(&etalon::BufferDescriptor {
         label: None,
         size: size_of_val(&local_a) as u64,
-        usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+        usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
         mapped_at_creation: false,
     });
 
-    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+    let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: None,
         entries: &[
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: false },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 1,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: false },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
@@ -83,27 +83,27 @@ async fn run() {
             },
         ],
     });
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
         label: None,
         layout: &bind_group_layout,
         entries: &[
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 0,
                 resource: storage_buffer_a.as_entire_binding(),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 1,
                 resource: storage_buffer_b.as_entire_binding(),
             },
         ],
     });
 
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+    let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
         label: None,
         bind_group_layouts: &[Some(&bind_group_layout)],
         immediate_size: 0,
     });
-    let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+    let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
         label: None,
         layout: Some(&pipeline_layout),
         module: &shader,
@@ -115,9 +115,9 @@ async fn run() {
     //----------------------------------------------------------
 
     let mut command_encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
     {
-        let mut compute_pass = command_encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        let mut compute_pass = command_encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
             label: None,
             timestamp_writes: None,
         });
@@ -154,13 +154,13 @@ async fn run() {
 
 async fn get_data<T: bytemuck::Pod>(
     output: &mut [T],
-    storage_buffer: &wgpu::Buffer,
-    staging_buffer: &wgpu::Buffer,
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
+    storage_buffer: &etalon::Buffer,
+    staging_buffer: &etalon::Buffer,
+    device: &etalon::Device,
+    queue: &etalon::Queue,
 ) {
     let mut command_encoder =
-        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+        device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
     command_encoder.copy_buffer_to_buffer(
         storage_buffer,
         0,
@@ -171,8 +171,8 @@ async fn get_data<T: bytemuck::Pod>(
     queue.submit(Some(command_encoder.finish()));
     let buffer_slice = staging_buffer.slice(..);
     let (sender, receiver) = flume::bounded(1);
-    buffer_slice.map_async(wgpu::MapMode::Read, move |r| sender.send(r).unwrap());
-    device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+    buffer_slice.map_async(etalon::MapMode::Read, move |r| sender.send(r).unwrap());
+    device.poll(etalon::PollType::wait_indefinitely()).unwrap();
     receiver.recv_async().await.unwrap().unwrap();
     let data: Vec<T> =
         bytemuck::allocation::pod_collect_to_vec(&buffer_slice.get_mapped_range().unwrap()[..]);

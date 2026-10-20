@@ -1026,12 +1026,12 @@ pub enum TypeInner {
     /// [`Sampler`]: TypeInner::Sampler
     /// [`Uniform`]: AddressSpace::Uniform
     /// [`Storage`]: AddressSpace::Storage
-    /// [`TextureViewArray`]: https://docs.rs/wgpu/latest/wgpu/enum.BindingResource.html#variant.TextureViewArray
-    /// [`SamplerArray`]: https://docs.rs/wgpu/latest/wgpu/enum.BindingResource.html#variant.SamplerArray
-    /// [`BufferArray`]: https://docs.rs/wgpu/latest/wgpu/enum.BindingResource.html#variant.BufferArray
+    /// [`TextureViewArray`]: https://docs.rs/etalon/latest/etalon/enum.BindingResource.html#variant.TextureViewArray
+    /// [`SamplerArray`]: https://docs.rs/etalon/latest/etalon/enum.BindingResource.html#variant.SamplerArray
+    /// [`BufferArray`]: https://docs.rs/etalon/latest/etalon/enum.BindingResource.html#variant.BufferArray
     /// [`DATA`]: crate::valid::TypeFlags::DATA
     /// [`ARGUMENT`]: crate::valid::TypeFlags::ARGUMENT
-    /// [naga#1864]: https://github.com/gfx-rs/naga/issues/1864
+    /// [naga#1864]: https://github.com/mediaprophet/naga/issues/1864
     BindingArray { base: Handle<Type>, size: ArraySize },
 }
 
@@ -2386,7 +2386,7 @@ pub enum Statement {
         target: Handle<Expression>,
         data: CooperativeData,
     },
-    /// This corresponds to `debugPrintf` in WGSL when the `wgpu_debug_printf` extension is enabled.
+    /// This corresponds to `debugPrintf` in WGSL when the `etalon_debug_printf` extension is enabled.
     DebugPrintf {
         format: String,
         arguments: Vec<Handle<Expression>>,
@@ -2597,7 +2597,7 @@ pub struct SpecialTypes {
     /// Struct containing parameters required by some backends to emit code for
     /// [`ImageClass::External`] textures.
     ///
-    /// See `wgpu_core::device::resource::ExternalTextureParams` for the
+    /// See `etalon_core::device::resource::ExternalTextureParams` for the
     /// documentation of each field.
     ///
     /// In WGSL, this type would be:
@@ -2789,7 +2789,7 @@ pub enum RayPipelineFunction {
         /// A pointer in the ray_payload or incoming_ray_payload address spaces
         payload: Handle<Expression>,
         // Do we want miss index? What about sbt offset and sbt stride (could be hard to validate)?
-        // https://github.com/gfx-rs/wgpu/issues/8894
+        // https://github.com/mediaprophet/etalon/issues/8894
     },
 }
 

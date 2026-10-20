@@ -36,7 +36,7 @@ pub(crate) fn run_wasm(
 
     xshell::cmd!(
         shell,
-        "cargo build --target wasm32-unknown-unknown -p wgpu-examples --no-default-features --features webgpu {release_flag...}"
+        "cargo build --target wasm32-unknown-unknown -p etalon-examples --no-default-features --features webgpu {release_flag...}"
     )
     .args(&cargo_args)
     .quiet()
@@ -47,7 +47,7 @@ pub(crate) fn run_wasm(
 
     xshell::cmd!(
         shell,
-        "wasm-bindgen target/wasm32-unknown-unknown/{output_dir}/wgpu-examples.wasm --target web --no-typescript --out-dir target/generated --out-name webgpu"
+        "wasm-bindgen target/wasm32-unknown-unknown/{output_dir}/etalon-examples.wasm --target web --no-typescript --out-dir target/generated --out-name webgpu"
     )
     .quiet()
     .run()
@@ -57,7 +57,7 @@ pub(crate) fn run_wasm(
 
     xshell::cmd!(
         shell,
-        "cargo build --target wasm32-unknown-unknown -p wgpu-examples --no-default-features --features webgl {release_flag...}"
+        "cargo build --target wasm32-unknown-unknown -p etalon-examples --no-default-features --features webgl {release_flag...}"
     )
     .args(&cargo_args)
     .quiet()
@@ -68,7 +68,7 @@ pub(crate) fn run_wasm(
 
     xshell::cmd!(
         shell,
-        "wasm-bindgen target/wasm32-unknown-unknown/{output_dir}/wgpu-examples.wasm --target web --no-typescript --out-dir target/generated --out-name webgl2"
+        "wasm-bindgen target/wasm32-unknown-unknown/{output_dir}/etalon-examples.wasm --target web --no-typescript --out-dir target/generated --out-name webgl2"
     )
     .quiet()
     .run()

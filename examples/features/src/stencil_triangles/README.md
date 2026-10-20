@@ -10,7 +10,7 @@ Then, it draws a larger "outer" triangle which only touches pixels where the ste
 ## To Run
 
 ```
-cargo run --bin wgpu-examples stencil_triangles
+cargo run --bin etalon-examples stencil_triangles
 ```
 
 ## Screenshots

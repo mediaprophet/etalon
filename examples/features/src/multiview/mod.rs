@@ -3,7 +3,7 @@
 
 use std::{num::NonZero, time::Instant};
 
-use wgpu::util::TextureBlitter;
+use etalon::util::TextureBlitter;
 
 const TEXTURE_SIZE: u32 = 512;
 
@@ -13,44 +13,44 @@ const LAYER_MASK: u32 = 0b11;
 const NUM_LAYERS: u32 = 32 - LAYER_MASK.leading_zeros();
 
 pub struct Example {
-    pipeline: wgpu::RenderPipeline,
-    entire_texture_view: wgpu::TextureView,
-    views: Vec<wgpu::TextureView>,
+    pipeline: etalon::RenderPipeline,
+    entire_texture_view: etalon::TextureView,
+    views: Vec<etalon::TextureView>,
     start_time: Instant,
     blitter: TextureBlitter,
 }
 
 impl crate::framework::Example for Example {
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
         let shader_src = include_str!("shader.wgsl");
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(shader_src.into()),
+            source: etalon::ShaderSource::Wgsl(shader_src.into()),
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 buffers: &[],
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
             },
-            primitive: wgpu::PrimitiveState::default(),
-            fragment: Some(wgpu::FragmentState {
+            primitive: etalon::PrimitiveState::default(),
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8Unorm,
+                targets: &[Some(etalon::ColorTargetState {
+                    format: etalon::TextureFormat::Rgba8Unorm,
                     blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
+                    write_mask: etalon::ColorWrites::ALL,
                 })],
             }),
             multiview_mask: NonZero::new(LAYER_MASK),
@@ -59,50 +59,50 @@ impl crate::framework::Example for Example {
             depth_stencil: None,
             cache: None,
         });
-        let texture = device.create_texture(&wgpu::TextureDescriptor {
+        let texture = device.create_texture(&etalon::TextureDescriptor {
             label: None,
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width: TEXTURE_SIZE,
                 height: TEXTURE_SIZE,
                 depth_or_array_layers: NUM_LAYERS,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::COPY_SRC
-                | wgpu::TextureUsages::TEXTURE_BINDING,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::Rgba8Unorm,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::COPY_SRC
+                | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
-        let entire_texture_view = texture.create_view(&wgpu::TextureViewDescriptor {
+        let entire_texture_view = texture.create_view(&etalon::TextureViewDescriptor {
             label: None,
-            format: Some(wgpu::TextureFormat::Rgba8Unorm),
-            dimension: Some(wgpu::TextureViewDimension::D2Array),
-            usage: Some(wgpu::TextureUsages::RENDER_ATTACHMENT),
-            aspect: wgpu::TextureAspect::All,
+            format: Some(etalon::TextureFormat::Rgba8Unorm),
+            dimension: Some(etalon::TextureViewDimension::D2Array),
+            usage: Some(etalon::TextureUsages::RENDER_ATTACHMENT),
+            aspect: etalon::TextureAspect::All,
             base_mip_level: 0,
             mip_level_count: None,
             base_array_layer: 0,
             array_layer_count: Some(NUM_LAYERS),
-            swizzle: wgpu::TextureComponentSwizzle::default(),
+            swizzle: etalon::TextureComponentSwizzle::default(),
         });
         let mut views = Vec::new();
         for i in 0..NUM_LAYERS {
-            views.push(texture.create_view(&wgpu::TextureViewDescriptor {
+            views.push(texture.create_view(&etalon::TextureViewDescriptor {
                 label: None,
-                format: Some(wgpu::TextureFormat::Rgba8Unorm),
-                dimension: Some(wgpu::TextureViewDimension::D2),
-                usage: Some(wgpu::TextureUsages::TEXTURE_BINDING),
-                aspect: wgpu::TextureAspect::All,
+                format: Some(etalon::TextureFormat::Rgba8Unorm),
+                dimension: Some(etalon::TextureViewDimension::D2),
+                usage: Some(etalon::TextureUsages::TEXTURE_BINDING),
+                aspect: etalon::TextureAspect::All,
                 base_mip_level: 0,
                 mip_level_count: None,
                 base_array_layer: i,
                 array_layer_count: Some(1),
-                swizzle: wgpu::TextureComponentSwizzle::default(),
+                swizzle: etalon::TextureComponentSwizzle::default(),
             }));
         }
-        let blitter = wgpu::util::TextureBlitter::new(device, config.format);
+        let blitter = etalon::util::TextureBlitter::new(device, config.format);
         Self {
             pipeline,
             entire_texture_view,
@@ -112,23 +112,23 @@ impl crate::framework::Example for Example {
         }
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: &self.entire_texture_view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color {
                             r: 0.02,
                             g: 0.02,
                             b: 0.02,
                             a: 1.0,
                         }),
-                        store: wgpu::StoreOp::Store,
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -146,21 +146,21 @@ impl crate::framework::Example for Example {
         queue.submit(Some(encoder.finish()));
     }
 
-    fn required_downlevel_capabilities() -> wgpu::DownlevelCapabilities {
+    fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
         Default::default()
     }
 
-    fn required_features() -> wgpu::Features {
-        wgpu::Features::MULTIVIEW
+    fn required_features() -> etalon::Features {
+        etalon::Features::MULTIVIEW
             | if !(LAYER_MASK + 1).is_power_of_two() {
-                wgpu::Features::SELECTIVE_MULTIVIEW
+                etalon::Features::SELECTIVE_MULTIVIEW
             } else {
-                wgpu::Features::empty()
+                etalon::Features::empty()
             }
     }
 
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits {
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits {
             max_multiview_view_count: NUM_LAYERS,
             ..Default::default()
         }
@@ -168,9 +168,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        _config: &wgpu::SurfaceConfiguration,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        _config: &etalon::SurfaceConfiguration,
+        _device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         // empty
     }

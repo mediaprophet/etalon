@@ -73,8 +73,8 @@ impl Frontend {
 }
 
 /// <div class="warning">
-// NOTE: Keep this in sync with `wgpu::Device::create_shader_module`!
-// NOTE: Keep this in sync with `wgpu_core::Global::device_create_shader_module`!
+// NOTE: Keep this in sync with `etalon::Device::create_shader_module`!
+// NOTE: Keep this in sync with `etalon_core::Global::device_create_shader_module`!
 ///
 /// This function may consume a lot of stack space. Compiler-enforced limits for parsing recursion
 /// exist; if shader compilation runs into them, it will return an error gracefully. However, on

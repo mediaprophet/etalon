@@ -1842,11 +1842,11 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
 
                     // We have this special check here for `let` declarations because the
                     // validator doesn't check them (they are comingled with other things in
-                    // `named_expressions`; see <https://github.com/gfx-rs/wgpu/issues/7393>).
+                    // `named_expressions`; see <https://github.com/mediaprophet/etalon/issues/7393>).
                     // The check could go in `type_and_init`, but then we'd have to
                     // distinguish whether override-sized is allowed. The error ought to use
                     // the type's span, but `module.types.get_span(ty)` is `Span::UNDEFINED`
-                    // (see <https://github.com/gfx-rs/wgpu/issues/7951>).
+                    // (see <https://github.com/mediaprophet/etalon/issues/7951>).
                     if ctx.module.types[ty]
                         .inner
                         .is_dynamically_sized(&ctx.module.types)
@@ -2730,7 +2730,7 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
             }) {
                 // Short-circuit behavior: don't evaluate the RHS.
 
-                // TODO(https://github.com/gfx-rs/wgpu/issues/8440): We shouldn't ignore the
+                // TODO(https://github.com/mediaprophet/etalon/issues/8440): We shouldn't ignore the
                 // RHS completely, it should still be type-checked. Preserving it for type
                 // checking is a bit tricky, because we're trying to produce an expression
                 // for a const context, but the RHS is allowed to have things that aren't
@@ -3955,11 +3955,11 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                 "debugPrintf" => {
                     if !ctx
                         .enable_extensions
-                        .contains(crate::front::wgsl::ImplementedEnableExtension::WgpuDebugPrintf)
+                        .contains(crate::front::wgsl::ImplementedEnableExtension::etalonDebugPrintf)
                     {
                         return Err(Box::new(Error::EnableExtensionNotEnabled {
                             span: function_span,
-                            kind: crate::front::wgsl::ImplementedEnableExtension::WgpuDebugPrintf
+                            kind: crate::front::wgsl::ImplementedEnableExtension::etalonDebugPrintf
                                 .into(),
                         }));
                     }

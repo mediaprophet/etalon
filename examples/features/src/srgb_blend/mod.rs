@@ -1,5 +1,5 @@
 use bytemuck::{Pod, Zeroable};
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -48,104 +48,104 @@ fn create_vertices() -> (Vec<Vertex>, Vec<u16>) {
 }
 
 struct Example<const SRGB: bool> {
-    vertex_buf: wgpu::Buffer,
-    index_buf: wgpu::Buffer,
+    vertex_buf: etalon::Buffer,
+    index_buf: etalon::Buffer,
     index_count: usize,
-    bind_group: wgpu::BindGroup,
-    pipeline: wgpu::RenderPipeline,
+    bind_group: etalon::BindGroup,
+    pipeline: etalon::RenderPipeline,
 }
 
 impl<const SRGB: bool> crate::framework::Example for Example<SRGB> {
     const SRGB: bool = SRGB;
 
-    fn optional_features() -> wgpu::Features {
-        wgpu::Features::POLYGON_MODE_LINE
+    fn optional_features() -> etalon::Features {
+        etalon::Features::POLYGON_MODE_LINE
     }
 
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
         // Create the vertex and index buffers
         let vertex_size = size_of::<Vertex>();
         let (vertex_data, index_data) = create_vertices();
 
-        let vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertex_data),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: etalon::BufferUsages::VERTEX,
         });
 
-        let index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let index_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(&index_data),
-            usage: wgpu::BufferUsages::INDEX,
+            usage: etalon::BufferUsages::INDEX,
         });
 
         // Create pipeline layout
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: None,
             entries: &[],
         });
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
 
         // Create bind group
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &bind_group_layout,
             entries: &[],
             label: None,
         });
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
-        let vertex_buffers = [Some(wgpu::VertexBufferLayout {
-            array_stride: vertex_size as wgpu::BufferAddress,
-            step_mode: wgpu::VertexStepMode::Vertex,
+        let vertex_buffers = [Some(etalon::VertexBufferLayout {
+            array_stride: vertex_size as etalon::BufferAddress,
+            step_mode: etalon::VertexStepMode::Vertex,
             attributes: &[
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x4,
+                etalon::VertexAttribute {
+                    format: etalon::VertexFormat::Float32x4,
                     offset: 0,
                     shader_location: 0,
                 },
-                wgpu::VertexAttribute {
-                    format: wgpu::VertexFormat::Float32x4,
+                etalon::VertexAttribute {
+                    format: etalon::VertexFormat::Float32x4,
                     offset: 4 * 4,
                     shader_location: 1,
                 },
             ],
         })];
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &vertex_buffers,
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
+                targets: &[Some(etalon::ColorTargetState {
                     format: config.view_formats[0],
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::ALL,
+                    blend: Some(etalon::BlendState::ALPHA_BLENDING),
+                    write_mask: etalon::ColorWrites::ALL,
                 })],
             }),
-            primitive: wgpu::PrimitiveState {
-                cull_mode: Some(wgpu::Face::Back),
+            primitive: etalon::PrimitiveState {
+                cull_mode: Some(etalon::Face::Back),
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
@@ -166,30 +166,30 @@ impl<const SRGB: bool> crate::framework::Example for Example<SRGB> {
 
     fn resize(
         &mut self,
-        _config: &wgpu::SurfaceConfiguration,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        _config: &etalon::SurfaceConfiguration,
+        _device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color {
                             r: 0.0,
                             g: 0.0,
                             b: 0.0,
                             a: 1.0,
                         }),
-                        store: wgpu::StoreOp::Store,
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -200,7 +200,7 @@ impl<const SRGB: bool> crate::framework::Example for Example<SRGB> {
             rpass.push_debug_group("Prepare data for draw.");
             rpass.set_pipeline(&self.pipeline);
             rpass.set_bind_group(0, &self.bind_group, &[]);
-            rpass.set_index_buffer(self.index_buf.slice(..), wgpu::IndexFormat::Uint16);
+            rpass.set_index_buffer(self.index_buf.slice(..), etalon::IndexFormat::Uint16);
             rpass.set_vertex_buffer(0, self.vertex_buf.slice(..));
             rpass.pop_debug_group();
             rpass.insert_debug_marker("Draw!");
@@ -222,29 +222,29 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST_SRGB: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "srgb-blend-srg",
     // Generated on WARP/Windows
     image_path: "/examples/features/src/srgb_blend/screenshot-srgb.png",
     width: 192,
     height: 192,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default(),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.04)],
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default(),
+    comparisons: &[etalon_test::ComparisonType::Mean(0.04)],
     _phantom: std::marker::PhantomData::<Example<true>>,
 };
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST_LINEAR: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "srgb-blend-linear",
     // Generated on WARP/Windows
     image_path: "/examples/features/src/srgb_blend/screenshot-linear.png",
     width: 192,
     height: 192,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default(),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.04)],
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default(),
+    comparisons: &[etalon_test::ComparisonType::Mean(0.04)],
     _phantom: std::marker::PhantomData::<Example<false>>,
 };

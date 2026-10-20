@@ -1,4 +1,4 @@
-enable wgpu_per_vertex;
+enable etalon_per_vertex;
 
 @fragment
 fn fs_main(@location(0) @interpolate(per_vertex) v: array<f32, 3>) -> @location(0) vec4<f32> {

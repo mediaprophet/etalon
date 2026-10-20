@@ -11,7 +11,7 @@ layout(set = 0, binding = 0) uniform A {
     // as the stride is always rounded up to 16, meaning that _every_ f16 matrix in a uniform
     // buffer is over-aligned to what naga-ir wants.
     // 
-    // This is https://github.com/gfx-rs/wgpu/issues/4375.
+    // This is https://github.com/mediaprophet/etalon/issues/4375.
 
     // f16mat2 a_mat2;
     // f16mat2x3 a_mat2x3;

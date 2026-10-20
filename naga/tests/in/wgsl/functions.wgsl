@@ -4,7 +4,7 @@ fn test_fma() -> vec2<f32> {
     let c = vec2<f32>(0.5, 0.5);
 
     // Hazard: HLSL needs a different intrinsic function for f32 and f64
-    // See: https://github.com/gfx-rs/naga/issues/1579
+    // See: https://github.com/mediaprophet/naga/issues/1579
     return fma(a, b, c);
 }
 

@@ -5,7 +5,7 @@
 
 use std::{future::Future, pin::Pin};
 
-use wgpu_sync::Mutex;
+use etalon_sync::Mutex;
 
 use crate::{
     config::GpuTestConfiguration, params::TestInfo, report::AdapterReport, run::execute_test,
@@ -30,8 +30,8 @@ impl NativeTest {
         let backend = adapter_report.info.backend;
         let driver = &adapter_report.info.driver;
         let report_driver_as_backend = [
-            (wgpu::Backend::Vulkan, "MoltenVK"),
-            (wgpu::Backend::Vulkan, "KosmicKrisp"),
+            (etalon::Backend::Vulkan, "MoltenVK"),
+            (etalon::Backend::Vulkan, "KosmicKrisp"),
         ];
         let backend_str = if report_driver_as_backend.contains(&(backend, driver.as_ref())) {
             driver.clone()
@@ -58,7 +58,7 @@ impl NativeTest {
                 // validation layers for the entire process, or other instances.
                 //
                 // We do not enable metal validation when running on moltenvk.
-                let metal_validation = backend == wgpu::Backend::Metal;
+                let metal_validation = backend == etalon::Backend::Metal;
 
                 let env_value = if metal_validation { "1" } else { "0" };
                 std::env::set_var("MTL_DEBUG_LAYER", env_value);
@@ -88,7 +88,7 @@ impl NativeTest {
 
 #[doc(hidden)]
 pub static TEST_LIST: Mutex<Vec<crate::GpuTestConfiguration>> =
-    Mutex::const_new(wgpu_sync::RawMutex::new(), Vec::new());
+    Mutex::const_new(etalon_sync::RawMutex::new(), Vec::new());
 
 /// Return value for the main function.
 pub type MainResult = anyhow::Result<()>;
@@ -102,7 +102,7 @@ pub fn main(tests: Vec<GpuTestInitializer>) -> MainResult {
     // If this environment variable is set, we will only enumerate the noop backend. The
     // main use case is running tests with miri, where we can't even enumerate adapters,
     // as we cannot load DLLs or make any external calls.
-    let use_noop = std::env::var("WGPU_GPU_TESTS_USE_NOOP_BACKEND").as_deref() == Ok("1");
+    let use_noop = std::env::var("etalon_GPU_TESTS_USE_NOOP_BACKEND").as_deref() == Ok("1");
 
     let report = if use_noop {
         GpuReport::noop_only()
@@ -117,11 +117,11 @@ pub fn main(tests: Vec<GpuTestInitializer>) -> MainResult {
         let mut report =
             GpuReport::from_json(config_text).context("Could not parse .gpuconfig JSON")?;
 
-        // Filter out the adapters that are not part of WGPU_BACKEND.
-        let wgpu_backends = wgpu::Backends::from_env().unwrap_or_default();
+        // Filter out the adapters that are not part of etalon_BACKEND.
+        let etalon_backends = etalon::Backends::from_env().unwrap_or_default();
         report
             .devices
-            .retain(|report| wgpu_backends.contains(wgpu::Backends::from(report.info.backend)));
+            .retain(|report| etalon_backends.contains(etalon::Backends::from(report.info.backend)));
 
         report
     };

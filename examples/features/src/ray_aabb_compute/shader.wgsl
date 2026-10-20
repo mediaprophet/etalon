@@ -1,4 +1,4 @@
-enable wgpu_ray_query;
+enable etalon_ray_query;
 
 struct Uniforms {
     view_inv: mat4x4<f32>,

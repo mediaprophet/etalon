@@ -1513,7 +1513,7 @@ impl<'a> Error<'a> {
                 notes: vec![format!(
                     concat!(
                         "Let Naga maintainers know that you ran into this at ",
-                        "<https://github.com/gfx-rs/wgpu/issues/{}>, ",
+                        "<https://github.com/mediaprophet/etalon/issues/{}>, ",
                         "so they can prioritize it!"
                     ),
                     kind.tracking_issue_num()
@@ -1537,7 +1537,7 @@ impl<'a> Error<'a> {
                         concat!(
                             "This \"Enable Extension\" is not yet implemented. ",
                             "Let Naga maintainers know that you ran into this at ",
-                            "<https://github.com/gfx-rs/wgpu/issues/{}>, ",
+                            "<https://github.com/mediaprophet/etalon/issues/{}>, ",
                             "so they can prioritize it!"
                         ),
                         kind.tracking_issue_num()
@@ -1560,7 +1560,7 @@ impl<'a> Error<'a> {
                 notes: vec![format!(
                     concat!(
                         "Let Naga maintainers know that you ran into this at ",
-                        "<https://github.com/gfx-rs/wgpu/issues/{}>, ",
+                        "<https://github.com/mediaprophet/etalon/issues/{}>, ",
                         "so they can prioritize it!"
                     ),
                     kind.tracking_issue_num()
@@ -1621,7 +1621,7 @@ impl<'a> Error<'a> {
                 },
                 notes: vec![concat!(
                     "Let Naga maintainers know that you ran into this at ",
-                    "<https://github.com/gfx-rs/wgpu/issues/5320>, ",
+                    "<https://github.com/mediaprophet/etalon/issues/5320>, ",
                     "so they can prioritize it!"
                 ).into()],
                 message: "`@diagnostic(…)` attribute(s) not yet implemented".into(),

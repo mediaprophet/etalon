@@ -90,7 +90,7 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/trunk' }}
 
       # In theory this shouldn't be necessary, but sometimes it is
-      # not available. <https://github.com/gfx-rs/wgpu/issues/9514>
+      # not available. <https://github.com/mediaprophet/etalon/issues/9514>
       - name: Install Metal toolchain
         run: sudo xcodebuild -downloadComponent MetalToolchain
 

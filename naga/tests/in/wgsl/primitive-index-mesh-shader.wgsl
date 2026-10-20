@@ -1,4 +1,4 @@
-enable wgpu_mesh_shader;
+enable etalon_mesh_shader;
 enable primitive_index;
 
 struct VertexOutput {

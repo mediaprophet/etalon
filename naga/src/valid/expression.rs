@@ -150,7 +150,7 @@ pub enum ExpressionError {
     MissingCapabilities(super::Capabilities),
     #[error(transparent)]
     Literal(#[from] LiteralError),
-    #[error("{0:?} is not supported for Width {2} {1:?} arguments yet, see https://github.com/gfx-rs/wgpu/issues/5276")]
+    #[error("{0:?} is not supported for Width {2} {1:?} arguments yet, see https://github.com/mediaprophet/etalon/issues/5276")]
     UnsupportedWidth(crate::MathFunction, crate::ScalarKind, crate::Bytes),
     #[error("Invalid operand for cooperative op")]
     InvalidCooperativeOperand(Handle<crate::Expression>),

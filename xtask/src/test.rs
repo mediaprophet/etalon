@@ -15,12 +15,12 @@ fn apply_agility_sdk_env<'a>(
     let Some(info) = agility_sdk_info else {
         return cmd;
     };
-    let cmd = cmd.env("WGPU_DX12_AGILITY_SDK_PATH", &info.sdk_path).env(
-        "WGPU_DX12_AGILITY_SDK_VERSION",
+    let cmd = cmd.env("etalon_DX12_AGILITY_SDK_PATH", &info.sdk_path).env(
+        "etalon_DX12_AGILITY_SDK_VERSION",
         info.sdk_version.to_string(),
     );
     if require {
-        cmd.env("WGPU_DX12_AGILITY_SDK_REQUIRE", "1")
+        cmd.env("etalon_DX12_AGILITY_SDK_REQUIRE", "1")
     } else {
         cmd
     }
@@ -88,7 +88,7 @@ pub fn run_tests(
     };
 
     // Test concurrency, and therefore how much contention the tests see, follows
-    // the CPU count. See <https://github.com/gfx-rs/wgpu/issues/9248>.
+    // the CPU count. See <https://github.com/mediaprophet/etalon/issues/9248>.
     match std::thread::available_parallelism() {
         Ok(n) => log::info!("Host reports {n} logical CPUs"),
         Err(e) => log::info!("Could not determine the host CPU count: {e}"),
@@ -97,11 +97,11 @@ pub fn run_tests(
     log::info!("Generating .gpuconfig file based on gpus on the system");
 
     // We use a test to generate the .gpuconfig file instead of using the cli directly
-    // as `cargo run --bin wgpu-info` would build a different set of dependencies, causing
-    // incremental changes to need to rebuild the wgpu stack twice, one for the tests
+    // as `cargo run --bin etalon-info` would build a different set of dependencies, causing
+    // incremental changes to need to rebuild the etalon stack twice, one for the tests
     // and once for the cli binary.
     //
-    // Needs to be kept in sync with the test in wgpu-info/src/tests.rs
+    // Needs to be kept in sync with the test in etalon-info/src/tests.rs
     let mut gpuconfig_cmd = shell
         .cmd("cargo")
         .args(test_suite_run_flags)
@@ -112,9 +112,9 @@ pub fn run_tests(
         // We need to tell nextest to filter by binary too, so it doesn't try to enumerate
         // tests on any of the gpu enabled test binaries, as that will fail due to
         // old or missing .gpuconfig files.
-        .args(["-E", "binary(wgpu-info)", "generate_gpuconfig_report"])
+        .args(["-E", "binary(etalon-info)", "generate_gpuconfig_report"])
         // Turn on the env var for saving the .gpuconfig files
-        .env("WGPU_INFO_SAVE_GPUCONFIG_REPORT", "1");
+        .env("etalon_INFO_SAVE_GPUCONFIG_REPORT", "1");
     gpuconfig_cmd =
         apply_agility_sdk_env(gpuconfig_cmd, &agility_sdk_info, !no_require_agility_sdk);
     gpuconfig_cmd

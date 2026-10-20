@@ -2,7 +2,7 @@
 // adapted from https://github.com/austinEng/webgpu-samples/blob/master/src/examples/computeBoids.ts
 
 use nanorand::{Rng, WyRand};
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 // number of boid particles to simulate
 
@@ -12,38 +12,38 @@ const NUM_PARTICLES: u32 = 1500;
 
 const PARTICLES_PER_GROUP: u32 = 64;
 
-/// Example struct holds references to wgpu resources and frame persistent data
+/// Example struct holds references to etalon resources and frame persistent data
 struct Example {
-    particle_bind_groups: Vec<wgpu::BindGroup>,
-    particle_buffers: Vec<wgpu::Buffer>,
-    vertices_buffer: wgpu::Buffer,
-    compute_pipeline: wgpu::ComputePipeline,
-    render_pipeline: wgpu::RenderPipeline,
+    particle_bind_groups: Vec<etalon::BindGroup>,
+    particle_buffers: Vec<etalon::Buffer>,
+    vertices_buffer: etalon::Buffer,
+    compute_pipeline: etalon::ComputePipeline,
+    render_pipeline: etalon::RenderPipeline,
     work_group_count: u32,
     frame_num: usize,
 }
 
 impl crate::framework::Example for Example {
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits::downlevel_defaults()
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits::downlevel_defaults()
     }
 
-    fn required_downlevel_capabilities() -> wgpu::DownlevelCapabilities {
-        wgpu::DownlevelCapabilities {
-            flags: wgpu::DownlevelFlags::COMPUTE_SHADERS,
+    fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
+        etalon::DownlevelCapabilities {
+            flags: etalon::DownlevelFlags::COMPUTE_SHADERS,
             ..Default::default()
         }
     }
 
     /// constructs initial instance of Example struct
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
-        let compute_shader = device.create_shader_module(wgpu::include_wgsl!("compute.wgsl"));
-        let draw_shader = device.create_shader_module(wgpu::include_wgsl!("draw.wgsl"));
+        let compute_shader = device.create_shader_module(etalon::include_wgsl!("compute.wgsl"));
+        let draw_shader = device.create_shader_module(etalon::include_wgsl!("draw.wgsl"));
 
         // buffer for simulation parameters uniform
 
@@ -57,46 +57,46 @@ impl crate::framework::Example for Example {
             0.005,   // rule3Scale
         ]
         .to_vec();
-        let sim_param_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let sim_param_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Simulation Parameter Buffer"),
             contents: bytemuck::cast_slice(&sim_param_data),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
         });
 
         // create compute bind layout group and compute pipeline layout
 
         let compute_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 entries: &[
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new(
+                            min_binding_size: etalon::BufferSize::new(
                                 (sim_param_data.len() * size_of::<f32>()) as _,
                             ),
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Storage { read_only: true },
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new((NUM_PARTICLES * 16) as _),
+                            min_binding_size: etalon::BufferSize::new((NUM_PARTICLES * 16) as _),
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 2,
-                        visibility: wgpu::ShaderStages::COMPUTE,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Storage { read_only: false },
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Storage { read_only: false },
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new((NUM_PARTICLES * 16) as _),
+                            min_binding_size: etalon::BufferSize::new((NUM_PARTICLES * 16) as _),
                         },
                         count: None,
                     },
@@ -104,7 +104,7 @@ impl crate::framework::Example for Example {
                 label: None,
             });
         let compute_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: Some("compute"),
                 bind_group_layouts: &[Some(&compute_bind_group_layout)],
                 immediate_size: 0,
@@ -113,48 +113,48 @@ impl crate::framework::Example for Example {
         // create render pipeline with empty bind group layout
 
         let render_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: Some("render"),
                 bind_group_layouts: &[],
                 immediate_size: 0,
             });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&render_pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &draw_shader,
                 entry_point: Some("main_vs"),
                 compilation_options: Default::default(),
                 buffers: &[
-                    Some(wgpu::VertexBufferLayout {
+                    Some(etalon::VertexBufferLayout {
                         array_stride: 4 * 4,
-                        step_mode: wgpu::VertexStepMode::Instance,
-                        attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x2],
+                        step_mode: etalon::VertexStepMode::Instance,
+                        attributes: &etalon::vertex_attr_array![0 => Float32x2, 1 => Float32x2],
                     }),
-                    Some(wgpu::VertexBufferLayout {
+                    Some(etalon::VertexBufferLayout {
                         array_stride: 2 * 4,
-                        step_mode: wgpu::VertexStepMode::Vertex,
-                        attributes: &wgpu::vertex_attr_array![2 => Float32x2],
+                        step_mode: etalon::VertexStepMode::Vertex,
+                        attributes: &etalon::vertex_attr_array![2 => Float32x2],
                     }),
                 ],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &draw_shader,
                 entry_point: Some("main_fs"),
                 compilation_options: Default::default(),
                 targets: &[Some(config.view_formats[0].into())],
             }),
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: etalon::PrimitiveState::default(),
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
 
         // create compute pipeline
 
-        let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let compute_pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: Some("Compute pipeline"),
             layout: Some(&compute_pipeline_layout),
             module: &compute_shader,
@@ -166,10 +166,10 @@ impl crate::framework::Example for Example {
         // buffer for the three 2d triangle vertices of each instance
 
         let vertex_buffer_data = [-0.01f32, -0.02, 0.01, -0.02, 0.00, 0.02];
-        let vertices_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let vertices_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::bytes_of(&vertex_buffer_data),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::VERTEX | etalon::BufferUsages::COPY_DST,
         });
 
         // buffer for all particles data of type [(posx,posy,velx,vely),...]
@@ -187,16 +187,16 @@ impl crate::framework::Example for Example {
         // creates two buffers of particle data each of size NUM_PARTICLES
         // the two buffers alternate as dst and src for each frame
 
-        let mut particle_buffers = Vec::<wgpu::Buffer>::new();
-        let mut particle_bind_groups = Vec::<wgpu::BindGroup>::new();
+        let mut particle_buffers = Vec::<etalon::Buffer>::new();
+        let mut particle_bind_groups = Vec::<etalon::BindGroup>::new();
         for i in 0..2 {
             particle_buffers.push(
-                device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                device.create_buffer_init(&etalon::util::BufferInitDescriptor {
                     label: Some(&format!("Particle Buffer {i}")),
                     contents: bytemuck::cast_slice(&initial_particle_data),
-                    usage: wgpu::BufferUsages::VERTEX
-                        | wgpu::BufferUsages::STORAGE
-                        | wgpu::BufferUsages::COPY_DST,
+                    usage: etalon::BufferUsages::VERTEX
+                        | etalon::BufferUsages::STORAGE
+                        | etalon::BufferUsages::COPY_DST,
                 }),
             );
         }
@@ -205,18 +205,18 @@ impl crate::framework::Example for Example {
         // where the alternate buffer is used as the dst
 
         for i in 0..2 {
-            particle_bind_groups.push(device.create_bind_group(&wgpu::BindGroupDescriptor {
+            particle_bind_groups.push(device.create_bind_group(&etalon::BindGroupDescriptor {
                 layout: &compute_bind_group_layout,
                 entries: &[
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 0,
                         resource: sim_param_buffer.as_entire_binding(),
                     },
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 1,
                         resource: particle_buffers[i].as_entire_binding(),
                     },
-                    wgpu::BindGroupEntry {
+                    etalon::BindGroupEntry {
                         binding: 2,
                         resource: particle_buffers[(i + 1) % 2].as_entire_binding(), // bind to opposite buffer
                     },
@@ -249,27 +249,27 @@ impl crate::framework::Example for Example {
     /// resize is called on WindowEvent::Resized events
     fn resize(
         &mut self,
-        _sc_desc: &wgpu::SurfaceConfiguration,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        _sc_desc: &etalon::SurfaceConfiguration,
+        _device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         //empty
     }
 
     /// render is called each frame, dispatching compute groups proportional
     ///   a TriangleList draw call for all NUM_PARTICLES at 3 vertices each
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         // create render pass descriptor and its color attachments
-        let color_attachments = [Some(wgpu::RenderPassColorAttachment {
+        let color_attachments = [Some(etalon::RenderPassColorAttachment {
             view,
             depth_slice: None,
             resolve_target: None,
-            ops: wgpu::Operations {
-                load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                store: wgpu::StoreOp::Store,
+            ops: etalon::Operations {
+                load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                store: etalon::StoreOp::Store,
             },
         })];
-        let render_pass_descriptor = wgpu::RenderPassDescriptor {
+        let render_pass_descriptor = etalon::RenderPassDescriptor {
             label: None,
             color_attachments: &color_attachments,
             depth_stencil_attachment: None,
@@ -280,12 +280,12 @@ impl crate::framework::Example for Example {
 
         // get command encoder
         let mut command_encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         command_encoder.push_debug_group("compute boid movement");
         {
             // compute pass
-            let mut cpass = command_encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+            let mut cpass = command_encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
                 label: None,
                 timestamp_writes: None,
             });
@@ -322,17 +322,17 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "boids",
     // Generated on 1080ti on Vk/Windows
     image_path: "/examples/features/src/boids/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default()
-        .downlevel_flags(wgpu::DownlevelFlags::COMPUTE_SHADERS)
-        .limits(wgpu::Limits::downlevel_defaults()),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.005)],
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default()
+        .downlevel_flags(etalon::DownlevelFlags::COMPUTE_SHADERS)
+        .limits(etalon::Limits::downlevel_defaults()),
+    comparisons: &[etalon_test::ComparisonType::Mean(0.005)],
     _phantom: std::marker::PhantomData::<Example>,
 };

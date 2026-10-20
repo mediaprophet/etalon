@@ -4,7 +4,7 @@
 # The period is 15s rather than 45s only so that the log gets a liveness
 # heartbeat every 15s; nextest prints a `SLOW` line once per period, and CI
 # hosts that stall are hard to distinguish from slow tests without one.
-# See <https://github.com/gfx-rs/wgpu/issues/9248>.
+# See <https://github.com/mediaprophet/etalon/issues/9248>.
 [profile.default]
 default-filter = "!test(~oom_test)"
 slow-timeout = { period = "15s", terminate-after = 6 }
@@ -37,9 +37,9 @@ threads-required = 8
 # Workarounds for flaky tests
 #
 
-# https://github.com/gfx-rs/wgpu/issues/7200
+# https://github.com/mediaprophet/etalon/issues/7200
 [[profile.default.overrides]]
-filter = 'test(wgpu_gpu::image_atomics::image_32_atomics)'
+filter = 'test(etalon_gpu::image_atomics::image_32_atomics)'
 platform = 'cfg(target_vendor = "apple")'
 retries = 1
 
@@ -54,7 +54,7 @@ threads-required = "num-test-threads"
 #
 # Priorities for slow tests so that they run first, increasing overall test suite speed.
 # On software renderers, they can take 10-60 seconds. Compile fail can easily take 30+
-# seconds as it has to compile wgpu.
+# seconds as it has to compile etalon.
 #
 [[profile.default.overrides]]
 priority = 1

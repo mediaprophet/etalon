@@ -25,11 +25,11 @@ struct App {
 
 struct State {
     window: Arc<Window>,
-    instance: wgpu::Instance,
-    device: wgpu::Device,
-    queue: Option<wgpu::Queue>,
-    surface: wgpu::Surface<'static>,
-    surface_config: wgpu::SurfaceConfiguration,
+    instance: etalon::Instance,
+    device: etalon::Device,
+    queue: Option<etalon::Queue>,
+    surface: etalon::Surface<'static>,
+    surface_config: etalon::SurfaceConfiguration,
 }
 
 impl ApplicationHandler for App {
@@ -63,15 +63,15 @@ impl ApplicationHandler for App {
             }
             WindowEvent::RedrawRequested => {
                 let frame = match state.surface.get_current_texture() {
-                    wgpu::CurrentSurfaceTexture::Success(f) => f,
-                    wgpu::CurrentSurfaceTexture::Suboptimal(_)
-                    | wgpu::CurrentSurfaceTexture::Outdated => {
+                    etalon::CurrentSurfaceTexture::Success(f) => f,
+                    etalon::CurrentSurfaceTexture::Suboptimal(_)
+                    | etalon::CurrentSurfaceTexture::Outdated => {
                         state
                             .surface
                             .configure(&state.device, &state.surface_config);
                         return;
                     }
-                    wgpu::CurrentSurfaceTexture::Lost => {
+                    etalon::CurrentSurfaceTexture::Lost => {
                         state.surface =
                             state.instance.create_surface(state.window.clone()).unwrap();
                         state
@@ -105,11 +105,11 @@ impl State {
         let width = size.width.max(1);
         let height = size.height.max(1);
 
-        let mut instance_desc = wgpu::InstanceDescriptor::new_without_display_handle_from_env();
-        instance_desc.flags |= wgpu::InstanceFlags::advanced_debugging();
-        let instance = wgpu::Instance::new(instance_desc);
+        let mut instance_desc = etalon::InstanceDescriptor::new_without_display_handle_from_env();
+        instance_desc.flags |= etalon::InstanceFlags::advanced_debugging();
+        let instance = etalon::Instance::new(instance_desc);
         let surface = instance.create_surface(window.clone()).unwrap();
-        let adapter = pollster::block_on(instance.request_adapter(&wgpu::RequestAdapterOptions {
+        let adapter = pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions {
             compatible_surface: Some(&surface),
             ..Default::default()
         }))
@@ -121,14 +121,14 @@ impl State {
             pollster::block_on(adapter.request_device(&Default::default())).unwrap();
 
         let surface_format = surface.get_capabilities(&adapter).formats[0];
-        let surface_config = wgpu::SurfaceConfiguration {
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+        let surface_config = etalon::SurfaceConfiguration {
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT,
             format: surface_format,
-            color_space: wgpu::SurfaceColorSpace::Auto,
+            color_space: etalon::SurfaceColorSpace::Auto,
             width,
             height,
-            present_mode: wgpu::PresentMode::AutoVsync,
-            alpha_mode: wgpu::CompositeAlphaMode::Auto,
+            present_mode: etalon::PresentMode::AutoVsync,
+            alpha_mode: etalon::CompositeAlphaMode::Auto,
             view_formats: vec![],
             desired_maximum_frame_latency: 2,
         };

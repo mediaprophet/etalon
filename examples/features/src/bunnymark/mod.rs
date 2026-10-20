@@ -1,7 +1,7 @@
 use bytemuck::{Pod, Zeroable};
 use nanorand::{Rng, WyRand};
 use std::borrow::Cow;
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 use winit::{
     event::{ElementState, KeyEvent},
     keyboard::{Key, NamedKey},
@@ -52,16 +52,16 @@ impl Bunny {
     }
 }
 
-/// Example struct holds references to wgpu resources and frame persistent data
+/// Example struct holds references to etalon resources and frame persistent data
 struct Example {
-    view: wgpu::TextureView,
-    sampler: wgpu::Sampler,
-    global_bind_group_layout: wgpu::BindGroupLayout,
-    global_group: wgpu::BindGroup,
-    local_group: wgpu::BindGroup,
-    pipeline: wgpu::RenderPipeline,
+    view: etalon::TextureView,
+    sampler: etalon::Sampler,
+    global_bind_group_layout: etalon::BindGroupLayout,
+    global_group: etalon::BindGroup,
+    local_group: etalon::BindGroup,
+    pipeline: etalon::RenderPipeline,
     bunnies: Vec<Bunny>,
-    local_buffer: wgpu::Buffer,
+    local_buffer: etalon::Buffer,
     extent: [u32; 2],
     rng: WyRand,
 }
@@ -88,9 +88,9 @@ impl Example {
 
     fn render_inner(
         &mut self,
-        view: &wgpu::TextureView,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) {
         let delta = 0.01;
         for bunny in self.bunnies.iter_mut() {
@@ -100,23 +100,23 @@ impl Example {
         let uniform_alignment = device.limits().min_uniform_buffer_offset_alignment;
         queue.write_buffer(&self.local_buffer, 0, bytemuck::cast_slice(&self.bunnies));
 
-        let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
         {
-            let clear_color = wgpu::Color {
+            let clear_color = etalon::Color {
                 r: 0.1,
                 g: 0.2,
                 b: 0.3,
                 a: 1.0,
             };
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(clear_color),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(clear_color),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -128,7 +128,7 @@ impl Example {
             rpass.set_bind_group(0, &self.global_group, &[]);
             for i in 0..self.bunnies.len() {
                 let offset =
-                    (i as wgpu::DynamicOffset) * (uniform_alignment as wgpu::DynamicOffset);
+                    (i as etalon::DynamicOffset) * (uniform_alignment as etalon::DynamicOffset);
                 rpass.set_bind_group(1, &self.local_group, &[offset]);
                 rpass.draw(0..4, 0..1);
             }
@@ -140,65 +140,65 @@ impl Example {
 
 impl crate::framework::Example for Example {
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!(
-                "../../../../wgpu-hal/examples/halmark/shader.wgsl"
+            source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!(
+                "../../../../etalon-hal/examples/halmark/shader.wgsl"
             ))),
         });
 
         let global_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 entries: &[
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::VERTEX,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
-                            min_binding_size: wgpu::BufferSize::new(size_of::<Globals>() as _),
+                            min_binding_size: etalon::BufferSize::new(size_of::<Globals>() as _),
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
                             multisampled: false,
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 2,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
                         count: None,
                     },
                 ],
                 label: None,
             });
         let local_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[wgpu::BindGroupLayoutEntry {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                entries: &[etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::VERTEX,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: true,
-                        min_binding_size: wgpu::BufferSize::new(size_of::<Bunny>() as _),
+                        min_binding_size: etalon::BufferSize::new(size_of::<Bunny>() as _),
                     },
                     count: None,
                 }],
                 label: None,
             });
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[
                 Some(&global_bind_group_layout),
@@ -207,32 +207,32 @@ impl crate::framework::Example for Example {
             immediate_size: 0,
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
+                targets: &[Some(etalon::ColorTargetState {
                     format: config.view_formats[0],
-                    blend: Some(wgpu::BlendState::ALPHA_BLENDING),
-                    write_mask: wgpu::ColorWrites::default(),
+                    blend: Some(etalon::BlendState::ALPHA_BLENDING),
+                    write_mask: etalon::ColorWrites::default(),
                 })],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleStrip,
-                strip_index_format: Some(wgpu::IndexFormat::Uint16),
-                ..wgpu::PrimitiveState::default()
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::TriangleStrip,
+                strip_index_format: Some(etalon::IndexFormat::Uint16),
+                ..etalon::PrimitiveState::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
@@ -247,25 +247,25 @@ impl crate::framework::Example for Example {
             let mut buf = vec![0; buf_len];
             let info = reader.next_frame(&mut buf).unwrap();
 
-            let size = wgpu::Extent3d {
+            let size = etalon::Extent3d {
                 width: info.width,
                 height: info.height,
                 depth_or_array_layers: 1,
             };
-            let texture = device.create_texture(&wgpu::TextureDescriptor {
+            let texture = device.create_texture(&etalon::TextureDescriptor {
                 label: None,
                 size,
                 mip_level_count: 1,
                 sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba8UnormSrgb,
-                usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
+                dimension: etalon::TextureDimension::D2,
+                format: etalon::TextureFormat::Rgba8UnormSrgb,
+                usage: etalon::TextureUsages::COPY_DST | etalon::TextureUsages::TEXTURE_BINDING,
                 view_formats: &[],
             });
             queue.write_texture(
                 texture.as_image_copy(),
                 &buf,
-                wgpu::TexelCopyBufferLayout {
+                etalon::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(info.width * 4),
                     rows_per_image: None,
@@ -275,14 +275,14 @@ impl crate::framework::Example for Example {
             texture
         };
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: None,
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+            address_mode_u: etalon::AddressMode::ClampToEdge,
+            address_mode_v: etalon::AddressMode::ClampToEdge,
+            address_mode_w: etalon::AddressMode::ClampToEdge,
+            mag_filter: etalon::FilterMode::Linear,
+            min_filter: etalon::FilterMode::Nearest,
+            mipmap_filter: etalon::MipmapFilterMode::Nearest,
             ..Default::default()
         });
 
@@ -300,47 +300,47 @@ impl crate::framework::Example for Example {
             pad: [0.0; 2],
         };
 
-        let global_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let global_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("global"),
             contents: bytemuck::bytes_of(&globals),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::UNIFORM,
         });
         let uniform_alignment =
-            device.limits().min_uniform_buffer_offset_alignment as wgpu::BufferAddress;
-        let local_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            device.limits().min_uniform_buffer_offset_alignment as etalon::BufferAddress;
+        let local_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("local"),
-            size: (MAX_BUNNIES as wgpu::BufferAddress) * uniform_alignment,
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+            size: (MAX_BUNNIES as etalon::BufferAddress) * uniform_alignment,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::UNIFORM,
             mapped_at_creation: false,
         });
 
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let global_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let view = texture.create_view(&etalon::TextureViewDescriptor::default());
+        let global_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &global_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
                     resource: global_buffer.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&view),
+                    resource: etalon::BindingResource::TextureView(&view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 2,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: etalon::BindingResource::Sampler(&sampler),
                 },
             ],
             label: None,
         });
-        let local_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let local_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &local_bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
+            entries: &[etalon::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                resource: etalon::BindingResource::Buffer(etalon::BufferBinding {
                     buffer: &local_buffer,
                     offset: 0,
-                    size: wgpu::BufferSize::new(size_of::<Bunny>() as _),
+                    size: etalon::BufferSize::new(size_of::<Bunny>() as _),
                 }),
             }],
             label: None,
@@ -383,9 +383,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        sc_desc: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        sc_desc: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         self.extent = [sc_desc.width, sc_desc.height];
 
@@ -403,26 +403,26 @@ impl crate::framework::Example for Example {
             pad: [0.0; 2],
         };
 
-        let global_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let global_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("global"),
             contents: bytemuck::bytes_of(&globals),
-            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::UNIFORM,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::UNIFORM,
         });
 
-        let global_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let global_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &self.global_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
                     resource: global_buffer.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&self.view),
+                    resource: etalon::BindingResource::TextureView(&self.view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 2,
-                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                    resource: etalon::BindingResource::Sampler(&self.sampler),
                 },
             ],
             label: None,
@@ -430,7 +430,7 @@ impl crate::framework::Example for Example {
         self.global_group = global_group;
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         self.render_inner(view, device, queue);
     }
 }
@@ -440,18 +440,18 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "bunnymark",
     image_path: "/examples/features/src/bunnymark/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default(),
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default(),
     // We're looking for very small differences, so look in the high percentiles.
     comparisons: &[
-        wgpu_test::ComparisonType::Mean(0.05),
-        wgpu_test::ComparisonType::Percentile {
+        etalon_test::ComparisonType::Mean(0.05),
+        etalon_test::ComparisonType::Percentile {
             percentile: 0.99,
             threshold: 0.37,
         },

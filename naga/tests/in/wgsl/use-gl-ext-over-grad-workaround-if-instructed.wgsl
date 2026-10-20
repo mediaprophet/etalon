@@ -1,4 +1,4 @@
-// see https://github.com/gfx-rs/wgpu/pull/5171
+// see https://github.com/mediaprophet/etalon/pull/5171
 
 @group(0) @binding(0) var texture: texture_depth_2d_array;
 @group(0) @binding(1) var texture_sampler: sampler_comparison;

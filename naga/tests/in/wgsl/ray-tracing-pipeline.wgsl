@@ -1,4 +1,4 @@
-enable wgpu_ray_tracing_pipeline;
+enable etalon_ray_tracing_pipeline;
 enable primitive_index;
 
 struct HitCounters {

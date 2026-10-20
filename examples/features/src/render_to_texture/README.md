@@ -7,5 +7,5 @@ If all goes well, the end result should look familiarly like hello-triangle with
 ## To Run
 
 ```
-cargo run --bin wgpu-examples render_to_texture
+cargo run --bin etalon-examples render_to_texture
 ```

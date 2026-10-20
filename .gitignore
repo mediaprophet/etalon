@@ -1,6 +1,6 @@
 # Jujutsu
 #
-# When using the wgpu repository through [Jujutsu](https://github.com/martinvonz/jj), `.jj/` dirs.
+# When using the etalon repository through [Jujutsu](https://github.com/martinvonz/jj), `.jj/` dirs.
 # are ignored because Jujutsu writes a `.jj/.gitignore` file containing `/*`. Some tools, like
 # `prettier`, don't handle nested `.gitgnore` properly, but they _do_ handle top-level `.gitignore`
 # patterns properly. So, include it here, even though we shouldn't need it. :cry:
@@ -24,7 +24,7 @@
 .idea
 
 # Output from capture example
-wgpu/red.png
+etalon/red.png
 
 # Output from render_to_texture example
 **/please_don't_git_push_me.png
@@ -44,7 +44,7 @@ wgpu/red.png
 .wasmgpuconfig
 
 # Temporary clone location for wasm-bindgen mirroring
-wgpu/src/backend/webgpu/webgpu_sys/wasm_bindgen_clone_tmp
+etalon/src/backend/webgpu/webgpu_sys/wasm_bindgen_clone_tmp
 
 # LLM-related
 .claude/settings.local.json

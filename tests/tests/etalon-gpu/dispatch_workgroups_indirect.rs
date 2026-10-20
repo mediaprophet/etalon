@@ -1,0 +1,334 @@
+use etalon_test::{
+    apply, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters, TestingContext,
+};
+
+pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
+    vec.extend([
+        NUM_WORKGROUPS_BUILTIN,
+        DISCARD_DISPATCH,
+        RESET_BIND_GROUPS,
+        ZERO_SIZED_BUFFER,
+    ]);
+}
+
+/// Make sure that the num_workgroups builtin works properly (it requires a workaround on D3D12).
+#[apply(gpu_test!)]
+static NUM_WORKGROUPS_BUILTIN: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(
+        TestParameters::default()
+            .features(etalon::Features::IMMEDIATES)
+            .downlevel_flags(
+                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+            )
+            .limits(etalon::Limits {
+                max_immediate_size: 4,
+                ..etalon::Limits::downlevel_defaults()
+            }),
+    )
+    .run_async(|ctx| async move {
+        let num_workgroups = [1, 2, 3];
+        let res = run_test(&ctx, &num_workgroups).await;
+        assert_eq!(res, num_workgroups);
+    });
+
+/// Make sure that we discard (don't run) the dispatch if its size exceeds the device limit.
+#[apply(gpu_test!)]
+static DISCARD_DISPATCH: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(
+        TestParameters::default()
+            .features(etalon::Features::IMMEDIATES)
+            .downlevel_flags(
+                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+            )
+            .limits(etalon::Limits {
+                max_compute_workgroups_per_dimension: 10,
+                max_immediate_size: 4,
+                ..etalon::Limits::downlevel_defaults()
+            }),
+    )
+    .run_async(|ctx| async move {
+        let max = ctx.device.limits().max_compute_workgroups_per_dimension;
+
+        let res = run_test(&ctx, &[max, max, max]).await;
+        assert_eq!(res, [max; 3]);
+
+        let res = run_test(&ctx, &[max + 1, 1, 1]).await;
+        assert_eq!(res, [0; 3]);
+
+        let res = run_test(&ctx, &[1, max + 1, 1]).await;
+        assert_eq!(res, [0; 3]);
+
+        let res = run_test(&ctx, &[1, 1, max + 1]).await;
+        assert_eq!(res, [0; 3]);
+    });
+
+/// Make sure that resetting the bind groups set by the validation code works properly.
+#[apply(gpu_test!)]
+static RESET_BIND_GROUPS: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(
+        TestParameters::default()
+            .features(etalon::Features::IMMEDIATES)
+            .downlevel_flags(
+                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+            )
+            .limits(etalon::Limits {
+                max_immediate_size: 4,
+                ..etalon::Limits::downlevel_defaults()
+            }).enable_noop(),
+    )
+    .run_async(|ctx| async move {
+        let scope = ctx.device.push_error_scope(etalon::ErrorFilter::Validation);
+
+        let test_resources = TestResources::new(&ctx);
+
+        let indirect_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
+            label: None,
+            size: 12,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::INDIRECT,
+            mapped_at_creation: false,
+        });
+
+        let mut encoder = ctx.device.create_command_encoder(&Default::default());
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&Default::default());
+            compute_pass.set_pipeline(&test_resources.pipeline);
+            compute_pass.set_immediates(0, &[0, 0, 0, 0]);
+            // compute_pass.set_bind_group(0, &test_resources.bind_group, &[]);
+            compute_pass.dispatch_workgroups_indirect(&indirect_buffer, 0);
+        }
+        ctx.queue.submit(Some(encoder.finish()));
+
+        let error = pollster::block_on(scope.pop());
+        assert!(error.is_some_and(|error| {
+            format!("{error}").contains("The current set ComputePipeline with '' label expects a BindGroup to be set at index 0")
+        }));
+    });
+
+/// Make sure that zero sized buffer validation is raised.
+#[apply(gpu_test!)]
+static ZERO_SIZED_BUFFER: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(
+        TestParameters::default()
+            .features(etalon::Features::IMMEDIATES)
+            .downlevel_flags(
+                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+            )
+            .limits(etalon::Limits {
+                max_immediate_size: 4,
+                ..etalon::Limits::downlevel_defaults()
+            })
+            .enable_noop(),
+    )
+    .run_async(|ctx| async move {
+        let scope = ctx.device.push_error_scope(etalon::ErrorFilter::Validation);
+
+        let test_resources = TestResources::new(&ctx);
+
+        let indirect_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
+            label: None,
+            size: 0,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::INDIRECT,
+            mapped_at_creation: false,
+        });
+
+        let mut encoder = ctx.device.create_command_encoder(&Default::default());
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&Default::default());
+            compute_pass.set_pipeline(&test_resources.pipeline);
+            compute_pass.set_immediates(0, &[0, 0, 0, 0]);
+            compute_pass.set_bind_group(0, &test_resources.bind_group, &[]);
+            compute_pass.dispatch_workgroups_indirect(&indirect_buffer, 0);
+        }
+        ctx.queue.submit(Some(encoder.finish()));
+
+        let error = pollster::block_on(scope.pop());
+        assert!(error.is_some_and(|error| {
+            format!("{error}").contains(
+                "Indirect buffer of 12 bytes starting at offset 0 would overrun buffer of size 0",
+            )
+        }));
+    });
+
+struct TestResources {
+    pipeline: etalon::ComputePipeline,
+    out_buffer: etalon::Buffer,
+    readback_buffer: etalon::Buffer,
+    bind_group: etalon::BindGroup,
+}
+
+impl TestResources {
+    fn new(ctx: &TestingContext) -> Self {
+        const SHADER_SRC: &str = "
+            struct TestOffsetPc {
+                inner: u32,
+            }
+
+            // `test_offset.inner` should always be 0; we test that resetting the immediate data set by the validation code works properly.
+            var<immediate> test_offset: TestOffsetPc;
+
+            @group(0) @binding(0)
+            var<storage, read_write> out: array<u32, 3>;
+
+            @compute @workgroup_size(1)
+            fn main(@builtin(num_workgroups) num_workgroups: vec3u, @builtin(workgroup_id) workgroup_id: vec3u) {
+                if (all(workgroup_id == vec3u())) {
+                    out[0] = num_workgroups.x + test_offset.inner;
+                    out[1] = num_workgroups.y + test_offset.inner;
+                    out[2] = num_workgroups.z + test_offset.inner;
+                }
+            }
+        ";
+
+        let module = ctx
+            .device
+            .create_shader_module(etalon::ShaderModuleDescriptor {
+                label: None,
+                source: etalon::ShaderSource::Wgsl(SHADER_SRC.into()),
+            });
+
+        let bgl = ctx
+            .device
+            .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
+
+        let layout = ctx
+            .device
+            .create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                label: None,
+                bind_group_layouts: &[Some(&bgl)],
+                immediate_size: 4,
+            });
+
+        let pipeline = ctx
+            .device
+            .create_compute_pipeline(&etalon::ComputePipelineDescriptor {
+                label: None,
+                layout: Some(&layout),
+                module: &module,
+                entry_point: Some("main"),
+                compilation_options: Default::default(),
+                cache: None,
+            });
+
+        let out_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
+            label: None,
+            size: 12,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+
+        let readback_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
+            label: None,
+            size: 12,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+
+        let bind_group = ctx.device.create_bind_group(&etalon::BindGroupDescriptor {
+            label: None,
+            layout: &pipeline.get_bind_group_layout(0),
+            entries: &[etalon::BindGroupEntry {
+                binding: 0,
+                resource: out_buffer.as_entire_binding(),
+            }],
+        });
+
+        Self {
+            pipeline,
+            out_buffer,
+            readback_buffer,
+            bind_group,
+        }
+    }
+}
+
+async fn run_test(ctx: &TestingContext, num_workgroups: &[u32; 3]) -> [u32; 3] {
+    let test_resources = TestResources::new(ctx);
+
+    let mut res = None;
+
+    for (indirect_offset, indirect_buffer_size) in [
+        // internal src buffer binding size will be buffer.size
+        (0, 12),
+        (4, 4 + 12),
+        (4, 8 + 12),
+        (256 * 2 - 4 - 12, 256 * 2 - 4),
+        // internal src buffer binding size will be 256 * 2 + x
+        (0, 256 * 2 * 2 + 4),
+        (256, 256 * 2 * 2 + 8),
+        (256 + 4, 256 * 2 * 2 + 12),
+        (256 * 2 + 16, 256 * 2 * 2 + 16),
+        (256 * 2 * 2, 256 * 2 * 2 + 32),
+        (256 + 12, 256 * 2 * 2 + 64),
+    ] {
+        let indirect_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
+            label: None,
+            size: indirect_buffer_size,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::INDIRECT,
+            mapped_at_creation: false,
+        });
+
+        ctx.queue.write_buffer(
+            &indirect_buffer,
+            indirect_offset,
+            bytemuck::bytes_of(num_workgroups),
+        );
+
+        let mut encoder = ctx.device.create_command_encoder(&Default::default());
+        {
+            let mut compute_pass = encoder.begin_compute_pass(&Default::default());
+            compute_pass.set_pipeline(&test_resources.pipeline);
+            compute_pass.set_immediates(0, &[0, 0, 0, 0]);
+            compute_pass.set_bind_group(0, &test_resources.bind_group, &[]);
+            compute_pass.dispatch_workgroups_indirect(&indirect_buffer, indirect_offset);
+        }
+
+        encoder.copy_buffer_to_buffer(
+            &test_resources.out_buffer,
+            0,
+            &test_resources.readback_buffer,
+            0,
+            12,
+        );
+
+        ctx.queue.submit(Some(encoder.finish()));
+
+        test_resources
+            .readback_buffer
+            .slice(..)
+            .map_async(etalon::MapMode::Read, |_| {});
+
+        ctx.async_poll(etalon::PollType::wait_indefinitely())
+            .await
+            .unwrap();
+
+        let view = test_resources
+            .readback_buffer
+            .slice(..)
+            .get_mapped_range()
+            .unwrap();
+
+        let current_res = *bytemuck::from_bytes(&view);
+        drop(view);
+        test_resources.readback_buffer.unmap();
+
+        if let Some(past_res) = res {
+            assert_eq!(past_res, current_res);
+        } else {
+            res = Some(current_res);
+        }
+    }
+
+    res.unwrap()
+}

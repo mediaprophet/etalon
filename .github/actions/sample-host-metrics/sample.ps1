@@ -4,7 +4,7 @@
 # Windows CI intermittently stops making progress for a minute or more at a
 # time, which kills whichever tests happen to be running. These samples let a
 # timeout be correlated with CPU, memory or disk pressure on the host.
-# https://github.com/gfx-rs/wgpu/issues/9248
+# https://github.com/mediaprophet/etalon/issues/9248
 param(
     [Parameter(Mandatory = $true)] [string] $Output,
     [int] $IntervalSeconds = 5,
@@ -28,9 +28,10 @@ for ($i = 0; $i -lt $Samples; $i++) {
     $now = (Get-Date).ToUniversalTime().ToString("o")
     try {
         $values = (Get-Counter -Counter $counters -ErrorAction Stop).CounterSamples |
-            ForEach-Object { [math]::Round($_.CookedValue, 1) }
+        ForEach-Object { [math]::Round($_.CookedValue, 1) }
         Add-Content -Path $Output -Value "$now,$($values -join ',')"
-    } catch {
+    }
+    catch {
         Add-Content -Path $Output -Value "$now,,,,,"
     }
     Start-Sleep -Seconds $IntervalSeconds

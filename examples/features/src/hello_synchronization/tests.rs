@@ -1,13 +1,13 @@
 use super::*;
-use wgpu_test::{apply, gpu_test, GpuTestConfiguration, TestParameters};
+use etalon_test::{apply, gpu_test, GpuTestConfiguration, TestParameters};
 
 #[apply(gpu_test!)]
 pub static SYNC: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         // Taken from hello-compute tests.
         TestParameters::default()
-            .downlevel_flags(wgpu::DownlevelFlags::COMPUTE_SHADERS)
-            .limits(wgpu::Limits::downlevel_defaults()),
+            .downlevel_flags(etalon::DownlevelFlags::COMPUTE_SHADERS)
+            .limits(etalon::Limits::downlevel_defaults()),
     )
     .run_async(|ctx| async move {
         let ExecuteResults {

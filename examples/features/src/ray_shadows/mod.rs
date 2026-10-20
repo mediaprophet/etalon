@@ -2,8 +2,8 @@ use std::{borrow::Cow, iter, mem};
 
 use bytemuck::{Pod, Zeroable};
 use glam::{Mat4, Vec3};
-use wgpu::util::DeviceExt;
-use wgpu::{vertex_attr_array, IndexFormat, VertexBufferLayout};
+use etalon::util::DeviceExt;
+use etalon::{vertex_attr_array, IndexFormat, VertexBufferLayout};
 
 use crate::utils;
 
@@ -54,17 +54,17 @@ struct Uniforms {
 
 struct Example {
     uniforms: Uniforms,
-    uniform_buf: wgpu::Buffer,
-    vertex_buf: wgpu::Buffer,
-    index_buf: wgpu::Buffer,
-    pipeline: wgpu::RenderPipeline,
-    bind_group: wgpu::BindGroup,
+    uniform_buf: etalon::Buffer,
+    vertex_buf: etalon::Buffer,
+    index_buf: etalon::Buffer,
+    pipeline: etalon::RenderPipeline,
+    bind_group: etalon::BindGroup,
     animation_timer: utils::AnimationTimer,
 }
 
 const CAM_LOOK_AT: Vec3 = Vec3::new(0.0, 1.0, -1.5);
 
-fn create_matrix(config: &wgpu::SurfaceConfiguration) -> Uniforms {
+fn create_matrix(config: &etalon::SurfaceConfiguration) -> Uniforms {
     let view = glam::camera::rh::view::look_at_mat4(CAM_LOOK_AT, Vec3::ZERO, Vec3::Y);
     let proj = glam::camera::rh::proj::directx::perspective(
         59.0_f32.to_radians(),
@@ -81,101 +81,101 @@ fn create_matrix(config: &wgpu::SurfaceConfiguration) -> Uniforms {
 }
 
 impl crate::framework::Example for Example {
-    fn required_features() -> wgpu::Features {
-        wgpu::Features::EXPERIMENTAL_RAY_QUERY | wgpu::Features::IMMEDIATES
+    fn required_features() -> etalon::Features {
+        etalon::Features::EXPERIMENTAL_RAY_QUERY | etalon::Features::IMMEDIATES
     }
 
-    fn required_downlevel_capabilities() -> wgpu::DownlevelCapabilities {
-        wgpu::DownlevelCapabilities {
-            flags: wgpu::DownlevelFlags::COMPUTE_SHADERS,
+    fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
+        etalon::DownlevelCapabilities {
+            flags: etalon::DownlevelFlags::COMPUTE_SHADERS,
             ..Default::default()
         }
     }
 
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits {
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits {
             max_immediate_size: 16,
-            ..wgpu::Limits::default()
+            ..etalon::Limits::default()
         }
         .using_minimum_supported_acceleration_structure_values()
     }
 
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) -> Self {
         let uniforms = create_matrix(config);
 
-        let uniform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let uniform_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Uniform Buffer"),
             contents: bytemuck::cast_slice(&[uniforms]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
         });
 
         let (vertex_data, index_data) = create_vertices();
 
-        let vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertex_data),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::BLAS_INPUT,
+            usage: etalon::BufferUsages::VERTEX | etalon::BufferUsages::BLAS_INPUT,
         });
 
-        let index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let index_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(&index_data),
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::BLAS_INPUT,
+            usage: etalon::BufferUsages::INDEX | etalon::BufferUsages::BLAS_INPUT,
         });
 
-        let blas_geo_size_desc = wgpu::BlasTriangleGeometrySizeDescriptor {
-            vertex_format: wgpu::VertexFormat::Float32x3,
+        let blas_geo_size_desc = etalon::BlasTriangleGeometrySizeDescriptor {
+            vertex_format: etalon::VertexFormat::Float32x3,
             vertex_count: vertex_data.len() as u32,
-            index_format: Some(wgpu::IndexFormat::Uint16),
+            index_format: Some(etalon::IndexFormat::Uint16),
             index_count: Some(index_data.len() as u32),
-            flags: wgpu::AccelerationStructureGeometryFlags::OPAQUE,
+            flags: etalon::AccelerationStructureGeometryFlags::OPAQUE,
         };
 
         let blas = device.create_blas(
-            &wgpu::CreateBlasDescriptor {
+            &etalon::CreateBlasDescriptor {
                 label: None,
-                flags: wgpu::AccelerationStructureFlags::PREFER_FAST_TRACE,
-                update_mode: wgpu::AccelerationStructureUpdateMode::Build,
+                flags: etalon::AccelerationStructureFlags::PREFER_FAST_TRACE,
+                update_mode: etalon::AccelerationStructureUpdateMode::Build,
             },
-            wgpu::BlasGeometrySizeDescriptors::Triangles {
+            etalon::BlasGeometrySizeDescriptors::Triangles {
                 descriptors: vec![blas_geo_size_desc.clone()],
             },
         );
 
-        let mut tlas = device.create_tlas(&wgpu::CreateTlasDescriptor {
+        let mut tlas = device.create_tlas(&etalon::CreateTlasDescriptor {
             label: None,
-            flags: wgpu::AccelerationStructureFlags::PREFER_FAST_TRACE,
-            update_mode: wgpu::AccelerationStructureUpdateMode::Build,
+            flags: etalon::AccelerationStructureFlags::PREFER_FAST_TRACE,
+            update_mode: etalon::AccelerationStructureUpdateMode::Build,
             max_instances: 1,
         });
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+            source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: None,
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::AccelerationStructure {
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::AccelerationStructure {
                         vertex_return: false,
                     },
                     count: None,
@@ -183,42 +183,42 @@ impl crate::framework::Example for Example {
             ],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 16,
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[Some(VertexBufferLayout {
-                    array_stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    array_stride: mem::size_of::<Vertex>() as etalon::BufferAddress,
                     step_mode: Default::default(),
                     attributes: &vertex_attr_array![0 => Float32x3, 1 => Float32x3],
                 })],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(config.format.into())],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::TriangleList,
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
 
-        tlas[0] = Some(wgpu::TlasInstance::new(
+        tlas[0] = Some(etalon::TlasInstance::new(
             &blas,
             [1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
             0,
@@ -226,13 +226,13 @@ impl crate::framework::Example for Example {
         ));
 
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         encoder.build_acceleration_structures(
-            iter::once(&wgpu::BlasBuildEntry {
+            iter::once(&etalon::BlasBuildEntry {
                 blas: &blas,
-                geometry: wgpu::BlasGeometries::TriangleGeometries(vec![
-                    wgpu::BlasTriangleGeometry {
+                geometry: etalon::BlasGeometries::TriangleGeometries(vec![
+                    etalon::BlasTriangleGeometry {
                         size: &blas_geo_size_desc,
                         vertex_buffer: &vertex_buf,
                         first_vertex: 0,
@@ -249,15 +249,15 @@ impl crate::framework::Example for Example {
 
         queue.submit(Some(encoder.finish()));
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
                     resource: uniform_buf.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
                     resource: tlas.as_binding(),
                 },
@@ -281,9 +281,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        _device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _device: &etalon::Device,
+        queue: &etalon::Queue,
     ) {
         self.uniforms = create_matrix(config);
 
@@ -291,8 +291,8 @@ impl crate::framework::Example for Example {
         queue.submit(None);
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
-        //device.push_error_scope(wgpu::ErrorFilter::Validation);
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+        //device.push_error_scope(etalon::ErrorFilter::Validation);
         const LIGHT_DISTANCE: f32 = 5.0;
         const TIME_SCALE: f32 = -0.2;
         const INITIAL_TIME: f32 = 1.0;
@@ -301,23 +301,23 @@ impl crate::framework::Example for Example {
         let sin = (time * TIME_SCALE + INITIAL_TIME).sin() * LIGHT_DISTANCE;
 
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color {
                             r: 0.1,
                             g: 0.1,
                             b: 0.1,
                             a: 1.0,
                         }),
-                        store: wgpu::StoreOp::Store,
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -336,7 +336,7 @@ impl crate::framework::Example for Example {
             rpass.draw_indexed(0..12, 0, 0..1);
         }
         queue.submit(Some(encoder.finish()));
-        device.poll(wgpu::PollType::wait_indefinitely()).unwrap();
+        device.poll(etalon::PollType::wait_indefinitely()).unwrap();
     }
 }
 
@@ -345,16 +345,16 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "ray_shadows",
     image_path: "/examples/features/src/ray_shadows/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default()
-        // https://github.com/gfx-rs/wgpu/issues/9100
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default()
+        // https://github.com/mediaprophet/etalon/issues/9100
         .disable_mtl_shader_validation(),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.02)],
+    comparisons: &[etalon_test::ComparisonType::Mean(0.02)],
     _phantom: std::marker::PhantomData::<Example>,
 };

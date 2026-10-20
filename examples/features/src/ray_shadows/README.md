@@ -5,7 +5,7 @@ This example renders a ray traced shadow with hardware acceleration.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples ray_shadows
+cargo run --bin etalon-examples ray_shadows
 ```
 
 ## Screenshots

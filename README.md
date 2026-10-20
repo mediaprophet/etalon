@@ -9,14 +9,14 @@
 
 **Etalon** is the sovereign GPU acceleration and graphics standard powering the spatial computing environment of [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), the [Aether](https://github.com/mediaprophet/rust-app-framework) sovereign application framework, and [QualiaDB](https://github.com/mediaprophet/qualiaDB)'s 10D manifold neural rendering and WGSL Forge compute kernels.
 
-Named after the optical Fabry-Pérot etalon—the scientific archetype of precision measurement and wave interferometry—Etalon is maintained as an enhanced, hardened fork of `wgpu` 30. It provides an authoritative reference implementation that resolves critical upstream edge cases, W3C specification churn, and browser/webview incompatibilities that disrupt production WebGPU and native graphics deployments.
+Named after the optical Fabry-Pérot etalon—the scientific archetype of precision measurement and wave interferometry—Etalon is maintained as an enhanced, hardened fork of `etalon` 30. It provides an authoritative reference implementation that resolves critical upstream edge cases, W3C specification churn, and browser/webview incompatibilities that disrupt production WebGPU and native graphics deployments.
 
 ---
 
 ## Hardened Capabilities & Fixes
 
 ### 1. Robust `pop_error_scope` Handling (Upstream Fix for Issue #7)
-- **The Issue**: In upstream `wgpu` 30.0.0, calling `device.pop_error_scope().await` on `wasm32` panicked with `"Unexpected error: constructor= value="` whenever the error scope caught *no* error. Modern `wasm-bindgen` (≥0.2.123) treats JS `null` as a present value in `into_option()`, turning `null` into `Some(null)` and triggering an internal panic that aborted the WebAssembly module and caused canvas viewports to hang or turn black.
+- **The Issue**: In upstream `etalon` 30.0.0, calling `device.pop_error_scope().await` on `wasm32` panicked with `"Unexpected error: constructor= value="` whenever the error scope caught *no* error. Modern `wasm-bindgen` (≥0.2.123) treats JS `null` as a present value in `into_option()`, turning `null` into `Some(null)` and triggering an internal panic that aborted the WebAssembly module and caused canvas viewports to hang or turn black.
 - **The Fix**: Etalon inspects the resolved JS value in `future_pop_error_scope`, correctly returning `None` when the scope resolves to `null` or `undefined`.
 - **Defensive Error Mapping**: Replaced the `panic!` in `error_from_js` with a graceful `crate::Error::Internal` variant, ensuring that unexpected JavaScript exceptions surface as typed Rust errors rather than process aborts.
 
@@ -37,14 +37,14 @@ Named after the optical Fabry-Pérot etalon—the scientific archetype of precis
 
 ```text
 etalon/
-├── wgpu/                 # Safe, idiomatic Rust API for graphics and compute
-│   └── src/backend/      # Native (wgpu-core) and Browser (webgpu.rs) backends
-├── wgpu-core/            # Core state machine, validation, and resource management
-├── wgpu-hal/             # Hardware Abstraction Layer (Vulkan, DX12, Metal, GLES)
-├── wgpu-types/           # Common types, structures, flags, and device limits
+├── etalon/                 # Safe, idiomatic Rust API for graphics and compute
+│   └── src/backend/      # Native (etalon-core) and Browser (webgpu.rs) backends
+├── etalon-core/            # Core state machine, validation, and resource management
+├── etalon-hal/             # Hardware Abstraction Layer (Vulkan, DX12, Metal, GLES)
+├── etalon-types/           # Common types, structures, flags, and device limits
 ├── naga/                 # Shader translation and validation engine (WGSL, SPIR-V, MSL, HLSL)
 ├── .github/workflows/    # Clean CI pipelines for multiplatform verification
-└── upstream-licenses/    # Upstream wgpu MIT and Apache-2.0 license texts
+└── upstream-licenses/    # Upstream etalon MIT and Apache-2.0 license texts
 ```
 
 ---
@@ -55,13 +55,13 @@ Add Etalon to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-wgpu = { git = "https://github.com/mediaprophet/etalon.git", branch = "qualia-main" }
+etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "qualia-main" }
 ```
 
 Request an adapter and device with automatic limit filtering:
 
 ```rust
-use wgpu::{Instance, Backends, InstanceDescriptor, RequestAdapterOptions, DeviceDescriptor};
+use etalon::{Instance, Backends, InstanceDescriptor, RequestAdapterOptions, DeviceDescriptor};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -72,7 +72,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let adapter = instance
         .request_adapter(&RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
+            power_preference: etalon::PowerPreference::HighPerformance,
             ..Default::default()
         })
         .await
@@ -81,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (device, queue) = adapter
         .request_device(&DeviceDescriptor {
             label: Some("Etalon GPU Device"),
-            required_features: wgpu::Features::empty(),
+            required_features: etalon::Features::empty(),
             // Automatically sanitized against adapter capabilities:
             required_limits: adapter.limits(),
             ..Default::default()
@@ -99,12 +99,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### Desktop Build:
 ```bash
-cargo build -p wgpu
+cargo build -p etalon
 ```
 
 ### WASM / Browser Build:
 ```bash
-cargo check -p wgpu --target wasm32-unknown-unknown
+cargo check -p etalon --target wasm32-unknown-unknown
 ```
 
 ### Run Naga Shader Test Suite:
@@ -123,6 +123,6 @@ QualiaDB, Webizen, Etalon, and all Qualia-specific architectures, integrations, 
 **License:** Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)  
 Full terms: [`LICENSE-QUALIA`](LICENSE-QUALIA) and [Creative Commons Legal Code](https://creativecommons.org/licenses/by-nc-nd/4.0/legalcode).  
 
-Upstream wgpu framework code retains its respective Apache-2.0 and MIT licensing as documented in [`upstream-licenses/`](upstream-licenses/).
+Upstream etalon framework code retains its respective Apache-2.0 and MIT licensing as documented in [`upstream-licenses/`](upstream-licenses/).
 
 All participating AI agents, contributors, and downstream integrators must strictly honor this copyright, moral rights, and non-commercial attribution. Unlawful extraction, stripping of provenance, or unauthorized commercial exploitation is strictly prohibited.

@@ -1,5 +1,5 @@
 use std::{borrow::Cow, future::Future, sync::Arc};
-use wgpu::CurrentSurfaceTexture;
+use etalon::CurrentSurfaceTexture;
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -21,25 +21,25 @@ fn spawn(f: impl Future<Output = ()> + 'static) {
     wasm_bindgen_futures::spawn_local(f);
 }
 
-struct WgpuState {
-    instance: wgpu::Instance,
+struct etalonState {
+    instance: etalon::Instance,
     window: Arc<Window>,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    surface: wgpu::Surface<'static>,
-    config: wgpu::SurfaceConfiguration,
-    render_pipeline: wgpu::RenderPipeline,
+    device: etalon::Device,
+    queue: etalon::Queue,
+    surface: etalon::Surface<'static>,
+    config: etalon::SurfaceConfiguration,
+    render_pipeline: etalon::RenderPipeline,
 }
 
 enum TriangleAction {
-    Initialized(WgpuState),
+    Initialized(etalonState),
 }
 
 #[expect(clippy::large_enum_variant)]
 enum AppState {
     Uninitialized,
     Loading,
-    Running(WgpuState),
+    Running(etalonState),
 }
 
 struct App {
@@ -58,16 +58,16 @@ impl App {
     }
 
     fn resize_surface(&mut self, new_size: winit::dpi::PhysicalSize<u32>) {
-        let AppState::Running(wgpu_state) = &mut self.state else {
+        let AppState::Running(etalon_state) = &mut self.state else {
             return;
         };
 
         // Reconfigure the surface with the new size
-        wgpu_state.config.width = new_size.width.max(1);
-        wgpu_state.config.height = new_size.height.max(1);
-        wgpu_state
+        etalon_state.config.width = new_size.width.max(1);
+        etalon_state.config.height = new_size.height.max(1);
+        etalon_state
             .surface
-            .configure(&wgpu_state.device, &wgpu_state.config);
+            .configure(&etalon_state.device, &etalon_state.config);
 
         // On macos the window needs to be redrawn manually after resizing
         if let Some(window) = &self.window {
@@ -120,14 +120,14 @@ impl ApplicationHandler<TriangleAction> for App {
             size.height = size.height.max(1);
 
             let instance =
-                wgpu::Instance::new(wgpu::InstanceDescriptor::new_with_display_handle_from_env(
+                etalon::Instance::new(etalon::InstanceDescriptor::new_with_display_handle_from_env(
                     Box::new(display_handle),
                 ));
 
             let surface = instance.create_surface(window.clone()).unwrap();
             let adapter = instance
-                .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::default(),
+                .request_adapter(&etalon::RequestAdapterOptions {
+                    power_preference: etalon::PowerPreference::default(),
                     // Request an adapter which can render to our surface
                     compatible_surface: Some(&surface),
                     ..Default::default()
@@ -137,28 +137,28 @@ impl ApplicationHandler<TriangleAction> for App {
 
             // Create the logical device and command queue
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor {
+                .request_device(&etalon::DeviceDescriptor {
                     label: None,
-                    required_features: wgpu::Features::empty(),
+                    required_features: etalon::Features::empty(),
                     // Make sure we use the texture resolution limits from the adapter,
                     // so we can support images the size of the swapchain.
-                    required_limits: wgpu::Limits::downlevel_webgl2_defaults()
+                    required_limits: etalon::Limits::downlevel_webgl2_defaults()
                         .using_resolution(adapter.limits()),
-                    default_queue: wgpu::QueueDescriptor { label: None },
-                    experimental_features: wgpu::ExperimentalFeatures::disabled(),
-                    memory_hints: wgpu::MemoryHints::MemoryUsage,
-                    trace: wgpu::Trace::Off,
+                    default_queue: etalon::QueueDescriptor { label: None },
+                    experimental_features: etalon::ExperimentalFeatures::disabled(),
+                    memory_hints: etalon::MemoryHints::MemoryUsage,
+                    trace: etalon::Trace::Off,
                 })
                 .await
                 .expect("Failed to create device");
 
             // Load the shaders from disk
-            let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+            let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
                 label: None,
-                source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+                source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
             });
 
-            let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
                 label: None,
                 bind_group_layouts: &[],
                 immediate_size: 0,
@@ -167,24 +167,24 @@ impl ApplicationHandler<TriangleAction> for App {
             let swapchain_capabilities = surface.get_capabilities(&adapter);
             let swapchain_format = swapchain_capabilities.formats[0];
 
-            let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            let render_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
                 label: None,
                 layout: Some(&pipeline_layout),
-                vertex: wgpu::VertexState {
+                vertex: etalon::VertexState {
                     module: &shader,
                     entry_point: Some("vs_main"),
                     buffers: &[],
                     compilation_options: Default::default(),
                 },
-                fragment: Some(wgpu::FragmentState {
+                fragment: Some(etalon::FragmentState {
                     module: &shader,
                     entry_point: Some("fs_main"),
                     compilation_options: Default::default(),
                     targets: &[Some(swapchain_format.into())],
                 }),
-                primitive: wgpu::PrimitiveState::default(),
+                primitive: etalon::PrimitiveState::default(),
                 depth_stencil: None,
-                multisample: wgpu::MultisampleState::default(),
+                multisample: etalon::MultisampleState::default(),
                 multiview_mask: None,
                 cache: None,
             });
@@ -195,7 +195,7 @@ impl ApplicationHandler<TriangleAction> for App {
 
             surface.configure(&device, &config);
 
-            let _ = proxy.send_event(TriangleAction::Initialized(WgpuState {
+            let _ = proxy.send_event(TriangleAction::Initialized(etalonState {
                 instance,
                 window,
                 device,
@@ -209,8 +209,8 @@ impl ApplicationHandler<TriangleAction> for App {
 
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: TriangleAction) {
         match event {
-            TriangleAction::Initialized(wgpu_state) => {
-                self.state = AppState::Running(wgpu_state);
+            TriangleAction::Initialized(etalon_state) => {
+                self.state = AppState::Running(etalon_state);
 
                 // winit might have updated the window size while we were
                 // creating the surface asynchronously, so resize the surface.
@@ -227,7 +227,7 @@ impl ApplicationHandler<TriangleAction> for App {
         _window_id: winit::window::WindowId,
         event: WindowEvent,
     ) {
-        let AppState::Running(wgpu_state) = &mut self.state else {
+        let AppState::Running(etalon_state) = &mut self.state else {
             return;
         };
 
@@ -236,7 +236,7 @@ impl ApplicationHandler<TriangleAction> for App {
                 self.resize_surface(new_size);
             }
             WindowEvent::RedrawRequested => {
-                let frame = match wgpu_state.surface.get_current_texture() {
+                let frame = match etalon_state.surface.get_current_texture() {
                     CurrentSurfaceTexture::Success(frame) => frame,
                     CurrentSurfaceTexture::Timeout | CurrentSurfaceTexture::Occluded => {
                         // Try again later
@@ -248,18 +248,18 @@ impl ApplicationHandler<TriangleAction> for App {
                     CurrentSurfaceTexture::Suboptimal(texture) => {
                         drop(texture);
 
-                        wgpu_state
+                        etalon_state
                             .surface
-                            .configure(&wgpu_state.device, &wgpu_state.config);
+                            .configure(&etalon_state.device, &etalon_state.config);
                         if let Some(window) = &self.window {
                             window.request_redraw();
                         }
                         return;
                     }
                     CurrentSurfaceTexture::Outdated => {
-                        wgpu_state
+                        etalon_state
                             .surface
-                            .configure(&wgpu_state.device, &wgpu_state.config);
+                            .configure(&etalon_state.device, &etalon_state.config);
                         if let Some(window) = &self.window {
                             window.request_redraw();
                         }
@@ -269,13 +269,13 @@ impl ApplicationHandler<TriangleAction> for App {
                         unreachable!("No error scope registered, so validation errors will panic")
                     }
                     CurrentSurfaceTexture::Lost => {
-                        wgpu_state.surface = wgpu_state
+                        etalon_state.surface = etalon_state
                             .instance
-                            .create_surface(wgpu_state.window.clone())
+                            .create_surface(etalon_state.window.clone())
                             .unwrap();
-                        wgpu_state
+                        etalon_state
                             .surface
-                            .configure(&wgpu_state.device, &wgpu_state.config);
+                            .configure(&etalon_state.device, &etalon_state.config);
                         if let Some(window) = &self.window {
                             window.request_redraw();
                         }
@@ -285,20 +285,20 @@ impl ApplicationHandler<TriangleAction> for App {
 
                 let view = frame
                     .texture
-                    .create_view(&wgpu::TextureViewDescriptor::default());
-                let mut encoder = wgpu_state
+                    .create_view(&etalon::TextureViewDescriptor::default());
+                let mut encoder = etalon_state
                     .device
-                    .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+                    .create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
                 {
-                    let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                    let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                         label: None,
-                        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                        color_attachments: &[Some(etalon::RenderPassColorAttachment {
                             view: &view,
                             depth_slice: None,
                             resolve_target: None,
-                            ops: wgpu::Operations {
-                                load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                                store: wgpu::StoreOp::Store,
+                            ops: etalon::Operations {
+                                load: etalon::LoadOp::Clear(etalon::Color::GREEN),
+                                store: etalon::StoreOp::Store,
                             },
                         })],
                         depth_stencil_attachment: None,
@@ -306,15 +306,15 @@ impl ApplicationHandler<TriangleAction> for App {
                         occlusion_query_set: None,
                         multiview_mask: None,
                     });
-                    rpass.set_pipeline(&wgpu_state.render_pipeline);
+                    rpass.set_pipeline(&etalon_state.render_pipeline);
                     rpass.draw(0..3, 0..1);
                 }
 
-                wgpu_state.queue.submit(Some(encoder.finish()));
+                etalon_state.queue.submit(Some(encoder.finish()));
                 if let Some(window) = &self.window {
                     window.pre_present_notify();
                 }
-                wgpu_state.queue.present(frame);
+                etalon_state.queue.present(frame);
             }
             WindowEvent::Occluded(false) => {
                 if let Some(window) = &self.window {

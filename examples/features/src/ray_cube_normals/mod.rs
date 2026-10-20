@@ -2,10 +2,10 @@ use std::{borrow::Cow, iter, mem};
 
 use bytemuck::{Pod, Zeroable};
 use glam::{Affine3A, Mat4, Quat, Vec3};
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 use crate::utils;
-use wgpu::StoreOp;
+use etalon::StoreOp;
 
 // from cube
 #[repr(C)]
@@ -98,77 +98,77 @@ fn affine_to_rows(mat: &Affine3A) -> [f32; 12] {
 }
 
 struct Example {
-    rt_target: wgpu::Texture,
-    tlas: wgpu::Tlas,
-    compute_pipeline: wgpu::ComputePipeline,
-    compute_bind_group: wgpu::BindGroup,
-    blit_pipeline: wgpu::RenderPipeline,
-    blit_bind_group: wgpu::BindGroup,
+    rt_target: etalon::Texture,
+    tlas: etalon::Tlas,
+    compute_pipeline: etalon::ComputePipeline,
+    compute_bind_group: etalon::BindGroup,
+    blit_pipeline: etalon::RenderPipeline,
+    blit_bind_group: etalon::BindGroup,
     animation_timer: utils::AnimationTimer,
 }
 
 impl crate::framework::Example for Example {
     // Don't want srgb, so normals show up better.
     const SRGB: bool = false;
-    fn required_features() -> wgpu::Features {
-        wgpu::Features::EXPERIMENTAL_RAY_QUERY | wgpu::Features::EXPERIMENTAL_RAY_HIT_VERTEX_RETURN
+    fn required_features() -> etalon::Features {
+        etalon::Features::EXPERIMENTAL_RAY_QUERY | etalon::Features::EXPERIMENTAL_RAY_HIT_VERTEX_RETURN
     }
 
-    fn required_downlevel_capabilities() -> wgpu::DownlevelCapabilities {
-        wgpu::DownlevelCapabilities {
-            flags: wgpu::DownlevelFlags::COMPUTE_SHADERS,
+    fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
+        etalon::DownlevelCapabilities {
+            flags: etalon::DownlevelFlags::COMPUTE_SHADERS,
             ..Default::default()
         }
     }
 
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits::default().using_minimum_supported_acceleration_structure_values()
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits::default().using_minimum_supported_acceleration_structure_values()
     }
 
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) -> Self {
         let side_count = 8;
 
-        let rt_target = device.create_texture(&wgpu::TextureDescriptor {
+        let rt_target = device.create_texture(&etalon::TextureDescriptor {
             label: Some("rt_target"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width: config.width,
                 height: config.height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::STORAGE_BINDING,
-            view_formats: &[wgpu::TextureFormat::Rgba8Unorm],
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::Rgba8Unorm,
+            usage: etalon::TextureUsages::TEXTURE_BINDING | etalon::TextureUsages::STORAGE_BINDING,
+            view_formats: &[etalon::TextureFormat::Rgba8Unorm],
         });
 
-        let rt_view = rt_target.create_view(&wgpu::TextureViewDescriptor {
+        let rt_view = rt_target.create_view(&etalon::TextureViewDescriptor {
             label: None,
-            format: Some(wgpu::TextureFormat::Rgba8Unorm),
-            dimension: Some(wgpu::TextureViewDimension::D2),
+            format: Some(etalon::TextureFormat::Rgba8Unorm),
+            dimension: Some(etalon::TextureViewDimension::D2),
             usage: None,
-            aspect: wgpu::TextureAspect::All,
+            aspect: etalon::TextureAspect::All,
             base_mip_level: 0,
             mip_level_count: None,
             base_array_layer: 0,
             array_layer_count: None,
-            swizzle: wgpu::TextureComponentSwizzle::default(),
+            swizzle: etalon::TextureComponentSwizzle::default(),
         });
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("rt_sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+            address_mode_u: etalon::AddressMode::ClampToEdge,
+            address_mode_v: etalon::AddressMode::ClampToEdge,
+            address_mode_w: etalon::AddressMode::ClampToEdge,
+            mag_filter: etalon::FilterMode::Linear,
+            min_filter: etalon::FilterMode::Linear,
+            mipmap_filter: etalon::MipmapFilterMode::Nearest,
             ..Default::default()
         });
 
@@ -188,65 +188,65 @@ impl crate::framework::Example for Example {
             }
         };
 
-        let uniform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let uniform_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Uniform Buffer"),
             contents: bytemuck::cast_slice(&[uniforms]),
-            usage: wgpu::BufferUsages::UNIFORM,
+            usage: etalon::BufferUsages::UNIFORM,
         });
 
         let (vertex_data, index_data) = create_vertices();
 
-        let vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertex_data),
-            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::BLAS_INPUT,
+            usage: etalon::BufferUsages::VERTEX | etalon::BufferUsages::BLAS_INPUT,
         });
 
-        let index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let index_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Index Buffer"),
             contents: bytemuck::cast_slice(&index_data),
-            usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::BLAS_INPUT,
+            usage: etalon::BufferUsages::INDEX | etalon::BufferUsages::BLAS_INPUT,
         });
 
-        let blas_geo_size_desc = wgpu::BlasTriangleGeometrySizeDescriptor {
-            vertex_format: wgpu::VertexFormat::Float32x3,
+        let blas_geo_size_desc = etalon::BlasTriangleGeometrySizeDescriptor {
+            vertex_format: etalon::VertexFormat::Float32x3,
             vertex_count: vertex_data.len() as u32,
-            index_format: Some(wgpu::IndexFormat::Uint16),
+            index_format: Some(etalon::IndexFormat::Uint16),
             index_count: Some(index_data.len() as u32),
-            flags: wgpu::AccelerationStructureGeometryFlags::OPAQUE,
+            flags: etalon::AccelerationStructureGeometryFlags::OPAQUE,
         };
 
         let blas = device.create_blas(
-            &wgpu::CreateBlasDescriptor {
+            &etalon::CreateBlasDescriptor {
                 label: None,
-                flags: wgpu::AccelerationStructureFlags::PREFER_FAST_TRACE
-                    | wgpu::AccelerationStructureFlags::ALLOW_RAY_HIT_VERTEX_RETURN,
-                update_mode: wgpu::AccelerationStructureUpdateMode::Build,
+                flags: etalon::AccelerationStructureFlags::PREFER_FAST_TRACE
+                    | etalon::AccelerationStructureFlags::ALLOW_RAY_HIT_VERTEX_RETURN,
+                update_mode: etalon::AccelerationStructureUpdateMode::Build,
             },
-            wgpu::BlasGeometrySizeDescriptors::Triangles {
+            etalon::BlasGeometrySizeDescriptors::Triangles {
                 descriptors: vec![blas_geo_size_desc.clone()],
             },
         );
 
-        let mut tlas = device.create_tlas(&wgpu::CreateTlasDescriptor {
+        let mut tlas = device.create_tlas(&etalon::CreateTlasDescriptor {
             label: None,
-            flags: wgpu::AccelerationStructureFlags::PREFER_FAST_TRACE
-                | wgpu::AccelerationStructureFlags::ALLOW_RAY_HIT_VERTEX_RETURN,
-            update_mode: wgpu::AccelerationStructureUpdateMode::Build,
+            flags: etalon::AccelerationStructureFlags::PREFER_FAST_TRACE
+                | etalon::AccelerationStructureFlags::ALLOW_RAY_HIT_VERTEX_RETURN,
+            update_mode: etalon::AccelerationStructureUpdateMode::Build,
             max_instances: side_count * side_count,
         });
 
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("rt_computer"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
+            source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let blit_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let blit_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("blit"),
-            source: wgpu::ShaderSource::Wgsl(Cow::Borrowed(include_str!("blit.wgsl"))),
+            source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!("blit.wgsl"))),
         });
 
-        let compute_pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let compute_pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: Some("rt"),
             layout: None,
             module: &shader,
@@ -257,63 +257,63 @@ impl crate::framework::Example for Example {
 
         let compute_bind_group_layout = compute_pipeline.get_bind_group_layout(0);
 
-        let compute_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let compute_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &compute_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&rt_view),
+                    resource: etalon::BindingResource::TextureView(&rt_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
                     resource: uniform_buf.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 2,
-                    resource: wgpu::BindingResource::AccelerationStructure(&tlas),
+                    resource: etalon::BindingResource::AccelerationStructure(&tlas),
                 },
             ],
         });
 
-        let blit_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let blit_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("blit"),
             layout: None,
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &blit_shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &blit_shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(config.format.into())],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::TriangleList,
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
 
         let blit_bind_group_layout = blit_pipeline.get_bind_group_layout(0);
 
-        let blit_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let blit_bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &blit_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&rt_view),
+                    resource: etalon::BindingResource::TextureView(&rt_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: etalon::BindingResource::Sampler(&sampler),
                 },
             ],
         });
@@ -322,7 +322,7 @@ impl crate::framework::Example for Example {
 
         for x in 0..side_count {
             for y in 0..side_count {
-                tlas[(x + y * side_count) as usize] = Some(wgpu::TlasInstance::new(
+                tlas[(x + y * side_count) as usize] = Some(etalon::TlasInstance::new(
                     &blas,
                     affine_to_rows(&Affine3A::from_rotation_translation(
                         Quat::from_rotation_y(45.9_f32.to_radians()),
@@ -339,13 +339,13 @@ impl crate::framework::Example for Example {
         }
 
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         encoder.build_acceleration_structures(
-            iter::once(&wgpu::BlasBuildEntry {
+            iter::once(&etalon::BlasBuildEntry {
                 blas: &blas,
-                geometry: wgpu::BlasGeometries::TriangleGeometries(vec![
-                    wgpu::BlasTriangleGeometry {
+                geometry: etalon::BlasGeometries::TriangleGeometries(vec![
+                    etalon::BlasTriangleGeometry {
                         size: &blas_geo_size_desc,
                         vertex_buffer: &vertex_buf,
                         first_vertex: 0,
@@ -379,13 +379,13 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        _config: &wgpu::SurfaceConfiguration,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        _config: &etalon::SurfaceConfiguration,
+        _device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         let anim_time = self.animation_timer.time();
 
         self.tlas[0].as_mut().unwrap().transform =
@@ -404,12 +404,12 @@ impl crate::framework::Example for Example {
             ));
 
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         encoder.build_acceleration_structures(iter::empty(), iter::once(&self.tlas));
 
         {
-            let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+            let mut cpass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
                 label: None,
                 timestamp_writes: None,
             });
@@ -419,14 +419,14 @@ impl crate::framework::Example for Example {
         }
 
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::GREEN),
                         store: StoreOp::Store,
                     },
                 })],
@@ -450,23 +450,23 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "ray_cube_normals",
     image_path: "/examples/features/src/ray_cube_normals/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default().expect_fail(
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default().expect_fail(
         // RADV does this fine.
-        wgpu_test::FailureCase {
-            backends: Some(wgpu::Backends::VULKAN),
+        etalon_test::FailureCase {
+            backends: Some(etalon::Backends::VULKAN),
             adapter: Some("AMD"),
             driver: Some("AMD proprietary driver"),
-            ..wgpu_test::FailureCase::default()
+            ..etalon_test::FailureCase::default()
         }
         .panic("Image data mismatch"),
     ),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.02)],
+    comparisons: &[etalon_test::ComparisonType::Mean(0.02)],
     _phantom: std::marker::PhantomData::<Example>,
 };

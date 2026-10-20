@@ -1,5 +1,5 @@
 enable f16;
-enable wgpu_cooperative_matrix;
+enable etalon_cooperative_matrix;
 
 @group(0) @binding(0)
 var<storage, read_write> ab: array<f16>;

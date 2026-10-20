@@ -19,7 +19,7 @@ water
 ## To run
 
 ```
-cargo run --bin wgpu-examples water
+cargo run --bin etalon-examples water
 ```
 
 ## Screenshot

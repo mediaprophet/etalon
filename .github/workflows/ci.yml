@@ -24,9 +24,9 @@ env:
 
   # This is the MSRV used by all repository infrastructure.
   REPO_MSRV: "1.96.1"
-  # This is the MSRV used by `wgpu` itself.
-  WGPU_MSRV: "1.87"
-  # This is the MSRV used by the `wgpu-core`, `wgpu-hal`, `wgpu-sync`, and `wgpu-types` crates,
+  # This is the MSRV used by `etalon` itself.
+  etalon_MSRV: "1.87"
+  # This is the MSRV used by the `etalon-core`, `etalon-hal`, `etalon-sync`, and `etalon-types` crates,
   # to ensure that they can be used with firefox.
   CORE_MSRV: "1.87"
 
@@ -39,18 +39,18 @@ env:
   RUST_LOG: debug,wasm_bindgen_wasm_interpreter=warn,wasm_bindgen_cli_support=warn,walrus=warn,naga=info
   RUST_BACKTRACE: full
   PKG_CONFIG_ALLOW_CROSS: 1 # allow android to work
-  RUSTFLAGS: -D warnings --cfg wgpu_validate_locks_debug
+  RUSTFLAGS: -D warnings --cfg etalon_validate_locks_debug
   RUSTDOCFLAGS: -D warnings
   WASM_BINDGEN_TEST_TIMEOUT: 300 # 5 minutes
   CACHE_SUFFIX: e # cache busting
-  WGPU_CI: true
+  etalon_CI: true
 
   #
   # Runtime configuration
   #
 
   LVP_POISON_MEMORY: true # to test memory init; see docs/testing.md
-  WGPU_DX12_COMPILER: dxc
+  etalon_DX12_COMPILER: dxc
 
 # Every time a PR is pushed to, cancel any previous jobs. This
 # makes us behave nicer to github and get faster turnaround times
@@ -122,7 +122,7 @@ jobs:
           - name: VisionOS aarch64
             os: macos-14
             target: aarch64-apple-visionos
-            kind: wgpu-only
+            kind: etalon-only
             tier: 3
             extra-flags: -Zbuild-std
 
@@ -144,14 +144,14 @@ jobs:
             os: ubuntu-24.04
             target: x86_64-unknown-freebsd
             tier: 2
-            kind: wgpu-only
+            kind: etalon-only
 
           # NetBSD
           - name: NetBSD x86_64
             os: ubuntu-24.04
             target: x86_64-unknown-netbsd
             tier: 2
-            kind: wgpu-only
+            kind: etalon-only
 
           # Android
           - name: Android aarch64
@@ -165,14 +165,14 @@ jobs:
             os: ubuntu-24.04
             target: armv7-linux-androideabi
             tier: 2
-            kind: wgpu-only
+            kind: etalon-only
 
           # Android
           - name: Android x86_64
             os: ubuntu-24.04
             target: x86_64-linux-android
             tier: 2
-            kind: wgpu-only
+            kind: etalon-only
 
           # OpenHarmony
           - name: OpenHarmony aarch64
@@ -191,7 +191,7 @@ jobs:
           - name: WebAssembly 64-bit
             os: ubuntu-24.04
             target: wasm64-unknown-unknown
-            kind: wgpu-only
+            kind: etalon-only
             tier: 3
             extra-flags: -Zbuild-std=std,panic_abort
 
@@ -199,7 +199,7 @@ jobs:
             os: ubuntu-24.04
             target: wasm32-unknown-emscripten
             tier: 2
-            kind: wgpu-only
+            kind: etalon-only
 
           - name: WebAssembly Core 1.0
             os: ubuntu-24.04
@@ -213,7 +213,7 @@ jobs:
             os: ubuntu-24.04
             target: powerpc-unknown-linux-gnu
             tier: 2
-            kind: wgpu-only
+            kind: etalon-only
 
     name: Clippy ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
@@ -306,20 +306,20 @@ jobs:
           cargo --locked doc --target ${{ matrix.target }} ${{ matrix.extra-flags }} --no-deps --all-features
 
       # Building for platforms where the tests do not compile.
-      - name: Check `wgpu` only
-        if: matrix.kind == 'wgpu-only'
+      - name: Check `etalon` only
+        if: matrix.kind == 'etalon-only'
         shell: bash
         run: |
           set -e
 
           # check with no features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu -p wgpu-hal --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon -p etalon-hal --no-default-features
 
           # Don't check samples since we use winit in our samples which has dropped support for Emscripten.
 
           # Check with all features.
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --all-features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu --all-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --all-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon --all-features
 
       # Building for no_std platforms.
       - name: Check `no_std`
@@ -329,22 +329,22 @@ jobs:
           set -e
 
           # check with no features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-types --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-types --no-default-features
           cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p naga-types --no-default-features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-sync --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-sync --no-default-features
           cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p naga --no-default-features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --no-default-features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-core --no-default-features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-core --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon --no-default-features
 
           # Check with all compatible features
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-types --no-default-features --features strict_asserts,fragile-send-sync-non-atomic-wasm,serde,counters
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-types --no-default-features --features strict_asserts,fragile-send-sync-non-atomic-wasm,serde,counters
           cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p naga-types --no-default-features --features serialize,deserialize
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-sync --no-default-features
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-sync --no-default-features
           cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p naga --no-default-features --features dot-out,spv-in,spv-out,glsl-out,msl-out,serialize,deserialize,wgsl-in,wgsl-out,hlsl-out
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --no-default-features --features fragile-send-sync-non-atomic-wasm
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-core --no-default-features --features api_log_info,resource_log_info,strict_asserts,serde,wgsl,spirv,counters,noop
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu --no-default-features --features webgpu,drm,wgsl,strict_asserts,serde,counters
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --no-default-features --features fragile-send-sync-non-atomic-wasm
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-core --no-default-features --features api_log_info,resource_log_info,strict_asserts,serde,wgsl,spirv,counters,noop
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon --no-default-features --features webgpu,drm,wgsl,strict_asserts,serde,counters
 
       # Building for native platforms with standard tests.
       - name: Check native
@@ -363,12 +363,12 @@ jobs:
           # If we don't check this then errors inside `profiling::scope!()` will not be caught.
           cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} --tests --benches --all-features --features test-build-with-profiling
 
-          # Check wgpu-hal with main backends in isolation to catch missing feature/dependencies activations which may be overlooked when they are dragged in via other features.
+          # Check etalon-hal with main backends in isolation to catch missing feature/dependencies activations which may be overlooked when they are dragged in via other features.
           # (best effort: in theory we'd need to test all combinations)
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --no-default-features --features vulkan
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --no-default-features --features gles
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --no-default-features --features metal
-          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p wgpu-hal --no-default-features --features dx12
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --no-default-features --features vulkan
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --no-default-features --features gles
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --no-default-features --features metal
+          cargo --locked clippy --target ${{ matrix.target }} ${{ matrix.extra-flags }} -p etalon-hal --no-default-features --features dx12
 
           # Check important naga features in isolation
           for feature in arbitrary glsl-in glsl-out hlsl-out msl-out spv-in spv-out wgsl-in wgsl-out; do
@@ -385,19 +385,19 @@ jobs:
           set -e
 
           cargo --locked doc --target ${{ matrix.target }} ${{ matrix.extra-flags }} \
-                --package wgpu-core \
-                --package wgpu-core-remote \
-                --package wgpu-core-remote-types \
-                --package wgpu-hal \
+                --package etalon-core \
+                --package etalon-core-remote \
+                --package etalon-core-remote-types \
+                --package etalon-hal \
                 --package naga \
-                --package wgpu \
+                --package etalon \
                 --all-features --no-deps --document-private-items
 
-  # We run minimal checks on the MSRV of the `wgpu` crate, ensuring that
+  # We run minimal checks on the MSRV of the `etalon` crate, ensuring that
   # its dependency tree does not cause issues for servo or other users.
   #
   # We don't test all platforms, just ones with different dependency stacks.
-  check-wgpu-msrv:
+  check-etalon-msrv:
     # runtime is normally 1-3 minutes
     timeout-minutes: 10
 
@@ -425,7 +425,7 @@ jobs:
             os: ubuntu-24.04
             target: wasm32-unknown-unknown
 
-    name: wgpu MSRV Check ${{ matrix.name }}
+    name: etalon MSRV Check ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
     permissions: {}
@@ -438,8 +438,8 @@ jobs:
 
       - name: Install core MSRV toolchain
         run: |
-          rustup toolchain install ${{ env.WGPU_MSRV }} --no-self-update --profile=minimal --component clippy --target ${{ matrix.target }}
-          rustup override set ${{ env.WGPU_MSRV }}
+          rustup toolchain install ${{ env.etalon_MSRV }} --no-self-update --profile=minimal --component clippy --target ${{ matrix.target }}
+          rustup override set ${{ env.etalon_MSRV }}
           cargo -V
 
       - name: Disable debug symbols
@@ -455,7 +455,7 @@ jobs:
       - name: Caching
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          key: wgpu-msrv-check-${{ matrix.target }}-${{ env.CACHE_SUFFIX }}
+          key: etalon-msrv-check-${{ matrix.target }}-${{ env.CACHE_SUFFIX }}
           env-vars: ImageVersion
           save-if: ${{ github.ref == 'refs/heads/trunk' }}
 
@@ -473,8 +473,8 @@ jobs:
         run: |
           set -e
 
-          # check `wgpu` with all features.
-          cargo check --target ${{ matrix.target }} --all-features -p wgpu
+          # check `etalon` with all features.
+          cargo check --target ${{ matrix.target }} --all-features -p etalon
 
   # We run minimal checks on the MSRV of the core crates, ensuring that
   # its dependency tree does not cause issues for firefox.
@@ -551,8 +551,8 @@ jobs:
         run: |
           set -e
 
-          # check `wgpu-core-remote` and `wgpu-core` all features. This will also get `wgpu-core-remote-types` and `wgpu-hal` and `wgpu-types`.
-          cargo check --target ${{ matrix.target }} --all-features -p wgpu-core -p wgpu-core-remote
+          # check `etalon-core-remote` and `etalon-core` all features. This will also get `etalon-core-remote-types` and `etalon-hal` and `etalon-types`.
+          cargo check --target ${{ matrix.target }} --all-features -p etalon-core -p etalon-core-remote
 
   # Check that the libraries build — but not that there are no warnings or that tests pass -
   # with `-Zdirect-minimal-versions` which lowers all dependencies from the workspace packages
@@ -754,7 +754,7 @@ jobs:
       # Windows CI intermittently stops making progress for a minute or more at
       # a time, which kills whichever tests happen to be running. Sample the
       # host counters so that a timeout can be correlated with CPU, memory or
-      # disk pressure. https://github.com/gfx-rs/wgpu/issues/9248
+      # disk pressure. https://github.com/mediaprophet/etalon/issues/9248
       - name: (Windows) Start host metrics sampler
         if: matrix.os == 'windows-2022'
         uses: $/.github/actions/sample-host-metrics
@@ -893,7 +893,7 @@ jobs:
           # Note: this is a *smaller* set of tests than `cargo xtask miri` runs;
           # it is ones that are both important and cheap.
           # Consider expanding it to include some API tests with the noop backend.
-          cargo miri test --package=wgpu --no-default-features -- write_only
+          cargo miri test --package=etalon --no-default-features -- write_only
 
   fmt:
     # runtime is normally 15 seconds

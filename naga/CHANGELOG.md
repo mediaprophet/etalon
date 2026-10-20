@@ -1,6 +1,6 @@
 # Change Log
 
-For changelogs after v0.14, see [the wgpu changelog](../CHANGELOG.md).
+For changelogs after v0.14, see [the etalon changelog](../CHANGELOG.md).
 
 ## v0.14 (2023-10-25)
 
@@ -79,9 +79,9 @@ For changelogs after v0.14, see [the wgpu changelog](../CHANGELOG.md).
 
 - Add and fix minimum Metal version checks for optional functionality. ([#2486](https://github.com/gfx-rs/naga/pull/2486)) **@teoxoy**
 - Make varyings' struct members unique. ([#2521](https://github.com/gfx-rs/naga/pull/2521)) **@evahop**
-- Add experimental vertex pulling transform flag. ([#5254](https://github.com/gfx-rs/wgpu/pull/5254)) **@bradwerth**
-- Fixup some generated MSL for vertex buffer unpack functions. ([#5829](https://github.com/gfx-rs/wgpu/pull/5829)) **@bradwerth**
-- Make vertex pulling transform on by default. ([#5773](https://github.com/gfx-rs/wgpu/pull/5773)) **@bradwerth**
+- Add experimental vertex pulling transform flag. ([#5254](https://github.com/gfx-rs/etalon/pull/5254)) **@bradwerth**
+- Fixup some generated MSL for vertex buffer unpack functions. ([#5829](https://github.com/gfx-rs/etalon/pull/5829)) **@bradwerth**
+- Make vertex pulling transform on by default. ([#5773](https://github.com/gfx-rs/etalon/pull/5773)) **@bradwerth**
 
 #### GLSL-OUT
 
@@ -713,7 +713,7 @@ GLSL-OUT
 
 ## v0.8 (2021-12-18)
 
-- development release for wgpu-0.12
+- development release for etalon-0.12
 - lots of fixes in all parts
 - validator:
   - now gated by `validate` feature
@@ -758,7 +758,7 @@ GLSL-OUT
 
 ## v0.7 (2021-10-07)
 
-- development release for wgpu-0.11
+- development release for etalon-0.11
 - API:
   - bit extraction and packing functions
   - hyperbolic trigonometry functions
@@ -834,7 +834,7 @@ GLSL-OUT
 
 ## v0.6 (2021-08-18)
 
-- development release for wgpu-0.10
+- development release for etalon-0.10
 - API:
   - atomic types and functions
   - storage access is moved from global variables to the storage class and storage texture type
@@ -847,7 +847,7 @@ GLSL-OUT
 
 ## v0.5 (2021-06-18)
 
-- development release for wgpu-0.9
+- development release for etalon-0.9
 - API:
   - barriers
   - dynamic indexing of matrices and arrays is only allowed on variables
@@ -901,7 +901,7 @@ GLSL-OUT
 
 ## v0.4 (2021-04-29)
 
-- development release for wgpu-0.8
+- development release for etalon-0.8
 - API:
   - expressions are explicitly emitted with `Statement::Emit`
   - entry points have inputs in arguments and outputs in the result type
@@ -952,7 +952,7 @@ GLSL-OUT
 
 ## v0.3 (2021-01-30)
 
-- development release for wgpu-0.7
+- development release for etalon-0.7
 - API:
   - math functions
   - type casts
@@ -970,7 +970,7 @@ GLSL-OUT
 
 ## v0.2 (2020-08-17)
 
-- development release for wgpu-0.6
+- development release for etalon-0.6
 
 ## v0.1 (2020-02-26)
 

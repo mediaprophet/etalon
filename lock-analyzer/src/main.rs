@@ -1,16 +1,16 @@
-//! Analyzer for data produced by `wgpu-core`'s `observe_locks` feature.
+//! Analyzer for data produced by `etalon-core`'s `observe_locks` feature.
 //!
-//! When `wgpu-core`'s `observe_locks` feature is enabled, if the
-//! `WGPU_CORE_LOCK_OBSERVE_DIR` environment variable is set to the
+//! When `etalon-core`'s `observe_locks` feature is enabled, if the
+//! `etalon_CORE_LOCK_OBSERVE_DIR` environment variable is set to the
 //! path of an existing directory, then every thread that acquires a
-//! lock in `wgpu-core` will write its own log file to that directory.
+//! lock in `etalon-core` will write its own log file to that directory.
 //! You can then run this program to read those files and summarize
 //! the results.
 //!
-//! This program also consults the `WGPU_CORE_LOCK_OBSERVE_DIR`
-//! environment variable to find the log files written by `wgpu-core`.
+//! This program also consults the `etalon_CORE_LOCK_OBSERVE_DIR`
+//! environment variable to find the log files written by `etalon-core`.
 //!
-//! See `wgpu_core/src/lock/observing.rs` for a general explanation of
+//! See `etalon_core/src/lock/observing.rs` for a general explanation of
 //! this analysis.
 
 use std::sync::Arc;
@@ -29,13 +29,13 @@ const PRINT_ACQUISITION_LOCATIONS: bool = false;
 fn main() -> Result<()> {
     let mut ranks: BTreeMap<u32, Rank> = BTreeMap::default();
 
-    let Ok(dir) = std::env::var("WGPU_CORE_LOCK_OBSERVE_DIR") else {
+    let Ok(dir) = std::env::var("etalon_CORE_LOCK_OBSERVE_DIR") else {
         eprintln!(concat!(
-            "Please set the `WGPU_CORE_LOCK_OBSERVE_DIR` environment variable\n",
+            "Please set the `etalon_CORE_LOCK_OBSERVE_DIR` environment variable\n",
             "to the path of the directory containing the files written by\n",
-            "`wgpu-core`'s `observe_locks` feature."
+            "`etalon-core`'s `observe_locks` feature."
         ));
-        anyhow::bail!("`WGPU_CORE_LOCK_OBSERVE_DIR` environment variable is not set");
+        anyhow::bail!("`etalon_CORE_LOCK_OBSERVE_DIR` environment variable is not set");
     };
     let entries =
         std::fs::read_dir(&dir).with_context(|| format!("failed to read directory {dir}"))?;

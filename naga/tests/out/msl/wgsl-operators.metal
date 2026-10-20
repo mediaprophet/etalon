@@ -197,7 +197,7 @@ metal::uint2 naga_mod(metal::uint2 lhs, metal::uint2 rhs) {
 void arithmetic(
 ) {
     int prevent_const_eval = {};
-    int wgpu_7437_ = {};
+    int etalon_7437_ = {};
     float neg0_1 = -(1.0);
     metal::int2 neg1_1 = naga_neg(metal::int2(1));
     metal::float2 neg2_ = -(metal::float2(1.0));
@@ -271,7 +271,7 @@ void arithmetic(
     metal::float4 mul_vector1_ = metal::float3(2.0) * metal::float4x3 {};
     metal::float3x3 mul = metal::float3x3(metal::float3(0.0, 0.0, 0.0), metal::float3(0.0, 0.0, 0.0), metal::float3(0.0, 0.0, 0.0));
     int _e205 = prevent_const_eval;
-    wgpu_7437_ = as_type<int>(as_type<uint>(_e205) + as_type<uint>((-2147483647 - 1)));
+    etalon_7437_ = as_type<int>(as_type<uint>(_e205) + as_type<uint>((-2147483647 - 1)));
     return;
 }
 

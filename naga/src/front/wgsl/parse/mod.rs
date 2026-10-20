@@ -231,7 +231,7 @@ impl<'a> BindingParser<'a> {
             }
             "per_primitive" => {
                 lexer.require_enable_extension(
-                    ImplementedEnableExtension::WgpuMeshShader,
+                    ImplementedEnableExtension::etalonMeshShader,
                     name_span,
                 )?;
                 self.per_primitive.set((), name_span)?;
@@ -1924,7 +1924,7 @@ impl Parser {
                 }
                 "task" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuMeshShader,
+                        ImplementedEnableExtension::etalonMeshShader,
                         name_span,
                     )?;
                     stage.set(ShaderStage::Task, name_span)?;
@@ -1932,7 +1932,7 @@ impl Parser {
                 }
                 "mesh" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuMeshShader,
+                        ImplementedEnableExtension::etalonMeshShader,
                         name_span,
                     )?;
                     stage.set(ShaderStage::Mesh, name_span)?;
@@ -1944,7 +1944,7 @@ impl Parser {
                 }
                 "ray_generation" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuRayTracingPipeline,
+                        ImplementedEnableExtension::etalonRayTracingPipeline,
                         name_span,
                     )?;
                     stage.set(ShaderStage::RayGeneration, name_span)?;
@@ -1952,7 +1952,7 @@ impl Parser {
                 }
                 "any_hit" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuRayTracingPipeline,
+                        ImplementedEnableExtension::etalonRayTracingPipeline,
                         name_span,
                     )?;
                     stage.set(ShaderStage::AnyHit, name_span)?;
@@ -1960,7 +1960,7 @@ impl Parser {
                 }
                 "closest_hit" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuRayTracingPipeline,
+                        ImplementedEnableExtension::etalonRayTracingPipeline,
                         name_span,
                     )?;
                     stage.set(ShaderStage::ClosestHit, name_span)?;
@@ -1968,7 +1968,7 @@ impl Parser {
                 }
                 "miss" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuRayTracingPipeline,
+                        ImplementedEnableExtension::etalonRayTracingPipeline,
                         name_span,
                     )?;
                     stage.set(ShaderStage::Miss, name_span)?;
@@ -1976,7 +1976,7 @@ impl Parser {
                 }
                 "payload" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuMeshShader,
+                        ImplementedEnableExtension::etalonMeshShader,
                         name_span,
                     )?;
                     lexer.expect(Token::Paren('('))?;
@@ -1985,7 +1985,7 @@ impl Parser {
                 }
                 "incoming_payload" => {
                     lexer.require_enable_extension(
-                        ImplementedEnableExtension::WgpuRayTracingPipeline,
+                        ImplementedEnableExtension::etalonRayTracingPipeline,
                         name_span,
                     )?;
                     lexer.expect(Token::Paren('('))?;

@@ -1,6 +1,6 @@
 # Upstream / Historical License Qualification Notice
 
-This directory preserves the historical licenses of the upstream wgpu project (Apache-2.0 and MIT) for source provenance.
+This directory preserves the historical licenses of the upstream etalon project (Apache-2.0 and MIT) for source provenance.
 
 ### Qualification & Governing Terms
 

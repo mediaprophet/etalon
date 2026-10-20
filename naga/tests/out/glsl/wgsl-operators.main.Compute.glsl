@@ -137,7 +137,7 @@ void logical() {
 
 void arithmetic() {
     int prevent_const_eval = 0;
-    int wgpu_7437_ = 0;
+    int etalon_7437_ = 0;
     float neg0_1 = -(1.0);
     ivec2 neg1_1 = -(ivec2(1));
     vec2 neg2_ = -(vec2(1.0));
@@ -223,7 +223,7 @@ void arithmetic() {
     vec4 mul_vector1_ = (vec3(2.0) * mat4x3(0.0));
     mat3x3 mul = mat3x3(vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0), vec3(0.0, 0.0, 0.0));
     int _e205 = prevent_const_eval;
-    wgpu_7437_ = (_e205 + -2147483648);
+    etalon_7437_ = (_e205 + -2147483648);
     return;
 }
 

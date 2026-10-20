@@ -2,7 +2,7 @@
 name = "naga"
 version.workspace = true
 edition.workspace = true
-description = "Shader translator and validator. Part of the wgpu project"
+description = "Shader translator and validator. Part of the etalon project"
 repository.workspace = true
 keywords = ["shader", "SPIR-V", "GLSL", "MSL"]
 license.workspace = true

@@ -33,11 +33,11 @@ struct Dimensions {
 }
 
 async fn run() {
-    // Initialize wgpu
-    let instance = wgpu::Instance::default();
+    // Initialize etalon
+    let instance = etalon::Instance::default();
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions {
-            power_preference: wgpu::PowerPreference::HighPerformance,
+        .request_adapter(&etalon::RequestAdapterOptions {
+            power_preference: etalon::PowerPreference::HighPerformance,
             ..Default::default()
         })
         .await
@@ -84,16 +84,16 @@ async fn run() {
             prop.m_size == 16
                 && prop.n_size == 16
                 && prop.k_size == 16
-                && prop.ab_type == wgpu::CooperativeScalarType::F16
-                && prop.cr_type == wgpu::CooperativeScalarType::F16
+                && prop.ab_type == etalon::CooperativeScalarType::F16
+                && prop.cr_type == etalon::CooperativeScalarType::F16
         })
         .or_else(|| {
             coop_props.iter().find(|prop| {
                 prop.m_size == 8
                     && prop.n_size == 8
                     && prop.k_size == 8
-                    && prop.ab_type == wgpu::CooperativeScalarType::F32
-                    && prop.cr_type == wgpu::CooperativeScalarType::F32
+                    && prop.ab_type == etalon::CooperativeScalarType::F32
+                    && prop.cr_type == etalon::CooperativeScalarType::F32
             })
         });
 
@@ -120,7 +120,7 @@ async fn run() {
     };
 
     let tile_size = config.m_size;
-    let use_f16 = config.ab_type == wgpu::CooperativeScalarType::F16;
+    let use_f16 = config.ab_type == etalon::CooperativeScalarType::F16;
 
     log::info!(
         "Using {}x{} tiles with {} precision",
@@ -131,36 +131,36 @@ async fn run() {
 
     // Check if cooperative matrix is supported
     let adapter_features = adapter.features();
-    if !adapter_features.contains(wgpu::Features::EXPERIMENTAL_COOPERATIVE_MATRIX) {
+    if !adapter_features.contains(etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX) {
         log::error!("EXPERIMENTAL_COOPERATIVE_MATRIX feature not available");
         return;
     }
 
     // Check if f16 is needed and available
-    if use_f16 && !adapter_features.contains(wgpu::Features::SHADER_F16) {
+    if use_f16 && !adapter_features.contains(etalon::Features::SHADER_F16) {
         log::error!("SHADER_F16 feature not available, but required for f16 cooperative matrices");
         return;
     }
 
     // Build required features
-    let mut required_features = wgpu::Features::EXPERIMENTAL_COOPERATIVE_MATRIX;
+    let mut required_features = etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX;
     if use_f16 {
-        required_features |= wgpu::Features::SHADER_F16;
+        required_features |= etalon::Features::SHADER_F16;
     }
 
     // Request device with experimental features enabled
     let (device, queue) = unsafe {
         adapter
-            .request_device(&wgpu::DeviceDescriptor {
+            .request_device(&etalon::DeviceDescriptor {
                 label: Some("Cooperative Matrix Device"),
                 required_features,
-                required_limits: wgpu::Limits::downlevel_defaults(),
-                default_queue: wgpu::QueueDescriptor {
+                required_limits: etalon::Limits::downlevel_defaults(),
+                default_queue: etalon::QueueDescriptor {
                     label: Some("Cooperative Matrix Queue"),
                 },
-                experimental_features: wgpu::ExperimentalFeatures::enabled(),
-                memory_hints: wgpu::MemoryHints::Performance,
-                trace: wgpu::Trace::Off,
+                experimental_features: etalon::ExperimentalFeatures::enabled(),
+                memory_hints: etalon::MemoryHints::Performance,
+                trace: etalon::Trace::Off,
             })
             .await
             .expect("Failed to create device")
@@ -203,11 +203,11 @@ struct ExecuteResults {
 }
 
 async fn execute(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    config: &wgpu::CooperativeMatrixProperties,
+    device: &etalon::Device,
+    queue: &etalon::Queue,
+    config: &etalon::CooperativeMatrixProperties,
 ) -> ExecuteResults {
-    let use_f16 = config.ab_type == wgpu::CooperativeScalarType::F16;
+    let use_f16 = config.ab_type == etalon::CooperativeScalarType::F16;
 
     // Select the appropriate shader based on configuration
     let shader_source = if use_f16 {
@@ -217,9 +217,9 @@ async fn execute(
     };
 
     // Create the shader module using the standard validated path
-    let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+    let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
         label: Some("Cooperative Matrix Shader"),
-        source: wgpu::ShaderSource::Wgsl(shader_source.into()),
+        source: etalon::ShaderSource::Wgsl(shader_source.into()),
     });
 
     // Initialize matrices
@@ -253,26 +253,26 @@ async fn execute(
     let num_elements_c = (M * N) as usize;
 
     // Create buffers
-    let buffer_a = device.create_buffer(&wgpu::BufferDescriptor {
+    let buffer_a = device.create_buffer(&etalon::BufferDescriptor {
         label: Some("Matrix A"),
         size: (num_elements_a * element_size) as u64,
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
-    let buffer_b = device.create_buffer(&wgpu::BufferDescriptor {
+    let buffer_b = device.create_buffer(&etalon::BufferDescriptor {
         label: Some("Matrix B"),
         size: (num_elements_b * element_size) as u64,
-        usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+        usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
-    let buffer_c = device.create_buffer(&wgpu::BufferDescriptor {
+    let buffer_c = device.create_buffer(&etalon::BufferDescriptor {
         label: Some("Matrix C"),
         size: (num_elements_c * element_size) as u64,
-        usage: wgpu::BufferUsages::STORAGE
-            | wgpu::BufferUsages::COPY_DST
-            | wgpu::BufferUsages::COPY_SRC,
+        usage: etalon::BufferUsages::STORAGE
+            | etalon::BufferUsages::COPY_DST
+            | etalon::BufferUsages::COPY_SRC,
         mapped_at_creation: false,
     });
 
@@ -282,17 +282,17 @@ async fn execute(
         k: K,
         stride: N,
     };
-    let buffer_dims = device.create_buffer(&wgpu::BufferDescriptor {
+    let buffer_dims = device.create_buffer(&etalon::BufferDescriptor {
         label: Some("Dimensions"),
         size: std::mem::size_of::<Dimensions>() as u64,
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
-    let staging_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+    let staging_buffer = device.create_buffer(&etalon::BufferDescriptor {
         label: Some("Staging Buffer"),
         size: (num_elements_c * element_size) as u64,
-        usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
+        usage: etalon::BufferUsages::MAP_READ | etalon::BufferUsages::COPY_DST,
         mapped_at_creation: false,
     });
 
@@ -312,44 +312,44 @@ async fn execute(
     queue.write_buffer(&buffer_dims, 0, bytemuck::bytes_of(&dimensions));
 
     // Create bind group layout and bind group
-    let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+    let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("Cooperative Matrix Bind Group Layout"),
         entries: &[
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: true },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 1,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: true },
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: true },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 2,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Storage { read_only: false },
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Storage { read_only: false },
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 3,
-                visibility: wgpu::ShaderStages::COMPUTE,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
+                visibility: etalon::ShaderStages::COMPUTE,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
                     min_binding_size: None,
                 },
@@ -358,23 +358,23 @@ async fn execute(
         ],
     });
 
-    let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+    let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
         label: Some("Cooperative Matrix Bind Group"),
         layout: &bind_group_layout,
         entries: &[
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 0,
                 resource: buffer_a.as_entire_binding(),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 1,
                 resource: buffer_b.as_entire_binding(),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 2,
                 resource: buffer_c.as_entire_binding(),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 3,
                 resource: buffer_dims.as_entire_binding(),
             },
@@ -382,13 +382,13 @@ async fn execute(
     });
 
     // Create compute pipeline
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+    let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
         label: Some("Cooperative Matrix Pipeline Layout"),
         bind_group_layouts: &[Some(&bind_group_layout)],
         immediate_size: 0,
     });
 
-    let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+    let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
         label: Some("Cooperative Matrix Pipeline"),
         layout: Some(&pipeline_layout),
         module: &shader,
@@ -398,12 +398,12 @@ async fn execute(
     });
 
     // Dispatch compute
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+    let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
         label: Some("Cooperative Matrix Encoder"),
     });
 
     {
-        let mut compute_pass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        let mut compute_pass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
             label: Some("Cooperative Matrix Pass"),
             timestamp_writes: None,
         });
@@ -421,9 +421,9 @@ async fn execute(
     // Read back results
     let buffer_slice = staging_buffer.slice(..);
     let (sender, receiver) = flume::bounded(1);
-    buffer_slice.map_async(wgpu::MapMode::Read, move |r| sender.send(r).unwrap());
+    buffer_slice.map_async(etalon::MapMode::Read, move |r| sender.send(r).unwrap());
     device
-        .poll(wgpu::PollType::wait_indefinitely())
+        .poll(etalon::PollType::wait_indefinitely())
         .expect("Poll failed");
     receiver
         .recv_async()

@@ -63,7 +63,7 @@ Commands:
     --retries                     Number of times to retry failing tests
     --no-require-agility-sdk      Don't fail if the D3D12 Agility SDK cannot be loaded (fall back to system runtime)
 
-    All extra arguments will be forwarded to cargo-nextest (NOT wgpu-info)
+    All extra arguments will be forwarded to cargo-nextest (NOT etalon-info)
 
   test-wasm
     Run wasm tests in a browser
@@ -78,10 +78,10 @@ Commands:
                     running. Tests can then be debugged individually in a browser by visiting
                     the test URL with the test's package name for the `wasm` param
                     and the test's name for the `name` param, for example:
-                    http://127.0.0.1:3000/?wasm=wgpu-test&name=wgpu_gpu::buffer_usages::buffer_usage
+                    http://127.0.0.1:3000/?wasm=etalon-test&name=etalon_gpu::buffer_usages::buffer_usage
                     When you run a test this way, check the browser's console for output.
 
-    All extra arguments will be forwarded to cargo-nextest (NOT wgpu-info)
+    All extra arguments will be forwarded to cargo-nextest (NOT etalon-info)
 
   changelog [from_branch] [to_commit]
     Audit changes in the `CHANGELOG.md` at the root of the repo. Ensure that:
@@ -128,8 +128,8 @@ Commands:
   install-agility-sdk
     Download and install the D3D12 Agility SDK for testing with a specific D3D12 runtime version.
 
-    Prints the required environment variables (WGPU_DX12_AGILITY_SDK_PATH and
-    WGPU_DX12_AGILITY_SDK_VERSION) to stdout after installation.
+    Prints the required environment variables (etalon_DX12_AGILITY_SDK_PATH and
+    etalon_DX12_AGILITY_SDK_VERSION) to stdout after installation.
 
 Options:
   -h, --help  Print help

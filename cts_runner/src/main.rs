@@ -193,7 +193,7 @@ impl deno_web::TimersPermission for Permissions {
 
 /// On Windows, install an SEH filter that logs the exception code, so
 /// unhandled-exception crashes from native code (driver bugs, WARP, D3D12) are
-/// more visible in CI. (See <https://github.com/gfx-rs/wgpu/issues/9693> for an
+/// more visible in CI. (See <https://github.com/mediaprophet/etalon/issues/9693> for an
 /// example.)
 #[cfg(windows)]
 fn install_unhandled_exception_filter() {

@@ -210,7 +210,7 @@ float4x3 ZeroValuefloat4x3() {
 void arithmetic()
 {
     int prevent_const_eval = (int)0;
-    int wgpu_7437_ = (int)0;
+    int etalon_7437_ = (int)0;
 
     float neg0_1 = -(1.0);
     int2 neg1_1 = naga_neg((int(1)).xx);
@@ -285,7 +285,7 @@ void arithmetic()
     float4 mul_vector1_ = mul(ZeroValuefloat4x3(), (2.0).xxx);
     float3x3 mul_ = float3x3(float3(0.0, 0.0, 0.0), float3(0.0, 0.0, 0.0), float3(0.0, 0.0, 0.0));
     int _e205 = prevent_const_eval;
-    wgpu_7437_ = asint(asuint(_e205) + asuint(int(-2147483647 - 1)));
+    etalon_7437_ = asint(asuint(_e205) + asuint(int(-2147483647 - 1)));
     return;
 }
 

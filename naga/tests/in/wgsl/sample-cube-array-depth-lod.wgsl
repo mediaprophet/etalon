@@ -1,4 +1,4 @@
-// see https://github.com/gfx-rs/wgpu/issues/4455
+// see https://github.com/mediaprophet/etalon/issues/4455
 
 @group(0) @binding(0) var texture: texture_depth_cube_array;
 @group(0) @binding(1) var texture_sampler: sampler_comparison;

@@ -5,7 +5,7 @@ Repeatedly performs the Collatz calculation used in `hello-compute` on sets of r
 ## To Run
 
 ```
-cargo run --bin wgpu-examples repeated_compute
+cargo run --bin etalon-examples repeated_compute
 ```
 
 ## Sample

@@ -7,7 +7,7 @@
 // Each workgroup cooperatively loads tiles of A and B, multiplies them,
 // and accumulates the result into C.
 
-enable wgpu_cooperative_matrix;
+enable etalon_cooperative_matrix;
 
 // Matrix dimensions (8x8 tiles)
 const TILE_SIZE: u32 = 8u;

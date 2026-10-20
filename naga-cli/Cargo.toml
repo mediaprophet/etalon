@@ -2,7 +2,7 @@
 name = "naga-cli"
 version.workspace = true
 edition.workspace = true
-description = "CLI for the naga shader translator and validator. Part of the wgpu project"
+description = "CLI for the naga shader translator and validator. Part of the etalon project"
 repository.workspace = true
 keywords = ["shader", "SPIR-V", "GLSL", "MSL"]
 license.workspace = true
@@ -13,7 +13,7 @@ name = "naga"
 path = "src/bin/naga.rs"
 # This _must_ be false, as this conflicts with `naga`'s docs.
 #
-# See https://github.com/gfx-rs/wgpu/issues/4997
+# See https://github.com/mediaprophet/etalon/issues/4997
 doc = false
 test = false
 

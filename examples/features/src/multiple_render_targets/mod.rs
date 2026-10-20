@@ -2,8 +2,8 @@ const EXAMPLE_NAME: &str = "multiple_render_targets";
 
 /// Renderer that draws its outputs to two output texture targets at the same time.
 struct MultiTargetRenderer {
-    pipeline: wgpu::RenderPipeline,
-    bindgroup: wgpu::BindGroup,
+    pipeline: etalon::RenderPipeline,
+    bindgroup: etalon::BindGroup,
 }
 
 fn create_ball_texture_data(width: usize, height: usize) -> Vec<u8> {
@@ -24,40 +24,40 @@ fn create_ball_texture_data(width: usize, height: usize) -> Vec<u8> {
 
 impl MultiTargetRenderer {
     fn create_image_texture(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-    ) -> (wgpu::Texture, wgpu::TextureView) {
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) -> (etalon::Texture, etalon::TextureView) {
         const WIDTH: usize = 256;
         const HEIGHT: usize = 256;
 
-        let size = wgpu::Extent3d {
+        let size = etalon::Extent3d {
             width: WIDTH as u32,
             height: HEIGHT as u32,
             depth_or_array_layers: 1,
         };
 
-        let texture = device.create_texture(&wgpu::TextureDescriptor {
+        let texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("data texture"),
             size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R8Unorm, // we need only the red channel for black/white image,
-            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::R8Unorm, // we need only the red channel for black/white image,
+            usage: etalon::TextureUsages::COPY_DST | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
 
         let ball_texture_data = &create_ball_texture_data(WIDTH, HEIGHT);
 
         queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
-                aspect: wgpu::TextureAspect::All,
+            etalon::TexelCopyTextureInfo {
+                aspect: etalon::TextureAspect::All,
                 texture: &texture,
                 mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
+                origin: etalon::Origin3d::ZERO,
             },
             ball_texture_data,
-            wgpu::TexelCopyBufferLayout {
+            etalon::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(WIDTH as u32),
                 rows_per_image: Some(HEIGHT as u32),
@@ -65,103 +65,103 @@ impl MultiTargetRenderer {
             size,
         );
 
-        let view = texture.create_view(&wgpu::TextureViewDescriptor {
+        let view = texture.create_view(&etalon::TextureViewDescriptor {
             label: Some("view"),
             format: None,
-            dimension: Some(wgpu::TextureViewDimension::D2),
+            dimension: Some(etalon::TextureViewDimension::D2),
             usage: None,
-            aspect: wgpu::TextureAspect::All,
+            aspect: etalon::TextureAspect::All,
             base_mip_level: 0,
             mip_level_count: None,
             base_array_layer: 0,
             array_layer_count: None,
-            swizzle: wgpu::TextureComponentSwizzle::default(),
+            swizzle: etalon::TextureComponentSwizzle::default(),
         });
 
         (texture, view)
     }
 
     fn init(
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        shader: &wgpu::ShaderModule,
-        target_states: &[Option<wgpu::ColorTargetState>],
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+        shader: &etalon::ShaderModule,
+        target_states: &[Option<etalon::ColorTargetState>],
     ) -> MultiTargetRenderer {
         let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 entries: &[
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
                             multisampled: false,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
                         count: None,
                     },
                 ],
                 label: None,
             });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&texture_bind_group_layout)],
             immediate_size: 0,
         });
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::Repeat,
-            address_mode_v: wgpu::AddressMode::Repeat,
-            address_mode_w: wgpu::AddressMode::Repeat,
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
+            address_mode_u: etalon::AddressMode::Repeat,
+            address_mode_v: etalon::AddressMode::Repeat,
+            address_mode_w: etalon::AddressMode::Repeat,
+            mag_filter: etalon::FilterMode::Nearest,
+            min_filter: etalon::FilterMode::Nearest,
+            mipmap_filter: etalon::MipmapFilterMode::Nearest,
             ..Default::default()
         });
 
         let (_, texture_view) = Self::create_image_texture(device, queue);
 
-        let bindgroup = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bindgroup = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout: &texture_bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture_view),
+                    resource: etalon::BindingResource::TextureView(&texture_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: etalon::BindingResource::Sampler(&sampler),
                 },
             ],
             label: None,
         });
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: shader,
                 entry_point: Some("fs_multi_main"),
                 // IMPORTANT: specify the color states for the outputs:
                 compilation_options: Default::default(),
                 targets: target_states,
             }),
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: etalon::PrimitiveState::default(),
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
@@ -174,10 +174,10 @@ impl MultiTargetRenderer {
 
     fn draw(
         &self,
-        encoder: &mut wgpu::CommandEncoder,
-        targets: &[Option<wgpu::RenderPassColorAttachment>],
+        encoder: &mut etalon::CommandEncoder,
+        targets: &[Option<etalon::RenderPassColorAttachment>],
     ) {
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: None,
             color_attachments: targets,
             depth_stencil_attachment: None,
@@ -193,81 +193,81 @@ impl MultiTargetRenderer {
 
 /// Renderer that displays results on the screen.
 struct TargetRenderer {
-    pipeline: wgpu::RenderPipeline,
-    bindgroup_layout: wgpu::BindGroupLayout,
-    bindgroup_left: wgpu::BindGroup,
-    bindgroup_right: wgpu::BindGroup,
-    sampler: wgpu::Sampler,
+    pipeline: etalon::RenderPipeline,
+    bindgroup_layout: etalon::BindGroupLayout,
+    bindgroup_left: etalon::BindGroup,
+    bindgroup_right: etalon::BindGroup,
+    sampler: etalon::Sampler,
 }
 
 impl TargetRenderer {
     fn init(
-        device: &wgpu::Device,
-        shader: &wgpu::ShaderModule,
-        format: wgpu::TextureFormat,
+        device: &etalon::Device,
+        shader: &etalon::ShaderModule,
+        format: etalon::TextureFormat,
         targets: &TextureTargets,
     ) -> TargetRenderer {
         let texture_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 entries: &[
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
                             multisampled: false,
-                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
                         count: None,
                     },
                 ],
                 label: None,
             });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&texture_bind_group_layout)],
             immediate_size: 0,
         });
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::Repeat,
-            address_mode_v: wgpu::AddressMode::Repeat,
-            address_mode_w: wgpu::AddressMode::Repeat,
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::MipmapFilterMode::Nearest,
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
+            address_mode_u: etalon::AddressMode::Repeat,
+            address_mode_v: etalon::AddressMode::Repeat,
+            address_mode_w: etalon::AddressMode::Repeat,
+            mag_filter: etalon::FilterMode::Nearest,
+            min_filter: etalon::FilterMode::Nearest,
+            mipmap_filter: etalon::MipmapFilterMode::Nearest,
             ..Default::default()
         });
 
-        let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let render_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: shader,
                 entry_point: Some("fs_display_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
+                targets: &[Some(etalon::ColorTargetState {
                     format,
                     blend: None,
                     write_mask: Default::default(),
                 })],
             }),
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: etalon::PrimitiveState::default(),
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
@@ -283,36 +283,36 @@ impl TargetRenderer {
         }
     }
     fn create_bindgroups(
-        device: &wgpu::Device,
-        layout: &wgpu::BindGroupLayout,
+        device: &etalon::Device,
+        layout: &etalon::BindGroupLayout,
         texture_targets: &TextureTargets,
-        sampler: &wgpu::Sampler,
-    ) -> (wgpu::BindGroup, wgpu::BindGroup) {
-        let left = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        sampler: &etalon::Sampler,
+    ) -> (etalon::BindGroup, etalon::BindGroup) {
+        let left = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture_targets.red_view),
+                    resource: etalon::BindingResource::TextureView(&texture_targets.red_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(sampler),
+                    resource: etalon::BindingResource::Sampler(sampler),
                 },
             ],
             label: None,
         });
 
-        let right = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let right = device.create_bind_group(&etalon::BindGroupDescriptor {
             layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&texture_targets.green_view),
+                    resource: etalon::BindingResource::TextureView(&texture_targets.green_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::Sampler(sampler),
+                    resource: etalon::BindingResource::Sampler(sampler),
                 },
             ],
             label: None,
@@ -322,20 +322,20 @@ impl TargetRenderer {
 
     fn draw(
         &self,
-        encoder: &mut wgpu::CommandEncoder,
-        surface_view: &wgpu::TextureView,
+        encoder: &mut etalon::CommandEncoder,
+        surface_view: &etalon::TextureView,
         width: u32,
         height: u32,
     ) {
-        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: None,
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: surface_view,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::GREEN),
-                    store: wgpu::StoreOp::Store,
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color::GREEN),
+                    store: etalon::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,
@@ -359,7 +359,7 @@ impl TargetRenderer {
         rpass.draw(0..3, 0..1);
     }
 
-    fn rebuild_resources(&mut self, device: &wgpu::Device, texture_targets: &TextureTargets) {
+    fn rebuild_resources(&mut self, device: &etalon::Device, texture_targets: &TextureTargets) {
         (self.bindgroup_left, self.bindgroup_right) = Self::create_bindgroups(
             device,
             &self.bindgroup_layout,
@@ -370,56 +370,56 @@ impl TargetRenderer {
 }
 
 struct TextureTargets {
-    red_view: wgpu::TextureView,
-    green_view: wgpu::TextureView,
+    red_view: etalon::TextureView,
+    green_view: etalon::TextureView,
 }
 
 impl TextureTargets {
     fn new(
-        device: &wgpu::Device,
-        format: wgpu::TextureFormat,
+        device: &etalon::Device,
+        format: etalon::TextureFormat,
         width: u32,
         height: u32,
     ) -> TextureTargets {
-        let size = wgpu::Extent3d {
+        let size = etalon::Extent3d {
             width,
             height,
             depth_or_array_layers: 1,
         };
 
-        let red_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let red_texture = device.create_texture(&etalon::TextureDescriptor {
             label: None,
             size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format,
-            usage: wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: etalon::TextureUsages::COPY_DST
+                | etalon::TextureUsages::TEXTURE_BINDING
+                | etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[format],
         });
-        let green_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let green_texture = device.create_texture(&etalon::TextureDescriptor {
             label: None,
             size,
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format,
-            usage: wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: etalon::TextureUsages::COPY_DST
+                | etalon::TextureUsages::TEXTURE_BINDING
+                | etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[format],
         });
-        let red_view = red_texture.create_view(&wgpu::TextureViewDescriptor {
+        let red_view = red_texture.create_view(&etalon::TextureViewDescriptor {
             format: Some(format),
-            dimension: Some(wgpu::TextureViewDimension::D2),
-            ..wgpu::TextureViewDescriptor::default()
+            dimension: Some(etalon::TextureViewDimension::D2),
+            ..etalon::TextureViewDescriptor::default()
         });
-        let green_view = green_texture.create_view(&wgpu::TextureViewDescriptor {
+        let green_view = green_texture.create_view(&etalon::TextureViewDescriptor {
             format: Some(format),
-            dimension: Some(wgpu::TextureViewDimension::D2),
-            ..wgpu::TextureViewDescriptor::default()
+            dimension: Some(etalon::TextureViewDimension::D2),
+            ..etalon::TextureViewDescriptor::default()
         });
         TextureTargets {
             red_view,
@@ -438,14 +438,14 @@ struct Example {
 
 impl crate::framework::Example for Example {
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: None,
-            source: wgpu::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
+            source: etalon::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(include_str!(
                 "shader.wgsl"
             ))),
         });
@@ -457,12 +457,12 @@ impl crate::framework::Example for Example {
             // ColorTargetStates specify how the data will be written to the
             // output textures:
             &[
-                Some(wgpu::ColorTargetState {
+                Some(etalon::ColorTargetState {
                     format: config.view_formats[0],
                     blend: None,
                     write_mask: Default::default(),
                 }),
-                Some(wgpu::ColorTargetState {
+                Some(etalon::ColorTargetState {
                     format: config.view_formats[0],
                     blend: None,
                     write_mask: Default::default(),
@@ -489,9 +489,9 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         self.screen_width = config.width;
         self.screen_height = config.height;
@@ -502,21 +502,21 @@ impl crate::framework::Example for Example {
 
     fn update(&mut self, _event: winit::event::WindowEvent) {}
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 
         // draw to 2 textures at the same time:
         self.multi_target_renderer.draw(
             &mut encoder,
             &[
-                Some(wgpu::RenderPassColorAttachment {
+                Some(etalon::RenderPassColorAttachment {
                     view: &self.texture_targets.red_view,
                     depth_slice: None,
                     resolve_target: None,
                     ops: Default::default(),
                 }),
-                Some(wgpu::RenderPassColorAttachment {
+                Some(etalon::RenderPassColorAttachment {
                     view: &self.texture_targets.green_view,
                     depth_slice: None,
                     resolve_target: None,
@@ -538,15 +538,15 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: EXAMPLE_NAME,
     image_path: "/examples/features/src/multiple_render_targets/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default(),
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default(),
     // Bounded by lavapipe
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.014)], // Bounded by Apple A9
+    comparisons: &[etalon_test::ComparisonType::Mean(0.014)], // Bounded by Apple A9
     _phantom: std::marker::PhantomData::<Example>,
 };

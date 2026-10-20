@@ -36,7 +36,7 @@ constant int shr_iaiai = 0;
 constant int shr_iai_u_1 = 0;
 constant uint shr_uaiai = 0u;
 constant uint shr_uai_u = 0u;
-constant int wgpu_4492_ = (-2147483647 - 1);
+constant int etalon_4492_ = (-2147483647 - 1);
 
 void runtime_values(
 ) {
@@ -94,12 +94,12 @@ void runtime_values(
     return;
 }
 
-void wgpu_4445_(
+void etalon_4445_(
 ) {
     return;
 }
 
-void wgpu_4435_(
+void etalon_4435_(
     threadgroup type_3& a
 ) {
     uint y = a.inner[as_type<int>(as_type<uint>(1) - as_type<uint>(1))];
@@ -115,7 +115,7 @@ kernel void main_(
     }
     metal::threadgroup_barrier(metal::mem_flags::mem_threadgroup);
     runtime_values();
-    wgpu_4445_();
-    wgpu_4435_(a);
+    etalon_4445_();
+    etalon_4435_(a);
     return;
 }

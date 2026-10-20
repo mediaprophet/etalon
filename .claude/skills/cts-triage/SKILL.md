@@ -76,9 +76,9 @@ cargo xtask cts 'webgpu:api,validation,category:subcategory:specific_test' 2>&1 
 
 Look for:
 
-- **"EXPECTATION FAILED: DID NOT REJECT"**: wgpu is accepting invalid input (validation gap)
+- **"EXPECTATION FAILED: DID NOT REJECT"**: etalon is accepting invalid input (validation gap)
 - **"Validation succeeded unexpectedly"**: Similar to above
-- **"Unexpected validation error occurred"**: wgpu is rejecting valid input
+- **"Unexpected validation error occurred"**: etalon is rejecting valid input
 - **Error message content**: Tells you what validation is triggering or missing
 
 ## Step 6: Check CTS Test Source
@@ -102,7 +102,7 @@ Group failures into categories:
 
 **High Priority - Validation Gaps:**
 
-- wgpu accepts invalid configurations that should fail
+- etalon accepts invalid configurations that should fail
 - Security or correctness implications
 - Example: Accepting wrong texture formats, missing aspect checks
 
@@ -130,32 +130,32 @@ For validation gaps, find where validation should happen:
 1. **Search for existing validation:**
 
    ```bash
-   grep -n "relevant_keyword" wgpu-core/src/device/resource.rs
+   grep -n "relevant_keyword" etalon-core/src/device/resource.rs
    ```
 
 2. **Look for render/compute pipeline creation:**
-   - Render pipeline: `wgpu-core/src/device/resource.rs` around `create_render_pipeline`
+   - Render pipeline: `etalon-core/src/device/resource.rs` around `create_render_pipeline`
    - Compute pipeline: Similar location
    - Look for existing validation patterns you can follow
 
 3. **Check for helper functions:**
 
    ```bash
-   grep "fn is_" wgpu-types/src/texture/format.rs
+   grep "fn is_" etalon-types/src/texture/format.rs
    ```
 
 4. **Find error enums:**
    ```bash
-   grep "pub enum.*Error" wgpu-core/src/pipeline.rs
+   grep "pub enum.*Error" etalon-core/src/pipeline.rs
    ```
 
 ## Step 9: Implement Fixes
 
 When implementing fixes:
 
-1. **Add error variants if needed** (in `wgpu-core/src/pipeline.rs`)
-2. **Add helper methods** (in `wgpu-types` if checking properties)
-3. **Add validation checks** (in `wgpu-core/src/device/resource.rs`)
+1. **Add error variants if needed** (in `etalon-core/src/pipeline.rs`)
+2. **Add helper methods** (in `etalon-types` if checking properties)
+3. **Add validation checks** (in `etalon-core/src/device/resource.rs`)
 4. **Test the fix** with specific failing tests
 5. **Run full subcategory** to verify all related tests pass
 6. **Check you didn't break passing tests**
@@ -287,18 +287,18 @@ attempting to fix.
 
 - Naga allows referencing an atomic directly in an expression
 - Should only allow accessing via `atomicLoad`, `atomicStore`, etc.
-- Only investigate as necessary to confirm this is the issue. Do not attempt to fix. Refer user to https://github.com/gfx-rs/wgpu/issues/5474.
+- Only investigate as necessary to confirm this is the issue. Do not attempt to fix. Refer user to https://github.com/mediaprophet/etalon/issues/5474.
 
 **Pattern: Error reporting for destroyed resources**
 
-- Tests that check for validation errors when a destroyed resource is used. `wgpu` often reports these errors later than WebGPU requires, causing the tests to fail.
-- `wgpu` may report these errors earlier than it should, causing the test to fail with an unexpected validation error.
+- Tests that check for validation errors when a destroyed resource is used. `etalon` often reports these errors later than WebGPU requires, causing the tests to fail.
+- `etalon` may report these errors earlier than it should, causing the test to fail with an unexpected validation error.
 - Look for:
   - Tests with `state="destroyed"` parameter
   - Tests checking that operations on destroyed buffers or textures should fail
 - Example failing tests:
   - `webgpu:api,validation,encoding,cmds,compute_pass:indirect_dispatch_buffer_state:` with `state="destroyed"` subcases
-- Only investigate as necessary to confirm this is the issue. Do not attempt to fix. Refer user to https://github.com/gfx-rs/wgpu/issues/7881.
+- Only investigate as necessary to confirm this is the issue. Do not attempt to fix. Refer user to https://github.com/mediaprophet/etalon/issues/7881.
 
 # Tips
 

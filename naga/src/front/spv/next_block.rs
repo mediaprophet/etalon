@@ -18,7 +18,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
     /// Except for the function's entry block, `block_id` should be the label of
     /// a block we've seen mentioned before, with an entry in
     /// `block_ctx.body_for_label` to tell us which `Body` it contributes to.
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/gfx-rs/wgpu/issues/9456)
+    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
     pub(in crate::front::spv) fn next_block(
         &mut self,
         block_id: spirv::Word,
@@ -1767,7 +1767,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
                         Glo::UnpackSnorm2x16 => Mf::Unpack2x16snorm,
                         Glo::FindILsb => Mf::FirstTrailingBit,
                         Glo::FindUMsb | Glo::FindSMsb => Mf::FirstLeadingBit,
-                        // TODO: https://github.com/gfx-rs/naga/issues/2526
+                        // TODO: https://github.com/mediaprophet/naga/issues/2526
                         Glo::Modf | Glo::Frexp => return Err(Error::UnsupportedExtInst(inst_id)),
                         Glo::IMix
                         | Glo::PackDouble2x32

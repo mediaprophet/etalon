@@ -6,7 +6,7 @@ This is the same scene set-up as hal ray-traced triangle
 ## To Run
 
 ```
-cargo run --bin wgpu-examples ray_traced_triangle
+cargo run --bin etalon-examples ray_traced_triangle
 ```
 
 ## Screenshots

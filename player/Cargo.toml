@@ -18,7 +18,7 @@ name = "play"
 test = false
 
 [dependencies]
-wgpu-types = { workspace = true, features = ["serde", "std"] }
+etalon-types = { workspace = true, features = ["serde", "std"] }
 
 env_logger.workspace = true
 hashbrown.workspace = true
@@ -31,7 +31,7 @@ bytemuck.workspace = true
 # Non-Webassembly
 #
 # We are a non-wasm only crate, and this allows us to compile.
-[target.'cfg(not(target_arch = "wasm32"))'.dependencies.wgpu-core]
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies.etalon-core]
 workspace = true
 default-features = true
 features = [

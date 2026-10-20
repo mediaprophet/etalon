@@ -3,8 +3,8 @@
 #![cfg(not(target_arch = "wasm32"))]
 #![warn(clippy::allow_attributes, unsafe_op_in_unsafe_fn)]
 
-extern crate wgpu_core as wgc;
-extern crate wgpu_types as wgt;
+extern crate etalon_core as wgc;
+extern crate etalon_types as wgt;
 
 use std::{
     borrow::Cow,

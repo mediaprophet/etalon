@@ -27,7 +27,7 @@ fn vs_main(@builtin(vertex_index) vi: u32) -> VertexOutput {
 // `array<...>` values, because naga's SPIR-V backend decorates array types
 // with ArrayStride, which is invalid on function-local variables
 // (VUID-StandaloneSpirv-None-10684; see
-// https://github.com/gfx-rs/wgpu/issues/7696).
+// https://github.com/mediaprophet/etalon/issues/7696).
 
 fn staircase_nits(i: u32) -> f32 {
     if i == 0u { return 50.0; }

@@ -179,7 +179,7 @@ fn loop_switch_continue_nesting(x: i32, y: i32, z: i32) {
     }
 
     // In separate loop to avoid spv validation error:
-    // See https://github.com/gfx-rs/wgpu/issues/5658
+    // See https://github.com/mediaprophet/etalon/issues/5658
     loop {
         // Nested degenerate switch with continue
         switch y {

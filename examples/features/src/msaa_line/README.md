@@ -5,7 +5,7 @@ This example shows how to render lines using MSAA.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples msaa_line
+cargo run --bin etalon-examples msaa_line
 ```
 
 ## Screenshots

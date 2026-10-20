@@ -1,7 +1,7 @@
 # Review Checklist
 
 This is a collection of notes on things to watch out for when
-reviewing pull requests submitted to wgpu and Naga.
+reviewing pull requests submitted to etalon and Naga.
 
 Ideally, we want to keep items off this list entirely:
 

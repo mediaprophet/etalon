@@ -1,7 +1,7 @@
 use std::future::Future;
 use std::sync::Arc;
 
-use wgpu::{Instance, Surface};
+use etalon::{Instance, Surface};
 use winit::{
     application::ApplicationHandler,
     dpi::PhysicalSize,
@@ -14,43 +14,43 @@ use winit::{
 pub trait Example: 'static + Sized {
     const SRGB: bool = true;
 
-    fn optional_features() -> wgpu::Features {
-        wgpu::Features::empty()
+    fn optional_features() -> etalon::Features {
+        etalon::Features::empty()
     }
 
-    fn required_features() -> wgpu::Features {
-        wgpu::Features::empty()
+    fn required_features() -> etalon::Features {
+        etalon::Features::empty()
     }
 
-    fn required_downlevel_capabilities() -> wgpu::DownlevelCapabilities {
-        wgpu::DownlevelCapabilities {
-            flags: wgpu::DownlevelFlags::empty(),
-            shader_model: wgpu::ShaderModel::Sm5,
-            ..wgpu::DownlevelCapabilities::default()
+    fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
+        etalon::DownlevelCapabilities {
+            flags: etalon::DownlevelFlags::empty(),
+            shader_model: etalon::ShaderModel::Sm5,
+            ..etalon::DownlevelCapabilities::default()
         }
     }
 
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits::downlevel_webgl2_defaults() // These downlevel limits will allow the code to run on all possible hardware
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits::downlevel_webgl2_defaults() // These downlevel limits will allow the code to run on all possible hardware
     }
 
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     ) -> Self;
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
     );
 
     fn update(&mut self, event: WindowEvent);
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue);
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue);
 }
 
 // Initialize logging in platform dependent ways.
@@ -77,7 +77,7 @@ fn init_logger() {
             env_logger::builder()
                 .filter_level(log::LevelFilter::Info)
                 // Millisecond timestamps; see
-                // <https://github.com/gfx-rs/wgpu/issues/9248>.
+                // <https://github.com/mediaprophet/etalon/issues/9248>.
                 .format_timestamp_millis()
                 .parse_default_env()
                 .init();
@@ -86,14 +86,14 @@ fn init_logger() {
 }
 
 /// Runs a future to completion. On native this blocks via pollster, on wasm this spawns
-/// a local task. This allows the same async wgpu initialization code to work on both platforms.
+/// a local task. This allows the same async etalon initialization code to work on both platforms.
 #[cfg(not(target_arch = "wasm32"))]
 fn spawn(f: impl Future<Output = ()> + 'static) {
     pollster::block_on(f);
 }
 
 /// Runs a future to completion. On native this blocks via pollster, on wasm this spawns
-/// a local task. This allows the same async wgpu initialization code to work on both platforms.
+/// a local task. This allows the same async etalon initialization code to work on both platforms.
 #[cfg(target_arch = "wasm32")]
 fn spawn(f: impl Future<Output = ()> + 'static) {
     wasm_bindgen_futures::spawn_local(f);
@@ -103,8 +103,8 @@ fn spawn(f: impl Future<Output = ()> + 'static) {
 ///
 /// As surface usage varies per platform, wrapping this up cleans up the event loop code.
 struct SurfaceWrapper {
-    surface: Option<wgpu::Surface<'static>>,
-    config: Option<wgpu::SurfaceConfiguration>,
+    surface: Option<etalon::Surface<'static>>,
+    config: Option<etalon::SurfaceConfiguration>,
 }
 
 impl SurfaceWrapper {
@@ -190,8 +190,8 @@ impl SurfaceWrapper {
         &mut self,
         context: &ExampleContext,
         window: Arc<Window>,
-    ) -> Option<wgpu::SurfaceTexture> {
-        use wgpu::CurrentSurfaceTexture;
+    ) -> Option<etalon::SurfaceTexture> {
+        use etalon::CurrentSurfaceTexture;
 
         let surface = self.surface.as_ref().unwrap();
 
@@ -249,17 +249,17 @@ impl SurfaceWrapper {
         self.surface.as_ref()
     }
 
-    fn config(&self) -> &wgpu::SurfaceConfiguration {
+    fn config(&self) -> &etalon::SurfaceConfiguration {
         self.config.as_ref().unwrap()
     }
 }
 
-/// Context containing global wgpu resources.
+/// Context containing global etalon resources.
 struct ExampleContext {
-    instance: wgpu::Instance,
-    adapter: wgpu::Adapter,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
+    instance: etalon::Instance,
+    adapter: etalon::Adapter,
+    device: etalon::Device,
+    queue: etalon::Queue,
 }
 impl ExampleContext {
     /// Initializes the example context.
@@ -268,11 +268,11 @@ impl ExampleContext {
         window: Arc<Window>,
         display_handle: winit::event_loop::OwnedDisplayHandle,
     ) -> Self {
-        log::info!("Initializing wgpu...");
+        log::info!("Initializing etalon...");
 
         let instance_descriptor =
-            wgpu::InstanceDescriptor::new_with_display_handle_from_env(Box::new(display_handle));
-        let instance = wgpu::Instance::new(instance_descriptor);
+            etalon::InstanceDescriptor::new_with_display_handle_from_env(Box::new(display_handle));
+        let instance = etalon::Instance::new(instance_descriptor);
         surface.pre_adapter(&instance, window);
         let adapter = get_adapter_with_capabilities_or_from_env(
             &instance,
@@ -288,17 +288,17 @@ impl ExampleContext {
         log::info!("Selected adapter: {} ({:?})", info.name, info.backend);
 
         let (device, queue) = adapter
-            .request_device(&wgpu::DeviceDescriptor {
+            .request_device(&etalon::DeviceDescriptor {
                 label: None,
                 required_features: (E::optional_features() & adapter.features())
                     | E::required_features(),
                 required_limits: needed_limits,
-                default_queue: wgpu::QueueDescriptor { label: None },
-                experimental_features: unsafe { wgpu::ExperimentalFeatures::enabled() },
-                memory_hints: wgpu::MemoryHints::MemoryUsage,
-                trace: match std::env::var_os("WGPU_TRACE") {
-                    Some(path) => wgpu::Trace::Directory(path.into()),
-                    None => wgpu::Trace::Off,
+                default_queue: etalon::QueueDescriptor { label: None },
+                experimental_features: unsafe { etalon::ExperimentalFeatures::enabled() },
+                memory_hints: etalon::MemoryHints::MemoryUsage,
+                trace: match std::env::var_os("etalon_TRACE") {
+                    Some(path) => etalon::Trace::Directory(path.into()),
+                    None => etalon::Trace::Off,
                 },
             })
             .await
@@ -347,8 +347,8 @@ impl FrameCounter {
 /// User event sent via [`EventLoopProxy`] to deliver async initialization results
 /// back to the main event loop.
 enum AppAction {
-    /// The async wgpu initialization has completed.
-    WgpuInitialized {
+    /// The async etalon initialization has completed.
+    etalonInitialized {
         context: ExampleContext,
         surface: SurfaceWrapper,
     },
@@ -358,7 +358,7 @@ enum AppAction {
 enum AppState<E> {
     /// Waiting for the first `resumed()` call.
     Uninitialized,
-    /// Window created, async wgpu initialization in progress.
+    /// Window created, async etalon initialization in progress.
     Loading,
     /// Fully initialized and rendering.
     Running {
@@ -371,7 +371,7 @@ enum AppState<E> {
 /// The main application struct, implementing winit's [`ApplicationHandler`].
 ///
 /// Winit 0.30 requires that windows are not created until the `resumed()` callback,
-/// and that all wgpu resources (instance, adapter, device) are initialized after the
+/// and that all etalon resources (instance, adapter, device) are initialized after the
 /// window exists. On native, this init happens synchronously via `pollster::block_on`.
 /// On wasm, it happens asynchronously via `wasm_bindgen_futures::spawn_local`, with
 /// the results delivered back through an [`EventLoopProxy`] user event.
@@ -398,7 +398,7 @@ impl<E: Example> App<E> {
 }
 
 impl<E: Example> ApplicationHandler<AppAction> for App<E> {
-    /// Called when the application is (re)started. On the first call, the window and wgpu
+    /// Called when the application is (re)started. On the first call, the window and etalon
     /// resources are created. On Android, this may be called again after each suspend —
     /// in that case we only need to re-create the surface.
     fn resumed(&mut self, event_loop: &ActiveEventLoop) {
@@ -452,7 +452,7 @@ impl<E: Example> ApplicationHandler<AppAction> for App<E> {
         let display_handle = event_loop.owned_display_handle();
         let proxy = self.proxy.clone();
 
-        // Spawn the async wgpu initialization. On native, `spawn` uses `pollster::block_on`
+        // Spawn the async etalon initialization. On native, `spawn` uses `pollster::block_on`
         // so this completes synchronously before `resumed()` returns. On wasm, `spawn` uses
         // `wasm_bindgen_futures::spawn_local` so the result arrives later via `user_event()`.
         spawn(async move {
@@ -460,15 +460,15 @@ impl<E: Example> ApplicationHandler<AppAction> for App<E> {
             let context =
                 ExampleContext::init_async::<E>(&mut surface, window.clone(), display_handle).await;
             surface.resume(&context, window, E::SRGB);
-            let _ = proxy.send_event(AppAction::WgpuInitialized { context, surface });
+            let _ = proxy.send_event(AppAction::etalonInitialized { context, surface });
         });
     }
 
-    /// Receives the result of the async wgpu initialization. Creates the [`Example`] and
+    /// Receives the result of the async etalon initialization. Creates the [`Example`] and
     /// transitions to the running state.
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: AppAction) {
         match event {
-            AppAction::WgpuInitialized { context, surface } => {
+            AppAction::etalonInitialized { context, surface } => {
                 let example = E::init(
                     surface.config(),
                     &context.adapter,
@@ -540,9 +540,9 @@ impl<E: Example> ApplicationHandler<AppAction> for App<E> {
 
                 let window_arc = self.window.clone().unwrap();
                 if let Some(frame) = surface.acquire(context, window_arc) {
-                    let view = frame.texture.create_view(&wgpu::TextureViewDescriptor {
+                    let view = frame.texture.create_view(&etalon::TextureViewDescriptor {
                         format: Some(surface.config().view_formats[0]),
-                        ..wgpu::TextureViewDescriptor::default()
+                        ..etalon::TextureViewDescriptor::default()
                     });
 
                     example.render(&view, &context.device, &context.queue);
@@ -579,7 +579,7 @@ fn start<E: Example>(title: &'static str) {
 
     log::debug!(
         "Enabled backends: {:?}",
-        wgpu::Instance::enabled_backend_features()
+        etalon::Instance::enabled_backend_features()
     );
 
     let event_loop = EventLoop::with_user_event().build().unwrap();
@@ -622,7 +622,7 @@ pub fn parse_url_query_string<'a>(query: &'a str, search_key: &str) -> Option<&'
 }
 
 #[cfg(test)]
-pub use wgpu_test::image::ComparisonType;
+pub use etalon_test::image::ComparisonType;
 
 use crate::utils::get_adapter_with_capabilities_or_from_env;
 
@@ -634,19 +634,19 @@ pub struct ExampleTestParams<E> {
     pub image_path: &'static str,
     pub width: u32,
     pub height: u32,
-    pub optional_features: wgpu::Features,
-    pub base_test_parameters: wgpu_test::TestParameters,
+    pub optional_features: etalon::Features,
+    pub base_test_parameters: etalon_test::TestParameters,
     /// Comparisons against FLIP statistics that determine if the test passes or fails.
     pub comparisons: &'static [ComparisonType],
     pub _phantom: std::marker::PhantomData<E>,
 }
 
 #[cfg(test)]
-impl<E: Example + wgpu::WasmNotSendSync> From<ExampleTestParams<E>>
-    for wgpu_test::GpuTestConfiguration
+impl<E: Example + etalon::WasmNotSendSync> From<ExampleTestParams<E>>
+    for etalon_test::GpuTestConfiguration
 {
     fn from(params: ExampleTestParams<E>) -> Self {
-        wgpu_test::GpuTestConfiguration::new()
+        etalon_test::GpuTestConfiguration::new()
             .name(params.name)
             .parameters({
                 assert_eq!(params.width % 64, 0, "width needs to be aligned 64");
@@ -661,45 +661,45 @@ impl<E: Example + wgpu::WasmNotSendSync> From<ExampleTestParams<E>>
             })
             .run_async(move |ctx| async move {
                 let format = if E::SRGB {
-                    wgpu::TextureFormat::Rgba8UnormSrgb
+                    etalon::TextureFormat::Rgba8UnormSrgb
                 } else {
-                    wgpu::TextureFormat::Rgba8Unorm
+                    etalon::TextureFormat::Rgba8Unorm
                 };
-                let dst_texture = ctx.device.create_texture(&wgpu::TextureDescriptor {
+                let dst_texture = ctx.device.create_texture(&etalon::TextureDescriptor {
                     label: Some("destination"),
-                    size: wgpu::Extent3d {
+                    size: etalon::Extent3d {
                         width: params.width,
                         height: params.height,
                         depth_or_array_layers: 1,
                     },
                     mip_level_count: 1,
                     sample_count: 1,
-                    dimension: wgpu::TextureDimension::D2,
+                    dimension: etalon::TextureDimension::D2,
                     format,
-                    usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::COPY_SRC,
+                    usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::COPY_SRC,
                     view_formats: &[],
                 });
 
-                let dst_view = dst_texture.create_view(&wgpu::TextureViewDescriptor::default());
+                let dst_view = dst_texture.create_view(&etalon::TextureViewDescriptor::default());
 
-                let dst_buffer = ctx.device.create_buffer(&wgpu::BufferDescriptor {
+                let dst_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
                     label: Some("image map buffer"),
                     size: params.width as u64 * params.height as u64 * 4,
-                    usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+                    usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
                     mapped_at_creation: false,
                 });
 
                 let mut example = E::init(
-                    &wgpu::SurfaceConfiguration {
-                        usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+                    &etalon::SurfaceConfiguration {
+                        usage: etalon::TextureUsages::RENDER_ATTACHMENT,
                         format,
-                        color_space: wgpu::SurfaceColorSpace::Auto,
+                        color_space: etalon::SurfaceColorSpace::Auto,
                         width: params.width,
                         height: params.height,
                         desired_maximum_frame_latency: 2,
                         // Fifo corresponds to traditional VSync. It's supported everywhere.
-                        present_mode: wgpu::PresentMode::Fifo,
-                        alpha_mode: wgpu::CompositeAlphaMode::Auto,
+                        present_mode: etalon::PresentMode::Fifo,
+                        alpha_mode: etalon::CompositeAlphaMode::Auto,
                         view_formats: vec![format],
                     },
                     &ctx.adapter,
@@ -711,24 +711,24 @@ impl<E: Example + wgpu::WasmNotSendSync> From<ExampleTestParams<E>>
 
                 let mut cmd_buf = ctx
                     .device
-                    .create_command_encoder(&wgpu::CommandEncoderDescriptor::default());
+                    .create_command_encoder(&etalon::CommandEncoderDescriptor::default());
 
                 cmd_buf.copy_texture_to_buffer(
-                    wgpu::TexelCopyTextureInfo {
+                    etalon::TexelCopyTextureInfo {
                         texture: &dst_texture,
                         mip_level: 0,
-                        origin: wgpu::Origin3d::ZERO,
-                        aspect: wgpu::TextureAspect::All,
+                        origin: etalon::Origin3d::ZERO,
+                        aspect: etalon::TextureAspect::All,
                     },
-                    wgpu::TexelCopyBufferInfo {
+                    etalon::TexelCopyBufferInfo {
                         buffer: &dst_buffer,
-                        layout: wgpu::TexelCopyBufferLayout {
+                        layout: etalon::TexelCopyBufferLayout {
                             offset: 0,
                             bytes_per_row: Some(params.width * 4),
                             rows_per_image: None,
                         },
                     },
-                    wgpu::Extent3d {
+                    etalon::Extent3d {
                         width: params.width,
                         height: params.height,
                         depth_or_array_layers: 1,
@@ -738,13 +738,13 @@ impl<E: Example + wgpu::WasmNotSendSync> From<ExampleTestParams<E>>
                 ctx.queue.submit(Some(cmd_buf.finish()));
 
                 let dst_buffer_slice = dst_buffer.slice(..);
-                dst_buffer_slice.map_async(wgpu::MapMode::Read, |_| ());
-                ctx.async_poll(wgpu::PollType::wait_indefinitely())
+                dst_buffer_slice.map_async(etalon::MapMode::Read, |_| ());
+                ctx.async_poll(etalon::PollType::wait_indefinitely())
                     .await
                     .unwrap();
                 let bytes = dst_buffer_slice.get_mapped_range().unwrap().to_vec();
 
-                wgpu_test::image::compare_image_output(
+                etalon_test::image::compare_image_output(
                     dbg!(env!("CARGO_MANIFEST_DIR").to_string() + "/../../" + params.image_path),
                     &ctx.adapter_info,
                     params.width,

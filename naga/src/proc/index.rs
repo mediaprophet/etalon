@@ -25,7 +25,7 @@ use crate::{valid, FastHashSet};
 ///     and either the `Restrict` or `ReadZeroSkipWrite` behaviors for texture
 ///     accesses.
 ///
-/// -   When used by the `wgpu` crate for native development, `wgpu` selects
+/// -   When used by the `etalon` crate for native development, `etalon` selects
 ///     `ReadZeroSkipWrite` as its default.
 ///
 /// -   Naga's own default is `Unchecked`, so that shader translations

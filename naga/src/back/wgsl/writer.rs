@@ -440,7 +440,7 @@ impl<W: Write> Writer<W> {
             any_written = true;
         }
         if needed.int16 {
-            writeln!(self.out, "enable wgpu_int16;")?;
+            writeln!(self.out, "enable etalon_int16;")?;
             any_written = true;
         }
         if needed.dual_source_blending {
@@ -452,11 +452,11 @@ impl<W: Write> Writer<W> {
             any_written = true;
         }
         if module.uses_mesh_shaders() {
-            writeln!(self.out, "enable wgpu_mesh_shader;")?;
+            writeln!(self.out, "enable etalon_mesh_shader;")?;
             any_written = true;
         }
         if needed.binding_array {
-            writeln!(self.out, "enable wgpu_binding_array;")?;
+            writeln!(self.out, "enable etalon_binding_array;")?;
             any_written = true;
         }
         if needed.draw_index {
@@ -468,19 +468,19 @@ impl<W: Write> Writer<W> {
             any_written = true;
         }
         if needed.cooperative_matrix {
-            writeln!(self.out, "enable wgpu_cooperative_matrix;")?;
+            writeln!(self.out, "enable etalon_cooperative_matrix;")?;
             any_written = true;
         }
         if needed.ray_tracing_pipeline {
-            writeln!(self.out, "enable wgpu_ray_tracing_pipeline;")?;
+            writeln!(self.out, "enable etalon_ray_tracing_pipeline;")?;
             any_written = true;
         }
         if needed.per_vertex {
-            writeln!(self.out, "enable wgpu_per_vertex;")?;
+            writeln!(self.out, "enable etalon_per_vertex;")?;
             any_written = true;
         }
         if needed.debug_printf {
-            writeln!(self.out, "enable wgpu_debug_printf;")?;
+            writeln!(self.out, "enable etalon_debug_printf;")?;
             any_written = true;
         }
         if any_written {

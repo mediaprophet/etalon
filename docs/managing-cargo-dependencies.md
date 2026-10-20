@@ -1,16 +1,16 @@
 # Managing Cargo dependencies
 
-In general, `wgpu` tries to stay up-to-date with the current Rust ecosystem; we are interested in keeping the version of dependency crates we use up-to-date. However, there are some considerations to keep in mind when upgrading or adding dependencies to `wgpu`.
+In general, `etalon` tries to stay up-to-date with the current Rust ecosystem; we are interested in keeping the version of dependency crates we use up-to-date. However, there are some considerations to keep in mind when upgrading or adding dependencies to `etalon`.
 
 ## Adding or upgrading dependencies may cause dependency duplication downstream
 
-Some crates in the Rust ecosystem are useful for both `wgpu` and its downstream consumers. Popular crates—like those in the `serde` ecosystem, for example—are often used in multiple places in a Rust crate's dependency tree. Normally, Cargo can unify dependencies behind a single SemVer-compatible version. When one or more, but not all, of these places consume a [SemVer-incompatible upgrade][semver-summary], Cargo uses both in the new dependency tree (see The Cargo Book's section titled [`Version-incompatibility hazards`](https://doc.rust-lang.org/cargo/reference/resolver.html#version-incompatibility-hazards)). These are often referred to as "duplicate dependencies"[^1].
+Some crates in the Rust ecosystem are useful for both `etalon` and its downstream consumers. Popular crates—like those in the `serde` ecosystem, for example—are often used in multiple places in a Rust crate's dependency tree. Normally, Cargo can unify dependencies behind a single SemVer-compatible version. When one or more, but not all, of these places consume a [SemVer-incompatible upgrade][semver-summary], Cargo uses both in the new dependency tree (see The Cargo Book's section titled [`Version-incompatibility hazards`](https://doc.rust-lang.org/cargo/reference/resolver.html#version-incompatibility-hazards)). These are often referred to as "duplicate dependencies"[^1].
 
 [semver-summary]: https://semver.org/spec/v2.0.0.html#summary
 
 [^1]: One can detect such duplicates with [`cargo tree --duplicates`](https://doc.rust-lang.org/cargo/commands/cargo-tree.html#option-cargo-tree---duplicates).
 
-There exist many Rust projects that, for some reason or another, are sensitive to duplicate dependencies. The most common reason for this is to minimize the number of built dependencies, but there are other reasons for doing so, like projects that prefer to [vendor in their dependencies' source code](https://doc.rust-lang.org/cargo/commands/cargo-vendor.html) and keep diffs easy to inspect. **When a dependency of `wgpu` releases a SemVer-incompatible change and `wgpu` consumes it (even if it's new _to `wgpu`_), it may cause conflicts for projects that avoid duplicate dependencies.**
+There exist many Rust projects that, for some reason or another, are sensitive to duplicate dependencies. The most common reason for this is to minimize the number of built dependencies, but there are other reasons for doing so, like projects that prefer to [vendor in their dependencies' source code](https://doc.rust-lang.org/cargo/commands/cargo-vendor.html) and keep diffs easy to inspect. **When a dependency of `etalon` releases a SemVer-incompatible change and `etalon` consumes it (even if it's new _to `etalon`_), it may cause conflicts for projects that avoid duplicate dependencies.**
 
 > [!TIP]
 > Downstreams like Firefox can and do work around Cargo's (well-motivated) refusal to unify SemVer-incompatible versions of crates, but this happens only on a case-by-case basis. In general, this requires source compatibility for the APIs actually consumed between both versions.

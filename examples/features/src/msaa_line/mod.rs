@@ -10,7 +10,7 @@
 use std::iter;
 
 use bytemuck::{Pod, Zeroable};
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 
 use winit::{
     event::{ElementState, KeyEvent, WindowEvent},
@@ -25,55 +25,55 @@ struct Vertex {
 }
 
 struct Example {
-    bundle: wgpu::RenderBundle,
-    shader: wgpu::ShaderModule,
-    pipeline_layout: wgpu::PipelineLayout,
-    multisampled_framebuffer: wgpu::TextureView,
-    vertex_buffer: wgpu::Buffer,
+    bundle: etalon::RenderBundle,
+    shader: etalon::ShaderModule,
+    pipeline_layout: etalon::PipelineLayout,
+    multisampled_framebuffer: etalon::TextureView,
+    vertex_buffer: etalon::Buffer,
     vertex_count: u32,
     sample_count: u32,
     rebuild_bundle: bool,
-    config: wgpu::SurfaceConfiguration,
+    config: etalon::SurfaceConfiguration,
     max_sample_count: u32,
 }
 
 impl Example {
     fn create_bundle(
-        device: &wgpu::Device,
-        config: &wgpu::SurfaceConfiguration,
-        shader: &wgpu::ShaderModule,
-        pipeline_layout: &wgpu::PipelineLayout,
+        device: &etalon::Device,
+        config: &etalon::SurfaceConfiguration,
+        shader: &etalon::ShaderModule,
+        pipeline_layout: &etalon::PipelineLayout,
         sample_count: u32,
-        vertex_buffer: &wgpu::Buffer,
+        vertex_buffer: &etalon::Buffer,
         vertex_count: u32,
-    ) -> wgpu::RenderBundle {
+    ) -> etalon::RenderBundle {
         log::info!("sample_count: {sample_count}");
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: None,
             layout: Some(pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: shader,
                 entry_point: Some("vs_main"),
                 compilation_options: Default::default(),
-                buffers: &[Some(wgpu::VertexBufferLayout {
-                    array_stride: size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::VertexStepMode::Vertex,
-                    attributes: &wgpu::vertex_attr_array![0 => Float32x2, 1 => Float32x4],
+                buffers: &[Some(etalon::VertexBufferLayout {
+                    array_stride: size_of::<Vertex>() as etalon::BufferAddress,
+                    step_mode: etalon::VertexStepMode::Vertex,
+                    attributes: &etalon::vertex_attr_array![0 => Float32x2, 1 => Float32x4],
                 })],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(config.view_formats[0].into())],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::LineList,
-                front_face: wgpu::FrontFace::Ccw,
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::LineList,
+                front_face: etalon::FrontFace::Ccw,
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState {
+            multisample: etalon::MultisampleState {
                 count: sample_count,
                 ..Default::default()
             },
@@ -81,7 +81,7 @@ impl Example {
             cache: None,
         });
         let mut encoder =
-            device.create_render_bundle_encoder(&wgpu::RenderBundleEncoderDescriptor {
+            device.create_render_bundle_encoder(&etalon::RenderBundleEncoderDescriptor {
                 label: None,
                 color_formats: &[Some(config.view_formats[0])],
                 depth_stencil: None,
@@ -91,49 +91,49 @@ impl Example {
         encoder.set_pipeline(&pipeline);
         encoder.set_vertex_buffer(0, vertex_buffer.slice(..));
         encoder.draw(0..vertex_count, 0..1);
-        encoder.finish(&wgpu::RenderBundleDescriptor {
+        encoder.finish(&etalon::RenderBundleDescriptor {
             label: Some("main"),
         })
     }
 
     fn create_multisampled_framebuffer(
-        device: &wgpu::Device,
-        config: &wgpu::SurfaceConfiguration,
+        device: &etalon::Device,
+        config: &etalon::SurfaceConfiguration,
         sample_count: u32,
-    ) -> wgpu::TextureView {
-        let multisampled_texture_extent = wgpu::Extent3d {
+    ) -> etalon::TextureView {
+        let multisampled_texture_extent = etalon::Extent3d {
             width: config.width,
             height: config.height,
             depth_or_array_layers: 1,
         };
-        let multisampled_frame_descriptor = &wgpu::TextureDescriptor {
+        let multisampled_frame_descriptor = &etalon::TextureDescriptor {
             size: multisampled_texture_extent,
             mip_level_count: 1,
             sample_count,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format: config.view_formats[0],
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                | wgpu::TextureUsages::TRANSIENT_ATTACHMENT,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TRANSIENT_ATTACHMENT,
             label: None,
             view_formats: &[],
         };
 
         device
             .create_texture(multisampled_frame_descriptor)
-            .create_view(&wgpu::TextureViewDescriptor::default())
+            .create_view(&etalon::TextureViewDescriptor::default())
     }
 }
 
 impl crate::framework::Example for Example {
-    fn optional_features() -> wgpu::Features {
-        wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES
+    fn optional_features() -> etalon::Features {
+        etalon::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES
     }
 
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
         log::info!("Press left/right arrow keys to change sample_count.");
 
@@ -142,13 +142,13 @@ impl crate::framework::Example for Example {
             .flags;
 
         let max_sample_count = {
-            if sample_flags.contains(wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X16) {
+            if sample_flags.contains(etalon::TextureFormatFeatureFlags::MULTISAMPLE_X16) {
                 16
-            } else if sample_flags.contains(wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X8) {
+            } else if sample_flags.contains(etalon::TextureFormatFeatureFlags::MULTISAMPLE_X8) {
                 8
-            } else if sample_flags.contains(wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X4) {
+            } else if sample_flags.contains(etalon::TextureFormatFeatureFlags::MULTISAMPLE_X4) {
                 4
-            } else if sample_flags.contains(wgpu::TextureFormatFeatureFlags::MULTISAMPLE_X2) {
+            } else if sample_flags.contains(etalon::TextureFormatFeatureFlags::MULTISAMPLE_X2) {
                 2
             } else {
                 1
@@ -157,9 +157,9 @@ impl crate::framework::Example for Example {
 
         let sample_count = max_sample_count;
 
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[],
             immediate_size: 0,
@@ -184,10 +184,10 @@ impl crate::framework::Example for Example {
             });
         }
 
-        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let vertex_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("Vertex Buffer"),
             contents: bytemuck::cast_slice(&vertex_data),
-            usage: wgpu::BufferUsages::VERTEX,
+            usage: etalon::BufferUsages::VERTEX,
         });
         let vertex_count = vertex_data.len() as u32;
 
@@ -245,16 +245,16 @@ impl crate::framework::Example for Example {
 
     fn resize(
         &mut self,
-        config: &wgpu::SurfaceConfiguration,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         self.config = config.clone();
         self.multisampled_framebuffer =
             Example::create_multisampled_framebuffer(device, config, self.sample_count);
     }
 
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         if self.rebuild_bundle {
             self.bundle = Example::create_bundle(
                 device,
@@ -271,34 +271,34 @@ impl crate::framework::Example for Example {
         }
 
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {
             let rpass_color_attachment = if self.sample_count == 1 {
-                wgpu::RenderPassColorAttachment {
+                etalon::RenderPassColorAttachment {
                     view,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Store,
                     },
                 }
             } else {
-                wgpu::RenderPassColorAttachment {
+                etalon::RenderPassColorAttachment {
                     view: &self.multisampled_framebuffer,
                     depth_slice: None,
                     resolve_target: Some(view),
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
                         // Storing pre-resolve MSAA data is unnecessary if it isn't used later.
                         // On tile-based GPU, avoid store can reduce your app's memory footprint.
-                        store: wgpu::StoreOp::Discard,
+                        store: etalon::StoreOp::Discard,
                     },
                 }
             };
 
             encoder
-                .begin_render_pass(&wgpu::RenderPassDescriptor {
+                .begin_render_pass(&etalon::RenderPassDescriptor {
                     label: None,
                     color_attachments: &[Some(rpass_color_attachment)],
                     depth_stencil_attachment: None,
@@ -318,19 +318,19 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "msaa-line",
     image_path: "/examples/features/src/msaa_line/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
-    base_test_parameters: wgpu_test::TestParameters::default(),
+    optional_features: etalon::Features::TEXTURE_ADAPTER_SPECIFIC_FORMAT_FEATURES,
+    base_test_parameters: etalon_test::TestParameters::default(),
     // There's a lot of natural variance so we check the weighted median too to differentiate
     // real failures from variance.
     comparisons: &[
-        wgpu_test::ComparisonType::Mean(0.065),
-        wgpu_test::ComparisonType::Percentile {
+        etalon_test::ComparisonType::Mean(0.065),
+        etalon_test::ComparisonType::Percentile {
             percentile: 0.5,
             threshold: 0.29,
         },

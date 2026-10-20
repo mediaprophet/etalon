@@ -1,17 +1,17 @@
-This document is a guide for contributions to the wgpu project.
+This document is a guide for contributions to the etalon project.
 
 ## Welcome!
 
-First of all, welcome to the wgpu community! 👋 We're glad you want to
-contribute. If you are unfamiliar with the wgpu project, we recommend you read
+First of all, welcome to the etalon community! 👋 We're glad you want to
+contribute. If you are unfamiliar with the etalon project, we recommend you read
 [`GOVERNANCE.md`] for an overview of its goals, and how it's governed.
 
 ## Table of Contents
 
 - [Documentation Overview](#documentation-overview)
-- [Talking to other humans in the wgpu project](#talking-to-other-humans-in-the-wgpu-project)
+- [Talking to other humans in the etalon project](#talking-to-other-humans-in-the-etalon-project)
 - ["What can I work on?" as a new contributor](#what-can-i-work-on-as-a-new-contributor)
-- [Setting up a wgpu development environment](#setting-up-a-wgpu-development-environment)
+- [Setting up a etalon development environment](#setting-up-a-etalon-development-environment)
 - [What to expect when you file an issue](#what-to-expect-when-you-file-an-issue)
 - [Pull requests](#pull-requests)
   - [Change Ownership](#change-ownership)
@@ -22,11 +22,11 @@ contribute. If you are unfamiliar with the wgpu project, we recommend you read
 
 ## Documentation Overview:
 
-- [`GOVERNANCE.md`]: An overview of the wgpu project's goals and governance.
-- [`CODE_OF_CONDUCT.md`]: The code of conduct for the wgpu project.
-- [`docs/release-checklist.md`]: Checklist for creating a new release of wgpu.
-- [`docs/review-checklist.md`]: Checklist for reviewing a pull request in wgpu.
-- [`docs/testing.md`]: Information on the test suites in wgpu and naga.
+- [`GOVERNANCE.md`]: An overview of the etalon project's goals and governance.
+- [`CODE_OF_CONDUCT.md`]: The code of conduct for the etalon project.
+- [`docs/release-checklist.md`]: Checklist for creating a new release of etalon.
+- [`docs/review-checklist.md`]: Checklist for reviewing a pull request in etalon.
+- [`docs/testing.md`]: Information on the test suites in etalon and naga.
 
 [`GOVERNANCE.md`]: ./GOVERNANCE.md
 [`CODE_OF_CONDUCT.md`]: ./CODE_OF_CONDUCT.md
@@ -34,11 +34,11 @@ contribute. If you are unfamiliar with the wgpu project, we recommend you read
 [`docs/review-checklist.md`]: ./docs/review-checklist.md
 [`docs/testing.md`]: ./docs/testing.md
 
-## Talking to other humans in the wgpu project
+## Talking to other humans in the etalon project
 
-The wgpu project has multiple official platforms for community engagement:
+The etalon project has multiple official platforms for community engagement:
 
-- The Matrix channel [`wgpu:matrix.org`](https://matrix.to/#/#wgpu:matrix.org)
+- The Matrix channel [`etalon:matrix.org`](https://matrix.to/#/#etalon:matrix.org)
   is dedicated to informal chat about contributions the project. It is
   particularly useful for:
   - Saying hello, and introducing yourself.
@@ -51,7 +51,7 @@ The wgpu project has multiple official platforms for community engagement:
   tag people from whom you would like attention, esp. to follow-up after a day
   or so if you do not get a response to your contributions.
 
-- The [#wgpu channel on the Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ)
+- The [#etalon channel on the Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ)
   is dedicated to information chat about both contributing and using the project. Not
   all of the developers are on Discord, but this is monitored by the maintainers. Similar
   in place to the Matrix channels.
@@ -70,7 +70,7 @@ The wgpu project has multiple official platforms for community engagement:
 
 - [GitHub pull requests]: Modifications to the contents of this repository are
   done through pull requests.
-- `wgpu` Maintainership Meetings: Every week, the maintainership of the wgpu
+- `etalon` Maintainership Meetings: Every week, the maintainership of the etalon
   project meets to discuss the project's direction and review ongoing work.
   These meetings are open to the public, and you are welcome to attend. They
   happen on Google Meet and happen on Wednesday at 11:00 US Eastern Standard
@@ -82,9 +82,9 @@ The wgpu project has multiple official platforms for community engagement:
 - [GitHub discussions]: TODO: Experimentally used by some enthusiastic members
   of our community. Not supported officially.
 
-[GitHub discussions]: https://github.com/gfx-rs/wgpu/discussions
-[GitHub issues]: https://github.com/gfx-rs/wgpu/issues
-[GitHub pull requests]: https://github.com/gfx-rs/wgpu/pulls
+[GitHub discussions]: https://github.com/mediaprophet/etalon/discussions
+[GitHub issues]: https://github.com/mediaprophet/etalon/issues
+[GitHub pull requests]: https://github.com/mediaprophet/etalon/pulls
 [Meeting Notes]: https://docs.google.com/document/d/1Z3qjy3m7eAYaTsh2n-iKxLV4Hjc6wZxgukzdQOgVH1c/edit?usp=sharing
 [Meeting Link]: https://meet.google.com/ubo-ztcw-gwf
 [`CODE_OF_CONDUCT.md`]: ./CODE_OF_CONDUCT.md
@@ -94,24 +94,24 @@ The wgpu project has multiple official platforms for community engagement:
 TODO
 
 We discourage new contributors from submitting large changes or opinionated
-refactors unless they have been specifically validated by wgpu maintainership.
+refactors unless they have been specifically validated by etalon maintainership.
 These are likely to be rejected on basis of needing discussion before a formal
 review.
 
-### Setting up a wgpu development environment
+### Setting up a etalon development environment
 
-We use the following components in a wgpu development environment:
+We use the following components in a etalon development environment:
 
 - [A Rust toolchain][install-rust] matching the version specified in
-  [`rust-toolchain.toml`](./rust-toolchain.toml), to compile wgpu's code. If you
+  [`rust-toolchain.toml`](./rust-toolchain.toml), to compile etalon's code. If you
   use `rustup`, this will be automatically installed when you first run a
   `cargo` command in the repository.
 - [Tombi](https://tombi-toml.github.io/tombi/) to keep TOML files formatted.
 - [Vulkan SDK](https://vulkan.lunarg.com/) to provide Vulkan validation layers
   and other Vulkan/SPIR-V tools for testing.
 
-Once these are done, you should be ready to hack on wgpu! Drop into your
-favorite editor, make some changes to the repository's code, and test that wgpu
+Once these are done, you should be ready to hack on etalon! Drop into your
+favorite editor, make some changes to the repository's code, and test that etalon
 has been changed the way you expect. Take a look at [`docs/testing.md`] for more
 info on testing.
 
@@ -121,8 +121,8 @@ and a [`git` dependency][git-deps] pointing to your own fork to share changes
 with other contributors.
 
 Once you are ready to request a review of your changes so they become part of
-wgpu public history, create a pull request with your changes committed to a
-branch in your own fork of wgpu in GitHub. See documentation for that
+etalon public history, create a pull request with your changes committed to a
+branch in your own fork of etalon in GitHub. See documentation for that
 [here](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork).
 
 [install-rust]: https://www.rust-lang.org/tools/install
@@ -192,9 +192,9 @@ the maintainership. This could include, but is not limited to, [massive PRs](#la
 
 #### Designing new features
 
-As an open source project, wgpu wants to serve a broad audience. This
+As an open source project, etalon wants to serve a broad audience. This
 helps us cast a wide net for contributors, and widens the impact of
-their work. However, wgpu does not promise to incorporate every
+their work. However, etalon does not promise to incorporate every
 proposed feature.
 
 Large efforts that are ultimately rejected tend to burn contributors
@@ -211,11 +211,11 @@ Contributors should anticipate that the larger and more complex a pull
 request is, the less likely it is that reviewers will accept it,
 regardless of its merits.
 
-The wgpu project has had poor experiences with large, complex pull
+The etalon project has had poor experiences with large, complex pull
 requests:
 
 - Complex pull requests are difficult to review effectively. It is
-  common for us to debug a problem in wgpu and find that it was
+  common for us to debug a problem in etalon and find that it was
   introduced by some massive pull request that we had reviewed and
   accepted, showing that we obviously hadn't understood it as well as
   we'd thought.
@@ -225,7 +225,7 @@ requests:
   stressful to question its design decisions, knowing that changing
   them will require the author to essentially reimplement the project
   from scratch. Such pull requests make it hard for maintainers to
-  uphold their responsibility to keep wgpu maintainable. Incremental
+  uphold their responsibility to keep etalon maintainable. Incremental
   changes are easier to discuss and revise without drama.
 
 These problems are serious enough that maintainers may choose to

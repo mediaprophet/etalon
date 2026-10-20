@@ -3,7 +3,7 @@
 const ic0: vec2f = vec2(1, 1) + vec2(1.0, 1.0);
 
 // Conversion by value constructors
-//let vc0 = i32(1.0);  // https://github.com/gfx-rs/wgpu/issues/7312
+//let vc0 = i32(1.0);  // https://github.com/mediaprophet/etalon/issues/7312
 // etc. (also create the locals versions below)
 
 @compute @workgroup_size(1)

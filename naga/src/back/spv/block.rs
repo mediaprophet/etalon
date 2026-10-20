@@ -384,7 +384,7 @@ impl BlockContext<'_> {
         // the high u32 when the low u32 overflows. ie
         // counter -= vec2(select(0u, 1u, counter.y == 0), 1u);
         // Count down from u32::MAX rather than up from 0 to avoid hang on
-        // certain Intel drivers. See <https://github.com/gfx-rs/wgpu/issues/7319>.
+        // certain Intel drivers. See <https://github.com/mediaprophet/etalon/issues/7319>.
         let low_id = self.gen_id();
         block.body.push(Instruction::composite_extract(
             uint_type_id,
@@ -1786,7 +1786,7 @@ impl BlockContext<'_> {
                         };
 
                         if width != 4 {
-                            unreachable!("This is validated out until a polyfill is implemented. https://github.com/gfx-rs/wgpu/issues/5276");
+                            unreachable!("This is validated out until a polyfill is implemented. https://github.com/mediaprophet/etalon/issues/5276");
                         };
 
                         let msb_id = self.gen_id();
@@ -1945,7 +1945,7 @@ impl BlockContext<'_> {
                             };
                             MathOp::Ext(thing)
                         } else {
-                            unreachable!("This is validated out until a polyfill is implemented. https://github.com/gfx-rs/wgpu/issues/5276");
+                            unreachable!("This is validated out until a polyfill is implemented. https://github.com/mediaprophet/etalon/issues/5276");
                         }
                     }
                     Mf::Pack4x8unorm => MathOp::Ext(spirv::GlslStd450Op::PackUnorm4x8),

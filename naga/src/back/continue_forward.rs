@@ -5,7 +5,7 @@
 //!
 //! ## Avoiding `continue` within `switch`
 //!
-//! As described in <https://github.com/gfx-rs/wgpu/issues/4485>, the FXC HLSL
+//! As described in <https://github.com/mediaprophet/etalon/issues/4485>, the FXC HLSL
 //! compiler doesn't allow `continue` statements within `switch` statements, but
 //! Naga IR does. We work around this by introducing synthetic boolean local
 //! variables and branches.
@@ -45,7 +45,7 @@
 //!
 //! # Avoiding single body `switch` statements
 //!
-//! As described in <https://github.com/gfx-rs/wgpu/issues/4514>, some language
+//! As described in <https://github.com/mediaprophet/etalon/issues/4514>, some language
 //! front ends miscompile `switch` statements where all cases branch to the same
 //! body. Our HLSL and GLSL backends render [`Switch`] statements with a single
 //! [`SwitchCase`] as `do {} while(false);` loops.

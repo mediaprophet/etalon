@@ -12,7 +12,7 @@ Pixels only drawn with conservative rasterization enabled are depicted red.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples conservative_raster
+cargo run --bin etalon-examples conservative_raster
 ```
 
 ## Screenshots

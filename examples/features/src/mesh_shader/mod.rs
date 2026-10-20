@@ -1,40 +1,40 @@
 pub struct Example {
-    pipeline: wgpu::RenderPipeline,
+    pipeline: etalon::RenderPipeline,
 }
 impl crate::framework::Example for Example {
     fn init(
-        config: &wgpu::SurfaceConfiguration,
-        _adapter: &wgpu::Adapter,
-        device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        config: &etalon::SurfaceConfiguration,
+        _adapter: &etalon::Adapter,
+        device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) -> Self {
-        let shader = device.create_shader_module(wgpu::include_wgsl!("shader.wgsl"));
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[],
             immediate_size: 0,
         });
-        let pipeline = device.create_mesh_pipeline(&wgpu::MeshPipelineDescriptor {
+        let pipeline = device.create_mesh_pipeline(&etalon::MeshPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            task: Some(wgpu::TaskState {
+            task: Some(etalon::TaskState {
                 module: &shader,
                 entry_point: Some("ts_main"),
                 compilation_options: Default::default(),
             }),
-            mesh: wgpu::MeshState {
+            mesh: etalon::MeshState {
                 module: &shader,
                 entry_point: Some("ms_main"),
                 compilation_options: Default::default(),
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("fs_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(config.view_formats[0].into())],
             }),
-            primitive: wgpu::PrimitiveState {
-                cull_mode: Some(wgpu::Face::Back),
+            primitive: etalon::PrimitiveState {
+                cull_mode: Some(etalon::Face::Back),
                 ..Default::default()
             },
             depth_stencil: None,
@@ -44,23 +44,23 @@ impl crate::framework::Example for Example {
         });
         Self { pipeline }
     }
-    fn render(&mut self, view: &wgpu::TextureView, device: &wgpu::Device, queue: &wgpu::Queue) {
+    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
         let mut encoder =
-            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {
-            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: None,
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color {
                             r: 0.1,
                             g: 0.2,
                             b: 0.3,
                             a: 1.0,
                         }),
-                        store: wgpu::StoreOp::Store,
+                        store: etalon::StoreOp::Store,
                     },
                     depth_slice: None,
                 })],
@@ -77,20 +77,20 @@ impl crate::framework::Example for Example {
         }
         queue.submit(Some(encoder.finish()));
     }
-    fn required_downlevel_capabilities() -> wgpu::DownlevelCapabilities {
+    fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
         Default::default()
     }
-    fn required_features() -> wgpu::Features {
-        wgpu::Features::EXPERIMENTAL_MESH_SHADER | wgpu::Features::PASSTHROUGH_SHADERS
+    fn required_features() -> etalon::Features {
+        etalon::Features::EXPERIMENTAL_MESH_SHADER | etalon::Features::PASSTHROUGH_SHADERS
     }
-    fn required_limits() -> wgpu::Limits {
-        wgpu::Limits::defaults().using_recommended_minimum_mesh_shader_values()
+    fn required_limits() -> etalon::Limits {
+        etalon::Limits::defaults().using_recommended_minimum_mesh_shader_values()
     }
     fn resize(
         &mut self,
-        _config: &wgpu::SurfaceConfiguration,
-        _device: &wgpu::Device,
-        _queue: &wgpu::Queue,
+        _config: &etalon::SurfaceConfiguration,
+        _device: &etalon::Device,
+        _queue: &etalon::Queue,
     ) {
         // empty
     }
@@ -104,26 +104,26 @@ pub fn main() {
 }
 
 #[cfg(test)]
-#[wgpu_test::apply(wgpu_test::gpu_test!)]
+#[etalon_test::apply(etalon_test::gpu_test!)]
 pub static TEST: crate::framework::ExampleTestParams = crate::framework::ExampleTestParams {
     name: "mesh_shader",
     image_path: "/examples/features/src/mesh_shader/screenshot.png",
     width: 1024,
     height: 768,
-    optional_features: wgpu::Features::default(),
-    base_test_parameters: wgpu_test::TestParameters::default()
-        .features(wgpu::Features::EXPERIMENTAL_MESH_SHADER | wgpu::Features::PASSTHROUGH_SHADERS)
-        .instance_flags(wgpu::InstanceFlags::advanced_debugging())
-        .limits(wgpu::Limits::defaults().using_recommended_minimum_mesh_shader_values())
-        .skip(wgpu_test::FailureCase {
+    optional_features: etalon::Features::default(),
+    base_test_parameters: etalon_test::TestParameters::default()
+        .features(etalon::Features::EXPERIMENTAL_MESH_SHADER | etalon::Features::PASSTHROUGH_SHADERS)
+        .instance_flags(etalon::InstanceFlags::advanced_debugging())
+        .limits(etalon::Limits::defaults().using_recommended_minimum_mesh_shader_values())
+        .skip(etalon_test::FailureCase {
             backends: None,
             // Skip Mesa because LLVMPIPE has what is believed to be a driver bug
             vendor: Some(0x10005),
             adapter: None,
             driver: None,
             reasons: vec![],
-            behavior: wgpu_test::FailureBehavior::Ignore,
+            behavior: etalon_test::FailureBehavior::Ignore,
         }),
-    comparisons: &[wgpu_test::ComparisonType::Mean(0.005)],
+    comparisons: &[etalon_test::ComparisonType::Mean(0.005)],
     _phantom: std::marker::PhantomData::<Example>,
 };

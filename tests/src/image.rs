@@ -2,8 +2,8 @@
 
 use std::{borrow::Cow, ffi::OsStr, path::Path};
 
-use wgpu::util::{align_to, DeviceExt};
-use wgpu::*;
+use etalon::util::{align_to, DeviceExt};
+use etalon::*;
 
 use crate::TestingContext;
 
@@ -157,7 +157,7 @@ impl ComparisonType {
 #[cfg(not(any(target_arch = "wasm32", miri)))]
 pub async fn compare_image_output(
     path: impl AsRef<Path> + AsRef<OsStr>,
-    adapter_info: &wgpu::AdapterInfo,
+    adapter_info: &etalon::AdapterInfo,
     width: u32,
     height: u32,
     test_with_alpha: &[u8],
@@ -259,7 +259,7 @@ pub async fn compare_image_output(
 #[cfg(any(target_arch = "wasm32", miri))]
 pub async fn compare_image_output(
     path: impl AsRef<Path> + AsRef<OsStr>,
-    adapter_info: &wgpu::AdapterInfo,
+    adapter_info: &etalon::AdapterInfo,
     width: u32,
     height: u32,
     test_with_alpha: &[u8],

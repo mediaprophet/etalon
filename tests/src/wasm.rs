@@ -9,7 +9,7 @@ use crate::{
 
 use exhaust::Exhaust;
 use wasm_bindgen::prelude::wasm_bindgen;
-use wgpu::{Backends, TextureFormat};
+use etalon::{Backends, TextureFormat};
 
 #[wasm_bindgen(inline_js = "
   export function test_success() {
@@ -46,22 +46,22 @@ pub async fn run_gpu_report() {
 
     init_logger();
 
-    let instance = wgpu::Instance::new(wgpu::InstanceDescriptor {
-        flags: wgpu::InstanceFlags::debugging(),
+    let instance = etalon::Instance::new(etalon::InstanceDescriptor {
+        flags: etalon::InstanceFlags::debugging(),
         backends: Backends::from_comma_list("gles"),
-        ..wgpu::InstanceDescriptor::new_with_display_handle(Box::new(WebDisplayHandle))
+        ..etalon::InstanceDescriptor::new_with_display_handle(Box::new(WebDisplayHandle))
     });
 
     let canvas = initialize_html_canvas();
 
     let surface = Some(
         instance
-            .create_surface(wgpu::SurfaceTarget::Canvas(canvas.clone()))
+            .create_surface(etalon::SurfaceTarget::Canvas(canvas.clone()))
             .expect("could not create surface from canvas"),
     );
 
     let adapter = instance
-        .request_adapter(&wgpu::RequestAdapterOptions {
+        .request_adapter(&etalon::RequestAdapterOptions {
             compatible_surface: surface.as_ref(),
             ..Default::default()
         })

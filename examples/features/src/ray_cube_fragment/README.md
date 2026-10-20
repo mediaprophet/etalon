@@ -5,7 +5,7 @@ This example renders a ray traced cube with hardware acceleration.
 ## To Run
 
 ```
-cargo run --bin wgpu-examples ray_cube_fragment
+cargo run --bin etalon-examples ray_cube_fragment
 ```
 
 ## Screenshots

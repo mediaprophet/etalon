@@ -1,4 +1,4 @@
-//! Regression test for https://github.com/gfx-rs/wgpu/issues/8082: a shader-module label
+//! Regression test for https://github.com/mediaprophet/etalon/issues/8082: a shader-module label
 //! (or source) that contains embedded NUL characters caused Naga's SPIR-V backend to emit
 //! invalid SPIR-V. SPIR-V literal strings are NUL-terminated, but Naga's string encoder
 //! packed the raw UTF-8 bytes without any interior-NUL handling, so the emitted instruction

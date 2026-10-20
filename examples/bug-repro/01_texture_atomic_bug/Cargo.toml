@@ -1,5 +1,5 @@
 [package]
-name = "wgpu-bug-repro-01-texture-atomic-bug"
+name = "etalon-bug-repro-01-texture-atomic-bug"
 edition = "2021"
 rust-version = "1.87"
 publish = false
@@ -10,5 +10,5 @@ workspace = true
 [dependencies]
 env_logger.workspace = true
 pollster.workspace = true
-wgpu.workspace = true
+etalon.workspace = true
 winit.workspace = true

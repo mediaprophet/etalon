@@ -3,7 +3,7 @@
 ## To Run
 
 ```
-cargo run --bin wgpu-examples texture_arrays
+cargo run --bin etalon-examples texture_arrays
 ```
 
 ## Example Output

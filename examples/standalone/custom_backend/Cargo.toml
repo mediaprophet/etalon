@@ -1,5 +1,5 @@
 [package]
-name = "wgpu-example-custom-backend"
+name = "etalon-example-custom-backend"
 edition = "2024"
 rust-version = "1.87"
 publish = false
@@ -8,10 +8,10 @@ publish = false
 
 [features]
 default = ["web"]
-web = ["wgpu/web"]
+web = ["etalon/web"]
 
 [dependencies]
-wgpu = { version = "30.0.0", features = [
+etalon = { version = "0.0.1", features = [
     "custom",
     "wgsl",
 ], default-features = false }

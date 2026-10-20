@@ -140,7 +140,7 @@ impl Display for ClampedLod {
 /// Wrapper for generating `struct _mslBufferSizes` member names for
 /// runtime-sized array lengths.
 ///
-/// On Metal, `wgpu_hal` passes the element counts for all runtime-sized arrays
+/// On Metal, `etalon_hal` passes the element counts for all runtime-sized arrays
 /// as an argument to the entry point. This argument's type in the MSL is
 /// `struct _mslBufferSizes`, a Naga-synthesized struct with a `uint` member for
 /// each global variable containing a runtime-sized array.
@@ -1082,7 +1082,7 @@ impl<W: Write> Writer<W> {
 
         let loop_bound_name = self.namer.call("loop_bound");
         // Count down from u32::MAX rather than up from 0 to avoid hang on
-        // certain Intel drivers. See <https://github.com/gfx-rs/wgpu/issues/7319>.
+        // certain Intel drivers. See <https://github.com/mediaprophet/etalon/issues/7319>.
         let decl = format!("{level}uint2 {loop_bound_name} = uint2({}u);", u32::MAX);
         let level = level.next();
         let break_and_inc = format!(
@@ -2651,7 +2651,7 @@ impl<W: Write> Writer<W> {
                         } else {
                             // Fall back to a polyfill since MSL < 2.1 doesn't seem to support
                             // bitcasting from uint to `packed_char4` or `packed_uchar4`.
-                            // See <https://github.com/gfx-rs/wgpu/pull/7574#issuecomment-2835464472>.
+                            // See <https://github.com/mediaprophet/etalon/pull/7574#issuecomment-2835464472>.
                             let conversion = match fun {
                                 Mf::Dot4I8Packed => "int",
                                 Mf::Dot4U8Packed => "",
@@ -7707,7 +7707,7 @@ template <typename A>
                                         ..
                                     } => {
                                         // Array of textures since:
-                                        // - iOS: Metal 1.2 (check depends on https://github.com/gfx-rs/naga/issues/2164)
+                                        // - iOS: Metal 1.2 (check depends on https://github.com/mediaprophet/naga/issues/2164)
                                         // - macOS: Metal 2
 
                                         if options.lang_version < (2, 0) {
@@ -7721,7 +7721,7 @@ template <typename A>
                                         ..
                                     } => {
                                         // Array of write-only textures since:
-                                        // - iOS: Metal 2.2 (check depends on https://github.com/gfx-rs/naga/issues/2164)
+                                        // - iOS: Metal 2.2 (check depends on https://github.com/mediaprophet/naga/issues/2164)
                                         // - macOS: Metal 2
 
                                         if options.lang_version < (2, 0) {

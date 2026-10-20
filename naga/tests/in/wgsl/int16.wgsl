@@ -1,4 +1,4 @@
-enable wgpu_int16;
+enable etalon_int16;
 enable f16;
 
 var<private> private_variable: i16 = i16(1);
