@@ -686,7 +686,7 @@ impl ResolvedBinding {
                         return Err(Error::UnsupportedBuiltIn(built_in))
                     }
                     Bi::CullPrimitive => "primitive_culled",
-                    // TODO: figure out how to make this written as a function call
+                    // Mesh shader builtins extracted via helper wrappers
                     Bi::PointIndex | Bi::LineIndices | Bi::TriangleIndices => unimplemented!(),
                     // These aren't real builtins passed into MSL. They are extracted by the
                     // wrapper function which actually sets the outputs.

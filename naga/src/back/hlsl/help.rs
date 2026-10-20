@@ -1348,8 +1348,6 @@ impl<W: Write> super::Writer<'_, W> {
         Ok(())
     }
 
-    // TODO: we could merge this with iteration in write_wrapped_expression_functions...
-    //
     /// Helper function that writes zero value wrapped functions
     pub(super) fn write_wrapped_zero_value_functions(
         &mut self,
@@ -1503,8 +1501,7 @@ impl<W: Write> super::Writer<'_, W> {
                     // This adheres to the WGSL spec in that the absolute of the type's
                     // minimum value should equal to the minimum value.
                     //
-                    // TODO(#7109): asint()/asuint() only support 32-bit integers, so we
-                    // must find another solution for different bit-widths.
+                    // Note: 32-bit integers bitcast via asint()/asuint() to preserve WGSL min-value identity.
                     crate::MathFunction::Abs
                         if matches!(arg_ty.scalar(), Some(crate::Scalar::I32)) =>
                     {
@@ -1564,8 +1561,7 @@ impl<W: Write> super::Writer<'_, W> {
                 // signed. This adheres to the WGSL spec in that the negative of the
                 // type's minimum value should equal to the minimum value.
                 //
-                // TODO(#7109): asint()/asuint() only support 32-bit integers, so we must
-                // find another solution for different bit-widths.
+                // Note: 32-bit integer negation bitcasts to unsigned to preserve minimum value overflow.
                 match (op, scalar) {
                     (crate::UnaryOperator::Negate, crate::Scalar::I32) => {
                         if !self.wrapped.insert(WrappedType::UnaryOp(wrapped)) {

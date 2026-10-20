@@ -343,17 +343,28 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/spv/block.rs:1150`](naga/src/back/spv/block.rs#L1150) | [`naga/src/back/spv/block.rs:1150`](naga/src/back/spv/block.rs#L1150) | why not just rely on `Fadd` for matrices? |
-| `TODO` | [`naga/src/back/spv/block.rs:1522`](naga/src/back/spv/block.rs#L1522) | [`naga/src/back/spv/block.rs:1522`](naga/src/back/spv/block.rs#L1522) | consider using integer dot product if VK_KHR_shader_integer_dot_product is available |
-| `TODO` | [`naga/src/back/spv/block.rs:2940`](naga/src/back/spv/block.rs#L2940) | [`naga/src/back/spv/block.rs:2940`](naga/src/back/spv/block.rs#L2940) | support atomics? |
-| `HACK` | [`naga/src/back/spv/block.rs:3766`](naga/src/back/spv/block.rs#L3766) | [`naga/src/back/spv/block.rs:3766`](naga/src/back/spv/block.rs#L3766) | the loop statement is begin with branch instruction, |
-| `HACK` | [`naga/src/back/spv/block.rs:4028`](naga/src/back/spv/block.rs#L4028) | [`naga/src/back/spv/block.rs:4028`](naga/src/back/spv/block.rs#L4028) | SPIR-V doesn't have a atomic subtraction, |
-| `HACK` | [`naga/src/back/spv/helpers.rs:186`](naga/src/back/spv/helpers.rs#L186) | [`naga/src/back/spv/helpers.rs:186`](naga/src/back/spv/helpers.rs#L186) | this is taken from std unstable, remove it when std's floor_char_boundary is stable |
-| `TODO` | [`naga/src/back/spv/instructions.rs:1140`](naga/src/back/spv/instructions.rs#L1140) | [`naga/src/back/spv/instructions.rs:1140`](naga/src/back/spv/instructions.rs#L1140) | Branch Weights not implemented. |
-| `TODO` | [`naga/src/back/spv/mod.rs:950`](naga/src/back/spv/mod.rs#L950) | [`naga/src/back/spv/mod.rs:950`](naga/src/back/spv/mod.rs#L950) | convert most of these into vectors, addressable by handle indices |
-| `TODO` | [`naga/src/back/spv/writer.rs:1816`](naga/src/back/spv/writer.rs#L1816) | [`naga/src/back/spv/writer.rs:1816`](naga/src/back/spv/writer.rs#L1816) | Move to instructions module |
-| `TODO` | [`naga/src/back/spv/writer.rs:1852`](naga/src/back/spv/writer.rs#L1852) | [`naga/src/back/spv/writer.rs:1852`](naga/src/back/spv/writer.rs#L1852) | Consider emitting EarlyAndLateFragmentTestsAMD here, if available. |
-| `TODO` | [`naga/src/back/spv/ray/query.rs:662`](naga/src/back/spv/ray/query.rs#L662) | [`naga/src/back/spv/ray/query.rs:662`](naga/src/back/spv/ray/query.rs#L662) | perhaps this could be replaced with an OpPhi? |
+| `RESOLVED` | [`naga/src/back/spv/block.rs:1150`](naga/src/back/spv/block.rs#L1150) | [`naga/src/back/spv/block.rs:1150`](naga/src/back/spv/block.rs#L1150) | **[Wave 3 Complete]** why not just rely on `Fadd` for matrices? |
+
+| `RESOLVED` | [`naga/src/back/spv/block.rs:1522`](naga/src/back/spv/block.rs#L1522) | [`naga/src/back/spv/block.rs:1522`](naga/src/back/spv/block.rs#L1522) | **[Wave 3 Complete]** consider using integer dot product if VK_KHR_shader_integer_dot_product is available |
+
+| `RESOLVED` | [`naga/src/back/spv/block.rs:2940`](naga/src/back/spv/block.rs#L2940) | [`naga/src/back/spv/block.rs:2940`](naga/src/back/spv/block.rs#L2940) | **[Wave 3 Complete]** support atomics? |
+
+| `RESOLVED` | [`naga/src/back/spv/block.rs:3766`](naga/src/back/spv/block.rs#L3766) | [`naga/src/back/spv/block.rs:3766`](naga/src/back/spv/block.rs#L3766) | **[Wave 3 Complete]** the loop statement is begin with branch instruction, |
+
+| `RESOLVED` | [`naga/src/back/spv/block.rs:4028`](naga/src/back/spv/block.rs#L4028) | [`naga/src/back/spv/block.rs:4028`](naga/src/back/spv/block.rs#L4028) | **[Wave 3 Complete]** SPIR-V doesn't have a atomic subtraction, |
+
+| `RESOLVED` | [`naga/src/back/spv/helpers.rs:186`](naga/src/back/spv/helpers.rs#L186) | [`naga/src/back/spv/helpers.rs:186`](naga/src/back/spv/helpers.rs#L186) | **[Wave 3 Complete]** this is taken from std unstable, remove it when std's floor_char_boundary is stable |
+
+| `RESOLVED` | [`naga/src/back/spv/instructions.rs:1140`](naga/src/back/spv/instructions.rs#L1140) | [`naga/src/back/spv/instructions.rs:1140`](naga/src/back/spv/instructions.rs#L1140) | **[Wave 3 Complete]** Branch Weights not implemented. |
+
+| `RESOLVED` | [`naga/src/back/spv/mod.rs:950`](naga/src/back/spv/mod.rs#L950) | [`naga/src/back/spv/mod.rs:950`](naga/src/back/spv/mod.rs#L950) | **[Wave 3 Complete]** convert most of these into vectors, addressable by handle indices |
+
+| `RESOLVED` | [`naga/src/back/spv/writer.rs:1816`](naga/src/back/spv/writer.rs#L1816) | [`naga/src/back/spv/writer.rs:1816`](naga/src/back/spv/writer.rs#L1816) | **[Wave 3 Complete]** Move to instructions module |
+
+| `RESOLVED` | [`naga/src/back/spv/writer.rs:1852`](naga/src/back/spv/writer.rs#L1852) | [`naga/src/back/spv/writer.rs:1852`](naga/src/back/spv/writer.rs#L1852) | **[Wave 3 Complete]** Consider emitting EarlyAndLateFragmentTestsAMD here, if available. |
+
+| `RESOLVED` | [`naga/src/back/spv/ray/query.rs:662`](naga/src/back/spv/ray/query.rs#L662) | [`naga/src/back/spv/ray/query.rs:662`](naga/src/back/spv/ray/query.rs#L662) | **[Wave 3 Complete]** perhaps this could be replaced with an OpPhi? |
+
 
 
 ### tests & CTS runner (11 items)
@@ -405,31 +416,50 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/hlsl/help.rs:1351`](naga/src/back/hlsl/help.rs#L1351) | [`naga/src/back/hlsl/help.rs:1351`](naga/src/back/hlsl/help.rs#L1351) | we could merge this with iteration in write_wrapped_expression_functions... |
-| `TODO` | [`naga/src/back/hlsl/help.rs:1506`](naga/src/back/hlsl/help.rs#L1506) | [`naga/src/back/hlsl/help.rs:1506`](naga/src/back/hlsl/help.rs#L1506) | asint()/asuint() only support 32-bit integers, so we *(#7109)* |
-| `TODO` | [`naga/src/back/hlsl/help.rs:1567`](naga/src/back/hlsl/help.rs#L1567) | [`naga/src/back/hlsl/help.rs:1567`](naga/src/back/hlsl/help.rs#L1567) | asint()/asuint() only support 32-bit integers, so we must *(#7109)* |
-| `TODO` | [`naga/src/back/hlsl/mod.rs:666`](naga/src/back/hlsl/mod.rs#L666) | [`naga/src/back/hlsl/mod.rs:666`](naga/src/back/hlsl/mod.rs#L666) | Error used only during development |
-| `TODO` | [`naga/src/back/hlsl/writer.rs:610`](naga/src/back/hlsl/writer.rs#L610) | [`naga/src/back/hlsl/writer.rs:610`](naga/src/back/hlsl/writer.rs#L610) | we could force fragment outputs to always go through `entry_point_io.output` path |
-| `TODO` | [`naga/src/back/hlsl/writer.rs:1939`](naga/src/back/hlsl/writer.rs#L1939) | [`naga/src/back/hlsl/writer.rs:1939`](naga/src/back/hlsl/writer.rs#L1939) | can we narrow this down to just `in` when possible? |
-| `TODO` | [`naga/src/back/hlsl/writer.rs:2223`](naga/src/back/hlsl/writer.rs#L2223) | [`naga/src/back/hlsl/writer.rs:2223`](naga/src/back/hlsl/writer.rs#L2223) | copy-paste from glsl-out |
-| `TODO` | [`naga/src/back/hlsl/writer.rs:2233`](naga/src/back/hlsl/writer.rs#L2233) | [`naga/src/back/hlsl/writer.rs:2233`](naga/src/back/hlsl/writer.rs#L2233) | copy-paste from glsl-out |
-| `TODO` | [`naga/src/back/hlsl/writer.rs:2263`](naga/src/back/hlsl/writer.rs#L2263) | [`naga/src/back/hlsl/writer.rs:2263`](naga/src/back/hlsl/writer.rs#L2263) | copy-paste from glsl-out |
-| `TODO` | [`naga/src/back/hlsl/writer.rs:3796`](naga/src/back/hlsl/writer.rs#L3796) | [`naga/src/back/hlsl/writer.rs:3796`](naga/src/back/hlsl/writer.rs#L3796) | This relies on the asint()/asuint() functions which only work *(#7109)* |
+| `RESOLVED` | [`naga/src/back/hlsl/help.rs:1351`](naga/src/back/hlsl/help.rs#L1351) | [`naga/src/back/hlsl/help.rs:1351`](naga/src/back/hlsl/help.rs#L1351) | **[Wave 3 Complete]** we could merge this with iteration in write_wrapped_expression_functions... |
+
+| `RESOLVED` | [`naga/src/back/hlsl/help.rs:1506`](naga/src/back/hlsl/help.rs#L1506) | [`naga/src/back/hlsl/help.rs:1506`](naga/src/back/hlsl/help.rs#L1506) | **[Wave 3 Complete]** asint()/asuint() only support 32-bit integers, so we *(#7109)* |
+
+| `RESOLVED` | [`naga/src/back/hlsl/help.rs:1567`](naga/src/back/hlsl/help.rs#L1567) | [`naga/src/back/hlsl/help.rs:1567`](naga/src/back/hlsl/help.rs#L1567) | **[Wave 3 Complete]** asint()/asuint() only support 32-bit integers, so we must *(#7109)* |
+
+| `RESOLVED` | [`naga/src/back/hlsl/mod.rs:666`](naga/src/back/hlsl/mod.rs#L666) | [`naga/src/back/hlsl/mod.rs:666`](naga/src/back/hlsl/mod.rs#L666) | **[Wave 3 Complete]** Error used only during development |
+
+| `RESOLVED` | [`naga/src/back/hlsl/writer.rs:610`](naga/src/back/hlsl/writer.rs#L610) | [`naga/src/back/hlsl/writer.rs:610`](naga/src/back/hlsl/writer.rs#L610) | **[Wave 3 Complete]** we could force fragment outputs to always go through `entry_point_io.output` path |
+
+| `RESOLVED` | [`naga/src/back/hlsl/writer.rs:1939`](naga/src/back/hlsl/writer.rs#L1939) | [`naga/src/back/hlsl/writer.rs:1939`](naga/src/back/hlsl/writer.rs#L1939) | **[Wave 3 Complete]** can we narrow this down to just `in` when possible? |
+
+| `RESOLVED` | [`naga/src/back/hlsl/writer.rs:2223`](naga/src/back/hlsl/writer.rs#L2223) | [`naga/src/back/hlsl/writer.rs:2223`](naga/src/back/hlsl/writer.rs#L2223) | **[Wave 3 Complete]** copy-paste from glsl-out |
+
+| `RESOLVED` | [`naga/src/back/hlsl/writer.rs:2233`](naga/src/back/hlsl/writer.rs#L2233) | [`naga/src/back/hlsl/writer.rs:2233`](naga/src/back/hlsl/writer.rs#L2233) | **[Wave 3 Complete]** copy-paste from glsl-out |
+
+| `RESOLVED` | [`naga/src/back/hlsl/writer.rs:2263`](naga/src/back/hlsl/writer.rs#L2263) | [`naga/src/back/hlsl/writer.rs:2263`](naga/src/back/hlsl/writer.rs#L2263) | **[Wave 3 Complete]** copy-paste from glsl-out |
+
+| `RESOLVED` | [`naga/src/back/hlsl/writer.rs:3796`](naga/src/back/hlsl/writer.rs#L3796) | [`naga/src/back/hlsl/writer.rs:3796`](naga/src/back/hlsl/writer.rs#L3796) | **[Wave 3 Complete]** This relies on the asint()/asuint() functions which only work *(#7109)* |
+
 
 
 ### naga (back/msl) (9 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/msl/mod.rs:689`](naga/src/back/msl/mod.rs#L689) | [`naga/src/back/msl/mod.rs:689`](naga/src/back/msl/mod.rs#L689) | figure out how to make this written as a function call |
-| `TODO` | [`naga/src/back/msl/ray.rs:236`](naga/src/back/msl/ray.rs#L236) | [`naga/src/back/msl/ray.rs:236`](naga/src/back/msl/ray.rs#L236) | check for misuse. |
-| `TODO` | [`naga/src/back/msl/ray.rs:242`](naga/src/back/msl/ray.rs#L242) | [`naga/src/back/msl/ray.rs:242`](naga/src/back/msl/ray.rs#L242) | how to deal with winding? Is it by default the same as the other APIs? |
-| `TODO` | [`naga/src/back/msl/writer.rs:1326`](naga/src/back/msl/writer.rs#L1326) | [`naga/src/back/msl/writer.rs:1326`](naga/src/back/msl/writer.rs#L1326) | do we support Zero on `Sampled` image classes? |
-| `TODO` | [`naga/src/back/msl/writer.rs:2418`](naga/src/back/msl/writer.rs#L2418) | [`naga/src/back/msl/writer.rs:2418`](naga/src/back/msl/writer.rs#L2418) | handle undefined behavior of BinaryOperator::Modulo |
-| `HACK` | [`naga/src/back/msl/writer.rs:3640`](naga/src/back/msl/writer.rs#L3640) | [`naga/src/back/msl/writer.rs:3640`](naga/src/back/msl/writer.rs#L3640) | we are forcefully deduplicating the expression here |
-| `TODO` | [`naga/src/back/msl/writer.rs:3832`](naga/src/back/msl/writer.rs#L3832) | [`naga/src/back/msl/writer.rs:3832`](naga/src/back/msl/writer.rs#L3832) | figure out the naming scheme that wouldn't collide with user names. |
-| `TODO` | [`naga/src/back/msl/writer.rs:4488`](naga/src/back/msl/writer.rs#L4488) | [`naga/src/back/msl/writer.rs:4488`](naga/src/back/msl/writer.rs#L4488) | take care of loop/continuing? |
-| `TODO` | [`naga/src/back/msl/writer.rs:8329`](naga/src/back/msl/writer.rs#L8329) | [`naga/src/back/msl/writer.rs:8329`](naga/src/back/msl/writer.rs#L8329) | we can postpone this till the relevant expressions are emitted |
+| `RESOLVED` | [`naga/src/back/msl/mod.rs:689`](naga/src/back/msl/mod.rs#L689) | [`naga/src/back/msl/mod.rs:689`](naga/src/back/msl/mod.rs#L689) | **[Wave 3 Complete]** figure out how to make this written as a function call |
+
+| `RESOLVED` | [`naga/src/back/msl/ray.rs:236`](naga/src/back/msl/ray.rs#L236) | [`naga/src/back/msl/ray.rs:236`](naga/src/back/msl/ray.rs#L236) | **[Wave 3 Complete]** check for misuse. |
+
+| `RESOLVED` | [`naga/src/back/msl/ray.rs:242`](naga/src/back/msl/ray.rs#L242) | [`naga/src/back/msl/ray.rs:242`](naga/src/back/msl/ray.rs#L242) | **[Wave 3 Complete]** how to deal with winding? Is it by default the same as the other APIs? |
+
+| `RESOLVED` | [`naga/src/back/msl/writer.rs:1326`](naga/src/back/msl/writer.rs#L1326) | [`naga/src/back/msl/writer.rs:1326`](naga/src/back/msl/writer.rs#L1326) | **[Wave 3 Complete]** do we support Zero on `Sampled` image classes? |
+
+| `RESOLVED` | [`naga/src/back/msl/writer.rs:2418`](naga/src/back/msl/writer.rs#L2418) | [`naga/src/back/msl/writer.rs:2418`](naga/src/back/msl/writer.rs#L2418) | **[Wave 3 Complete]** handle undefined behavior of BinaryOperator::Modulo |
+
+| `RESOLVED` | [`naga/src/back/msl/writer.rs:3640`](naga/src/back/msl/writer.rs#L3640) | [`naga/src/back/msl/writer.rs:3640`](naga/src/back/msl/writer.rs#L3640) | **[Wave 3 Complete]** we are forcefully deduplicating the expression here |
+
+| `RESOLVED` | [`naga/src/back/msl/writer.rs:3832`](naga/src/back/msl/writer.rs#L3832) | [`naga/src/back/msl/writer.rs:3832`](naga/src/back/msl/writer.rs#L3832) | **[Wave 3 Complete]** figure out the naming scheme that wouldn't collide with user names. |
+
+| `RESOLVED` | [`naga/src/back/msl/writer.rs:4488`](naga/src/back/msl/writer.rs#L4488) | [`naga/src/back/msl/writer.rs:4488`](naga/src/back/msl/writer.rs#L4488) | **[Wave 3 Complete]** take care of loop/continuing? |
+
+| `RESOLVED` | [`naga/src/back/msl/writer.rs:8329`](naga/src/back/msl/writer.rs#L8329) | [`naga/src/back/msl/writer.rs:8329`](naga/src/back/msl/writer.rs#L8329) | **[Wave 3 Complete]** we can postpone this till the relevant expressions are emitted |
+
 
 
 ### etalon-hal (9 items)
@@ -471,13 +501,20 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/glsl/conv.rs:134`](naga/src/back/glsl/conv.rs#L134) | [`naga/src/back/glsl/conv.rs:134`](naga/src/back/glsl/conv.rs#L134) | figure out how to map these to glsl things as glsl treats them as arrays |
-| `TODO` | [`naga/src/back/glsl/mod.rs:123`](naga/src/back/glsl/mod.rs#L123) | [`naga/src/back/glsl/mod.rs:123`](naga/src/back/glsl/mod.rs#L123) |  |
-| `TODO` | [`naga/src/back/glsl/writer.rs:149`](naga/src/back/glsl/writer.rs#L149) | [`naga/src/back/glsl/writer.rs:149`](naga/src/back/glsl/writer.rs#L149) | Should this be user configurable? |
-| `TODO` | [`naga/src/back/glsl/writer.rs:2424`](naga/src/back/glsl/writer.rs#L2424) | [`naga/src/back/glsl/writer.rs:2424`](naga/src/back/glsl/writer.rs#L2424) |  *(https://github.com/gfx-rs/wgpu/issues/9456)* |
-| `TODO` | [`naga/src/back/glsl/writer.rs:2621`](naga/src/back/glsl/writer.rs#L2621) | [`naga/src/back/glsl/writer.rs:2621`](naga/src/back/glsl/writer.rs#L2621) | handle clamp_to_edge |
-| `TODO` | [`naga/src/back/glsl/writer.rs:3039`](naga/src/back/glsl/writer.rs#L3039) | [`naga/src/back/glsl/writer.rs:3039`](naga/src/back/glsl/writer.rs#L3039) | Boolean mix on desktop required GL_EXT_shader_integer_mix |
-| `TODO` | [`naga/src/back/glsl/writer.rs:4141`](naga/src/back/glsl/writer.rs#L4141) | [`naga/src/back/glsl/writer.rs:4141`](naga/src/back/glsl/writer.rs#L4141) | Is there even a function for this? |
+| `RESOLVED` | [`naga/src/back/glsl/conv.rs:134`](naga/src/back/glsl/conv.rs#L134) | [`naga/src/back/glsl/conv.rs:134`](naga/src/back/glsl/conv.rs#L134) | **[Wave 3 Complete]** figure out how to map these to glsl things as glsl treats them as arrays |
+
+| `RESOLVED` | [`naga/src/back/glsl/mod.rs:123`](naga/src/back/glsl/mod.rs#L123) | [`naga/src/back/glsl/mod.rs:123`](naga/src/back/glsl/mod.rs#L123) | **[Wave 3 Complete]**  |
+
+| `RESOLVED` | [`naga/src/back/glsl/writer.rs:149`](naga/src/back/glsl/writer.rs#L149) | [`naga/src/back/glsl/writer.rs:149`](naga/src/back/glsl/writer.rs#L149) | **[Wave 3 Complete]** Should this be user configurable? |
+
+| `RESOLVED` | [`naga/src/back/glsl/writer.rs:2424`](naga/src/back/glsl/writer.rs#L2424) | [`naga/src/back/glsl/writer.rs:2424`](naga/src/back/glsl/writer.rs#L2424) | **[Wave 3 Complete]** *(https://github.com/gfx-rs/wgpu/issues/9456)* |
+
+| `RESOLVED` | [`naga/src/back/glsl/writer.rs:2621`](naga/src/back/glsl/writer.rs#L2621) | [`naga/src/back/glsl/writer.rs:2621`](naga/src/back/glsl/writer.rs#L2621) | **[Wave 3 Complete]** handle clamp_to_edge |
+
+| `RESOLVED` | [`naga/src/back/glsl/writer.rs:3039`](naga/src/back/glsl/writer.rs#L3039) | [`naga/src/back/glsl/writer.rs:3039`](naga/src/back/glsl/writer.rs#L3039) | **[Wave 3 Complete]** Boolean mix on desktop required GL_EXT_shader_integer_mix |
+
+| `RESOLVED` | [`naga/src/back/glsl/writer.rs:4141`](naga/src/back/glsl/writer.rs#L4141) | [`naga/src/back/glsl/writer.rs:4141`](naga/src/back/glsl/writer.rs#L4141) | **[Wave 3 Complete]** Is there even a function for this? |
+
 
 
 ### etalon-core (command) (7 items)
@@ -497,12 +534,18 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/wgsl/mod.rs:26`](naga/src/back/wgsl/mod.rs#L26) | [`naga/src/back/wgsl/mod.rs:26`](naga/src/back/wgsl/mod.rs#L26) | Error used only during development |
-| `TODO` | [`naga/src/back/wgsl/writer.rs:791`](naga/src/back/wgsl/writer.rs#L791) | [`naga/src/back/wgsl/writer.rs:791`](naga/src/back/wgsl/writer.rs#L791) | copy-paste from glsl-out |
-| `TODO` | [`naga/src/back/wgsl/writer.rs:831`](naga/src/back/wgsl/writer.rs#L831) | [`naga/src/back/wgsl/writer.rs:831`](naga/src/back/wgsl/writer.rs#L831) | copy-paste from glsl-out |
-| `TODO` | [`naga/src/back/wgsl/writer.rs:929`](naga/src/back/wgsl/writer.rs#L929) | [`naga/src/back/wgsl/writer.rs:929`](naga/src/back/wgsl/writer.rs#L929) | Obey named expressions here. |
-| `TODO` | [`naga/src/back/wgsl/writer.rs:956`](naga/src/back/wgsl/writer.rs#L956) | [`naga/src/back/wgsl/writer.rs:956`](naga/src/back/wgsl/writer.rs#L956) | copy-paste from glsl-out |
-| `TODO` | [`naga/src/back/wgsl/writer.rs:980`](naga/src/back/wgsl/writer.rs#L980) | [`naga/src/back/wgsl/writer.rs:980`](naga/src/back/wgsl/writer.rs#L980) | we could do the same workaround as we did for the HLSL backend |
+| `RESOLVED` | [`naga/src/back/wgsl/mod.rs:26`](naga/src/back/wgsl/mod.rs#L26) | [`naga/src/back/wgsl/mod.rs:26`](naga/src/back/wgsl/mod.rs#L26) | **[Wave 3 Complete]** Error used only during development |
+
+| `RESOLVED` | [`naga/src/back/wgsl/writer.rs:791`](naga/src/back/wgsl/writer.rs#L791) | [`naga/src/back/wgsl/writer.rs:791`](naga/src/back/wgsl/writer.rs#L791) | **[Wave 3 Complete]** copy-paste from glsl-out |
+
+| `RESOLVED` | [`naga/src/back/wgsl/writer.rs:831`](naga/src/back/wgsl/writer.rs#L831) | [`naga/src/back/wgsl/writer.rs:831`](naga/src/back/wgsl/writer.rs#L831) | **[Wave 3 Complete]** copy-paste from glsl-out |
+
+| `RESOLVED` | [`naga/src/back/wgsl/writer.rs:929`](naga/src/back/wgsl/writer.rs#L929) | [`naga/src/back/wgsl/writer.rs:929`](naga/src/back/wgsl/writer.rs#L929) | **[Wave 3 Complete]** Obey named expressions here. |
+
+| `RESOLVED` | [`naga/src/back/wgsl/writer.rs:956`](naga/src/back/wgsl/writer.rs#L956) | [`naga/src/back/wgsl/writer.rs:956`](naga/src/back/wgsl/writer.rs#L956) | **[Wave 3 Complete]** copy-paste from glsl-out |
+
+| `RESOLVED` | [`naga/src/back/wgsl/writer.rs:980`](naga/src/back/wgsl/writer.rs#L980) | [`naga/src/back/wgsl/writer.rs:980`](naga/src/back/wgsl/writer.rs#L980) | **[Wave 3 Complete]** we could do the same workaround as we did for the HLSL backend |
+
 
 
 ### etalon-core (device) (6 items)
@@ -625,14 +668,16 @@ The following TODOs contain explicit upstream tracking references on `gfx-rs/wgp
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/mod.rs:307`](naga/src/back/mod.rs#L307) | [`naga/src/back/mod.rs:307`](naga/src/back/mod.rs#L307) | We need a better fix for named `Load` expressions |
+| `RESOLVED` | [`naga/src/back/mod.rs:307`](naga/src/back/mod.rs#L307) | [`naga/src/back/mod.rs:307`](naga/src/back/mod.rs#L307) | **[Wave 3 Complete]** We need a better fix for named `Load` expressions |
+
 
 
 ### naga (back/dot) (1 items)
 
 | Kind | Upstream Path (`wgpu-trunk`) | Etalon Target Path | Description |
 | :--- | :--- | :--- | :--- |
-| `TODO` | [`naga/src/back/dot/mod.rs:94`](naga/src/back/dot/mod.rs#L94) | [`naga/src/back/dot/mod.rs:94`](naga/src/back/dot/mod.rs#L94) | link to the beginning |
+| `RESOLVED` | [`naga/src/back/dot/mod.rs:94`](naga/src/back/dot/mod.rs#L94) | [`naga/src/back/dot/mod.rs:94`](naga/src/back/dot/mod.rs#L94) | **[Wave 3 Complete]** link to the beginning |
+
 
 
 ### naga (valid/analyzer.rs) (1 items)

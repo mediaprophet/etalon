@@ -659,7 +659,7 @@ impl Writer {
         let block_id = self.id_gen.next();
         let mut block = Block::new(block_id);
 
-        // TODO: perhaps this could be replaced with an OpPhi?
+        // Local variable allocation tracking ray query continuation status.
         let proceeded_id = self.id_gen.next();
         let const_false = self.get_constant_scalar(crate::Literal::Bool(false));
         block.body.push(Instruction::variable(

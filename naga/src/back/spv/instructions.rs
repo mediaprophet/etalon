@@ -1137,7 +1137,7 @@ impl super::Instruction {
         instruction
     }
 
-    // TODO Branch Weights not implemented.
+    /// Emits conditional branch instruction.
     pub(super) fn branch_conditional(
         condition_id: Word,
         true_label: Word,

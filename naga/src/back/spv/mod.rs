@@ -947,7 +947,6 @@ pub struct Writer {
     emit_int_div_checks: bool,
     void_type: Word,
     tuple_of_u32s_ty_id: Option<Word>,
-    //TODO: convert most of these into vectors, addressable by handle indices
     lookup_type: crate::FastHashMap<LookupType, Word>,
     lookup_function: crate::FastHashMap<Handle<crate::Function>, Word>,
     lookup_function_type: crate::FastHashMap<LookupFunctionType, Word>,

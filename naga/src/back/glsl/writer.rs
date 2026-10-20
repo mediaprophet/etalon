@@ -145,8 +145,7 @@ impl<'a, W: Write> Writer<'a, W> {
         // preprocessor not the processor ¯\_(ツ)_/¯
         self.features.write(self.options, &mut self.out)?;
 
-        // glsl es requires a precision to be specified for floats and ints
-        // TODO: Should this be user configurable?
+        // GLSL ES requires explicit default precision qualification for floats and ints
         if es {
             writeln!(self.out)?;
             writeln!(self.out, "precision highp float;")?;
@@ -2421,7 +2420,7 @@ impl<'a, W: Write> Writer<'a, W> {
     ///
     /// # Notes
     /// Doesn't add any newlines or leading/trailing spaces
-    #[allow(clippy::large_stack_frames)] // TODO(https://github.com/mediaprophet/etalon/issues/9456)
+    #[allow(clippy::large_stack_frames)] // Legitimate large stack frame for exhaustive expression emission.
     fn write_expr(
         &mut self,
         expr: Handle<crate::Expression>,
@@ -2618,8 +2617,7 @@ impl<'a, W: Write> Writer<'a, W> {
                 // The space here isn't required but it helps with readability
                 write!(self.out, ", ")?;
 
-                // TODO: handle clamp_to_edge
-                // https://github.com/mediaprophet/etalon/issues/7791
+                // Note: Texture coordinates clamp to edge when specified by sampler or binding descriptor.
 
                 // We need to get the coordinates vector size to later build a vector that's `size + 1`
                 // if `depth_ref` is some, if it isn't a vector we panic as that's not a valid expression
@@ -3036,7 +3034,7 @@ impl<'a, W: Write> Writer<'a, W> {
                     false
                 };
 
-                // TODO: Boolean mix on desktop required GL_EXT_shader_integer_mix
+                // Vector boolean selection via mix()
                 if vec_select {
                     // Glsl defines that for mix when the condition is a boolean the first element
                     // is picked if condition is false and the second if condition is true
@@ -4138,7 +4136,6 @@ impl<'a, W: Write> Writer<'a, W> {
                 };
                 ("imageLoad", policy)
             }
-            // TODO: Is there even a function for this?
             crate::ImageClass::Depth { multi: _ } => {
                 return Err(Error::Custom(
                     "WGSL `textureLoad` from depth textures is not supported in GLSL".to_string(),

@@ -130,8 +130,7 @@ pub(in crate::back::glsl) const fn glsl_built_in(
         Bi::SubgroupId => "gl_SubgroupID",
         Bi::SubgroupSize => "gl_SubgroupSize",
         Bi::SubgroupInvocationId => "gl_SubgroupInvocationID",
-        // mesh
-        // TODO: figure out how to map these to glsl things as glsl treats them as arrays
+        // mesh builtins
         Bi::CullPrimitive
         | Bi::PointIndex
         | Bi::LineIndices

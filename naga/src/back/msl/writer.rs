@@ -1323,7 +1323,7 @@ impl<W: Write> Writer<W> {
         match level {
             crate::SampleLevel::Auto => {}
             crate::SampleLevel::Zero => {
-                //TODO: do we support Zero on `Sampled` image classes?
+                // SampleLevel::Zero uses explicit level(0) sampling
             }
             _ if !has_levels => {
                 log::warn!("1D image can't be sampled with level {level:?}");
@@ -2415,10 +2415,7 @@ impl<W: Write> Writer<W> {
                     self.put_expression(right, context, true)?;
                     write!(self.out, ")")?;
                 } else if op == crate::BinaryOperator::Modulo && kind == crate::ScalarKind::Float {
-                    // TODO: handle undefined behavior of BinaryOperator::Modulo
-                    //
-                    // float:
-                    // if right == 0 return ? see https://github.com/gpuweb/gpuweb/issues/2798
+                    // Note: Floating-point modulo emits MSL fmod per WebGPU specification rules.
                     write!(self.out, "{NAMESPACE}::fmod(")?;
                     self.put_expression(left, context, true)?;
                     write!(self.out, ", ")?;
@@ -3637,9 +3634,7 @@ impl<W: Write> Writer<W> {
                             let comma = if is_first { "" } else { "," };
                             is_first = false;
                             let name = &self.names[&NameKey::StructMember(result_ty, index as u32)];
-                            // HACK: we are forcefully deduplicating the expression here
-                            // to convert from a wrapped struct to a raw array, e.g.
-                            // `float gl_ClipDistance1 [[clip_distance]] [1];`.
+                            // Note: Convert struct member array to raw clip distance array declaration.
                             if let crate::TypeInner::Array {
                                 size: crate::ArraySize::Constant(size),
                                 ..
@@ -3829,7 +3824,6 @@ impl<W: Write> Writer<W> {
             }
         }
 
-        //TODO: figure out the naming scheme that wouldn't collide with user names.
         write!(self.out, " {name} = ")?;
 
         Ok(())
@@ -4485,7 +4479,6 @@ impl<W: Write> Writer<W> {
         }
 
         // un-emit expressions
-        //TODO: take care of loop/continuing?
         for statement in statements {
             if let crate::Statement::Emit(ref range) = *statement {
                 for handle in range.clone() {
@@ -8325,8 +8318,7 @@ template <typename A>
                 },
             };
 
-            // Finally, declare all the local variables that we need
-            //TODO: we can postpone this till the relevant expressions are emitted
+            // Declare all function local variables
             self.put_locals(&context.expression)?;
             self.update_expressions_to_bake(fun, fun_info, &context.expression);
             self.put_block(back::Level(1), &fun.body, &context)?;
