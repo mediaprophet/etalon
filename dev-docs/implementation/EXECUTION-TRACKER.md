@@ -79,4 +79,16 @@
 ## 4. Verification & Permission Gate
 
 - **Cargo Command Rule:** Prior to running `cargo check`, `cargo test`, `cargo build`, or `cargo clippy`, the user must grant express permission.
-- **Current Gate Status:** All phases (M1, M2, M3, M4) are comprehensively implemented on disk. Ready for user verification gate.
+- **Current Gate Status:** All phases (M1, M2, M3, M4) are comprehensively implemented on disk and committed to local branches:
+  - **`c:\github\etalon` (branch `qualia-main`):**
+    - `2bfee2b73` — `feat(phase2-3): implement Phase 2 & 3 crates (etalon-agent, etalon-wgsl-forge, etalon-nquin, etalon-tensor, etalon-render, etalon-wasm)`
+    - `7957b224a` — `fix(hal): stub static-dxc feature to decouple from unmaintained mach-dxcompiler-rs`
+  - **`c:\github\qualiaDB` (branch `0.0.40.8-dev`):**
+    - `7594e2fa` — `fix(gpu): apply Etalon Runbook 01 bug fixes and align workspace dependencies`
+    - `ebdc23f9` — `chore(workspace): declare etalon-* path dependencies in workspace.dependencies`
+- **Ready Verification Actions (Awaiting Express Permission):**
+  1. `cargo tree -d` (verify single-universe dependency resolution with zero duplicate `naga` or `wgpu` instances)
+  2. `cargo check -p etalon -p etalon-core -p etalon-hal -p etalon-types -p naga`
+  3. `cargo check -p etalon-agent -p etalon-wgsl-forge -p etalon-nquin -p etalon-tensor -p etalon-render -p etalon-wasm`
+  4. `cargo check -p qualia-core-db`
+  5. `cargo nextest run -p naga -p etalon-core -p etalon-types -p etalon-nquin`
