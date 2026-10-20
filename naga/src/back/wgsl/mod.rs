@@ -23,7 +23,7 @@ pub enum Error {
     #[error("{0}")]
     Custom(String),
     #[error("{0}")]
-    Unimplemented(String), // TODO: Error used only during development
+    Unimplemented(String),
     #[error("Unsupported relational function: {0:?}")]
     UnsupportedRelationalFunction(crate::RelationalFunction),
     #[error("Unsupported {kind}: {value}")]

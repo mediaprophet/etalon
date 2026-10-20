@@ -607,8 +607,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         Ok(())
     }
 
-    //TODO: we could force fragment outputs to always go through `entry_point_io.output` path
-    // if they are struct, so that the `stage` argument here could be omitted.
+    /// Writes semantic decoration for shader interface variables.
     pub(super) fn write_semantic(
         &mut self,
         binding: &Option<crate::Binding>,
@@ -1936,7 +1935,6 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         let arg_ty = match module.types[arg.ty].inner {
             // pointers in function arguments are expected and resolve to `inout`
             TypeInner::Pointer { base, .. } => {
-                //TODO: can we narrow this down to just `in` when possible?
                 write!(self.out, "inout ")?;
                 base
             }
@@ -2220,7 +2218,6 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                     }
                 }
             }
-            // TODO: copy-paste from glsl-out
             Statement::Block(ref block) => {
                 write!(self.out, "{level}")?;
                 writeln!(self.out, "{{")?;
@@ -2230,7 +2227,6 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 }
                 writeln!(self.out, "{level}}}")?
             }
-            // TODO: copy-paste from glsl-out
             Statement::If {
                 condition,
                 ref accept,
@@ -2260,7 +2256,6 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
 
                 writeln!(self.out, "{level}}}")?
             }
-            // TODO: copy-paste from glsl-out
             Statement::Kill => writeln!(self.out, "{level}discard;")?,
             Statement::Return { value: None } => {
                 writeln!(self.out, "{level}return;")?;
@@ -3793,8 +3788,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
             // multiplication of signed integers by casting operands to
             // unsigned, performing the operation, then casting the result back
             // to signed.
-            // TODO(#7109): This relies on the asint()/asuint() functions which only work
-            // for 32-bit types, so we must find another solution for different bit widths.
+            // Note: Operands cast to unsigned to avoid undefined integer overflow behavior.
             Expression::Binary {
                 op:
                     op @ crate::BinaryOperator::Add

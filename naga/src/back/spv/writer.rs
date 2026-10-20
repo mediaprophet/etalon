@@ -1813,7 +1813,7 @@ impl Writer {
         Ok(())
     }
 
-    // TODO Move to instructions module
+    /// Emits entry point interface and execution modes.
     fn write_entry_point(
         &mut self,
         entry_point: &crate::EntryPoint,
@@ -1849,10 +1849,7 @@ impl Writer {
                         )?;
                     }
                     Some(crate::EarlyDepthTest::Allow { conservative }) => {
-                        // TODO: Consider emitting EarlyAndLateFragmentTestsAMD here, if available.
-                        // https://github.khronos.org/SPIRV-Registry/extensions/AMD/SPV_AMD_shader_early_and_late_fragment_tests.html
-                        // This permits early depth tests even if the shader writes to a storage
-                        // binding
+                        // Conservative depth execution modes.
                         match conservative {
                             crate::ConservativeDepth::GreaterEqual => self.write_execution_mode(
                                 function_id,

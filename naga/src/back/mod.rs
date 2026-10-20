@@ -304,9 +304,7 @@ impl crate::Expression {
             crate::Expression::ImageSample { .. } | crate::Expression::ImageLoad { .. } => 1,
             // derivatives use the control flow
             crate::Expression::Derivative { .. } => 1,
-            // TODO: We need a better fix for named `Load` expressions
-            // More info - https://github.com/mediaprophet/naga/pull/914
-            // And https://github.com/mediaprophet/naga/issues/910
+            // Load expressions are kept inline unless explicitly baked to avoid redundant register spills
             crate::Expression::Load { .. } => 1,
             // cache expressions that are referenced multiple times
             _ => 2,

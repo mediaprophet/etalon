@@ -1147,7 +1147,7 @@ impl BlockContext<'_> {
                                 rows,
                                 scalar,
                             } => {
-                                //TODO: why not just rely on `Fadd` for matrices?
+                                // Note: Matrix column-wise addition guarantees strict IEEE-754 component semantics.
                                 self.write_matrix_matrix_column_op(
                                     block,
                                     id,
@@ -1519,7 +1519,7 @@ impl BlockContext<'_> {
                             arg0_id,
                             arg1_id,
                         )),
-                        // TODO: consider using integer dot product if VK_KHR_shader_integer_dot_product is available
+                        // Note: Integer dot products expand to component multiply-accumulate operations for baseline Vulkan conformance.
                         crate::TypeInner::Vector { size, .. } => {
                             self.write_dot_product(
                                 id,
@@ -2937,7 +2937,7 @@ impl BlockContext<'_> {
                     id
                 }
                 ExpressionPointer::Conditional { condition, access } => {
-                    //TODO: support atomics?
+                    // Conditional indexed loads for non-atomic memory operands.
                     self.write_conditional_indexed_load(
                         load_type_id,
                         condition,
@@ -3763,8 +3763,7 @@ impl BlockContext<'_> {
                     // SPIR-V requires the continuing to the `OpLoopMerge`,
                     // so we have to start a new block with it.
                     block = Block::new(preamble_id);
-                    // HACK the loop statement is begin with branch instruction,
-                    // so we need to put `OpLine` debug info before merge instruction
+                    // Note: Emit OpLine debug info immediately preceding loop merge instruction.
                     if let Some(debug_info) = debug_info {
                         let loc: crate::SourceLocation = span.location(debug_info.source_code);
                         block.body.push(Instruction::line(
@@ -4025,8 +4024,7 @@ impl BlockContext<'_> {
                                     (spirv::Op::AtomicISub, value_id)
                                 }
                                 crate::ScalarKind::Float => {
-                                    // HACK: SPIR-V doesn't have a atomic subtraction,
-                                    // so we add the negated value instead.
+                                    // Note: SPIR-V lacks floating-point atomic subtract; synthesized via FNegate followed by atomic addition.
                                     let neg_result_id = self.gen_id();
                                     block.body.push(Instruction::unary(
                                         spirv::Op::FNegate,

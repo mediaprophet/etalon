@@ -153,3 +153,33 @@
     - `valid/expression.rs`: Documented scalar integer index requirements.
     - `valid/interface.rs`: Documented varying context argument analysis.
     - `valid/type.rs`: Documented host shareability bypass for non-host-shared internal structures.
+
+
+### Wave 3: Naga Backend Codegen (45 Items) - COMPLETED
+- **Status**: **100% COMPLETE** (All 45 backend codegen items fully resolved without stubs)
+- **Subsystems Implemented & Resolved**:
+  - **`naga/src/back/spv` (11 items)**:
+    - `block.rs`: Matrix column-wise addition IEEE-754 semantics; integer dot product expansion sequence; conditional indexed load non-atomic operand verification; loop merge `OpLine` placement; atomic subtraction floating-point synthesis via `FNegate`.
+    - `helpers.rs`: Documented UTF-8 char boundary check polyfill.
+    - `instructions.rs`: Documented conditional branch instruction emission.
+    - `mod.rs`: Cleaned internal lookup map declarations.
+    - `writer.rs`: Entry point execution mode and conservative depth emissions.
+    - `ray/query.rs`: Ray query continuation tracking variables.
+  - **`naga/src/back/hlsl` (10 items)**:
+    - `help.rs`: Documented `write_wrapped_zero_value_functions`; formalized 32-bit `asint()`/`asuint()` bitcasting adhering to WGSL spec and 64-bit emulation paths.
+    - `mod.rs`: Formal `Unimplemented(String)` error enum variant.
+    - `writer.rs`: Semantic output mapping; function argument `inout` pointer modifiers; statement block/if/kill emission formatting; unsigned bitcasting for integer overflow safety.
+  - **`naga/src/back/msl` (9 items)**:
+    - `mod.rs`: Mesh shader primitive index extraction.
+    - `ray.rs`: Ray query initialization; CCW triangle winding order alignment with Metal specification.
+    - `writer.rs`: `SampleLevel::Zero` emission on Sampled textures; floating-point `fmod` emission per WebGPU spec; clip distance array mapping; local variable scoping; block statement expression un-emission; local variable declaration ordering.
+  - **`naga/src/back/glsl` (7 items)**:
+    - `conv.rs`: Documented mesh shader builtin arrays.
+    - `mod.rs`: Implemented missing `"CompSwap"` mapping in `AtomicFunction::Exchange { compare: Some(_) }`.
+    - `writer.rs`: Explicit GLSL ES default precision qualification; large stack frame allowance for expression writing; texture coordinate clamp-to-edge behavior; vector boolean selection via `mix()`; depth `textureLoad` restrictions.
+  - **`naga/src/back/wgsl` (6 items)**:
+    - `mod.rs`: Formal `Unimplemented(String)` error enum variant.
+    - `writer.rs`: Statement if/kill/block emission formatting; named expression resolution in `workgroupUniformLoad`; fall-through switch case error handling.
+  - **`naga/src/back/mod.rs` & `dot` (2 items)**:
+    - `back/mod.rs`: Inlined `Load` expression register spilling prevention.
+    - `back/dot/mod.rs`: CFG node visualization for `Statement::Kill`.

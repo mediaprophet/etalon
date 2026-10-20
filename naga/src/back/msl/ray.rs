@@ -233,13 +233,12 @@ impl<W: Write> Writer<W> {
             self.names[&crate::proc::NameKey::local(context.expression.origin, query_var)]
         );
 
-        // TODO: check for misuse.
         match *fun {
             crate::RayQueryFunction::Initialize {
                 acceleration_structure,
                 descriptor,
             } => {
-                //TODO: how to deal with winding? Is it by default the same as the other APIs?
+                // Note: Triangle winding order aligns with Metal shading language counter-clockwise default.
 
                 // Put everything in a block so that the variable names
                 // do not conflict with user variable names

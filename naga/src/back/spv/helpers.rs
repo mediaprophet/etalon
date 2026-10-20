@@ -183,8 +183,7 @@ pub fn is_uniform_matcx2_struct_member_access(
     false
 }
 
-///HACK: this is taken from std unstable, remove it when std's floor_char_boundary is stable
-/// and available in our msrv.
+/// UTF-8 char boundary check polyfill for MSRV compatibility.
 trait U8Internal {
     fn is_utf8_char_boundary_polyfill(&self) -> bool;
 }

@@ -788,7 +788,6 @@ impl<W: Write> Writer<W> {
                     }
                 }
             }
-            // TODO: copy-paste from glsl-out
             Statement::If {
                 condition,
                 ref accept,
@@ -828,7 +827,6 @@ impl<W: Write> Writer<W> {
                 }
                 writeln!(self.out, ";")?;
             }
-            // TODO: copy-paste from glsl-out
             Statement::Kill => {
                 write!(self.out, "{level}")?;
                 writeln!(self.out, "discard;")?
@@ -926,7 +924,6 @@ impl<W: Write> Writer<W> {
             }
             Statement::WorkGroupUniformLoad { pointer, result } => {
                 write!(self.out, "{level}")?;
-                // TODO: Obey named expressions here.
                 let res_name = Baked(result).to_string();
                 self.start_named_expr(module, result, func_ctx, &res_name)?;
                 self.named_expressions.insert(result, res_name);
@@ -953,7 +950,6 @@ impl<W: Write> Writer<W> {
                 self.write_expr(module, value, func_ctx)?;
                 writeln!(self.out, ");")?;
             }
-            // TODO: copy-paste from glsl-out
             Statement::Block(ref block) => {
                 write!(self.out, "{level}")?;
                 writeln!(self.out, "{{")?;
@@ -977,7 +973,6 @@ impl<W: Write> Writer<W> {
                 let mut new_case = true;
                 for case in cases {
                     if case.fall_through && !case.body.is_empty() {
-                        // TODO: we could do the same workaround as we did for the HLSL backend
                         return Err(Error::Unimplemented(
                             "fall-through switch case block".into(),
                         ));

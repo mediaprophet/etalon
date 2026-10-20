@@ -663,7 +663,7 @@ pub enum Error {
     #[error("A scalar with an unsupported width was requested: {0:?}")]
     UnsupportedScalar(crate::Scalar),
     #[error("{0}")]
-    Unimplemented(String), // TODO: Error used only during development
+    Unimplemented(String),
     #[error("{0}")]
     Custom(String),
     #[error("overrides should not be present at this stage")]
