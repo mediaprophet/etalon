@@ -3,38 +3,55 @@
 //! Provides a lock-free, zero-allocation single-producer single-consumer (SPSC)
 //! ring buffer over WebAssembly `SharedArrayBuffer` memory.
 
-use bytemuck::{Pod, Zeroable};
 use core::sync::atomic::{AtomicU32, Ordering};
 
 pub const SAB_RING_MAGIC: u32 = 0x4554_5352; // "ETSR"
 pub const SAB_RING_VERSION: u16 = 1;
 
-/// Fixed 32-byte header located at the base of the SharedArrayBuffer.
-#[repr(C, align(16))]
+/// Fixed 192-byte cache-line-isolated header located at the base of the SharedArrayBuffer.
+///
+/// Metadata (`magic`, `version`, `slot_size`, `capacity`, `flags`), producer `head`,
+/// and consumer `tail` each reside on their own 64-byte cache line to eliminate
+/// L1 false sharing across WebWorkers.
+#[repr(C, align(64))]
 #[derive(Debug)]
 pub struct SabRingHeader {
     pub magic: u32,
     pub version: u16,
     pub slot_size: u16,
     pub capacity: u32,
-    pub head: AtomicU32,
-    pub tail: AtomicU32,
     pub flags: AtomicU32,
-    pub _pad: u32,
+    pub _pad0: [u8; 48],
+    pub head: AtomicU32,
+    pub _pad1: [u8; 60],
+    pub tail: AtomicU32,
+    pub _pad2: [u8; 60],
 }
 
+const _: () = assert!(core::mem::size_of::<SabRingHeader>() == 192);
+const _: () = assert!(core::mem::align_of::<SabRingHeader>() == 64);
+const _: () = assert!(core::mem::offset_of!(SabRingHeader, head) == 64);
+const _: () = assert!(core::mem::offset_of!(SabRingHeader, tail) == 128);
+
 impl SabRingHeader {
-    pub fn new(capacity: u32, slot_size: u16) -> Self {
+    pub const fn new(capacity: u32, slot_size: u16) -> Self {
         Self {
             magic: SAB_RING_MAGIC,
             version: SAB_RING_VERSION,
             slot_size,
             capacity,
-            head: AtomicU32::new(0),
-            tail: AtomicU32::new(0),
             flags: AtomicU32::new(0),
-            _pad: 0,
+            _pad0: [0u8; 48],
+            head: AtomicU32::new(0),
+            _pad1: [0u8; 60],
+            tail: AtomicU32::new(0),
+            _pad2: [0u8; 60],
         }
+    }
+
+    #[inline]
+    pub const fn mask(&self) -> u32 {
+        self.capacity.wrapping_sub(1)
     }
 }
 
@@ -105,5 +122,50 @@ impl<'a> SharedArrayBufferRing<'a> {
 
         self.header.tail.store(tail.wrapping_add(1), Ordering::Release);
         true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use core::mem::{align_of, offset_of, size_of};
+
+    #[test]
+    fn sab_ring_header_cache_line_isolation() {
+        assert_eq!(size_of::<SabRingHeader>(), 192);
+        assert_eq!(align_of::<SabRingHeader>(), 64);
+        assert_eq!(offset_of!(SabRingHeader, head), 64);
+        assert_eq!(offset_of!(SabRingHeader, tail), 128);
+    }
+
+    #[test]
+    fn sab_ring_push_pop_roundtrip_and_full_behavior() {
+        let header = SabRingHeader::new(4, 8);
+        let mut payload = [0u8; 32];
+        let mut ring = SharedArrayBufferRing::new(&header, &mut payload).unwrap();
+
+        assert_eq!(ring.available_read(), 0);
+        assert_eq!(ring.available_write(), 4);
+
+        assert!(ring.try_push(&[1, 2, 3, 4]));
+        assert!(ring.try_push(&[5, 6, 7, 8, 9, 10, 11, 12]));
+        assert!(ring.try_push(&[13]));
+        assert!(ring.try_push(&[14, 15]));
+        assert!(!ring.try_push(&[16]));
+
+        let mut out = [0u8; 8];
+        assert!(ring.try_pop(&mut out));
+        assert_eq!(out, [1, 2, 3, 4, 0, 0, 0, 0]);
+
+        assert!(ring.try_pop(&mut out));
+        assert_eq!(out, [5, 6, 7, 8, 9, 10, 11, 12]);
+
+        assert!(ring.try_pop(&mut out));
+        assert_eq!(out, [13, 0, 0, 0, 0, 0, 0, 0]);
+
+        assert!(ring.try_pop(&mut out));
+        assert_eq!(out, [14, 15, 0, 0, 0, 0, 0, 0]);
+
+        assert!(!ring.try_pop(&mut out));
     }
 }

@@ -1551,7 +1551,7 @@ pub struct BufferBinding<B = Arc<Buffer>> {
     pub size: Option<wgt::BufferAddress>,
 }
 
-// Note: Duplicated in `etalon-rs` as `BindingResource`
+// Note: Duplicated in `etalon` as `BindingResource`
 // They're different enough that it doesn't make sense to share a common type
 #[derive(Debug, Clone)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]

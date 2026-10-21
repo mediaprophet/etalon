@@ -11,9 +11,11 @@ pub mod hal_lane;
 pub mod cuda_lane;
 pub mod interop;
 
-pub use capability::{CapabilityState, SiliconCapability};
-pub use compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId};
+pub use capability::{AgentError, CapabilityState, SiliconCapability};
+pub use compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
 pub use hal_lane::{HalComputeLane, HalPreparedPlan, HalSubmission};
-pub use cuda_lane::{CudaComputeLane, CudaPreparedPlan, CudaSubmission};
+pub use cuda_lane::{
+    CudaComputeLane, CudaDriverApi, CudaPreparedPlan, CudaSubmission, PinBackend, PinnedRegion,
+};
 pub use lease::{AccessRights, AllocationId, BufferRegion, SubmissionLease};
 pub use slab::{BindingUsage, BufferView, MemoryTopology, QualiaSlabAllocator};

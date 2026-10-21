@@ -456,10 +456,12 @@ impl super::Validator {
                 role: _,
             } => {
                 self.require_type_capability(Capabilities::COOPERATIVE_MATRIX)?;
-                // Allow f16 (width 2) and f32 (width 4) for cooperative matrices
-                if scalar.kind != crate::ScalarKind::Float
-                    || (scalar.width != 2 && scalar.width != 4)
-                {
+                let valid_scalar = matches!(
+                    (scalar.kind, scalar.width),
+                    (crate::ScalarKind::Float, 2 | 4)
+                        | (crate::ScalarKind::Sint | crate::ScalarKind::Uint, 1 | 4)
+                );
+                if !valid_scalar {
                     return Err(TypeError::MatrixElementNotFloat);
                 }
                 TypeInfo::new(
@@ -982,5 +984,73 @@ impl super::Validator {
                 TypeInfo::new(base_info.flags & type_info_mask, Alignment::ONE)
             }
         })
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::valid::{Capabilities, ValidationFlags, Validator};
+    use crate::{CooperativeRole, CooperativeSize, Module, Scalar, ScalarKind, Span, Type, TypeInner};
+
+    #[test]
+    fn validate_integer_and_float_cooperative_matrices() {
+        let mut module = Module::default();
+        let cases = [
+            (
+                CooperativeSize::ThirtyTwo,
+                CooperativeSize::Sixteen,
+                Scalar { kind: ScalarKind::Sint, width: 1 },
+                CooperativeRole::A,
+            ),
+            (
+                CooperativeSize::Sixteen,
+                CooperativeSize::ThirtyTwo,
+                Scalar { kind: ScalarKind::Uint, width: 1 },
+                CooperativeRole::B,
+            ),
+            (
+                CooperativeSize::Sixteen,
+                CooperativeSize::Sixteen,
+                Scalar::I32,
+                CooperativeRole::C,
+            ),
+            (
+                CooperativeSize::ThirtyTwo,
+                CooperativeSize::ThirtyTwo,
+                Scalar::U32,
+                CooperativeRole::C,
+            ),
+            (
+                CooperativeSize::Sixteen,
+                CooperativeSize::Sixteen,
+                Scalar::F16,
+                CooperativeRole::A,
+            ),
+            (
+                CooperativeSize::Sixteen,
+                CooperativeSize::Sixteen,
+                Scalar::F32,
+                CooperativeRole::C,
+            ),
+        ];
+        for (columns, rows, scalar, role) in cases {
+            module.types.insert(
+                Type {
+                    name: None,
+                    inner: TypeInner::CooperativeMatrix {
+                        columns,
+                        rows,
+                        scalar,
+                        role,
+                    },
+                },
+                Span::UNDEFINED,
+            );
+        }
+        let mut validator = Validator::new(
+            ValidationFlags::all(),
+            Capabilities::COOPERATIVE_MATRIX | Capabilities::SHADER_FLOAT16,
+        );
+        assert!(validator.validate(&module).is_ok());
     }
 }

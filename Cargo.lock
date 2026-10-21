@@ -1688,6 +1688,7 @@ dependencies = [
  "bytemuck",
  "etalon",
  "log",
+ "naga",
  "thiserror 2.0.21",
 ]
 
@@ -1810,6 +1811,9 @@ dependencies = [
  "bytemuck",
  "log",
  "naga",
+ "serde",
+ "serde_json",
+ "tempfile",
  "thiserror 2.0.21",
 ]
 

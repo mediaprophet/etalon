@@ -36,6 +36,8 @@ Start with **`implementation/00-MASTER-IMPLEMENTATION-PLAYBOOK.md`** and execute
 | **Runbook 02** | **Phase 1: `etalon-hal`, `naga`, and Dependency Unlocks**<br>`compat/wgpu` `30.0.0` bridge, `CooperativeSize::ThirtyTwo` (`I8`/`U8`/`BF16`), and safe BDA / external host memory feature flags. | [`implementation/02-PHASE1-ETALON-HAL-AND-NAGA-SILICON-UNLOCKS.md`](implementation/02-PHASE1-ETALON-HAL-AND-NAGA-SILICON-UNLOCKS.md) |
 | **Runbook 03** | **Phase 2: `etalon-agent`, `etalon-wgsl-forge`, and `etalon-nquin`**<br>Safe resource lease hierarchy, `ComputeLane`, pure IR compiler, 48B `NQuinWire` warp scan, and 3-pass stable GPU radix sort. | [`implementation/03-PHASE2-ETALON-AGENT-FORGE-AND-NQUIN-MIGRATION.md`](implementation/03-PHASE2-ETALON-AGENT-FORGE-AND-NQUIN-MIGRATION.md) |
 | **Runbook 04** | **Phase 3: `etalon-tensor`, `etalon-render`, and `etalon-wasm`**<br>Unified decode/prefill/verify arena, in-shader GBNF/sieve argmax, POD scene contracts, and dual-transport WASM worker steward. | [`implementation/04-PHASE3-ETALON-TENSOR-RENDER-AND-WASM-MIGRATION.md`](implementation/04-PHASE3-ETALON-TENSOR-RENDER-AND-WASM-MIGRATION.md) |
+| **Audit 05** | **Implementation Audit & Remaining Gap Report**<br>Forensic code-vs-spec audit of `etalon` and `QualiaDB` commits, documenting completed items and 9 concrete bugs/stubs/regressions with drop-in fixes. | [`implementation/05-IMPLEMENTATION-AUDIT-AND-REMAINING-GAP-REPORT.md`](implementation/05-IMPLEMENTATION-AUDIT-AND-REMAINING-GAP-REPORT.md) |
+| **Tracker** | **Execution Tracker**<br>Wave-by-wave TODO resolution and Phase 1–3 implementation checklist. | [`implementation/EXECUTION-TRACKER.md`](implementation/EXECUTION-TRACKER.md) |
 
 ---
 

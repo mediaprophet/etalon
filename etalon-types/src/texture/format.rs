@@ -1635,6 +1635,12 @@ impl TextureFormat {
         *self != self.remove_srgb_suffix()
     }
 
+    /// Backwards-compatible alias for [`Self::has_srgb_suffix`].
+    #[must_use]
+    pub fn is_srgb(&self) -> bool {
+        self.has_srgb_suffix()
+    }
+
     /// Returns the theoretical memory footprint of a texture with the given format and dimensions.
     ///
     /// Actual memory usage may greatly exceed this value due to alignment and padding.

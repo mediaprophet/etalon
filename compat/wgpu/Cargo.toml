@@ -3,6 +3,8 @@ name = "wgpu"
 version = "30.0.0"
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
 license.workspace = true
 
 [features]
@@ -16,13 +18,22 @@ metal = ["etalon/metal"]
 gles = ["etalon/gles"]
 webgpu = ["etalon/webgpu"]
 webgl = ["etalon/webgl"]
+angle = ["etalon/angle"]
+vulkan-portability = ["etalon/vulkan-portability"]
+drm = ["etalon/drm"]
+custom = ["etalon/custom"]
 spirv = ["etalon/spirv"]
 glsl = ["etalon/glsl"]
+naga-ir = ["etalon/naga-ir"]
 noop = ["etalon/noop"]
-static-dxc = []
+strict_asserts = ["etalon/strict_asserts"]
+trace = ["etalon/trace"]
+static-dxc = ["etalon/static-dxc"]
 counters = ["etalon/counters"]
 fragile-send-sync-non-atomic-wasm = ["etalon/fragile-send-sync-non-atomic-wasm"]
+web = ["etalon/web"]
+exhaust = ["etalon/exhaust"]
 parking_lot = []
 
 [dependencies]
-etalon = { workspace = true }
+etalon = { version = "0.0.1", path = "../../etalon", default-features = false }

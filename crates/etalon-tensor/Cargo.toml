@@ -3,6 +3,8 @@ name = "etalon-tensor"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
 license.workspace = true
 description = "Prepared tensor execution, unified forward arena, and fused attention for Etalon"
 

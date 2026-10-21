@@ -3,18 +3,24 @@ name = "etalon-wgsl-forge"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
 license.workspace = true
 description = "Deterministic shader generation, multi-target emission, and verification for Etalon"
 
 [features]
-default = ["std", "wgsl"]
+default = ["std", "wgsl", "naga-validate"]
 std = []
 wgsl = []
-naga-validate = ["dep:naga"]
+naga-validate = ["dep:naga", "naga/wgsl-in"]
+dxc = []
 
 [dependencies]
-naga = { workspace = true, optional = true }
+naga = { workspace = true, optional = true, features = ["wgsl-in"] }
 blake3 = "1.5"
 bytemuck = { workspace = true, features = ["derive"] }
 log = { workspace = true }
+serde = { workspace = true, features = ["derive", "std"] }
+serde_json = { workspace = true }
+tempfile = { workspace = true }
 thiserror = "2"
