@@ -7,6 +7,7 @@ homepage.workspace = true
 repository.workspace = true
 keywords.workspace = true
 license.workspace = true
+publish = false
 readme = "README.md"
 
 # Override the workspace's `rust-version` key. Firefox uses `cargo vendor` to

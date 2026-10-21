@@ -6,6 +6,7 @@ description = "Shader translator and validator. Part of the etalon project"
 repository.workspace = true
 keywords = ["shader", "SPIR-V", "GLSL", "MSL"]
 license.workspace = true
+publish = false
 exclude = ["bin/**/*", "tests/**/*", "Cargo.lock", "target/**/*"]
 readme = "README.md"
 

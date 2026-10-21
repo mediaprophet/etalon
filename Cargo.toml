@@ -83,6 +83,7 @@ license = "CC-BY-NC-ND-4.0"
 homepage = "https://etalon.rs/"
 repository = "https://github.com/mediaprophet/etalon"
 version = "0.0.1"
+publish = false
 
 [workspace.dependencies]
 naga = { version = "0.0.1", path = "./naga" }

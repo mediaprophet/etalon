@@ -6,6 +6,7 @@ description = "Common types for naga and etalon"
 homepage.workspace = true
 repository.workspace = true
 license.workspace = true
+publish = false
 
 [package.metadata.docs.rs]
 all-features = true
