@@ -369,13 +369,13 @@ impl EmfPipeline {
             layout: Some(&pipeline_layout),
             vertex: etalon::VertexState {
                 module: &shader,
-                entry_point: Some("vs_main"),
+                entry_point: Some("vertex_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
             fragment: Some(etalon::FragmentState {
                 module: &shader,
-                entry_point: Some("fs_main"),
+                entry_point: Some("fragment_main"),
                 compilation_options: Default::default(),
                 targets: &[Some(etalon::ColorTargetState {
                     format: color_format,
