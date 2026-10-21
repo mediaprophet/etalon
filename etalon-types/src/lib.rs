@@ -319,6 +319,8 @@ impl<T> PollType<T> {
         }
     }
 
+    /// Wait indefinitely for the most recent submission to finish.
+    #[must_use]
     pub const fn wait_indefinitely() -> Self {
         Self::Wait {
             submission_index: None,

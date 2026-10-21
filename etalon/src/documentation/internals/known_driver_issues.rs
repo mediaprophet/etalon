@@ -60,7 +60,7 @@ the same issue.
 ## Intel / DirectX 12
 
 - **Offset after resizing window** —
-  [etalon-rs#647](https://github.com/mediaprophet/etalon-rs/issues/647)
+  [etalon#647](https://github.com/mediaprophet/etalon/issues/647)
 
   | Property         | Values observed   |
   | ---------------- | ----------------- |

@@ -11,7 +11,7 @@ mod file_sync;
 
 use file_sync::{sync_directory, sync_file, Mode};
 
-const LICENSE_FILES: &[&str] = &["LICENSE.APACHE", "LICENSE.MIT"];
+const LICENSE_FILES: &[&str] = &["LICENSE", "LICENSE-QUALIA"];
 
 pub(crate) fn run_sync_repo_files(shell: Shell, mut args: Arguments) -> anyhow::Result<()> {
     let mode = if args.contains("--check") {

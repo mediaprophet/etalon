@@ -3,6 +3,8 @@ name = "etalon-render"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
 license.workspace = true
 description = "Decoupled volumetric, HUD, and EMF rendering substrate for Etalon"
 

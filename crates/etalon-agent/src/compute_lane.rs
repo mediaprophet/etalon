@@ -13,6 +13,9 @@ pub struct PerQueueCompletionToken {
     pub fence_value: u64,
 }
 
+/// Type alias for a queue submission fence token.
+pub type SubmissionToken = PerQueueCompletionToken;
+
 impl PerQueueCompletionToken {
     pub const fn new(queue: QueueId, fence_value: u64) -> Self {
         Self { queue, fence_value }

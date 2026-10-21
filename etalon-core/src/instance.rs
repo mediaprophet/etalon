@@ -49,6 +49,7 @@ impl InstanceDevices {
     ///
     /// Return `all_queue_empty` indicating whether there are more queue
     /// submissions still in flight.
+    #[allow(dead_code)]
     fn poll_all_devices(
         &self,
         force_wait: bool,

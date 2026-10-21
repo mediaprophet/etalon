@@ -1,7 +1,8 @@
 //! Etalon-HAL compute lane execution harness.
 
 use super::capability::CapabilityState;
-use super::compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId};
+use super::compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
+use core::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Arc;
 
 /// A prepared compute pipeline and workgroup sizing on an Etalon device.
@@ -25,7 +26,8 @@ pub struct HalComputeLane {
     queue_id: QueueId,
     state: CapabilityState,
     active_plan: Option<HalPreparedPlan>,
-    fence_counter: u64,
+    submitted_counter: u64,
+    completed_counter: Arc<AtomicU64>,
 }
 
 impl HalComputeLane {
@@ -36,7 +38,8 @@ impl HalComputeLane {
             queue_id,
             state: CapabilityState::Detected,
             active_plan: None,
-            fence_counter: 0,
+            submitted_counter: 0,
+            completed_counter: Arc::new(AtomicU64::new(0)),
         }
     }
 
@@ -46,6 +49,44 @@ impl HalComputeLane {
 
     pub fn queue(&self) -> &etalon::Queue {
         &self.queue
+    }
+
+    pub fn submitted_counter(&self) -> u64 {
+        self.submitted_counter
+    }
+
+    pub fn completed_counter(&self) -> u64 {
+        self.completed_counter.load(Ordering::Acquire)
+    }
+
+    pub fn completed_counter_handle(&self) -> Arc<AtomicU64> {
+        Arc::clone(&self.completed_counter)
+    }
+
+    /// Submit a recorded command buffer and track GPU completion via `on_submitted_work_done`.
+    pub fn submit_command_buffer(&mut self, cmd: etalon::CommandBuffer) -> SubmissionToken {
+        self.submitted_counter += 1;
+        let fence_value = self.submitted_counter;
+        self.queue.submit(std::iter::once(cmd));
+        let completed = Arc::clone(&self.completed_counter);
+        self.queue.on_submitted_work_done(move || {
+            completed.fetch_max(fence_value, Ordering::Release);
+        });
+        self.state = CapabilityState::Verified;
+        PerQueueCompletionToken::new(self.queue_id, fence_value)
+    }
+
+    /// Block until the GPU has completed all work up to `token`.
+    pub fn wait_for(&self, token: SubmissionToken) -> bool {
+        if token.queue != self.queue_id {
+            return false;
+        }
+        while self.completed_counter.load(Ordering::Acquire) < token.fence_value {
+            if self.device.poll(etalon::PollType::wait_indefinitely()).is_err() {
+                break;
+            }
+        }
+        self.completed_counter.load(Ordering::Acquire) >= token.fence_value
     }
 }
 
@@ -83,16 +124,14 @@ impl ComputeLane for HalComputeLane {
             cpass.dispatch_workgroups(wg[0], wg[1], wg[2]);
         }
 
-        self.queue.submit(Some(encoder.finish()));
-        self.fence_counter += 1;
-        self.state = CapabilityState::Verified;
-        Ok(PerQueueCompletionToken::new(self.queue_id, self.fence_counter))
+        Ok(self.submit_command_buffer(encoder.finish()))
     }
 
     fn poll_completion(&self, token: PerQueueCompletionToken) -> bool {
         if token.queue != self.queue_id {
             return false;
         }
-        token.fence_value <= self.fence_counter
+        let _ = self.device.poll(etalon::PollType::Poll);
+        self.completed_counter.load(Ordering::Acquire) >= token.fence_value
     }
 }

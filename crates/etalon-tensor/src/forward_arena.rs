@@ -4,7 +4,7 @@
 //! eliminating ~420 bind groups per model and reducing speculative verify readback
 //! from 9.72 MB down to 4-64 bytes.
 
-use std::sync::Arc;
+
 
 /// Operational mode of the forward execution arena.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

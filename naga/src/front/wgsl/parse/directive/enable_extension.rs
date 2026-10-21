@@ -120,6 +120,7 @@ impl Default for EnableExtensions {
 /// An enable-extension not guaranteed to be present in all environments.
 ///
 /// WGSL spec.: <https://www.w3.org/TR/WGSL/#enable-extensions-sec>
+#[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum EnableExtension {
     Implemented(ImplementedEnableExtension),
@@ -208,6 +209,7 @@ impl EnableExtension {
 }
 
 /// A variant of [`EnableExtension::Implemented`].
+#[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 #[cfg_attr(test, derive(strum::VariantArray))]
 pub enum ImplementedEnableExtension {
@@ -322,6 +324,7 @@ fn test_manual_variants_array_is_correct() {
 }
 
 /// A variant of [`EnableExtension::Unimplemented`].
+#[allow(non_camel_case_types)]
 #[derive(Clone, Copy, Debug, Hash, Eq, PartialEq)]
 pub enum UnimplementedEnableExtension {
     /// Enables subgroup built-ins in all languages.
