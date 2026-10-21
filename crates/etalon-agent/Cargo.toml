@@ -6,6 +6,7 @@ rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
 license.workspace = true
+publish = false
 description = "Silicon steward, capability state machine, and safe resource lease manager for Etalon"
 
 [features]

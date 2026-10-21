@@ -7,6 +7,7 @@ homepage.workspace = true
 repository.workspace = true
 keywords.workspace = true
 license.workspace = true
+publish = false
 
 # Match the MSRV of naga and etalon-types so this crate is usable everywhere they are.
 rust-version = "1.87"

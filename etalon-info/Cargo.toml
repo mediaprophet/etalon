@@ -7,6 +7,7 @@ homepage.workspace = true
 repository.workspace = true
 keywords.workspace = true
 license.workspace = true
+publish = false
 rust-version.workspace = true
 
 [dependencies]

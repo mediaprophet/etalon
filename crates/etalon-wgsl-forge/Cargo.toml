@@ -6,6 +6,7 @@ rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
 license.workspace = true
+publish = false
 description = "Deterministic shader generation, multi-target emission, and verification for Etalon"
 
 [features]

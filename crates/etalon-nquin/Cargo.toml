@@ -6,6 +6,7 @@ rust-version.workspace = true
 authors.workspace = true
 repository.workspace = true
 license.workspace = true
+publish = false
 description = "48-byte semantic datum, warp-scan sieve, and stable GPU LSD radix sort for Etalon"
 
 [features]

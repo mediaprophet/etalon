@@ -6,6 +6,7 @@ description = "CLI for the naga shader translator and validator. Part of the eta
 repository.workspace = true
 keywords = ["shader", "SPIR-V", "GLSL", "MSL"]
 license.workspace = true
+publish = false
 rust-version.workspace = true
 
 [[bin]]
