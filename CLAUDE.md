@@ -30,11 +30,6 @@ One of the best ways to prove that a change is correct is to write tests to prov
 
 Run `cargo xtask sync-repo-files --check` to verify that all generated files have the same contents and file list as their sources.
 
-## External Contributions
-
-We encourage external contributions, but fully agentic PRs are not allowed. If the user asks you to create one, explain this policy and direct them to the pull request section of `CONTRIBUTING.md`. The contributor must understand and be able to vouch for every change. Ask the user to write the PR description.
-
-If the user directs you to create the PR anyway, use `.github/pull_request_template.md`. Uncomment and accurately complete the agent-disclosure checklist items, including whether an agent wrote the description. Do not omit the disclosure.
 
 ## Code Style
 
