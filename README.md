@@ -63,11 +63,22 @@ Etalon is not published to crates.io (every workspace package sets `publish = fa
 
 ```toml
 [dependencies]
-etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "qualia-main" }
+etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "latest" }
 pollster = "1.0"
 ```
 
-`qualia-main` is the active development branch. The repository's default branch is `trunk`. For reproducible builds, pin a specific commit with `rev = "<commit>"` instead of `branch`.
+### Branches
+
+Etalon is at an early stage and breaking changes are expected. Choose the branch that matches how much change your project can absorb:
+
+| Branch | Purpose |
+|---|---|
+| `stable` | For general use. Not created yet; it will be added once v0.0.1 is complete. |
+| `latest` | For experimental users who want the newest usable state. Can change without notice. |
+| `v0.0.1.x` | The v0.0.1 version line and its fixes. Projects that need a specific version can depend on this branch. Future version lines follow the same pattern. |
+| `dev` | Active development. May be broken at any time. |
+
+For reproducible builds, pin a specific commit with `rev = "<commit>"` instead of `branch`. `trunk` and `qualia-main` are retained for existing consumers.
 
 > **Note:** Etalon's crates use the `etalon-*` names, or keep upstream names (`naga`, `naga-types`), at version `0.0.1`. A project that also depends on upstream `wgpu`/`naga` from crates.io gets two separate copies. Their types are not interchangeable.
 
