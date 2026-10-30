@@ -2,9 +2,6 @@ name: CTS
 
 on:
   pull_request:
-  # Runs on `trunk` to save the build caches that pull requests read.
-  schedule:
-    - cron: "0 6 * * *"
   workflow_dispatch:
 
 env:
@@ -171,18 +168,3 @@ jobs:
       - name: Run CTS
         shell: bash
         run: cargo --locked xtask cts --llvm-cov --backend ${{ matrix.backend }} --filter '${{matrix.filter }}'
-
-      - name: Generate coverage report
-        id: coverage
-        continue-on-error: true
-        run: |
-          set -e
-
-          cargo --locked llvm-cov report --lcov --output-path lcov.info
-
-      - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
-        if: steps.coverage.outcome == 'success'
-        with:
-          files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
