@@ -45,6 +45,19 @@ Tracy is available prebuilt for Windows on [github](https://github.com/wolfpld/t
 cargo bench -p etalon-benchmark --features tracy,profiling/profile-with-tracy
 ```
 
+Tracy is unavailable on OpenHarmony's public NDK. Its
+[public pthread header](https://github.com/openharmony/interface_sdk_c/blob/OpenHarmony-6.0-Release/third_party/musl/ndk_musl_include/pthread.h)
+does not expose pthread cancellation, and its
+[errno header](https://github.com/openharmony/interface_sdk_c/blob/OpenHarmony-6.0-Release/third_party/musl/ndk_musl_include/errno.h)
+omits the GNU program-name globals required by the bundled Tracy client.
+Enabling this benchmark crate's `tracy` feature on OpenHarmony prints an
+unsupported-profiling diagnostic and retains ordinary benchmark execution and
+timing. The optional client is excluded for that target; its feature and behavior
+on other native targets are unchanged. OpenHarmony CI continues checking every
+benchmark with all crate features enabled. Do not enable the separate
+`profiling/profile-with-tracy` backend there. Supporting Tracy on OpenHarmony
+requires an upstream platform port using public NDK APIs and runtime validation.
+
 #### Superluminal
 
 Superluminal is a paid product for windows available [here](https://superluminal.eu/).

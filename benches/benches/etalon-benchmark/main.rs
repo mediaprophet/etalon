@@ -17,8 +17,10 @@ struct DeviceState {
 
 impl DeviceState {
     fn new() -> Self {
-        #[cfg(feature = "tracy")]
+        #[cfg(all(feature = "tracy", not(target_env = "ohos")))]
         tracy_client::Client::start();
+        #[cfg(all(feature = "tracy", target_env = "ohos"))]
+        eprintln!("Tracy profiling is unsupported by the OpenHarmony public NDK; benchmark timing remains enabled.");
 
         let base_backend = if cfg!(target_os = "macos") {
             // We don't want to use Molten-VK on Mac.

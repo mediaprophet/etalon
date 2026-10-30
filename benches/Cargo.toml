@@ -31,6 +31,8 @@ profiling.workspace = true
 serde = { workspace = true, features = ["derive"] }
 serde_json.workspace = true
 termcolor.workspace = true
+
+[target.'cfg(not(any(target_arch = "wasm32", target_env = "ohos")))'.dependencies]
 tracy-client = { workspace = true, optional = true }
 
 # Dependencies used by the benchmark crates
