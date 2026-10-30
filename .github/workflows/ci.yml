@@ -7,10 +7,6 @@ on:
       - trunk
       - qualia-main
       - main
-  # Runs on `trunk` to save the build caches that pull requests read
-  # and to upload the coverage baseline.
-  schedule:
-    - cron: "0 6 * * *"
   workflow_dispatch:
 
 env:
@@ -801,22 +797,6 @@ jobs:
           set -e
 
           cat .gpuconfig
-
-      - name: Generate coverage report
-        id: coverage
-        shell: bash
-        continue-on-error: true
-        run: |
-          set -e
-
-          cargo --locked llvm-cov report --lcov --output-path lcov.info
-
-      - name: Upload coverage report to Codecov
-        uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7
-        if: steps.coverage.outcome == 'success'
-        with:
-          files: lcov.info
-          token: ${{ secrets.CODECOV_TOKEN }}
 
   doctest:
     # runtime is normally 2 minutes
