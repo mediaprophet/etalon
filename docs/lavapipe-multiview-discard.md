@@ -54,3 +54,5 @@ and multiview cases. The new preservation case executed on Intel Vulkan; canonic
 DX12 cases executed on Intel and WARP. Unsupported configurations retain their
 explicit status. This host does not provide Lavapipe; Linux CI remains the driver
 verification gate.
+
+The final [Linux CI run](https://github.com/mediaprophet/etalon/actions/runs/41030580991) passed all 1,637 tests, including actual poisoned Lavapipe execution of the sparse ordinary, discard/resolve and prefilled inactive-layer cases. Windows, macOS and WebAssembly test jobs also passed for the same implementation revision.
