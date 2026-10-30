@@ -282,6 +282,46 @@ jobs:
           # the android sdk doesn't use the conventional name for ar, so explicitly set it.
           echo "AR_aarch64_linux_android=llvm-ar" >> "$GITHUB_ENV"
 
+      - name: (OpenHarmony) Install native SDK
+        if: matrix.target == 'aarch64-unknown-linux-ohos'
+        id: ohos-sdk
+        uses: openharmony-rs/setup-ohos-sdk@cfd996a9cff9e72a7e59827cb5424fcfae4ada3e
+        with:
+          version: "6.0"
+          components: native
+
+      - name: (OpenHarmony) Configure and verify native cross compiler
+        if: matrix.target == 'aarch64-unknown-linux-ohos'
+        shell: bash
+        env:
+          OHOS_SDK_NATIVE: ${{ steps.ohos-sdk.outputs.ohos_sdk_native }}
+        run: |
+          set -euo pipefail
+          test -x "$OHOS_SDK_NATIVE/llvm/bin/clang"
+          test -d "$OHOS_SDK_NATIVE/sysroot"
+          toolchain_dir="$RUNNER_TEMP/ohos-toolchain"
+          mkdir -p "$toolchain_dir"
+          cat > "$toolchain_dir/clang" <<'EOF'
+          #!/bin/sh
+          exec "$OHOS_SDK_NATIVE/llvm/bin/clang" -target aarch64-linux-ohos --sysroot="$OHOS_SDK_NATIVE/sysroot" -D__MUSL__ "$@"
+          EOF
+          cat > "$toolchain_dir/clang++" <<'EOF'
+          #!/bin/sh
+          exec "$OHOS_SDK_NATIVE/llvm/bin/clang++" -target aarch64-linux-ohos --sysroot="$OHOS_SDK_NATIVE/sysroot" -D__MUSL__ "$@"
+          EOF
+          chmod +x "$toolchain_dir/clang" "$toolchain_dir/clang++"
+          echo "OHOS_SDK_NATIVE=$OHOS_SDK_NATIVE" >> "$GITHUB_ENV"
+          echo "CC_aarch64_unknown_linux_ohos=$toolchain_dir/clang" >> "$GITHUB_ENV"
+          echo "CXX_aarch64_unknown_linux_ohos=$toolchain_dir/clang++" >> "$GITHUB_ENV"
+          echo "AR_aarch64_unknown_linux_ohos=$OHOS_SDK_NATIVE/llvm/bin/llvm-ar" >> "$GITHUB_ENV"
+          echo "CARGO_TARGET_AARCH64_UNKNOWN_LINUX_OHOS_LINKER=$toolchain_dir/clang" >> "$GITHUB_ENV"
+          printf '#include <arm_neon.h>\nuint32x4_t ohos_neon_probe(void) { return vdupq_n_u32(1); }\n' > "$toolchain_dir/neon.c"
+          "$toolchain_dir/clang" --version
+          "$toolchain_dir/clang" -c "$toolchain_dir/neon.c" -o "$toolchain_dir/neon.o"
+          header=$("$OHOS_SDK_NATIVE/llvm/bin/llvm-readelf" --file-header "$toolchain_dir/neon.o")
+          printf '%s\n' "$header"
+          [[ "$header" == *"AArch64"* ]]
+
       # Building for wasm32 requires a series of specific tests for the WebGPU backend.
       - name: Check web
         if: matrix.kind == 'web'
