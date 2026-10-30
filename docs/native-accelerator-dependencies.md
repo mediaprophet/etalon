@@ -86,3 +86,21 @@ model or pretrained weights. Runtime NPU device selection, disabled CPU fallback
 correct output and attributed execution profiling are all required before this
 workload can be reported as executed on the NPU. Device discovery or library
 initialization alone is insufficient.
+
+## Workspace dependency audit
+
+The complete workspace dependency graph is checked for advisories, licenses,
+sources and duplicate versions. `paste` was replaced by the compatible maintained
+`pastey 0.2.3` package. Exact duplicate-version exceptions in `.deny.toml` describe
+incompatible upstream APIs required by window-system backends, JNI and deadlock
+detection; they do not disable advisory or license checks for those dependencies.
+Private workspace packages retain the existing license-metadata exclusion;
+repository-file sync checks the first-party license copies it manages.
+
+The transitive Wayland title-rendering dependency `ttf-parser 0.25.1` remains
+unmaintained under [RUSTSEC-2026-0192](https://rustsec.org/advisories/RUSTSEC-2026-0192).
+Winit 0.30's `ab_glyph` dependency has no compatible maintained-parser upgrade.
+This specific advisory is recorded as an exception, not a resolved dependency.
+Replacing it with the available crossfont backend introduced an MPL-2.0 binding
+dependency, so that alternative was not retained. The existing title-rendering
+behavior is preserved; a future window-system update must revisit this exception.

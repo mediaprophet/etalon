@@ -2,6 +2,7 @@
 
 use bytemuck::{Pod, Zeroable};
 
+#[cfg(feature = "gpu")]
 use super::layout::NQuinWire;
 
 #[repr(C)]
@@ -385,7 +386,7 @@ impl GpuRadixSorter {
         #[cfg(target_arch = "wasm32")]
         {
             let _ = out_stage;
-            return None;
+            None
         }
 
         #[cfg(not(target_arch = "wasm32"))]

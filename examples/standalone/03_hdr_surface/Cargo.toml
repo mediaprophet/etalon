@@ -8,7 +8,7 @@ publish = false
 
 [dependencies]
 etalon = "0.0.1"
-winit = { version = "0.30.8", features = ["android-native-activity"] }
+winit = { version = "0.30.13", features = ["android-native-activity"] }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 env_logger = "0.11"
@@ -16,7 +16,7 @@ pollster = "1.0"
 
 # macOS: observe screen-parameter changes to re-query HDR info (winit has no event for it).
 [target.'cfg(target_os = "macos")'.dependencies]
-objc2 = "0.6.3"
+objc2 = "0.6.5"
 objc2-foundation = { version = "0.3.2", features = [
     "NSNotification",
     "NSOperation",
@@ -25,10 +25,10 @@ objc2-foundation = { version = "0.3.2", features = [
 block2 = "0.6.2"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-console_error_panic_hook = "0.1.5"
-wasm-bindgen = "0.2.127"
-wasm-bindgen-futures = "0.4.77"
-web-sys = { version = "0.3.104", features = [
+console_error_panic_hook = "0.1.7"
+wasm-bindgen = "0.2.129"
+wasm-bindgen-futures = "0.4.79"
+web-sys = { version = "0.3.106", features = [
     "console",
     "Document",
     "Element",
