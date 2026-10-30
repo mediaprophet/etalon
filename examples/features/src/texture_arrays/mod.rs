@@ -93,7 +93,7 @@ impl crate::framework::Example for Example {
     ) -> Self {
         let mut uniform_workaround = false;
         let base_shader_module = device.create_shader_module(etalon::include_wgsl!("indexing.wgsl"));
-        let env_override = match std::env::var("etalon_TEXTURE_ARRAY_STYLE") {
+        let env_override = match std::env::var("ETALON_TEXTURE_ARRAY_STYLE") {
             Ok(value) => match &*value.to_lowercase() {
                 "nonuniform" | "non_uniform" => Some(true),
                 "uniform" => Some(false),

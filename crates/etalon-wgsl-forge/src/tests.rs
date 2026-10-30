@@ -16,7 +16,7 @@ fn all_builtin_wgsl_kernels_emit_and_validate_with_naga() {
             let spec = builtin.spec();
             spec.validate().expect("RayProbe spec must validate");
             let shader = emit_wgsl(&spec, Schedule::default()).expect("RayProbe WGSL emit");
-            assert!(shader.source.contains("enable wgpu_ray_query;"));
+            assert!(shader.source.contains("enable etalon_ray_query;"));
             continue;
         }
         let spec = builtin.spec();
@@ -99,11 +99,11 @@ fn coopmat_m1_decode_bypass_and_tile_shapes() {
 
     // Verify all 4 cooperative matrix WGSL generators emit real, non-stub WGSL
     let tc8 = matmul_tc_wgsl();
-    assert!(tc8.contains("enable wgpu_cooperative_matrix;"));
+    assert!(tc8.contains("enable etalon_cooperative_matrix;"));
     assert!(tc8.contains("coop_mat8x8<f32"));
 
     let tc8_tiled = matmul_tc_wgsl_tiled();
-    assert!(tc8_tiled.contains("enable wgpu_cooperative_matrix;"));
+    assert!(tc8_tiled.contains("enable etalon_cooperative_matrix;"));
     assert!(tc8_tiled.contains("coopMultiplyAdd"));
 
     let tc16_f16 = matmul_tc_f16_16x16_wgsl();
@@ -111,7 +111,7 @@ fn coopmat_m1_decode_bypass_and_tile_shapes() {
     assert!(tc16_f16.contains("coop_mat16x16<f16"));
 
     let tc16_i8 = matmul_tc_i8_16x16x32_wgsl();
-    assert!(tc16_i8.contains("enable wgpu_cooperative_matrix;"));
+    assert!(tc16_i8.contains("enable etalon_cooperative_matrix;"));
     assert!(tc16_i8.contains("coop_mat16x16<i32"));
 }
 

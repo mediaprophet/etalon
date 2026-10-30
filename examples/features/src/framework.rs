@@ -296,7 +296,7 @@ impl ExampleContext {
                 default_queue: etalon::QueueDescriptor { label: None },
                 experimental_features: unsafe { etalon::ExperimentalFeatures::enabled() },
                 memory_hints: etalon::MemoryHints::MemoryUsage,
-                trace: match std::env::var_os("etalon_TRACE") {
+                trace: match std::env::var_os("ETALON_TRACE") {
                     Some(path) => etalon::Trace::Directory(path.into()),
                     None => etalon::Trace::Off,
                 },
@@ -348,7 +348,7 @@ impl FrameCounter {
 /// back to the main event loop.
 enum AppAction {
     /// The async etalon initialization has completed.
-    etalonInitialized {
+    EtalonInitialized {
         context: ExampleContext,
         surface: SurfaceWrapper,
     },
@@ -460,7 +460,7 @@ impl<E: Example> ApplicationHandler<AppAction> for App<E> {
             let context =
                 ExampleContext::init_async::<E>(&mut surface, window.clone(), display_handle).await;
             surface.resume(&context, window, E::SRGB);
-            let _ = proxy.send_event(AppAction::etalonInitialized { context, surface });
+            let _ = proxy.send_event(AppAction::EtalonInitialized { context, surface });
         });
     }
 
@@ -468,7 +468,7 @@ impl<E: Example> ApplicationHandler<AppAction> for App<E> {
     /// transitions to the running state.
     fn user_event(&mut self, _event_loop: &ActiveEventLoop, event: AppAction) {
         match event {
-            AppAction::etalonInitialized { context, surface } => {
+            AppAction::EtalonInitialized { context, surface } => {
                 let example = E::init(
                     surface.config(),
                     &context.adapter,

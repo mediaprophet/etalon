@@ -21,7 +21,7 @@ fn spawn(f: impl Future<Output = ()> + 'static) {
     wasm_bindgen_futures::spawn_local(f);
 }
 
-struct etalonState {
+struct EtalonState {
     instance: etalon::Instance,
     window: Arc<Window>,
     device: etalon::Device,
@@ -32,14 +32,14 @@ struct etalonState {
 }
 
 enum TriangleAction {
-    Initialized(etalonState),
+    Initialized(EtalonState),
 }
 
 #[expect(clippy::large_enum_variant)]
 enum AppState {
     Uninitialized,
     Loading,
-    Running(etalonState),
+    Running(EtalonState),
 }
 
 struct App {
@@ -195,7 +195,7 @@ impl ApplicationHandler<TriangleAction> for App {
 
             surface.configure(&device, &config);
 
-            let _ = proxy.send_event(TriangleAction::Initialized(etalonState {
+            let _ = proxy.send_event(TriangleAction::Initialized(EtalonState {
                 instance,
                 window,
                 device,

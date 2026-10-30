@@ -163,7 +163,7 @@ fn create_output_image_element(document: &web_sys::Document) -> web_sys::HtmlIma
 }
 
 #[cfg(not(target_arch = "wasm32"))]
-/// If the environment variable `etalon_ADAPTER_NAME` is set, this function will attempt to
+/// If the environment variable `ETALON_ADAPTER_NAME` is set, this function will attempt to
 /// initialize the adapter with that name. If it is not set, it will attempt to initialize
 /// the adapter which supports the required features.
 pub(crate) async fn get_adapter_with_capabilities_or_from_env(
@@ -173,7 +173,7 @@ pub(crate) async fn get_adapter_with_capabilities_or_from_env(
     surface: &Option<&etalon::Surface<'_>>,
 ) -> etalon::Adapter {
     use etalon::Backends;
-    if std::env::var("etalon_ADAPTER_NAME").is_ok() {
+    if std::env::var("ETALON_ADAPTER_NAME").is_ok() {
         let adapter = etalon::util::initialize_adapter_from_env_or_default(instance, *surface)
             .await
             .expect("No suitable GPU adapters found on the system!");

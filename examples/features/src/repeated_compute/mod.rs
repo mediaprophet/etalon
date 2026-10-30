@@ -11,7 +11,7 @@ const OVERFLOW: u32 = 0xffffffff;
 
 async fn run() {
     let mut numbers = [0u32; 256];
-    let context = etalonContext::new(size_of_val(&numbers)).await;
+    let context = EtalonContext::new(size_of_val(&numbers)).await;
 
     let mut rand = nanorand::WyRand::new();
 
@@ -33,7 +33,7 @@ async fn run() {
     }
 }
 
-async fn compute(local_buffer: &mut [u32], context: &etalonContext) {
+async fn compute(local_buffer: &mut [u32], context: &EtalonContext) {
     log::info!("Beginning GPU compute on data {local_buffer:?}.");
     // Local buffer contents -> GPU storage buffer
     // Adds a write buffer command to the queue. This command is more complicated
@@ -147,7 +147,7 @@ pub fn main() {
 }
 
 /// A convenient way to hold together all the useful etalon stuff together.
-struct etalonContext {
+struct EtalonContext {
     device: etalon::Device,
     queue: etalon::Queue,
     pipeline: etalon::ComputePipeline,
@@ -156,8 +156,8 @@ struct etalonContext {
     output_staging_buffer: etalon::Buffer,
 }
 
-impl etalonContext {
-    async fn new(buffer_size: usize) -> etalonContext {
+impl EtalonContext {
+    async fn new(buffer_size: usize) -> EtalonContext {
         let instance = etalon::Instance::default();
         let adapter = instance
             .request_adapter(&etalon::RequestAdapterOptions::default())
@@ -242,7 +242,7 @@ impl etalonContext {
             cache: None,
         });
 
-        etalonContext {
+        EtalonContext {
             device,
             queue,
             pipeline,

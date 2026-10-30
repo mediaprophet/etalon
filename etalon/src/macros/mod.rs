@@ -287,7 +287,7 @@ macro_rules! doc_image {
             "[",
             $name,
             "]: https://raw.githubusercontent.com/mediaprophet/etalon/",
-            env!("etalon_DOCS_COMMIT"),
+            env!("ETALON_DOCS_COMMIT"),
             "/etalon/src/documentation/images/",
             $name
         )
@@ -297,7 +297,7 @@ macro_rules! doc_image {
 #[cfg(not(docsrs))]
 macro_rules! doc_image {
     ($name:literal) => {
-        concat!("[", $name, "]: ", env!("etalon_DOCS_URL_BASE"), "/", $name)
+        concat!("[", $name, "]: ", env!("ETALON_DOCS_URL_BASE"), "/", $name)
     };
 }
 pub(crate) use doc_image;

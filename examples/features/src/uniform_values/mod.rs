@@ -96,7 +96,7 @@ impl Default for ShaderState {
     }
 }
 
-struct etalonContext {
+struct EtalonContext {
     pub instance: etalon::Instance,
     pub window: Arc<Window>,
     pub surface: etalon::Surface<'static>,
@@ -108,11 +108,11 @@ struct etalonContext {
     pub uniform_buffer: etalon::Buffer,
 }
 
-impl etalonContext {
+impl EtalonContext {
     async fn new(
         window: Arc<Window>,
         display_handle: winit::event_loop::OwnedDisplayHandle,
-    ) -> etalonContext {
+    ) -> EtalonContext {
         let size = window.inner_size();
 
         let instance = etalon::Instance::new(
@@ -214,7 +214,7 @@ impl etalonContext {
         surface.configure(&device, &surface_config);
 
         // (5)
-        etalonContext {
+        EtalonContext {
             instance,
             window,
             surface,
@@ -235,7 +235,7 @@ impl etalonContext {
 }
 
 enum UniformAction {
-    Initialized(etalonContext),
+    Initialized(EtalonContext),
 }
 
 #[expect(clippy::large_enum_variant)]
@@ -243,7 +243,7 @@ enum RunState {
     Uninitialized,
     Loading,
     Running {
-        etalon_ctx: etalonContext,
+        etalon_ctx: EtalonContext,
         // (6)
         shader_state: ShaderState,
     },
@@ -306,7 +306,7 @@ impl ApplicationHandler<UniformAction> for App {
         let proxy = self.proxy.clone();
 
         spawn(async move {
-            let etalon_ctx = etalonContext::new(window, display_handle).await;
+            let etalon_ctx = EtalonContext::new(window, display_handle).await;
             let _ = proxy.send_event(UniformAction::Initialized(etalon_ctx));
         });
     }

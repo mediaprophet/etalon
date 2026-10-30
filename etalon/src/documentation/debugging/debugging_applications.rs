@@ -146,7 +146,7 @@ Error { code: Eof, position: Position { line: 96233, col: 1 } }', player/src/bin
 If you encounter a problem with something that runs fine outside of Gecko
 but fails to run in Gecko, there is a way to trace the API use by the
 browser. Simply run Firefox Nightly (with prefs enabled for WebGPU,
-obviously) under `etalon_TRACE` pointing to a writable folder, and it will
+obviously) under `ETALON_TRACE` pointing to a writable folder, and it will
 record the API trace. Setting `MOZ_DISABLE_GPU_SANDBOX=1` might also be
 required if the GPU process is sandboxed by default. This trace can be
 replayed as usual, or even compared to a trace you get by running the same

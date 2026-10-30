@@ -144,7 +144,7 @@ pub const fn should_use_coopmat(shape: &CoopMatShape) -> bool {
 /// Emits the cooperative-matrix 8x8 GEMM tile `C = A * B`, all-f32.
 pub fn matmul_tc_wgsl() -> String {
     format!(
-        r#"enable wgpu_cooperative_matrix;
+        r#"enable etalon_cooperative_matrix;
 
 @group(0) @binding(0) var<storage, read> a: array<f32>;
 @group(0) @binding(1) var<storage, read> b: array<f32>;
@@ -165,7 +165,7 @@ fn matmul_tc() {{
 /// Emits a tiled cooperative-matrix GEMM `C[m x n] = A[m x k] * B[k x n]` (row-major, all-f32).
 pub fn matmul_tc_wgsl_tiled() -> String {
     format!(
-        r#"enable wgpu_cooperative_matrix;
+        r#"enable etalon_cooperative_matrix;
 
 @group(0) @binding(0) var<storage, read> a: array<f32>;
 @group(0) @binding(1) var<storage, read> b: array<f32>;
@@ -203,7 +203,7 @@ fn {ENTRY}(@builtin(workgroup_id) wid: vec3<u32>) {{
 pub fn matmul_tc_f16_16x16_wgsl() -> String {
     format!(
         r#"enable f16;
-enable wgpu_cooperative_matrix;
+enable etalon_cooperative_matrix;
 
 @group(0) @binding(0) var<storage, read> a: array<f16>;
 @group(0) @binding(1) var<storage, read> b: array<f16>;
@@ -225,7 +225,7 @@ fn {ENTRY}() {{
 /// `CooperativeSize::ThirtyTwo` (`coop_mat16x32` / `coop_mat32x16` / `coop_mat16x16<i32, C>`).
 pub fn matmul_tc_i8_16x16x32_wgsl() -> String {
     format!(
-        r#"enable wgpu_cooperative_matrix;
+        r#"enable etalon_cooperative_matrix;
 
 @group(0) @binding(0) var<storage, read> a: array<i32>;
 @group(0) @binding(1) var<storage, read> b: array<i32>;

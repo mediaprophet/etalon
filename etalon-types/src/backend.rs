@@ -167,15 +167,15 @@ impl From<Backend> for Backends {
 }
 
 impl Backends {
-    /// Gets a set of backends from the environment variable `etalon_BACKEND`.
+    /// Gets a set of backends from the environment variable `ETALON_BACKEND`.
     ///
     /// See [`Self::from_comma_list()`] for the format of the string.
     pub fn from_env() -> Option<Self> {
-        let env = crate::env::var("etalon_BACKEND")?;
+        let env = crate::env::var("ETALON_BACKEND")?;
         Some(Self::from_comma_list(&env))
     }
 
-    /// Takes the given options, modifies them based on the `etalon_BACKEND` environment variable, and returns the result.
+    /// Takes the given options, modifies them based on the `ETALON_BACKEND` environment variable, and returns the result.
     pub fn with_env(&self) -> Self {
         if let Some(env) = Self::from_env() {
             env
@@ -343,7 +343,7 @@ pub enum GlDebugFns {
 }
 
 impl GlDebugFns {
-    /// Choose debug functions setting from the environment variable `etalon_GL_DEBUG_FNS`.
+    /// Choose debug functions setting from the environment variable `ETALON_GL_DEBUG_FNS`.
     ///
     /// Possible values (case insensitive):
     /// - `auto` - automatically decide based on device
@@ -353,7 +353,7 @@ impl GlDebugFns {
     /// Use with `unwrap_or_default()` to get the default value if the environment variable is not set.
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let value = crate::env::var("etalon_GL_DEBUG_FNS")
+        let value = crate::env::var("ETALON_GL_DEBUG_FNS")
             .as_deref()?
             .to_lowercase();
         match value.as_str() {
@@ -364,7 +364,7 @@ impl GlDebugFns {
         }
     }
 
-    /// Takes the given setting, modifies it based on the `etalon_GL_DEBUG_FNS` environment variable, and returns the result.
+    /// Takes the given setting, modifies it based on the `ETALON_GL_DEBUG_FNS` environment variable, and returns the result.
     ///
     /// See `from_env` for more information.
     #[must_use]
@@ -418,13 +418,13 @@ pub enum Dx12AgilitySDKLoadFailure {
 
 impl Dx12AgilitySDKLoadFailure {
     /// Read the load failure behavior from the environment variable
-    /// `etalon_DX12_AGILITY_SDK_REQUIRE`.
+    /// `ETALON_DX12_AGILITY_SDK_REQUIRE`.
     ///
     /// When set to `1`, returns [`Error`](Self::Error).
     /// When set to `0`, returns [`Fallback`](Self::Fallback).
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let value = crate::env::var("etalon_DX12_AGILITY_SDK_REQUIRE")?;
+        let value = crate::env::var("ETALON_DX12_AGILITY_SDK_REQUIRE")?;
         match value.as_str() {
             "1" => Some(Self::Error),
             "0" => Some(Self::Fallback),
@@ -433,7 +433,7 @@ impl Dx12AgilitySDKLoadFailure {
     }
 
     /// Takes the given setting, modifies it based on the
-    /// `etalon_DX12_AGILITY_SDK_REQUIRE` environment variable, and returns the result.
+    /// `ETALON_DX12_AGILITY_SDK_REQUIRE` environment variable, and returns the result.
     ///
     /// See [`from_env`](Self::from_env) for more information.
     #[must_use]
@@ -501,7 +501,7 @@ pub struct Dx12AgilitySDK {
     ///
     /// Defaults to [`Fallback`](Dx12AgilitySDKLoadFailure::Fallback).
     ///
-    /// Can also be set via the `etalon_DX12_AGILITY_SDK_REQUIRE` environment variable
+    /// Can also be set via the `ETALON_DX12_AGILITY_SDK_REQUIRE` environment variable
     /// (`1` for [`Error`](Dx12AgilitySDKLoadFailure::Error),
     /// `0` for [`Fallback`](Dx12AgilitySDKLoadFailure::Fallback)).
     pub on_load_failure: Dx12AgilitySDKLoadFailure,
@@ -510,13 +510,13 @@ pub struct Dx12AgilitySDK {
 impl Dx12AgilitySDK {
     /// Read Agility SDK configuration from environment variables.
     ///
-    /// Reads `etalon_DX12_AGILITY_SDK_PATH`, `etalon_DX12_AGILITY_SDK_VERSION`,
-    /// and `etalon_DX12_AGILITY_SDK_REQUIRE`.
+    /// Reads `ETALON_DX12_AGILITY_SDK_PATH`, `ETALON_DX12_AGILITY_SDK_VERSION`,
+    /// and `ETALON_DX12_AGILITY_SDK_REQUIRE`.
     /// Both path and version must be set for this to return `Some`.
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let sdk_path = crate::env::var("etalon_DX12_AGILITY_SDK_PATH")?;
-        let sdk_version_str = crate::env::var("etalon_DX12_AGILITY_SDK_VERSION")?;
+        let sdk_path = crate::env::var("ETALON_DX12_AGILITY_SDK_PATH")?;
+        let sdk_version_str = crate::env::var("ETALON_DX12_AGILITY_SDK_VERSION")?;
         let sdk_version = sdk_version_str.parse::<u32>().ok()?;
         let on_load_failure = Dx12AgilitySDKLoadFailure::from_env().unwrap_or_default();
         Some(Self {
@@ -529,15 +529,15 @@ impl Dx12AgilitySDK {
     /// Takes the given configuration, overrides fields with environment variables if present,
     /// and returns the result.
     ///
-    /// Reads `etalon_DX12_AGILITY_SDK_PATH`, `etalon_DX12_AGILITY_SDK_VERSION`,
-    /// and `etalon_DX12_AGILITY_SDK_REQUIRE`.
+    /// Reads `ETALON_DX12_AGILITY_SDK_PATH`, `ETALON_DX12_AGILITY_SDK_VERSION`,
+    /// and `ETALON_DX12_AGILITY_SDK_REQUIRE`.
     /// Each variable overrides the corresponding field independently.
     #[must_use]
     pub fn with_env(mut self) -> Self {
-        if let Some(sdk_path) = crate::env::var("etalon_DX12_AGILITY_SDK_PATH") {
+        if let Some(sdk_path) = crate::env::var("ETALON_DX12_AGILITY_SDK_PATH") {
             self.sdk_path = sdk_path;
         }
-        if let Some(sdk_version_str) = crate::env::var("etalon_DX12_AGILITY_SDK_VERSION") {
+        if let Some(sdk_version_str) = crate::env::var("ETALON_DX12_AGILITY_SDK_VERSION") {
             if let Ok(sdk_version) = sdk_version_str.parse::<u32>() {
                 self.sdk_version = sdk_version;
             }
@@ -569,7 +569,7 @@ pub struct Dx12BackendOptions {
     /// Independent Devices API. If the API is unavailable or the configuration is
     /// invalid, it falls back to the system-installed D3D12 runtime.
     ///
-    /// Can also be set via `etalon_DX12_AGILITY_SDK_PATH` and `etalon_DX12_AGILITY_SDK_VERSION`
+    /// Can also be set via `ETALON_DX12_AGILITY_SDK_PATH` and `ETALON_DX12_AGILITY_SDK_VERSION`
     /// environment variables.
     pub agility_sdk: Option<Dx12AgilitySDK>,
 }
@@ -655,7 +655,7 @@ impl NoopBackendOptions {
 
     /// Choose whether the noop backend is enabled from the environment.
     ///
-    /// It will be enabled if the environment variable `etalon_NOOP_BACKEND` has the value `1`
+    /// It will be enabled if the environment variable `ETALON_NOOP_BACKEND` has the value `1`
     /// and not otherwise. Future versions may assign other meanings to other values.
     #[must_use]
     pub fn from_env_or_default() -> Self {
@@ -678,7 +678,7 @@ impl NoopBackendOptions {
     }
 
     fn enable_from_env() -> Option<bool> {
-        let value = crate::env::var("etalon_NOOP_BACKEND")?;
+        let value = crate::env::var("ETALON_NOOP_BACKEND")?;
         match value.as_str() {
             "1" => Some(true),
             "0" => Some(false),
@@ -709,14 +709,14 @@ pub enum Dx12SwapchainKind {
 }
 
 impl Dx12SwapchainKind {
-    /// Choose which presentation system to use from the environment variable `etalon_DX12_PRESENTATION_SYSTEM`.
+    /// Choose which presentation system to use from the environment variable `ETALON_DX12_PRESENTATION_SYSTEM`.
     ///
     /// Valid values, case insensitive:
     /// - `DxgiFromVisual` or `Visual`
     /// - `DxgiFromHwnd` or `Hwnd` for [`Self::DxgiFromHwnd`]
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let value = crate::env::var("etalon_DX12_PRESENTATION_SYSTEM")
+        let value = crate::env::var("ETALON_DX12_PRESENTATION_SYSTEM")
             .as_deref()?
             .to_lowercase();
         match value.as_str() {
@@ -726,7 +726,7 @@ impl Dx12SwapchainKind {
         }
     }
 
-    /// Takes the given presentation system, modifies it based on the `etalon_DX12_PRESENTATION_SYSTEM` environment variable, and returns the result.
+    /// Takes the given presentation system, modifies it based on the `ETALON_DX12_PRESENTATION_SYSTEM` environment variable, and returns the result.
     ///
     /// See [`from_env`](Self::from_env) for more information.
     #[must_use]
@@ -830,7 +830,7 @@ impl Dx12Compiler {
         }
     }
 
-    /// Choose which DX12 shader compiler to use from the environment variable `etalon_DX12_COMPILER`.
+    /// Choose which DX12 shader compiler to use from the environment variable `ETALON_DX12_COMPILER`.
     ///
     /// Valid values, case insensitive:
     /// - `Fxc`
@@ -838,16 +838,16 @@ impl Dx12Compiler {
     /// - `StaticDxc`
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let env = crate::env::var("etalon_DX12_COMPILER")?;
+        let env = crate::env::var("ETALON_DX12_COMPILER")?;
         env.parse().map_err(|expected_msg| {
             log::warn!(
-                "Unknown value `{env:?}` for `etalon_DX12_COMPILER` environment variable. {expected_msg}"
+                "Unknown value `{env:?}` for `ETALON_DX12_COMPILER` environment variable. {expected_msg}"
             )
         })
         .ok()
     }
 
-    /// Takes the given compiler, modifies it based on the `etalon_DX12_COMPILER` environment variable, and returns the result.
+    /// Takes the given compiler, modifies it based on the `ETALON_DX12_COMPILER` environment variable, and returns the result.
     ///
     /// See `from_env` for more information.
     #[must_use]
@@ -892,7 +892,7 @@ pub enum Dx12UseFrameLatencyWaitableObject {
 }
 
 impl Dx12UseFrameLatencyWaitableObject {
-    /// Choose whether to use a frame latency waitable object from the environment variable `etalon_DX12_USE_FRAME_LATENCY_WAITABLE_OBJECT`.
+    /// Choose whether to use a frame latency waitable object from the environment variable `ETALON_DX12_USE_FRAME_LATENCY_WAITABLE_OBJECT`.
     ///
     /// Valid values, case insensitive:
     /// - `None`
@@ -900,7 +900,7 @@ impl Dx12UseFrameLatencyWaitableObject {
     /// - `DontWait`
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let value = crate::env::var("etalon_DX12_USE_FRAME_LATENCY_WAITABLE_OBJECT")
+        let value = crate::env::var("ETALON_DX12_USE_FRAME_LATENCY_WAITABLE_OBJECT")
             .as_deref()?
             .to_lowercase();
         match value.as_str() {
@@ -911,7 +911,7 @@ impl Dx12UseFrameLatencyWaitableObject {
         }
     }
 
-    /// Takes the given setting, modifies it based on the `etalon_DX12_USE_FRAME_LATENCY_WAITABLE_OBJECT` environment variable, and returns the result.
+    /// Takes the given setting, modifies it based on the `ETALON_DX12_USE_FRAME_LATENCY_WAITABLE_OBJECT` environment variable, and returns the result.
     ///
     /// See `from_env` for more information.
     #[must_use]
@@ -944,14 +944,14 @@ pub enum Gles3MinorVersion {
 }
 
 impl Gles3MinorVersion {
-    /// Choose which minor OpenGL ES version to use from the environment variable `etalon_GLES_MINOR_VERSION`.
+    /// Choose which minor OpenGL ES version to use from the environment variable `ETALON_GLES_MINOR_VERSION`.
     ///
     /// Possible values are `0`, `1`, `2` or `automatic`. Case insensitive.
     ///
     /// Use with `unwrap_or_default()` to get the default value if the environment variable is not set.
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let value = crate::env::var("etalon_GLES_MINOR_VERSION")
+        let value = crate::env::var("ETALON_GLES_MINOR_VERSION")
             .as_deref()?
             .to_lowercase();
         match value.as_str() {
@@ -963,7 +963,7 @@ impl Gles3MinorVersion {
         }
     }
 
-    /// Takes the given compiler, modifies it based on the `etalon_GLES_MINOR_VERSION` environment variable, and returns the result.
+    /// Takes the given compiler, modifies it based on the `ETALON_GLES_MINOR_VERSION` environment variable, and returns the result.
     ///
     /// See `from_env` for more information.
     #[must_use]
@@ -1008,14 +1008,14 @@ impl GlFenceBehavior {
         matches!(self, Self::Normal)
     }
 
-    /// Choose which minor OpenGL ES version to use from the environment variable `etalon_GL_FENCE_BEHAVIOR`.
+    /// Choose which minor OpenGL ES version to use from the environment variable `ETALON_GL_FENCE_BEHAVIOR`.
     ///
     /// Possible values are `Normal` or `AutoFinish`. Case insensitive.
     ///
     /// Use with `unwrap_or_default()` to get the default value if the environment variable is not set.
     #[must_use]
     pub fn from_env() -> Option<Self> {
-        let value = crate::env::var("etalon_GL_FENCE_BEHAVIOR")
+        let value = crate::env::var("ETALON_GL_FENCE_BEHAVIOR")
             .as_deref()?
             .to_lowercase();
         match value.as_str() {
@@ -1025,7 +1025,7 @@ impl GlFenceBehavior {
         }
     }
 
-    /// Takes the given compiler, modifies it based on the `etalon_GL_FENCE_BEHAVIOR` environment variable, and returns the result.
+    /// Takes the given compiler, modifies it based on the `ETALON_GL_FENCE_BEHAVIOR` environment variable, and returns the result.
     ///
     /// See `from_env` for more information.
     #[must_use]

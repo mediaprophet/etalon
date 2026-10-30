@@ -8,7 +8,7 @@
 //! `etalon-core`'s observed behavior.
 //!
 //! When `etalon-core`'s `observe_locks` feature is enabled, if the
-//! `etalon_CORE_LOCK_OBSERVE_DIR` environment variable is set to the
+//! `ETALON_CORE_LOCK_OBSERVE_DIR` environment variable is set to the
 //! path of an existing directory, then every thread that acquires a
 //! lock in `etalon-core` will write its own log file to that directory.
 //! You can then run the `etalon` workspace's `lock-analyzer` binary to
@@ -16,7 +16,7 @@
 //! `lock-analyzer` has the same form as the lock ranks given in
 //! [`lock/rank.rs`].
 //!
-//! If the `etalon_CORE_LOCK_OBSERVE_DIR` environment variable is not
+//! If the `ETALON_CORE_LOCK_OBSERVE_DIR` environment variable is not
 //! set, then no instrumentation takes place, and the locks behave
 //! normally.
 //!
@@ -258,7 +258,7 @@ fn acquire(new_rank: LockRank, location: &'static Location<'static>) -> Option<H
         match *state {
             ThreadState::Disabled => None,
             ThreadState::Initial => {
-                let Ok(dir) = std::env::var("etalon_CORE_LOCK_OBSERVE_DIR") else {
+                let Ok(dir) = std::env::var("ETALON_CORE_LOCK_OBSERVE_DIR") else {
                     *state = ThreadState::Disabled;
                     return None;
                 };

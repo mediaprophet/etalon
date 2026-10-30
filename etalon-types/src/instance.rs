@@ -139,7 +139,7 @@ bitflags::bitflags! {
     pub struct InstanceFlags: u32 {
         /// Generate debug information in shaders and objects.
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_DEBUG` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_DEBUG` environment variable.
         const DEBUG = 1 << 0;
         /// Enable validation in the backend API, if possible:
         ///
@@ -156,7 +156,7 @@ bitflags::bitflags! {
         ///   enables the Vulkan validation layers by setting
         ///   [`EGL_PLATFORM_ANGLE_DEBUG_LAYERS_ENABLED`][gl:av].
         ///
-        /// When `Self::from_env()` is used, this bit is set if the `etalon_VALIDATION`
+        /// When `Self::from_env()` is used, this bit is set if the `ETALON_VALIDATION`
         /// environment variable has any value but "0".
         ///
         /// [dx12]: https://learn.microsoft.com/en-us/windows/win32/api/d3d12sdklayers/nf-d3d12sdklayers-id3d12debug-enabledebuglayer
@@ -167,7 +167,7 @@ bitflags::bitflags! {
         const VALIDATION = 1 << 1;
         /// Don't pass labels to etalon-hal.
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_DISCARD_HAL_LABELS` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_DISCARD_HAL_LABELS` environment variable.
         const DISCARD_HAL_LABELS = 1 << 2;
         /// Whether etalon should expose adapters that run on top of non-compliant adapters.
         ///
@@ -184,7 +184,7 @@ bitflags::bitflags! {
         /// [`Self::STRICT_WEBGPU_COMPLIANCE`] controls whether adapters that
         /// can't fully satisfy the *WebGPU v1* spec are excluded.
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER` environment variable.
         const ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER = 1 << 3;
         /// Enable GPU-based validation. Implies [`Self::VALIDATION`]. Currently, this only changes
         /// behavior on the DX12 and Vulkan backends.
@@ -196,7 +196,7 @@ bitflags::bitflags! {
         /// - Vulkan, via the `VK_LAYER_KHRONOS_validation` layer; called ["GPU-Assisted
         ///   Validation"](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/e45aeb85079e0835694cb8f03e6681fd18ae72c9/docs/gpu_validation.md#gpu-assisted-validation)
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_GPU_BASED_VALIDATION` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_GPU_BASED_VALIDATION` environment variable.
         const GPU_BASED_VALIDATION = 1 << 4;
 
         /// Validate indirect buffer content prior to issuing indirect draws/dispatches.
@@ -221,7 +221,7 @@ bitflags::bitflags! {
         /// - the value of `@builtin(vertex_index)` will not take into account the value of the `first_vertex`/`base_vertex` argument present in the indirect buffer
         /// - the value of `@builtin(instance_index)` will not take into account the value of the `first_instance` argument present in the indirect buffer
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_VALIDATION_INDIRECT_CALL` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_VALIDATION_INDIRECT_CALL` environment variable.
         const VALIDATION_INDIRECT_CALL = 1 << 5;
 
         /// Enable automatic timestamp normalization. This means that in [`CommandEncoder::resolve_query_set`][rqs],
@@ -238,7 +238,7 @@ bitflags::bitflags! {
 
         /// Restrict the available feature set to the one defined by the WebGPU specification.
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_STRICT_WEBGPU_COMPLIANCE` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_STRICT_WEBGPU_COMPLIANCE` environment variable.
         const STRICT_WEBGPU_COMPLIANCE = 1 << 7;
 
         /// Enable capturing the output of shader `debugPrintf`.
@@ -249,7 +249,7 @@ bitflags::bitflags! {
         ///
         /// Other backends, such as Metal, capture the output without needing this flag.
         ///
-        /// When `Self::from_env()` is used takes value from `etalon_DEBUG_PRINTF` environment variable.
+        /// When `Self::from_env()` is used takes value from `ETALON_DEBUG_PRINTF` environment variable.
         const DEBUG_PRINTF = 1 << 8;
     }
 }
@@ -298,18 +298,18 @@ impl InstanceFlags {
     /// - If the value is "0", the flag is unset.
     /// - If the environment variable is not present, then the flag retains its initial value.
     ///
-    /// For example `let flags = InstanceFlags::debugging().with_env();` with `etalon_VALIDATION=0`
+    /// For example `let flags = InstanceFlags::debugging().with_env();` with `ETALON_VALIDATION=0`
     /// does not contain [`InstanceFlags::VALIDATION`].
     ///
     /// The environment variables are named after the flags prefixed with "etalon_". For example:
-    /// - `etalon_DEBUG`
-    /// - `etalon_VALIDATION`
-    /// - `etalon_DISCARD_HAL_LABELS`
-    /// - `etalon_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER`
-    /// - `etalon_GPU_BASED_VALIDATION`
-    /// - `etalon_VALIDATION_INDIRECT_CALL`
-    /// - `etalon_STRICT_WEBGPU_COMPLIANCE`
-    /// - `etalon_DEBUG_PRINTF`
+    /// - `ETALON_DEBUG`
+    /// - `ETALON_VALIDATION`
+    /// - `ETALON_DISCARD_HAL_LABELS`
+    /// - `ETALON_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER`
+    /// - `ETALON_GPU_BASED_VALIDATION`
+    /// - `ETALON_VALIDATION_INDIRECT_CALL`
+    /// - `ETALON_STRICT_WEBGPU_COMPLIANCE`
+    /// - `ETALON_DEBUG_PRINTF`
     #[must_use]
     pub fn with_env(mut self) -> Self {
         fn env(key: &str) -> Option<bool> {
@@ -319,29 +319,29 @@ impl InstanceFlags {
             })
         }
 
-        if let Some(bit) = env("etalon_VALIDATION") {
+        if let Some(bit) = env("ETALON_VALIDATION") {
             self.set(Self::VALIDATION, bit);
         }
 
-        if let Some(bit) = env("etalon_DEBUG") {
+        if let Some(bit) = env("ETALON_DEBUG") {
             self.set(Self::DEBUG, bit);
         }
-        if let Some(bit) = env("etalon_DISCARD_HAL_LABELS") {
+        if let Some(bit) = env("ETALON_DISCARD_HAL_LABELS") {
             self.set(Self::DISCARD_HAL_LABELS, bit);
         }
-        if let Some(bit) = env("etalon_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER") {
+        if let Some(bit) = env("ETALON_ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER") {
             self.set(Self::ALLOW_UNDERLYING_NONCOMPLIANT_ADAPTER, bit);
         }
-        if let Some(bit) = env("etalon_GPU_BASED_VALIDATION") {
+        if let Some(bit) = env("ETALON_GPU_BASED_VALIDATION") {
             self.set(Self::GPU_BASED_VALIDATION, bit);
         }
-        if let Some(bit) = env("etalon_VALIDATION_INDIRECT_CALL") {
+        if let Some(bit) = env("ETALON_VALIDATION_INDIRECT_CALL") {
             self.set(Self::VALIDATION_INDIRECT_CALL, bit);
         }
-        if let Some(bit) = env("etalon_STRICT_WEBGPU_COMPLIANCE") {
+        if let Some(bit) = env("ETALON_STRICT_WEBGPU_COMPLIANCE") {
             self.set(Self::STRICT_WEBGPU_COMPLIANCE, bit);
         }
-        if let Some(bit) = env("etalon_DEBUG_PRINTF") {
+        if let Some(bit) = env("ETALON_DEBUG_PRINTF") {
             self.set(Self::DEBUG_PRINTF, bit);
         }
 

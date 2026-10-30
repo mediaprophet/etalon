@@ -51,24 +51,24 @@ impl EnableExtensions {
     /// Add an enable-extension to the set requested by a module.
     pub(crate) const fn add(&mut self, ext: ImplementedEnableExtension) {
         let field = match ext {
-            ImplementedEnableExtension::etalonMeshShader => &mut self.etalon_mesh_shader,
-            ImplementedEnableExtension::etalonRayQuery => &mut self.etalon_ray_query,
-            ImplementedEnableExtension::etalonRayQueryVertexReturn => {
+            ImplementedEnableExtension::EtalonMeshShader => &mut self.etalon_mesh_shader,
+            ImplementedEnableExtension::EtalonRayQuery => &mut self.etalon_ray_query,
+            ImplementedEnableExtension::EtalonRayQueryVertexReturn => {
                 &mut self.etalon_ray_query_vertex_return
             }
-            ImplementedEnableExtension::etalonRayTracingPipeline => {
+            ImplementedEnableExtension::EtalonRayTracingPipeline => {
                 &mut self.etalon_ray_tracing_pipeline
             }
             ImplementedEnableExtension::DualSourceBlending => &mut self.dual_source_blending,
             ImplementedEnableExtension::F16 => &mut self.f16,
-            ImplementedEnableExtension::etalonInt16 => &mut self.etalon_int16,
+            ImplementedEnableExtension::EtalonInt16 => &mut self.etalon_int16,
             ImplementedEnableExtension::ClipDistances => &mut self.clip_distances,
-            ImplementedEnableExtension::etalonCooperativeMatrix => &mut self.etalon_cooperative_matrix,
+            ImplementedEnableExtension::EtalonCooperativeMatrix => &mut self.etalon_cooperative_matrix,
             ImplementedEnableExtension::DrawIndex => &mut self.draw_index,
             ImplementedEnableExtension::PrimitiveIndex => &mut self.primitive_index,
-            ImplementedEnableExtension::etalonPerVertex => &mut self.per_vertex,
-            ImplementedEnableExtension::etalonBindingArray => &mut self.etalon_binding_array,
-            ImplementedEnableExtension::etalonDebugPrintf => &mut self.debug_printf,
+            ImplementedEnableExtension::EtalonPerVertex => &mut self.per_vertex,
+            ImplementedEnableExtension::EtalonBindingArray => &mut self.etalon_binding_array,
+            ImplementedEnableExtension::EtalonDebugPrintf => &mut self.debug_printf,
         };
         *field = true;
     }
@@ -76,22 +76,22 @@ impl EnableExtensions {
     /// Query whether an enable-extension tracked here has been requested.
     pub(crate) const fn contains(&self, ext: ImplementedEnableExtension) -> bool {
         match ext {
-            ImplementedEnableExtension::etalonMeshShader => self.etalon_mesh_shader,
-            ImplementedEnableExtension::etalonRayQuery => self.etalon_ray_query,
-            ImplementedEnableExtension::etalonRayQueryVertexReturn => {
+            ImplementedEnableExtension::EtalonMeshShader => self.etalon_mesh_shader,
+            ImplementedEnableExtension::EtalonRayQuery => self.etalon_ray_query,
+            ImplementedEnableExtension::EtalonRayQueryVertexReturn => {
                 self.etalon_ray_query_vertex_return
             }
-            ImplementedEnableExtension::etalonRayTracingPipeline => self.etalon_ray_tracing_pipeline,
+            ImplementedEnableExtension::EtalonRayTracingPipeline => self.etalon_ray_tracing_pipeline,
             ImplementedEnableExtension::DualSourceBlending => self.dual_source_blending,
             ImplementedEnableExtension::F16 => self.f16,
-            ImplementedEnableExtension::etalonInt16 => self.etalon_int16,
+            ImplementedEnableExtension::EtalonInt16 => self.etalon_int16,
             ImplementedEnableExtension::ClipDistances => self.clip_distances,
-            ImplementedEnableExtension::etalonCooperativeMatrix => self.etalon_cooperative_matrix,
+            ImplementedEnableExtension::EtalonCooperativeMatrix => self.etalon_cooperative_matrix,
             ImplementedEnableExtension::DrawIndex => self.draw_index,
             ImplementedEnableExtension::PrimitiveIndex => self.primitive_index,
-            ImplementedEnableExtension::etalonPerVertex => self.per_vertex,
-            ImplementedEnableExtension::etalonBindingArray => self.etalon_binding_array,
-            ImplementedEnableExtension::etalonDebugPrintf => self.debug_printf,
+            ImplementedEnableExtension::EtalonPerVertex => self.per_vertex,
+            ImplementedEnableExtension::EtalonBindingArray => self.etalon_binding_array,
+            ImplementedEnableExtension::EtalonDebugPrintf => self.debug_printf,
         }
     }
 
@@ -158,24 +158,24 @@ impl EnableExtension {
             Self::DUAL_SOURCE_BLENDING => {
                 Self::Implemented(ImplementedEnableExtension::DualSourceBlending)
             }
-            Self::MESH_SHADER => Self::Implemented(ImplementedEnableExtension::etalonMeshShader),
-            Self::RAY_QUERY => Self::Implemented(ImplementedEnableExtension::etalonRayQuery),
+            Self::MESH_SHADER => Self::Implemented(ImplementedEnableExtension::EtalonMeshShader),
+            Self::RAY_QUERY => Self::Implemented(ImplementedEnableExtension::EtalonRayQuery),
             Self::RAY_QUERY_VERTEX_RETURN => {
-                Self::Implemented(ImplementedEnableExtension::etalonRayQueryVertexReturn)
+                Self::Implemented(ImplementedEnableExtension::EtalonRayQueryVertexReturn)
             }
             Self::RAY_TRACING_PIPELINE => {
-                Self::Implemented(ImplementedEnableExtension::etalonRayTracingPipeline)
+                Self::Implemented(ImplementedEnableExtension::EtalonRayTracingPipeline)
             }
             Self::COOPERATIVE_MATRIX => {
-                Self::Implemented(ImplementedEnableExtension::etalonCooperativeMatrix)
+                Self::Implemented(ImplementedEnableExtension::EtalonCooperativeMatrix)
             }
             Self::SUBGROUPS => Self::Unimplemented(UnimplementedEnableExtension::Subgroups),
             Self::DRAW_INDEX => Self::Implemented(ImplementedEnableExtension::DrawIndex),
             Self::PRIMITIVE_INDEX => Self::Implemented(ImplementedEnableExtension::PrimitiveIndex),
-            Self::PER_VERTEX => Self::Implemented(ImplementedEnableExtension::etalonPerVertex),
-            Self::BINDING_ARRAY => Self::Implemented(ImplementedEnableExtension::etalonBindingArray),
-            Self::INT16 => Self::Implemented(ImplementedEnableExtension::etalonInt16),
-            Self::DEBUG_PRINTF => Self::Implemented(ImplementedEnableExtension::etalonDebugPrintf),
+            Self::PER_VERTEX => Self::Implemented(ImplementedEnableExtension::EtalonPerVertex),
+            Self::BINDING_ARRAY => Self::Implemented(ImplementedEnableExtension::EtalonBindingArray),
+            Self::INT16 => Self::Implemented(ImplementedEnableExtension::EtalonInt16),
+            Self::DEBUG_PRINTF => Self::Implemented(ImplementedEnableExtension::EtalonDebugPrintf),
             _ => return Err(Box::new(Error::UnknownEnableExtension(span, word))),
         })
     }
@@ -184,22 +184,22 @@ impl EnableExtension {
     pub const fn to_ident(self) -> &'static str {
         match self {
             Self::Implemented(kind) => match kind {
-                ImplementedEnableExtension::etalonMeshShader => Self::MESH_SHADER,
-                ImplementedEnableExtension::etalonRayQuery => Self::RAY_QUERY,
-                ImplementedEnableExtension::etalonRayQueryVertexReturn => {
+                ImplementedEnableExtension::EtalonMeshShader => Self::MESH_SHADER,
+                ImplementedEnableExtension::EtalonRayQuery => Self::RAY_QUERY,
+                ImplementedEnableExtension::EtalonRayQueryVertexReturn => {
                     Self::RAY_QUERY_VERTEX_RETURN
                 }
-                ImplementedEnableExtension::etalonCooperativeMatrix => Self::COOPERATIVE_MATRIX,
+                ImplementedEnableExtension::EtalonCooperativeMatrix => Self::COOPERATIVE_MATRIX,
                 ImplementedEnableExtension::DualSourceBlending => Self::DUAL_SOURCE_BLENDING,
                 ImplementedEnableExtension::F16 => Self::F16,
                 ImplementedEnableExtension::ClipDistances => Self::CLIP_DISTANCES,
                 ImplementedEnableExtension::DrawIndex => Self::DRAW_INDEX,
                 ImplementedEnableExtension::PrimitiveIndex => Self::PRIMITIVE_INDEX,
-                ImplementedEnableExtension::etalonRayTracingPipeline => Self::RAY_TRACING_PIPELINE,
-                ImplementedEnableExtension::etalonPerVertex => Self::PER_VERTEX,
-                ImplementedEnableExtension::etalonBindingArray => Self::BINDING_ARRAY,
-                ImplementedEnableExtension::etalonInt16 => Self::INT16,
-                ImplementedEnableExtension::etalonDebugPrintf => Self::DEBUG_PRINTF,
+                ImplementedEnableExtension::EtalonRayTracingPipeline => Self::RAY_TRACING_PIPELINE,
+                ImplementedEnableExtension::EtalonPerVertex => Self::PER_VERTEX,
+                ImplementedEnableExtension::EtalonBindingArray => Self::BINDING_ARRAY,
+                ImplementedEnableExtension::EtalonInt16 => Self::INT16,
+                ImplementedEnableExtension::EtalonDebugPrintf => Self::DEBUG_PRINTF,
             },
             Self::Unimplemented(kind) => match kind {
                 UnimplementedEnableExtension::Subgroups => Self::SUBGROUPS,
@@ -232,15 +232,15 @@ pub enum ImplementedEnableExtension {
     /// [`enable clip_distances;`]: https://www.w3.org/TR/WGSL/#extension-clip_distances
     ClipDistances,
     /// Enables the `etalon_mesh_shader` extension, native only
-    etalonMeshShader,
+    EtalonMeshShader,
     /// Enables the `etalon_ray_query` extension, native only.
-    etalonRayQuery,
+    EtalonRayQuery,
     /// Enables the `etalon_ray_query_vertex_return` extension, native only.
-    etalonRayQueryVertexReturn,
+    EtalonRayQueryVertexReturn,
     /// Enables the `etalon_ray_tracing_pipeline` extension, native only.
-    etalonRayTracingPipeline,
+    EtalonRayTracingPipeline,
     /// Enables the `etalon_cooperative_matrix` extension, native only.
-    etalonCooperativeMatrix,
+    EtalonCooperativeMatrix,
     /// Enables the `draw_index` builtin. Not currently part of the WGSL spec but probably will be at some point.
     DrawIndex,
     /// Enables the `@builtin(primitive_index)` attribute in WGSL.
@@ -250,13 +250,13 @@ pub enum ImplementedEnableExtension {
     /// [`enable primitive-index;`]: https://www.w3.org/TR/WGSL/#extension-primitive_index
     PrimitiveIndex,
     /// Enables the `etalon_per_vertex` extension, allows using `@interpolate(per_vertex)` attribute in WGSL, native only.
-    etalonPerVertex,
+    EtalonPerVertex,
     /// Enables the `etalon_binding_array` extension, native only.
-    etalonBindingArray,
+    EtalonBindingArray,
     /// Enables `i16`/`u16` 16-bit integer support in WGSL, native only.
-    etalonInt16,
+    EtalonInt16,
     /// Enables the `etalon_debug_printf` extension, allows using `debugPrintf`, native only.
-    etalonDebugPrintf,
+    EtalonDebugPrintf,
 }
 
 impl ImplementedEnableExtension {
@@ -265,17 +265,17 @@ impl ImplementedEnableExtension {
         Self::F16,
         Self::DualSourceBlending,
         Self::ClipDistances,
-        Self::etalonMeshShader,
-        Self::etalonRayQuery,
-        Self::etalonRayQueryVertexReturn,
-        Self::etalonRayTracingPipeline,
-        Self::etalonCooperativeMatrix,
+        Self::EtalonMeshShader,
+        Self::EtalonRayQuery,
+        Self::EtalonRayQueryVertexReturn,
+        Self::EtalonRayTracingPipeline,
+        Self::EtalonCooperativeMatrix,
         Self::DrawIndex,
         Self::PrimitiveIndex,
-        Self::etalonPerVertex,
-        Self::etalonBindingArray,
-        Self::etalonInt16,
-        Self::etalonDebugPrintf,
+        Self::EtalonPerVertex,
+        Self::EtalonBindingArray,
+        Self::EtalonInt16,
+        Self::EtalonDebugPrintf,
     ];
 
     /// Returns slice of all variants of [`ImplementedEnableExtension`].
@@ -290,15 +290,15 @@ impl ImplementedEnableExtension {
             Self::F16 => C::SHADER_FLOAT16,
             Self::DualSourceBlending => C::DUAL_SOURCE_BLENDING,
             Self::ClipDistances => C::CLIP_DISTANCES,
-            Self::etalonMeshShader => C::MESH_SHADER,
-            Self::etalonRayQuery => C::RAY_QUERY,
-            Self::etalonRayQueryVertexReturn => C::RAY_HIT_VERTEX_POSITION,
-            Self::etalonCooperativeMatrix => C::COOPERATIVE_MATRIX,
-            Self::etalonRayTracingPipeline => C::RAY_TRACING_PIPELINE,
+            Self::EtalonMeshShader => C::MESH_SHADER,
+            Self::EtalonRayQuery => C::RAY_QUERY,
+            Self::EtalonRayQueryVertexReturn => C::RAY_HIT_VERTEX_POSITION,
+            Self::EtalonCooperativeMatrix => C::COOPERATIVE_MATRIX,
+            Self::EtalonRayTracingPipeline => C::RAY_TRACING_PIPELINE,
             Self::DrawIndex => C::DRAW_INDEX,
             Self::PrimitiveIndex => C::PRIMITIVE_INDEX,
-            Self::etalonPerVertex => C::PER_VERTEX,
-            Self::etalonBindingArray => C::BUFFER_BINDING_ARRAY
+            Self::EtalonPerVertex => C::PER_VERTEX,
+            Self::EtalonBindingArray => C::BUFFER_BINDING_ARRAY
                 .union(C::BUFFER_BINDING_ARRAY_NON_UNIFORM_INDEXING)
                 .union(C::STORAGE_BUFFER_BINDING_ARRAY)
                 .union(C::STORAGE_BUFFER_BINDING_ARRAY_NON_UNIFORM_INDEXING)
@@ -307,8 +307,8 @@ impl ImplementedEnableExtension {
                 .union(C::TEXTURE_AND_SAMPLER_BINDING_ARRAY)
                 .union(C::TEXTURE_AND_SAMPLER_BINDING_ARRAY_NON_UNIFORM_INDEXING)
                 .union(C::ACCELERATION_STRUCTURE_BINDING_ARRAY),
-            Self::etalonInt16 => C::SHADER_INT16,
-            Self::etalonDebugPrintf => C::DEBUG_PRINTF,
+            Self::EtalonInt16 => C::SHADER_INT16,
+            Self::EtalonDebugPrintf => C::DEBUG_PRINTF,
         }
     }
 }

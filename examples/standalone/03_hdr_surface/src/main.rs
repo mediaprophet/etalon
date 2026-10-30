@@ -17,7 +17,7 @@
 //! `hdr10|hlg|scrgb|extended-srgb|extended-display-p3|srgb` (e.g. `cargo run --
 //! hdr10`; on the web: a `?mode=` query parameter) — to force a particular color
 //! space instead of auto-picking.
-//! Set `etalon_BACKEND=vulkan` to force the backend.
+//! Set `ETALON_BACKEND=vulkan` to force the backend.
 
 use std::sync::Arc;
 
@@ -525,7 +525,7 @@ impl ApplicationHandler<UserEvent> for App {
         // `window_handle()` errors with `Unavailable` anywhere else).
         //
         // `InstanceDescriptor::new_without_display_handle_from_env` honors
-        // `etalon_BACKEND` (e.g. `vulkan`, `dx12`) so each backend's color-space
+        // `ETALON_BACKEND` (e.g. `vulkan`, `dx12`) so each backend's color-space
         // path can be exercised separately.
         let instance =
             etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle_from_env());

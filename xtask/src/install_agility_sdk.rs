@@ -19,8 +19,8 @@ pub fn run_install_agility_sdk(shell: Shell, _args: Arguments) -> anyhow::Result
 
     let info = install_agility_sdk(&shell)?;
 
-    println!("etalon_DX12_AGILITY_SDK_PATH={}", info.sdk_path);
-    println!("etalon_DX12_AGILITY_SDK_VERSION={}", info.sdk_version);
+    println!("ETALON_DX12_AGILITY_SDK_PATH={}", info.sdk_path);
+    println!("ETALON_DX12_AGILITY_SDK_VERSION={}", info.sdk_version);
 
     Ok(())
 }

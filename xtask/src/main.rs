@@ -128,8 +128,8 @@ Commands:
   install-agility-sdk
     Download and install the D3D12 Agility SDK for testing with a specific D3D12 runtime version.
 
-    Prints the required environment variables (etalon_DX12_AGILITY_SDK_PATH and
-    etalon_DX12_AGILITY_SDK_VERSION) to stdout after installation.
+    Prints the required environment variables (ETALON_DX12_AGILITY_SDK_PATH and
+    ETALON_DX12_AGILITY_SDK_VERSION) to stdout after installation.
 
 Options:
   -h, --help  Print help

@@ -44,28 +44,18 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ## Unreleased
 
-### Bug Fixes
+## v0.0.1 (in development)
 
-#### General
-
-- `etalon-render`: EMF pipeline entry points now match the shader's `vertex_main` and `fragment_main`. (4e77ca3f7)
-
-### Documentation
-
-- README: upstream attribution to [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu), corrected the fork's version wording, a git-dependency quickstart matching the current API, and the homepage.
-- `upstream-licenses/`: restored the upstream MIT copyright notice (`The gfx-rs developers`) and clarified which material each license covers.
-- Workspace `homepage` is now <https://mediaprophet.github.io/etalon/>.
-- This changelog now records Etalon changes only. Upstream history is linked above rather than copied.
-
-## v0.0.1 (2026-10-21)
-
-First Etalon release, tagged `v0.0.1`. Forked from wgpu 30.
+First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-10-21 before the version was complete; work on v0.0.1 continues on the `v0.0.1.x` branch.
 
 ### Major changes
 
 - Renamed the `wgpu` crates, modules and documentation to `etalon` (`etalon`, `etalon-core`, `etalon-hal`, `etalon-types`, `etalon-core-remote`, `etalon-core-remote-types`, `etalon-sync`, `etalon-naga-bridge`, `etalon-info`). `naga` and `naga-types` keep their names. (5e1908e38 and earlier)
 - Set every workspace package to version `0.0.1` with `publish = false`. Etalon is consumed through git, not crates.io. (f20f5abaf, ed0b671d8)
 - Licensing: Etalon modifications and additions are CC BY-NC-ND 4.0 (`LICENSE`, `LICENSE-QUALIA`). Upstream wgpu license texts are kept in `upstream-licenses/`. (bcfb954fb, 29df9cf5e)
+- Environment variables use the upper-case `ETALON_` prefix (for example `ETALON_BACKEND`, `ETALON_ADAPTER_NAME`, `ETALON_POWER_PREF`, `ETALON_VALIDATION`). The initial rename had produced lower-case `etalon_*` names; those are no longer read, and neither are upstream's `WGPU_*` names.
+- WGSL extensions specific to this implementation use the `etalon_` prefix (for example `enable etalon_ray_query;`, `enable etalon_cooperative_matrix;`). Upstream's `wgpu_*` spellings are not accepted.
+- Branch model: `dev` (development), `latest` (experimental users, default branch), `v0.0.1.x` (the v0.0.1 version line and its fixes), and `stable` (general use, to be created when v0.0.1 is complete).
 
 ### Added/New Features
 
@@ -73,6 +63,13 @@ First Etalon release, tagged `v0.0.1`. Forked from wgpu 30.
 - Implementation work across the foundation/types/sync, naga IR/frontends/validation, naga backends, `etalon-core`, `etalon-hal`, and surface/deno/examples layers. (9ebe40ef3, 2aa8295a5, baf80e4c5, 38c7237d2, e6ac82c3d, 38723252e)
 
 ### Bug Fixes
+
+#### General
+
+- Identifiers broken by the rename are back to Rust naming conventions: `Etalon*` types and enum variants (for example `ImplementedEnableExtension::EtalonRayQuery`, `EtalonContext`) and upper-case constants and statics (`INSIDE_ETALON_PASSES`, `ETALON_CTS_XTASK`).
+- `etalon-wgsl-forge`: generated shaders now use `enable etalon_cooperative_matrix;` and `enable etalon_ray_query;`, which Etalon's WGSL front end accepts. They previously used upstream's `wgpu_*` spellings, which it rejects.
+- `etalon-core`: a range-tracking test called a non-existent `RangedStates::append` and stopped the crate's tests from compiling. It now uses `isolate` and `coalesce`.
+- `etalon-render`: EMF pipeline entry points now match the shader's `vertex_main` and `fragment_main`. (4e77ca3f7)
 
 #### WebGPU
 
@@ -87,6 +84,19 @@ First Etalon release, tagged `v0.0.1`. Forked from wgpu 30.
 
 - The `static-dxc` feature is stubbed to remove the dependency on the unmaintained `mach-dxcompiler-rs`. (7957b224a)
 
+### Documentation
+
+- README: upstream attribution to [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu), a git-dependency quickstart matching the current API, the homepage, the branch model, and an environment-variable section.
+- `upstream-licenses/`: restored the upstream MIT copyright notice (`The gfx-rs developers`) and clarified which material each license covers.
+- Workspace `homepage` is <https://mediaprophet.github.io/etalon/>.
+- This changelog records Etalon changes only. Upstream history is linked above rather than copied.
+- Removed dead links and links to crates.io/docs.rs for Etalon crates; Etalon is not published to crates.io.
+
 ### Dependency Updates
 
 - Workspace dependencies harmonized with consuming projects. (0c9e6c466)
+
+### Testing/Internal
+
+- Removed wgpu's community, governance and contribution setup (contributing, governance, code of conduct and security policies; issue and PR templates; maintainer approval and changelog PR gates; merge-queue, review and release checklists).
+- Removed legacy CI services and automation (Renovate, Codecov, daily scheduled runs, the `Lazy` workflow). Docs and examples deploy to this repository's `gh-pages` branch.

@@ -16,4 +16,4 @@ cargo run --bin etalon-info
 
 When called with any amount of arguments, it will interpret all of the arguments as a command to run. It will run this command N different times, one for every combination of adapter and backend on the system.
 
-For every command invocation, it will set `etalon_ADAPTER_NAME` to the name of the adapter name and `etalon_BACKEND` to the name of the backend. This is used as the primary means of testing across many adapters.
+For every command invocation, it will set `ETALON_ADAPTER_NAME` to the name of the adapter name and `ETALON_BACKEND` to the name of the backend. This is used as the primary means of testing across many adapters.

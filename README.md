@@ -112,6 +112,23 @@ On the WebGPU (browser) backend, Etalon removes any requested limit keys the ada
 
 ---
 
+## Environment variables
+
+Etalon uses `ETALON_*` environment variables wherever upstream wgpu uses `WGPU_*`. The `WGPU_*` names are **not** read, so projects migrating from wgpu need to rename them (for example `WGPU_BACKEND` → `ETALON_BACKEND`).
+
+These variables take effect when an application opts in through the `from_env` / `with_env` helpers (for example `Backends::from_env()`, `InstanceFlags::with_env()`, `BackendOptions::from_env_or_default()`) or `etalon::util::initialize_adapter_from_env_or_default()`. The examples, tests and benchmarks in this repository use them.
+
+| Variable | Effect |
+|---|---|
+| `ETALON_BACKEND` | Comma-separated list of backends: `vulkan`, `dx12`, `metal`, `gl`, `webgpu`. |
+| `ETALON_ADAPTER_NAME` | Selects the first adapter whose name contains this value (case-insensitive). |
+| `ETALON_POWER_PREF` | Power preference: `low`, `high` or `none`. |
+| `ETALON_DEBUG`, `ETALON_VALIDATION`, `ETALON_GPU_BASED_VALIDATION` | Debugging and validation flags (`1` enables, `0` disables). |
+
+Backend-specific variables (`ETALON_DX12_*`, `ETALON_GLES_MINOR_VERSION`, `ETALON_GL_*`, `ETALON_NOOP_BACKEND`) and the remaining instance flags are documented on `BackendOptions` and `InstanceFlags` in `etalon-types`.
+
+---
+
 ## Verification & Build
 
 ### Desktop Build:

@@ -80,7 +80,7 @@ fn main() {
     } else {
         format!("file:///{docs_dir}")
     };
-    println!("cargo::rustc-env=etalon_DOCS_URL_BASE={docs_url}");
+    println!("cargo::rustc-env=ETALON_DOCS_URL_BASE={docs_url}");
 
     // Pin hosted documentation image URLs (docs.rs and the self-hosted trunk
     // docs) to the exact commit being built rather than the moving `trunk`
@@ -89,7 +89,7 @@ fn main() {
     // and ignore it, so we deliberately don't add a `rerun-if-changed` on the
     // git HEAD — recomputing it on the build script's normal re-runs is enough.
     println!(
-        "cargo::rustc-env=etalon_DOCS_COMMIT={}",
+        "cargo::rustc-env=ETALON_DOCS_COMMIT={}",
         docs_commit(&manifest_dir)
     );
 }

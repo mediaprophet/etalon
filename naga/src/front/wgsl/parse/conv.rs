@@ -21,26 +21,26 @@ pub fn map_address_space<'a>(
         "immediate" => Ok(crate::AddressSpace::Immediate),
         "function" => Ok(crate::AddressSpace::Function),
         "task_payload" => {
-            enable_extensions.require(ImplementedEnableExtension::etalonMeshShader, span)?;
+            enable_extensions.require(ImplementedEnableExtension::EtalonMeshShader, span)?;
             Ok(crate::AddressSpace::TaskPayload)
         }
         "ray_payload" => {
-            if enable_extensions.contains(ImplementedEnableExtension::etalonRayTracingPipeline) {
+            if enable_extensions.contains(ImplementedEnableExtension::EtalonRayTracingPipeline) {
                 Ok(crate::AddressSpace::RayPayload)
             } else {
                 Err(Box::new(Error::EnableExtensionNotEnabled {
                     span,
-                    kind: ImplementedEnableExtension::etalonRayTracingPipeline.into(),
+                    kind: ImplementedEnableExtension::EtalonRayTracingPipeline.into(),
                 }))
             }
         }
         "incoming_ray_payload" => {
-            if enable_extensions.contains(ImplementedEnableExtension::etalonRayTracingPipeline) {
+            if enable_extensions.contains(ImplementedEnableExtension::EtalonRayTracingPipeline) {
                 Ok(crate::AddressSpace::IncomingRayPayload)
             } else {
                 Err(Box::new(Error::EnableExtensionNotEnabled {
                     span,
-                    kind: ImplementedEnableExtension::etalonRayTracingPipeline.into(),
+                    kind: ImplementedEnableExtension::EtalonRayTracingPipeline.into(),
                 }))
             }
         }
@@ -67,10 +67,10 @@ pub fn map_ray_flag(
 ) -> Result<'static, ()> {
     match word {
         "vertex_return" => {
-            if !enable_extensions.contains(ImplementedEnableExtension::etalonRayQueryVertexReturn) {
+            if !enable_extensions.contains(ImplementedEnableExtension::EtalonRayQueryVertexReturn) {
                 return Err(Box::new(Error::EnableExtensionNotEnabled {
                     span,
-                    kind: ImplementedEnableExtension::etalonRayQueryVertexReturn.into(),
+                    kind: ImplementedEnableExtension::EtalonRayQueryVertexReturn.into(),
                 }));
             }
             Ok(())
@@ -166,7 +166,7 @@ pub fn map_built_in(
         | crate::BuiltIn::Vertices
         | crate::BuiltIn::PrimitiveCount
         | crate::BuiltIn::Primitives => {
-            enable_extensions.require(ImplementedEnableExtension::etalonMeshShader, span)?
+            enable_extensions.require(ImplementedEnableExtension::EtalonMeshShader, span)?
         }
         _ => {}
     }
@@ -183,7 +183,7 @@ pub fn map_interpolation(
         "flat" => Ok(crate::Interpolation::Flat),
         "perspective" => Ok(crate::Interpolation::Perspective),
         "per_vertex" => {
-            enable_extensions.require(ImplementedEnableExtension::etalonPerVertex, span)?;
+            enable_extensions.require(ImplementedEnableExtension::EtalonPerVertex, span)?;
             Ok(crate::Interpolation::PerVertex)
         }
         _ => Err(Box::new(Error::UnknownAttribute(span))),
@@ -589,20 +589,20 @@ pub fn map_predeclared_type(
             Some(&[ImplementedEnableExtension::F16])
         }
         PredeclaredType::TypeInner(ref ty) if matches!(ty.scalar(), Some(s) if s == Sc::I16 || s == Sc::U16) => {
-            Some(&[ImplementedEnableExtension::etalonInt16])
+            Some(&[ImplementedEnableExtension::EtalonInt16])
         }
         PredeclaredType::RayDesc
         | PredeclaredType::RayIntersection
         | PredeclaredType::TypeGenerator(TypeGenerator::AccelerationStructure)
         | PredeclaredType::TypeGenerator(TypeGenerator::RayQuery) => Some(&[
-            ImplementedEnableExtension::etalonRayQuery,
-            ImplementedEnableExtension::etalonRayTracingPipeline,
+            ImplementedEnableExtension::EtalonRayQuery,
+            ImplementedEnableExtension::EtalonRayTracingPipeline,
         ]),
         PredeclaredType::TypeGenerator(TypeGenerator::CooperativeMatrix { .. }) => {
-            Some(&[ImplementedEnableExtension::etalonCooperativeMatrix])
+            Some(&[ImplementedEnableExtension::EtalonCooperativeMatrix])
         }
         PredeclaredType::TypeGenerator(TypeGenerator::BindingArray) => {
-            Some(&[ImplementedEnableExtension::etalonBindingArray])
+            Some(&[ImplementedEnableExtension::EtalonBindingArray])
         }
         _ => None,
     };

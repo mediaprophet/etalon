@@ -25,7 +25,7 @@ env:
   # This is the MSRV used by all repository infrastructure.
   REPO_MSRV: "1.96.1"
   # This is the MSRV used by `etalon` itself.
-  etalon_MSRV: "1.87"
+  ETALON_MSRV: "1.87"
   # This is the MSRV used by the `etalon-core`, `etalon-hal`, `etalon-sync`, and `etalon-types` crates,
   # to ensure that they can be used with firefox.
   CORE_MSRV: "1.87"
@@ -43,14 +43,14 @@ env:
   RUSTDOCFLAGS: -D warnings
   WASM_BINDGEN_TEST_TIMEOUT: 300 # 5 minutes
   CACHE_SUFFIX: e # cache busting
-  etalon_CI: true
+  ETALON_CI: true
 
   #
   # Runtime configuration
   #
 
   LVP_POISON_MEMORY: true # to test memory init; see docs/testing.md
-  etalon_DX12_COMPILER: dxc
+  ETALON_DX12_COMPILER: dxc
 
 # Every time a PR is pushed to, cancel any previous jobs. This
 # makes us behave nicer to github and get faster turnaround times
@@ -438,8 +438,8 @@ jobs:
 
       - name: Install core MSRV toolchain
         run: |
-          rustup toolchain install ${{ env.etalon_MSRV }} --no-self-update --profile=minimal --component clippy --target ${{ matrix.target }}
-          rustup override set ${{ env.etalon_MSRV }}
+          rustup toolchain install ${{ env.ETALON_MSRV }} --no-self-update --profile=minimal --component clippy --target ${{ matrix.target }}
+          rustup override set ${{ env.ETALON_MSRV }}
           cargo -V
 
       - name: Disable debug symbols
