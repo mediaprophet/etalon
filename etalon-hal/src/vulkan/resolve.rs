@@ -3,6 +3,12 @@ use core::num::NonZeroU32;
 use arrayvec::ArrayVec;
 use ash::vk;
 
+pub(super) fn needs_per_layer_resolve(mask: NonZeroU32, workarounds: super::Workarounds) -> bool {
+    (mask.get() > 1 && workarounds.contains(super::Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO))
+        || (mask.get().count_ones() != 32 - mask.get().leading_zeros()
+            && workarounds.contains(super::Workarounds::MULTIVIEW_RESOLVE_INACTIVE_LAYERS))
+}
+
 pub(super) fn color_attachment_ops(
     mut ops: crate::AttachmentOps,
     multiview_mask: Option<NonZeroU32>,
@@ -169,9 +175,35 @@ impl super::CommandEncoder {
 
 #[cfg(test)]
 mod tests {
-    use super::color_attachment_ops;
+    use super::{color_attachment_ops, needs_per_layer_resolve};
     use crate::{vulkan::Workarounds, AttachmentOps};
     use core::num::NonZeroU32;
+
+    #[test]
+    fn sparse_resolve_leaves_contiguous_and_unguarded_views_on_native_path() {
+        for mask in [1, 3, 7, u32::MAX] {
+            assert!(!needs_per_layer_resolve(
+                NonZeroU32::new(mask).unwrap(),
+                Workarounds::MULTIVIEW_RESOLVE_INACTIVE_LAYERS
+            ));
+        }
+        for mask in [2, 9, 1 << 31] {
+            let mask = NonZeroU32::new(mask).unwrap();
+            assert!(needs_per_layer_resolve(
+                mask,
+                Workarounds::MULTIVIEW_RESOLVE_INACTIVE_LAYERS
+            ));
+            assert!(!needs_per_layer_resolve(mask, Workarounds::empty()));
+        }
+        assert!(!needs_per_layer_resolve(
+            NonZeroU32::new(1).unwrap(),
+            Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO
+        ));
+        assert!(needs_per_layer_resolve(
+            NonZeroU32::new(3).unwrap(),
+            Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO
+        ));
+    }
 
     #[test]
     fn multiview_discard_promotion_preserves_load_and_store_contracts() {

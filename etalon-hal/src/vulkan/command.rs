@@ -868,12 +868,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
                 );
                 let mut fallback_resolve = false;
                 if let (Some(mask), Some(resolve)) = (desc.multiview_mask, &cat.resolve_target) {
-                    if mask.get() > 1
-                        && self
-                            .device
-                            .workarounds
-                            .contains(super::Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO)
-                    {
+                    if super::resolve::needs_per_layer_resolve(mask, self.device.workarounds) {
                         self.prepare_multiview_resolve(super::resolve::MultiviewResolve::new(
                             cat,
                             resolve,

@@ -186,11 +186,21 @@ pub fn validate_native(
 }
 
 /// Compares actual GPU f32 outputs against a CPU reference within `tolerance`.
+/// Tolerances must be finite and nonnegative; nonfinite values never pass.
 pub fn compare_f32(
     expected: &[f32],
     actual: &[f32],
     tolerance: OracleTolerance,
 ) -> Result<ComparisonReport, ForgeError> {
+    if !tolerance.absolute.is_finite()
+        || !tolerance.relative.is_finite()
+        || tolerance.absolute < 0.0
+        || tolerance.relative < 0.0
+    {
+        return Err(ForgeError::OracleMismatch(
+            "oracle tolerances must be finite and nonnegative".to_string(),
+        ));
+    }
     if expected.len() != actual.len() {
         return Err(ForgeError::OracleMismatch(format!(
             "output length mismatch: expected {}, got {}",
@@ -204,8 +214,15 @@ pub fn compare_f32(
     let mut max_relative_error = 0.0f32;
 
     for (idx, (&exp, &act)) in expected.iter().zip(actual.iter()).enumerate() {
-        let abs_err = (exp - act).abs();
-        let rel_err = if exp.abs() > 1.0e-12 {
+        let finite = exp.is_finite() && act.is_finite();
+        let abs_err = if finite {
+            (exp - act).abs()
+        } else {
+            f32::INFINITY
+        };
+        let rel_err = if !finite {
+            f32::INFINITY
+        } else if exp.abs() > 1.0e-12 {
             abs_err / exp.abs()
         } else {
             0.0
@@ -217,7 +234,7 @@ pub fn compare_f32(
             max_relative_error = rel_err;
         }
         let limit = tolerance.absolute + tolerance.relative * exp.abs();
-        if !act.is_finite() || abs_err > limit {
+        if !abs_err.is_finite() || abs_err > limit {
             mismatch_count += 1;
             if first_mismatch.is_none() {
                 first_mismatch = Some((idx, exp, act));
@@ -261,3 +278,6 @@ pub fn gemv_cpu(a: &[f32], x: &[f32], m: usize, n: usize) -> Vec<f32> {
     }
     y
 }
+
+#[cfg(test)]
+mod comparison_tests;
