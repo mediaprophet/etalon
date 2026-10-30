@@ -3952,11 +3952,11 @@ impl<'source, 'temp> Lowerer<'source, 'temp> {
                 "debugPrintf" => {
                     if !ctx
                         .enable_extensions
-                        .contains(crate::front::wgsl::ImplementedEnableExtension::etalonDebugPrintf)
+                        .contains(crate::front::wgsl::ImplementedEnableExtension::EtalonDebugPrintf)
                     {
                         return Err(Box::new(Error::EnableExtensionNotEnabled {
                             span: function_span,
-                            kind: crate::front::wgsl::ImplementedEnableExtension::etalonDebugPrintf
+                            kind: crate::front::wgsl::ImplementedEnableExtension::EtalonDebugPrintf
                                 .into(),
                         }));
                     }

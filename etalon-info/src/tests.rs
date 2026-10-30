@@ -1,6 +1,6 @@
 use std::{fs::File, io::BufWriter};
 
-const ENV_VAR_SAVE: &str = "etalon_INFO_SAVE_GPUCONFIG_REPORT";
+const ENV_VAR_SAVE: &str = "ETALON_INFO_SAVE_GPUCONFIG_REPORT";
 
 // We use a test to generate the .gpuconfig file instead of using the cli directly
 // as `cargo run --bin etalon-info` would build a different set of dependencies, causing

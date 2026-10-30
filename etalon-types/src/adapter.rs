@@ -88,9 +88,9 @@ pub enum PowerPreference {
 }
 
 impl PowerPreference {
-    /// Get a power preference from the environment variable `etalon_POWER_PREF`.
+    /// Get a power preference from the environment variable `ETALON_POWER_PREF`.
     pub fn from_env() -> Option<Self> {
-        let env = crate::env::var("etalon_POWER_PREF")?;
+        let env = crate::env::var("ETALON_POWER_PREF")?;
         match env.to_lowercase().as_str() {
             "low" => Some(Self::LowPower),
             "high" => Some(Self::HighPerformance),
@@ -316,7 +316,7 @@ impl fmt::Display for RequestAdapterError {
                     write!(f, "{comma}{backend} {explanation}")?;
                 }
             }
-            RequestAdapterError::EnvNotSet => f.write_str("etalon_ADAPTER_NAME not set")?,
+            RequestAdapterError::EnvNotSet => f.write_str("ETALON_ADAPTER_NAME not set")?,
         }
         Ok(())
     }

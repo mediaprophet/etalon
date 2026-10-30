@@ -114,7 +114,7 @@ static REQUEST_DEVICE_ERROR_MESSAGE_NATIVE: GpuTestConfiguration = GpuTestConfig
         // normal tests do not, so we get these weird error messages. This only actually gets hooked up
         // on Windows, because that's the only platform where the actual runtime gets hooked up and there
         // are no drivers.
-        if std::env::var("etalon_CI").is_ok() && cfg!(windows) {
+        if std::env::var("ETALON_CI").is_ok() && cfg!(windows) {
             default.expect_fail(
                 FailureCase::always()
                     .validation_error("Registry lookup failed to get ICD manifest files.  Possibly missing Vulkan driver?")

@@ -371,7 +371,7 @@ impl Precision {
     /// Returns the recommended scalar width (in bytes) associated with this precision hint.
     #[must_use]
     pub const fn recommended_scalar_bytes(&self) -> u8 {
-        match self {
+        match *self {
             Self::Low | Self::Medium => 2,
             Self::High => 4,
         }

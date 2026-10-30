@@ -10,7 +10,7 @@ env:
   #
 
   # This is the MSRV used by `etalon` itself.
-  etalon_MSRV: "1.87"
+  ETALON_MSRV: "1.87"
   RUSTFLAGS: -D warnings
 
 # Every time a PR is pushed to, cancel any previous jobs. This
@@ -74,7 +74,7 @@ jobs:
       # the toolchain for the current directory, not the newly generated project.
       - name: Install repo MSRV toolchain
         run: |
-          rustup toolchain install ${{ env.etalon_MSRV }} --no-self-update --profile=minimal
+          rustup toolchain install ${{ env.ETALON_MSRV }} --no-self-update --profile=minimal
           cargo -V
 
       - name: Disable debug symbols
@@ -116,4 +116,4 @@ jobs:
             [patch.crates-io]
             etalon = { path = "../etalon/etalon" }
           EOF
-          cargo +${{ env.etalon_MSRV }} check
+          cargo +${{ env.ETALON_MSRV }} check

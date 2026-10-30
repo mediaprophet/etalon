@@ -15,12 +15,12 @@ fn apply_agility_sdk_env<'a>(
     let Some(info) = agility_sdk_info else {
         return cmd;
     };
-    let cmd = cmd.env("etalon_DX12_AGILITY_SDK_PATH", &info.sdk_path).env(
-        "etalon_DX12_AGILITY_SDK_VERSION",
+    let cmd = cmd.env("ETALON_DX12_AGILITY_SDK_PATH", &info.sdk_path).env(
+        "ETALON_DX12_AGILITY_SDK_VERSION",
         info.sdk_version.to_string(),
     );
     if require {
-        cmd.env("etalon_DX12_AGILITY_SDK_REQUIRE", "1")
+        cmd.env("ETALON_DX12_AGILITY_SDK_REQUIRE", "1")
     } else {
         cmd
     }
@@ -114,7 +114,7 @@ pub fn run_tests(
         // old or missing .gpuconfig files.
         .args(["-E", "binary(etalon-info)", "generate_gpuconfig_report"])
         // Turn on the env var for saving the .gpuconfig files
-        .env("etalon_INFO_SAVE_GPUCONFIG_REPORT", "1");
+        .env("ETALON_INFO_SAVE_GPUCONFIG_REPORT", "1");
     gpuconfig_cmd =
         apply_agility_sdk_env(gpuconfig_cmd, &agility_sdk_info, !no_require_agility_sdk);
     gpuconfig_cmd

@@ -220,7 +220,7 @@ bitflags!(
         const ON_BLIT_ENCODER = Self::STAGE_BOUNDARIES.bits() | (1 << 4);
 
         /// Within any etalon render/compute pass.
-        const INSIDE_etalon_PASSES = Self::ON_RENDER_ENCODER.bits() | Self::ON_COMPUTE_ENCODER.bits();
+        const INSIDE_ETALON_PASSES = Self::ON_RENDER_ENCODER.bits() | Self::ON_COMPUTE_ENCODER.bits();
     }
 );
 

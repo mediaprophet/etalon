@@ -161,10 +161,16 @@ mod test {
         // Deterministic pseudo-random range insertion test
         let mut rs = RangedStates::from_slice(&[(0..10, 1u8), (10..20, 2u8)]);
         rs.check_sanity();
-        rs.append(20..30, 2u8);
+        for (_, value) in rs.isolate(&(20..30), 0) {
+            *value = 2;
+        }
+        rs.coalesce();
         rs.check_sanity();
         assert_eq!(rs.ranges.len(), 2, "Adjacent ranges with identical value must coalesce");
-        rs.append(30..40, 3u8);
+        for (_, value) in rs.isolate(&(30..40), 0) {
+            *value = 3;
+        }
+        rs.coalesce();
         rs.check_sanity();
         assert_eq!(rs.ranges.len(), 3);
     }

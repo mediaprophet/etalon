@@ -11,7 +11,7 @@ cargo bench -p etalon-benchmark
 cargo bench -p etalon-benchmark -- "filter"
 ```
 
-Use `etalon_BACKEND` and `etalon_ADAPTER_NAME` to adjust which device the benchmarks use. [More info on env vars](../README.md#environment-variables).
+Use `ETALON_BACKEND` and `ETALON_ADAPTER_NAME` to adjust which device the benchmarks use. [More info on env vars](../README.md#environment-variables).
 
 ## Comparing Against a Baseline
 

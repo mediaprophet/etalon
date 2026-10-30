@@ -200,7 +200,7 @@ unsafe extern "system" fn debug_utils_messenger_callback(
 
 /// Validation errors known to fire when running the CTS.
 ///
-/// These waivers are keyed off the `etalon_CTS_XTASK` environment variable, which
+/// These waivers are keyed off the `ETALON_CTS_XTASK` environment variable, which
 /// is set in `xtask/src/cts.rs`.
 #[cfg(all(
     debug_assertions,
@@ -210,9 +210,9 @@ unsafe extern "system" fn debug_utils_messenger_callback(
 fn cts_error_is_waived(message_id_number: i32) -> bool {
     use etalon_sync::Lazy;
 
-    static etalon_CTS_XTASK: Lazy<bool> = Lazy::new(|| std::env::var_os("etalon_CTS_XTASK").is_some());
+    static ETALON_CTS_XTASK: Lazy<bool> = Lazy::new(|| std::env::var_os("ETALON_CTS_XTASK").is_some());
 
-    if !*etalon_CTS_XTASK {
+    if !*ETALON_CTS_XTASK {
         return false;
     }
 

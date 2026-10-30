@@ -742,7 +742,7 @@ impl super::CapabilitiesQuery {
             if device.supportsCounterSampling(MTLCounterSamplingPoint::AtBlitBoundary) {
                 timestamp_query_support.insert(TimestampQuerySupport::ON_BLIT_ENCODER);
             }
-            // `TimestampQuerySupport::INSIDE_etalon_PASSES` emerges from the other flags.
+            // `TimestampQuerySupport::INSIDE_ETALON_PASSES` emerges from the other flags.
         }
 
         let argument_buffers = available!(macos = 10.13, ios = 11.0, tvos = 11.0, visionos = 1.0)
@@ -1276,7 +1276,7 @@ impl super::CapabilitiesQuery {
         features.set(
             F::TIMESTAMP_QUERY_INSIDE_PASSES,
             self.timestamp_query_support
-                .contains(TimestampQuerySupport::INSIDE_etalon_PASSES),
+                .contains(TimestampQuerySupport::INSIDE_ETALON_PASSES),
         );
         features.set(
             F::DUAL_SOURCE_BLENDING,

@@ -241,14 +241,14 @@ impl Capabilities {
             Self::DUAL_SOURCE_BLENDING => Some(Ext::DualSourceBlending),
             // NOTE: `SHADER_FLOAT16_IN_FLOAT32` _does not_ require the `f16` extension
             Self::SHADER_FLOAT16 => Some(Ext::F16),
-            Self::SHADER_INT16 => Some(Ext::etalonInt16),
+            Self::SHADER_INT16 => Some(Ext::EtalonInt16),
             Self::CLIP_DISTANCES => Some(Ext::ClipDistances),
-            Self::MESH_SHADER => Some(Ext::etalonMeshShader),
-            Self::RAY_QUERY => Some(Ext::etalonRayQuery),
-            Self::RAY_HIT_VERTEX_POSITION => Some(Ext::etalonRayQueryVertexReturn),
-            Self::COOPERATIVE_MATRIX => Some(Ext::etalonCooperativeMatrix),
-            Self::RAY_TRACING_PIPELINE => Some(Ext::etalonRayTracingPipeline),
-            Self::PER_VERTEX => Some(Ext::etalonPerVertex),
+            Self::MESH_SHADER => Some(Ext::EtalonMeshShader),
+            Self::RAY_QUERY => Some(Ext::EtalonRayQuery),
+            Self::RAY_HIT_VERTEX_POSITION => Some(Ext::EtalonRayQueryVertexReturn),
+            Self::COOPERATIVE_MATRIX => Some(Ext::EtalonCooperativeMatrix),
+            Self::RAY_TRACING_PIPELINE => Some(Ext::EtalonRayTracingPipeline),
+            Self::PER_VERTEX => Some(Ext::EtalonPerVertex),
             Self::BUFFER_BINDING_ARRAY
             | Self::BUFFER_BINDING_ARRAY_NON_UNIFORM_INDEXING
             | Self::STORAGE_BUFFER_BINDING_ARRAY
@@ -257,9 +257,9 @@ impl Capabilities {
             | Self::STORAGE_TEXTURE_BINDING_ARRAY_NON_UNIFORM_INDEXING
             | Self::TEXTURE_AND_SAMPLER_BINDING_ARRAY
             | Self::TEXTURE_AND_SAMPLER_BINDING_ARRAY_NON_UNIFORM_INDEXING => {
-                Some(Ext::etalonBindingArray)
+                Some(Ext::EtalonBindingArray)
             }
-            Self::DEBUG_PRINTF => Some(Ext::etalonDebugPrintf),
+            Self::DEBUG_PRINTF => Some(Ext::EtalonDebugPrintf),
             _ => None,
         }
     }

@@ -3,7 +3,7 @@ use crate::{Adapter, Instance, RequestAdapterOptions, Surface};
 #[cfg(doc)]
 use crate::Backends;
 
-/// Initialize the adapter obeying the `etalon_ADAPTER_NAME` environment variable.
+/// Initialize the adapter obeying the `ETALON_ADAPTER_NAME` environment variable.
 #[cfg(etalon_core)]
 #[cfg_attr(not(std), expect(unused_variables, unreachable_code))]
 pub async fn initialize_adapter_from_env(
@@ -13,7 +13,7 @@ pub async fn initialize_adapter_from_env(
     let desired_adapter_name: alloc::string::String = {
         cfg_if::cfg_if! {
             if #[cfg(std)] {
-                std::env::var("etalon_ADAPTER_NAME")
+                std::env::var("ETALON_ADAPTER_NAME")
                     .as_deref()
                     .map(str::to_lowercase)
                     .map_err(|_| wgt::RequestAdapterError::EnvNotSet)?
@@ -41,10 +41,10 @@ pub async fn initialize_adapter_from_env(
         }
     }
 
-    Ok(chosen_adapter.expect("etalon_ADAPTER_NAME set but no matching adapter found!"))
+    Ok(chosen_adapter.expect("ETALON_ADAPTER_NAME set but no matching adapter found!"))
 }
 
-/// Initialize the adapter obeying the `etalon_ADAPTER_NAME` environment variable.
+/// Initialize the adapter obeying the `ETALON_ADAPTER_NAME` environment variable.
 #[cfg(not(etalon_core))]
 pub async fn initialize_adapter_from_env(
     _instance: &Instance,
@@ -53,7 +53,7 @@ pub async fn initialize_adapter_from_env(
     Err(wgt::RequestAdapterError::EnvNotSet)
 }
 
-/// Initialize the adapter obeying the `etalon_ADAPTER_NAME` environment variable and if it doesn't exist fall back on a default adapter.
+/// Initialize the adapter obeying the `ETALON_ADAPTER_NAME` environment variable and if it doesn't exist fall back on a default adapter.
 pub async fn initialize_adapter_from_env_or_default(
     instance: &Instance,
     compatible_surface: Option<&Surface<'_>>,

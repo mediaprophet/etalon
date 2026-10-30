@@ -29,7 +29,7 @@ pub fn init_logger() {
 
 /// Initialize a etalon instance with the options from the environment.
 pub fn initialize_instance(backends: etalon::Backends, params: &TestParameters) -> Instance {
-    // We ignore `etalon_BACKEND` for now, merely using test filtering to only run a single backend's tests.
+    // We ignore `ETALON_BACKEND` for now, merely using test filtering to only run a single backend's tests.
     //
     // We can potentially work support back into the test runner in the future, but as the adapters are matched up
     // based on adapter index, removing some backends messes up the indexes in annoying ways.
@@ -90,7 +90,7 @@ pub fn initialize_instance(backends: etalon::Backends, params: &TestParameters) 
                 ..Default::default()
             },
             // Allow the noop backend to be used in tests. This will not be used unless
-            // etalon_GPU_TESTS_USE_NOOP_BACKEND env var is set, because etalon-info will not
+            // ETALON_GPU_TESTS_USE_NOOP_BACKEND env var is set, because etalon-info will not
             // enumerate the noop backend.
             //
             // However, we use wasm_bindgen_test to run tests on wasm, and etalon

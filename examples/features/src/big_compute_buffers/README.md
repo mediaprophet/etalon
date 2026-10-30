@@ -29,7 +29,7 @@ You can read more about fragmentation [here](https://developer.nvidia.com/docs/d
 RUST_LOG=etalon_examples::big_compute_buffers=info cargo run -r --bin etalon-examples -- big_compute_buffers
 
 # windows (Powershell)
-$env:etalon_BACKEND="Vulkan"; $env:RUST_LOG="etalon_examples::big_compute_buffers=info"; cargo run -r --bin etalon-examples -- big_compute_buffers
+$env:ETALON_BACKEND="Vulkan"; $env:RUST_LOG="etalon_examples::big_compute_buffers=info"; cargo run -r --bin etalon-examples -- big_compute_buffers
 ```
 
 ## Example Output

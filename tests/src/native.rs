@@ -102,7 +102,7 @@ pub fn main(tests: Vec<GpuTestInitializer>) -> MainResult {
     // If this environment variable is set, we will only enumerate the noop backend. The
     // main use case is running tests with miri, where we can't even enumerate adapters,
     // as we cannot load DLLs or make any external calls.
-    let use_noop = std::env::var("etalon_GPU_TESTS_USE_NOOP_BACKEND").as_deref() == Ok("1");
+    let use_noop = std::env::var("ETALON_GPU_TESTS_USE_NOOP_BACKEND").as_deref() == Ok("1");
 
     let report = if use_noop {
         GpuReport::noop_only()
@@ -117,7 +117,7 @@ pub fn main(tests: Vec<GpuTestInitializer>) -> MainResult {
         let mut report =
             GpuReport::from_json(config_text).context("Could not parse .gpuconfig JSON")?;
 
-        // Filter out the adapters that are not part of etalon_BACKEND.
+        // Filter out the adapters that are not part of ETALON_BACKEND.
         let etalon_backends = etalon::Backends::from_env().unwrap_or_default();
         report
             .devices
