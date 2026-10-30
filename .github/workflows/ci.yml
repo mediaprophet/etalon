@@ -307,7 +307,20 @@ jobs:
           EOF
           cat > "$toolchain_dir/clang++" <<'EOF'
           #!/bin/sh
-          exec "$OHOS_SDK_NATIVE/llvm/bin/clang++" -target aarch64-linux-ohos --sysroot="$OHOS_SDK_NATIVE/sysroot" -D__MUSL__ "$@"
+          diagnostics=$(mktemp "$RUNNER_TEMP/ohos-cxx.XXXXXX")
+          "$OHOS_SDK_NATIVE/llvm/bin/clang++" -target aarch64-linux-ohos --sysroot="$OHOS_SDK_NATIVE/sysroot" -D__MUSL__ "$@" 2> "$diagnostics"
+          compiler_status=$?
+          cat "$diagnostics" >&2
+          if [ "$compiler_status" -ne 0 ]; then
+            {
+              printf '\nOpenHarmony C++ compiler exited %s:' "$compiler_status"
+              printf ' %s' "$@"
+              printf '\n'
+              tail -c 65536 "$diagnostics"
+            } >> "$RUNNER_TEMP/ohos-cxx-errors.log"
+          fi
+          rm -f "$diagnostics"
+          exit "$compiler_status"
           EOF
           chmod +x "$toolchain_dir/clang" "$toolchain_dir/clang++"
           echo "OHOS_SDK_NATIVE=$OHOS_SDK_NATIVE" >> "$GITHUB_ENV"
@@ -319,6 +332,23 @@ jobs:
           "$toolchain_dir/clang" --version
           "$toolchain_dir/clang" -c "$toolchain_dir/neon.c" -o "$toolchain_dir/neon.o"
           header=$("$OHOS_SDK_NATIVE/llvm/bin/llvm-readelf" --file-header "$toolchain_dir/neon.o")
+          printf '%s\n' "$header"
+          [[ "$header" == *"AArch64"* ]]
+          cat > "$toolchain_dir/native.cpp" <<'EOF'
+          #include <atomic>
+          #include <thread>
+          #include <pthread.h>
+          #include <sys/syscall.h>
+          #include <unistd.h>
+          long ohos_cpp_probe() {
+            std::atomic<long> value{syscall(SYS_gettid)};
+            std::thread worker([&] { value.fetch_add(1); });
+            worker.join();
+            return value.load();
+          }
+          EOF
+          "$toolchain_dir/clang++" --target=aarch64-unknown-linux-ohos -std=c++11 -v -c "$toolchain_dir/native.cpp" -o "$toolchain_dir/native.o"
+          header=$("$OHOS_SDK_NATIVE/llvm/bin/llvm-readelf" --file-header "$toolchain_dir/native.o")
           printf '%s\n' "$header"
           [[ "$header" == *"AArch64"* ]]
 
@@ -428,6 +458,14 @@ jobs:
                 --package naga \
                 --package etalon \
                 --all-features --no-deps --document-private-items
+
+      - name: (OpenHarmony) Report C++ compiler diagnostics
+        if: failure() && matrix.target == 'aarch64-unknown-linux-ohos'
+        shell: bash
+        run: |
+          if [ -f "$RUNNER_TEMP/ohos-cxx-errors.log" ]; then
+            tail -c 131072 "$RUNNER_TEMP/ohos-cxx-errors.log"
+          fi
 
   # We run minimal checks on the MSRV of the `etalon` crate, ensuring that
   # its dependency tree does not cause issues for servo or other users.
