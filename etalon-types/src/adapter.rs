@@ -16,7 +16,8 @@ use crate::{Features, TextureUsages};
 /// Corresponds to the defined values of [WebGPU feature level string](
 /// https://gpuweb.github.io/gpuweb/#feature-level-string).
 ///
-/// `etalon` does not support compatibility-level adapters per se.
+/// Browser WebGPU supports explicit feature levels through
+/// `Instance::request_webgpu_adapter`; native adapter selection remains core-level.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, ConstDefault!)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[cfg_attr(feature = "serde", serde(rename_all = "kebab-case"))]
