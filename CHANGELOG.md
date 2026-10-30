@@ -66,8 +66,11 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 ### Bug Fixes
 
+- Forge manifests only label matching, source-bound Naga reports as validated. Numerical comparisons reject invalid tolerances and nonfinite reference values.
+
 #### General
 
+- Sparse multiview clears, resolves and discards track only selected layers, preserving inactive user data and initializing unwritten layers before reads.
 - Buffer-mapping failures invalidate the device immediately and deliver device-loss callbacks after resource locks are released, allowing callbacks to reenter the API safely.
 - Experimental buffer device addresses and host-memory imports now require explicit unsafe experimental-feature opt-in.
 - Identifiers broken by the rename are back to Rust naming conventions: `Etalon*` types and enum variants (for example `ImplementedEnableExtension::EtalonRayQuery`, `EtalonContext`) and upper-case constants and statics (`INSIDE_ETALON_PASSES`, `ETALON_CTS_XTASK`).
@@ -82,6 +85,7 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 #### Vulkan
 
+- Lavapipe multiview passes avoid driver defects in discarded color attachments and sparse resolves without disabling memory poisoning.
 - Naga folds subgroup gathers from the current invocation into their evaluated input, preserving argument side effects and avoiding unnecessary self-shuffle instructions.
 - `BFLOAT16_KHR` is matched by its raw discriminant (`1000141000`). (dfbaad4c3)
 

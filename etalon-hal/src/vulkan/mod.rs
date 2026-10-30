@@ -564,6 +564,8 @@ bitflags::bitflags!(
         const MULTIVIEW_RESOLVE_LAYER_ZERO = 0x8;
         /// Avoid Lavapipe's attachment-index corruption while poisoning multiview discards.
         const MULTIVIEW_DISCARD_STORE = 0x10;
+        /// Resolve only selected views instead of Lavapipe's contiguous layer range.
+        const MULTIVIEW_RESOLVE_INACTIVE_LAYERS = 0x20;
     }
 );
 

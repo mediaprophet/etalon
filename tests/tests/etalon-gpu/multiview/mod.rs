@@ -12,6 +12,7 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(DRAW_MULTIVIEW_NONCONTIGUOUS);
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE);
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD);
+    vec.push(DRAW_MULTIVIEW_PRESERVES_INACTIVE_LAYERS);
     vec.push(DRAW_MULTIVIEW_PIPELINE_ORDER);
     vec.push(DRAW_MULTIVIEW_PIPELINE_ORDER_MIXED_IO);
 }
@@ -50,12 +51,6 @@ static DRAW_MULTIVIEW_NONCONTIGUOUS: GpuTestConfiguration = GpuTestConfiguration
         },
         failures: {
             let mut failures = Vec::new();
-            // https://github.com/mediaprophet/etalon/issues/9620
-            failures.push(FailureCase::lvp_poison_memory(
-                "assertion `left == right` failed: Expected 0\n  \
-                 left: Some(128)\n \
-                 right: None",
-            ));
             // https://github.com/mediaprophet/etalon/issues/9184 and https://github.com/mediaprophet/etalon/issues/9187
             failures.extend(FailureCase::mac_vulkan().into_iter().map(|case| {
                 case.panic(
@@ -87,8 +82,7 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
         sample_count,
         0,
         etalon::StoreOp::Store,
-        None,
-        None,
+        RenderOptions::default(),
     )
     .await;
 }
@@ -125,8 +119,11 @@ async fn run_pipeline_order(ctx: TestingContext, shader_source: Option<&str>) {
             1,
             0,
             etalon::StoreOp::Store,
-            label,
-            shader_source,
+            RenderOptions {
+                shader_label: label,
+                shader_source,
+                ..Default::default()
+            },
         )
         .await;
     }
@@ -148,8 +145,52 @@ static DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD: GpuTestConfiguration =
                 }),
         )
         .run_async(|ctx| async move {
-            run_test_with_range(&ctx, 0b1001, 4, 1, etalon::StoreOp::Discard, None, None).await;
+            run_test_with_range(
+                &ctx,
+                0b1001,
+                4,
+                1,
+                etalon::StoreOp::Discard,
+                RenderOptions::default(),
+            )
+            .await;
         });
+
+#[apply(gpu_test!)]
+static DRAW_MULTIVIEW_PRESERVES_INACTIVE_LAYERS: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(
+        TestParameters::default()
+            .features(
+                Features::MULTIVIEW | Features::MULTISAMPLE_ARRAY | Features::SELECTIVE_MULTIVIEW,
+            )
+            .limits(Limits {
+                max_multiview_view_count: 4,
+                ..Limits::defaults()
+            }),
+    )
+    .run_async(|ctx| async move {
+        for (samples, store) in [(1, etalon::StoreOp::Store), (4, etalon::StoreOp::Discard)] {
+            run_test_with_range(
+                &ctx,
+                0b1001,
+                samples,
+                1,
+                store,
+                RenderOptions {
+                    prefill: Some(0.625),
+                    ..Default::default()
+                },
+            )
+            .await;
+        }
+    });
+
+#[derive(Default)]
+struct RenderOptions<'a> {
+    shader_label: Option<&'a str>,
+    shader_source: Option<&'a str>,
+    prefill: Option<f64>,
+}
 
 async fn run_test_with_range(
     ctx: &TestingContext,
@@ -157,18 +198,17 @@ async fn run_test_with_range(
     sample_count: u32,
     base_layer: u32,
     store: etalon::StoreOp,
-    shader_label: Option<&str>,
-    shader_source: Option<&str>,
+    options: RenderOptions<'_>,
 ) {
     let num_layers = 32 - layer_mask.leading_zeros();
     let total_layers = num_layers + base_layer + u32::from(base_layer != 0);
 
-    let shader_src = shader_source.unwrap_or(include_str!("shader.wgsl"));
+    let shader_src = options.shader_source.unwrap_or(include_str!("shader.wgsl"));
 
     let shader = ctx
         .device
         .create_shader_module(etalon::ShaderModuleDescriptor {
-            label: shader_label,
+            label: options.shader_label,
             source: etalon::ShaderSource::Wgsl(shader_src.into()),
         });
 
@@ -252,11 +292,40 @@ async fn run_test_with_range(
         mapped_at_creation: false,
     });
 
-    let clear_color = 0.0;
+    let clear_color = options.prefill.unwrap_or(0.0);
 
     let mut encoder = ctx
         .device
         .create_command_encoder(&etalon::CommandEncoderDescriptor::default());
+    if let Some(value) = options.prefill {
+        for layer in 0..total_layers {
+            let view = resolve_texture.as_ref().unwrap_or(&texture).create_view(
+                &etalon::TextureViewDescriptor {
+                    dimension: Some(etalon::TextureViewDimension::D2),
+                    base_array_layer: layer,
+                    array_layer_count: Some(1),
+                    ..Default::default()
+                },
+            );
+            let _pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
+                    view: &view,
+                    depth_slice: None,
+                    resolve_target: None,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color {
+                            r: value,
+                            g: value,
+                            b: value,
+                            a: value,
+                        }),
+                        store: etalon::StoreOp::Store,
+                    },
+                })],
+                ..Default::default()
+            });
+        }
+    }
     {
         let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: None,

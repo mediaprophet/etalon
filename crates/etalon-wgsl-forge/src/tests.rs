@@ -10,7 +10,7 @@ use crate::{
 };
 
 #[test]
-fn all_builtin_wgsl_kernels_emit_and_validate_with_naga() {
+fn all_builtin_wgsl_kernels_emit_and_report_validation() {
     for builtin in BuiltinKernel::ALL {
         if builtin == BuiltinKernel::RayProbe {
             let spec = builtin.spec();
@@ -28,10 +28,16 @@ fn all_builtin_wgsl_kernels_emit_and_validate_with_naga() {
             "WGSL for {} must contain @compute",
             spec.id
         );
-        let report =
-            validate_wgsl(&shader.source).expect("Naga validation must succeed for builtin WGSL");
-        assert!(report.naga_validated);
-        assert_eq!(report.entry_points, vec![spec.entry_point]);
+        let report = validate_wgsl(&shader.source).expect("builtin validation report must succeed");
+        assert_eq!(report.source_hash, shader.source_hash);
+        assert_eq!(report.naga_validated, cfg!(feature = "naga-validate"));
+        assert_eq!(report.native_tool_validated, None);
+        if report.naga_validated {
+            assert_eq!(report.entry_points, vec![spec.entry_point]);
+        } else {
+            assert!(report.entry_points.is_empty());
+            assert_eq!(report.binding_count, 0);
+        }
     }
 }
 

@@ -1139,6 +1139,7 @@ impl RenderPassInfo {
         texture_memory_actions: &mut CommandBufferTextureMemoryActions,
         view: &TextureView,
         depth_slice: Option<u32>,
+        multiview_mask: Option<NonZeroU32>,
         pending_discard_init_fixups: &mut SurfacesInDiscardState,
     ) {
         match (
@@ -1194,8 +1195,9 @@ impl RenderPassInfo {
                 ));
             } else {
                 // Clear + Store
-                texture_memory_actions
-                    .register_implicit_init(&view.parent, TextureInitRange::from(view));
+                for range in TextureInitRange::from(view).active_layer_ranges(multiview_mask) {
+                    texture_memory_actions.register_implicit_init(&view.parent, range);
+                }
             }
         }
         if store_op == StoreOp::Discard {
@@ -1208,11 +1210,33 @@ impl RenderPassInfo {
             // textures will be reinitialized at the end of the command buffer
             // (by [`BakedCommands::initialize_discarded_depth_slices`]),
             // because the primary init tracker does not track individual slices.
-            texture_memory_actions.discard(TextureSurfaceDiscard {
-                texture: view.parent.clone(),
-                mip_level: view.selector.mips.start,
-                layer_or_depth_slice: depth_slice.unwrap_or(view.selector.layers.start),
-            });
+            Self::discard_attachment_layers(
+                texture_memory_actions,
+                view,
+                depth_slice,
+                multiview_mask,
+            );
+        }
+    }
+
+    fn discard_attachment_layers(
+        texture_memory_actions: &mut CommandBufferTextureMemoryActions,
+        view: &TextureView,
+        depth_slice: Option<u32>,
+        multiview_mask: Option<NonZeroU32>,
+    ) {
+        let mut range = TextureInitRange::from(view);
+        if multiview_mask.is_none() {
+            range.layer_range.end = range.layer_range.start + 1;
+        }
+        for range in range.active_layer_ranges(multiview_mask) {
+            for layer in range.layer_range {
+                texture_memory_actions.discard(TextureSurfaceDiscard {
+                    texture: view.parent.clone(),
+                    mip_level: view.selector.mips.start,
+                    layer_or_depth_slice: depth_slice.unwrap_or(layer),
+                });
+            }
         }
     }
 
@@ -1337,6 +1361,7 @@ impl RenderPassInfo {
                     texture_memory_actions,
                     view,
                     None,
+                    multiview_mask,
                     pending_discard_init_fixups,
                 );
             } else if !ds_aspects.contains(hal::FormatAspects::DEPTH) {
@@ -1346,6 +1371,7 @@ impl RenderPassInfo {
                     texture_memory_actions,
                     view,
                     None,
+                    multiview_mask,
                     pending_discard_init_fixups,
                 );
             } else {
@@ -1396,10 +1422,11 @@ impl RenderPassInfo {
                 // (possible optimization: Delay and potentially drop this zeroing)
                 if at.depth.store_op() != at.stencil.store_op() {
                     if !need_init_beforehand {
-                        texture_memory_actions.register_implicit_init(
-                            &view.parent,
-                            TextureInitRange::from(view.as_ref()),
-                        );
+                        for range in TextureInitRange::from(view.as_ref())
+                            .active_layer_ranges(multiview_mask)
+                        {
+                            texture_memory_actions.register_implicit_init(&view.parent, range);
+                        }
                     }
                     divergent_discarded_depth_stencil_aspect = Some((
                         if at.depth.store_op() == StoreOp::Discard {
@@ -1411,11 +1438,12 @@ impl RenderPassInfo {
                     ));
                 } else if at.depth.store_op() == StoreOp::Discard {
                     // Both are discarded using the regular path.
-                    texture_memory_actions.discard(TextureSurfaceDiscard {
-                        texture: view.parent.clone(),
-                        mip_level: view.selector.mips.start,
-                        layer_or_depth_slice: view.selector.layers.start,
-                    });
+                    Self::discard_attachment_layers(
+                        texture_memory_actions,
+                        view,
+                        None,
+                        multiview_mask,
+                    );
                 }
             }
 
@@ -1587,6 +1615,7 @@ impl RenderPassInfo {
                 texture_memory_actions,
                 color_view,
                 at.depth_slice,
+                multiview_mask,
                 pending_discard_init_fixups,
             );
             render_attachments
@@ -1652,10 +1681,11 @@ impl RenderPassInfo {
                     });
                 }
 
-                texture_memory_actions.register_implicit_init(
-                    &resolve_view.parent,
-                    TextureInitRange::from(resolve_view.as_ref()),
-                );
+                for range in TextureInitRange::from(resolve_view.as_ref())
+                    .active_layer_ranges(multiview_mask)
+                {
+                    texture_memory_actions.register_implicit_init(&resolve_view.parent, range);
+                }
                 render_attachments
                     .push(resolve_view.to_render_attachment(wgt::TextureUses::COLOR_TARGET));
 

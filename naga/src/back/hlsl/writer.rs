@@ -1879,8 +1879,10 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                     write!(self.out, " : SV_GroupIndex")?;
                     local_invocation_index_name = Some(name);
                 }
-                if let Some(ForwardedViewIndex { source: None, name }) =
-                    &self.entry_point_io[&(ep_index as usize)].vertex_view_index
+                if let Some(ForwardedViewIndex {
+                    source: None,
+                    ref name,
+                }) = self.entry_point_io[&(ep_index as usize)].vertex_view_index
                 {
                     write!(self.out, "{}uint {name} : SV_ViewID", separator())?;
                 }
@@ -1929,8 +1931,8 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
             self.write_ep_arguments_initialization(module, func, index)?;
             if let Some(ForwardedViewIndex {
                 source: Some(source),
-                name,
-            }) = &self.entry_point_io[&(index as usize)].vertex_view_index
+                ref name,
+            }) = self.entry_point_io[&(index as usize)].vertex_view_index
             {
                 let argument = &self.names[&NameKey::EntryPointArgument(index, source.argument)];
                 write!(self.out, "{}uint {name} = {argument}", back::INDENT)?;
@@ -2407,7 +2409,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                                 "{}const {} {} = {{ ",
                                 level, ep_output.ty_name, final_name,
                             )?;
-                            if let Some(name) = &vertex_view_index {
+                            if let Some(ref name) = vertex_view_index {
                                 write!(self.out, "{name}, ")?;
                             }
                             for (index, m) in ep_output.members.iter().enumerate() {

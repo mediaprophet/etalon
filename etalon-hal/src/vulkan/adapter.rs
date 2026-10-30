@@ -2415,6 +2415,10 @@ impl super::Instance {
                 super::Workarounds::MULTIVIEW_DISCARD_STORE,
                 phd_capabilities.is_driver(vk::DriverId::MESA_LLVMPIPE),
             );
+            workarounds.set(
+                super::Workarounds::MULTIVIEW_RESOLVE_INACTIVE_LAYERS,
+                phd_capabilities.is_driver(vk::DriverId::MESA_LLVMPIPE),
+            );
         };
 
         if let Some(driver) = phd_capabilities.driver {

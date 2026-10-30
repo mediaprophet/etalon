@@ -149,8 +149,8 @@ Provider-specific tests must disable unnoticed CPU/GPU fallback and retain
 placement/equivalent execution evidence before reporting an NPU pass.
 
 Support phone and other browser diagnostics through GitHub Pages and an explicit
-local network static server. Reuse the source-linked Qualia portal WASM for
-canonical VibeHost CPU checks and an asynchronous Etalon Rust browser bridge;
+local network static server. Build a separate source-linked Qualia diagnostics
+WASM bundle for canonical VibeHost CPU checks and an asynchronous Etalon Rust browser bridge;
 the browser supplies WebGPU shader translation and HAL execution. Keep this
 coverage separate from the native Render.gpu capabilities and native backends.
 Verify the downloaded WASM against a build manifest containing both reviewed
