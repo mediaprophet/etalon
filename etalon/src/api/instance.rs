@@ -176,6 +176,30 @@ impl Instance {
         async move { future.await.map(|adapter| Adapter { inner: adapter }) }
     }
 
+    /// Requests a browser WebGPU adapter at the specified feature level.
+    ///
+    /// Compatibility devices retain browser validation and may have lower limits.
+    /// This does not select a native backend or promote compatibility capabilities to core.
+    #[cfg(webgpu)]
+    pub fn request_webgpu_adapter(
+        &self,
+        options: &RequestAdapterOptions<'_, '_>,
+        feature_level: FeatureLevel,
+    ) -> impl Future<Output = Result<Adapter, RequestAdapterError>> + WasmNotSend {
+        let future = self
+            .inner
+            .as_webgpu_opt()
+            .map(|context| context.request_adapter_with_feature_level(options, feature_level));
+        async move {
+            match future {
+                Some(future) => future.await.map(|adapter| Adapter { inner: adapter }),
+                None => Err(crate::backend::webgpu::request_adapter_null_error(
+                    Backends::BROWSER_WEBGPU,
+                )),
+            }
+        }
+    }
+
     /// Creates a new surface targeting a given window/canvas/surface/etc..
     ///
     /// Internally, this creates surfaces for all backends that are enabled for this instance.

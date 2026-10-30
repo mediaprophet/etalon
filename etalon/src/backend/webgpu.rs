@@ -992,7 +992,7 @@ fn future_request_adapter(
 }
 
 // Translate WebGPU’s null return into our error.
-fn request_adapter_null_error(requested_backends: Backends) -> wgt::RequestAdapterError {
+pub(crate) fn request_adapter_null_error(requested_backends: Backends) -> wgt::RequestAdapterError {
     wgt::RequestAdapterError::NotFound {
         active_backends: Backends::BROWSER_WEBGPU,
         requested_backends,
@@ -1131,6 +1131,60 @@ fn register_then_closures<F, T>(
 }
 
 impl ContextWebGpu {
+    pub(crate) fn request_adapter_with_feature_level(
+        &self,
+        options: &crate::RequestAdapterOptions<'_, '_>,
+        feature_level: wgt::FeatureLevel,
+    ) -> Pin<Box<dyn dispatch::RequestAdapterFuture>> {
+        let requested_backends = self.requested_backends;
+
+        // Backend request validation for browser WebGPU environment
+        if !(requested_backends.contains(wgt::Backends::BROWSER_WEBGPU)) {
+            return Box::pin(core::future::ready(Err(
+                wgt::RequestAdapterError::NotFound {
+                    active_backends: Backends::BROWSER_WEBGPU,
+                    requested_backends,
+                    // TODO: supported_backends should also include etalon-core-based backends,
+                    // if they were compiled in.
+                    supported_backends: Backends::BROWSER_WEBGPU,
+                    no_fallback_backends: Backends::default(),
+                    no_adapter_backends: Backends::default(),
+                    incompatible_surface_backends: Backends::default(),
+                },
+            )));
+        }
+        let mapped_options = webgpu_sys::GpuRequestAdapterOptions::new();
+        mapped_options.set_feature_level(match feature_level {
+            wgt::FeatureLevel::Core => "core",
+            wgt::FeatureLevel::Compatibility => "compatibility",
+        });
+        mapped_options.set_force_fallback_adapter(options.force_fallback_adapter);
+        let mapped_power_preference = match options.power_preference {
+            wgt::PowerPreference::None => None,
+            wgt::PowerPreference::LowPower => Some(webgpu_sys::GpuPowerPreference::LowPower),
+            wgt::PowerPreference::HighPerformance => {
+                Some(webgpu_sys::GpuPowerPreference::HighPerformance)
+            }
+        };
+        if let Some(mapped_pref) = mapped_power_preference {
+            mapped_options.set_power_preference(mapped_pref);
+        }
+
+        if let Some(gpu) = &self.gpu {
+            let adapter_promise = gpu.request_adapter_with_options(&mapped_options);
+            Box::pin(MakeSendFuture::new(
+                wasm_bindgen_futures::JsFuture::from(adapter_promise),
+                move |result| future_request_adapter(result, requested_backends),
+            ))
+        } else {
+            // Gpu is undefined; WebGPU is not supported in this browser.
+            // Treat this exactly like requestAdapter() returned null.
+            Box::pin(core::future::ready(Err(request_adapter_null_error(
+                requested_backends,
+            ))))
+        }
+    }
+
     /// Common portion of the internal branches of the public `instance_create_surface` function.
     ///
     /// Note: Analogous code also exists in the WebGL2 backend at
@@ -1683,48 +1737,7 @@ impl dispatch::InstanceInterface for ContextWebGpu {
         &self,
         options: &crate::RequestAdapterOptions<'_, '_>,
     ) -> Pin<Box<dyn dispatch::RequestAdapterFuture>> {
-        let requested_backends = self.requested_backends;
-
-        // Backend request validation for browser WebGPU environment
-        if !(requested_backends.contains(wgt::Backends::BROWSER_WEBGPU)) {
-            return Box::pin(core::future::ready(Err(
-                wgt::RequestAdapterError::NotFound {
-                    active_backends: Backends::BROWSER_WEBGPU,
-                    requested_backends,
-                    // TODO: supported_backends should also include etalon-core-based backends,
-                    // if they were compiled in.
-                    supported_backends: Backends::BROWSER_WEBGPU,
-                    no_fallback_backends: Backends::default(),
-                    no_adapter_backends: Backends::default(),
-                    incompatible_surface_backends: Backends::default(),
-                },
-            )));
-        }
-        let mapped_options = webgpu_sys::GpuRequestAdapterOptions::new();
-        let mapped_power_preference = match options.power_preference {
-            wgt::PowerPreference::None => None,
-            wgt::PowerPreference::LowPower => Some(webgpu_sys::GpuPowerPreference::LowPower),
-            wgt::PowerPreference::HighPerformance => {
-                Some(webgpu_sys::GpuPowerPreference::HighPerformance)
-            }
-        };
-        if let Some(mapped_pref) = mapped_power_preference {
-            mapped_options.set_power_preference(mapped_pref);
-        }
-
-        if let Some(gpu) = &self.gpu {
-            let adapter_promise = gpu.request_adapter_with_options(&mapped_options);
-            Box::pin(MakeSendFuture::new(
-                wasm_bindgen_futures::JsFuture::from(adapter_promise),
-                move |result| future_request_adapter(result, requested_backends),
-            ))
-        } else {
-            // Gpu is undefined; WebGPU is not supported in this browser.
-            // Treat this exactly like requestAdapter() returned null.
-            Box::pin(core::future::ready(Err(request_adapter_null_error(
-                requested_backends,
-            ))))
-        }
+        self.request_adapter_with_feature_level(options, wgt::FeatureLevel::Core)
     }
     fn enumerate_adapters(
         &self,
