@@ -1,5 +1,5 @@
-use std::{fs, process::Command};
 use etalon_benchmark::{iter_auto, BenchmarkContext, SubBenchResult};
+use std::{fs, process::Command};
 
 const DIR_IN: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../naga/tests/in");
 

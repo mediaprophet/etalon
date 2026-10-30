@@ -201,7 +201,8 @@ impl Device {
                             Some("(etalon internal) compaction read-back buffer"),
                             self.instance_flags,
                         ),
-                        size: size_of::<etalon_types::BufferAddress>() as etalon_types::BufferAddress,
+                        size: size_of::<etalon_types::BufferAddress>()
+                            as etalon_types::BufferAddress,
                         usage: etalon_types::BufferUses::ACCELERATION_STRUCTURE_QUERY
                             | etalon_types::BufferUses::MAP_READ,
                         memory_flags: hal::MemoryFlags::PREFER_COHERENT,

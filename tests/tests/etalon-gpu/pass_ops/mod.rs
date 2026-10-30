@@ -236,7 +236,9 @@ static DONT_CARE_STENCIL_STRICT_WEBGPU_COMPLIANCE: GpuTestConfiguration =
                     view: &view,
                     depth_ops: None,
                     stencil_ops: Some(etalon::Operations {
-                        load: etalon::LoadOp::DontCare(unsafe { etalon::LoadOpDontCare::enabled() }),
+                        load: etalon::LoadOp::DontCare(unsafe {
+                            etalon::LoadOpDontCare::enabled()
+                        }),
                         store: etalon::StoreOp::Store,
                     }),
                 }),

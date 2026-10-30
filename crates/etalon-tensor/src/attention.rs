@@ -87,9 +87,10 @@ impl FusedAttentionPipeline {
                     ty: etalon::BindingType::Buffer {
                         ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
-                        min_binding_size: core::num::NonZeroU64::new(
-                            core::mem::size_of::<AttentionParams>() as u64,
-                        ),
+                        min_binding_size: core::num::NonZeroU64::new(core::mem::size_of::<
+                            AttentionParams,
+                        >()
+                            as u64),
                     },
                     count: None,
                 },

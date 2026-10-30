@@ -1,7 +1,7 @@
 #![cfg_attr(target_arch = "wasm32", no_main)]
 #![cfg(not(target_arch = "wasm32"))]
-use pollster::block_on;
 use etalon_benchmark::Benchmark;
+use pollster::block_on;
 
 mod bind_groups;
 mod computepass;

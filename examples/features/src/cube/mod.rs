@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
-use std::f32::consts;
 use etalon::util::DeviceExt;
+use std::f32::consts;
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -135,31 +135,32 @@ impl crate::framework::Example for Example {
         });
 
         // Create pipeline layout
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::VERTEX,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: etalon::BufferSize::new(64),
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: etalon::BufferSize::new(64),
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Texture {
-                        multisampled: false,
-                        sample_type: etalon::TextureSampleType::Uint,
-                        view_dimension: etalon::TextureViewDimension::D2,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            multisampled: false,
+                            sample_type: etalon::TextureSampleType::Uint,
+                            view_dimension: etalon::TextureViewDimension::D2,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                ],
+            });
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group_layout)],
@@ -338,7 +339,12 @@ impl crate::framework::Example for Example {
         queue.write_buffer(&self.uniform_buf, 0, bytemuck::cast_slice(mx_ref));
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder =
             device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {

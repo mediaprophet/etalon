@@ -1,8 +1,8 @@
 use std::{borrow::Cow, iter, mem};
 
 use bytemuck::{Pod, Zeroable};
-use glam::{Affine3A, Mat4, Quat, Vec3};
 use etalon::util::DeviceExt;
+use glam::{Affine3A, Mat4, Quat, Vec3};
 
 use crate::utils;
 use etalon::StoreOp;
@@ -111,7 +111,8 @@ impl crate::framework::Example for Example {
     // Don't want srgb, so normals show up better.
     const SRGB: bool = false;
     fn required_features() -> etalon::Features {
-        etalon::Features::EXPERIMENTAL_RAY_QUERY | etalon::Features::EXPERIMENTAL_RAY_HIT_VERTEX_RETURN
+        etalon::Features::EXPERIMENTAL_RAY_QUERY
+            | etalon::Features::EXPERIMENTAL_RAY_HIT_VERTEX_RETURN
     }
 
     fn required_downlevel_capabilities() -> etalon::DownlevelCapabilities {
@@ -385,7 +386,12 @@ impl crate::framework::Example for Example {
     ) {
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let anim_time = self.animation_timer.time();
 
         self.tlas[0].as_mut().unwrap().transform =

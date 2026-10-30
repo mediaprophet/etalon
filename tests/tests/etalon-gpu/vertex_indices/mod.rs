@@ -5,11 +5,11 @@
 
 use std::{num::NonZeroU64, ops::Range};
 
-use itertools::Itertools;
-use strum::IntoEnumIterator;
 use etalon::util::{BufferInitDescriptor, DeviceExt, RenderEncoder};
 use etalon::RenderBundleDescriptor;
 use etalon_test::{apply, gpu_test, GpuTestConfiguration, TestParameters, TestingContext};
+use itertools::Itertools;
+use strum::IntoEnumIterator;
 
 pub fn all_tests(vec: &mut Vec<etalon_test::GpuTestInitializer>) {
     vec.push(VERTEX_INDICES);

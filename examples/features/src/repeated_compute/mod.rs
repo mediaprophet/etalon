@@ -203,20 +203,21 @@ impl EtalonContext {
         });
 
         // This can be though of as the function signature for our CPU-GPU function.
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[etalon::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: etalon::ShaderStages::COMPUTE,
-                ty: etalon::BindingType::Buffer {
-                    ty: etalon::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    // Going to have this be None just to be safe.
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        // Going to have this be None just to be safe.
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
         // This ties actual resources stored in the GPU to our metaphorical function
         // through the binding slots we defined above.
         let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {

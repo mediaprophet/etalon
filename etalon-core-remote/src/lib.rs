@@ -41,10 +41,9 @@ pub fn map_buffer_access_error(
     err: etalon_core::resource::BufferAccessError,
 ) -> etalon_core_remote_types::BufferMapError {
     match err {
-        e
-        @ etalon_core::resource::BufferAccessError::Device(etalon_core::device::DeviceError::Lost) => {
-            etalon_core_remote_types::BufferMapError::Aborted(e.to_string())
-        }
+        e @ etalon_core::resource::BufferAccessError::Device(
+            etalon_core::device::DeviceError::Lost,
+        ) => etalon_core_remote_types::BufferMapError::Aborted(e.to_string()),
         e @ etalon_core::resource::BufferAccessError::MapAborted => {
             etalon_core_remote_types::BufferMapError::Aborted(e.to_string())
         }

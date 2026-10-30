@@ -1,3 +1,4 @@
+use etalon::util::DeviceExt;
 /// To serve as an introduction to the etalon api, we will implement a simple
 /// compute shader which takes a list of numbers on the CPU and doubles them on the GPU.
 ///
@@ -11,7 +12,6 @@
 /// is quite a lot higher than the actual computation. This is normal and shows that the GPU
 /// needs a lot higher work/transfer ratio to come out ahead.
 use std::{num::NonZeroU64, str::FromStr};
-use etalon::util::DeviceExt;
 
 fn main() {
     // Parse all arguments as floats. We need to skip argument 0, which is the name of the program.

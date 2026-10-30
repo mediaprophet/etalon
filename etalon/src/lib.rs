@@ -62,13 +62,13 @@
 #![cfg_attr(not(any(etalon_core, webgpu)), allow(unused))]
 
 extern crate alloc;
-#[cfg(any(std, test))]
-extern crate std;
 #[cfg(etalon_core)]
 pub extern crate etalon_core as wgc;
 #[cfg(etalon_core)]
 pub extern crate etalon_hal as hal;
 pub extern crate etalon_types as wgt;
+#[cfg(any(std, test))]
+extern crate std;
 
 //
 //
@@ -106,7 +106,7 @@ pub use wgt::{
     DownlevelCapabilities, DownlevelFlags, DownlevelLimits, Dx12BackendOptions, Dx12Compiler,
     Dx12SwapchainKind, Dx12UseFrameLatencyWaitableObject, DxcShaderModel, DynamicOffset,
     ExperimentalFeatures, Extent3d, ExternalTextureFormat, ExternalTextureTransferFunction, Face,
-    Features, Featuresetalon, FeaturesWebGPU, FilterMode, ForceShaderModelToken, FrontFace,
+    Features, FeaturesWebGPU, Featuresetalon, FilterMode, ForceShaderModelToken, FrontFace,
     GlBackendOptions, GlDebugFns, GlFenceBehavior, Gles3MinorVersion, HalCounters,
     ImageSubresourceRange, IndexFormat, InstanceDescriptor, InstanceFlags, InternalCounters,
     Limits, LoadOpDontCare, MapMode, MemoryBudgetThresholds, MemoryHints, MipmapFilterMode,

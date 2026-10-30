@@ -1,7 +1,7 @@
 use bytemuck::{Pod, Zeroable};
+use etalon::util::DeviceExt;
 use nanorand::{Rng, WyRand};
 use std::borrow::Cow;
-use etalon::util::DeviceExt;
 use winit::{
     event::{ElementState, KeyEvent},
     keyboard::{Key, NamedKey},
@@ -100,7 +100,8 @@ impl Example {
         let uniform_alignment = device.limits().min_uniform_buffer_offset_alignment;
         queue.write_buffer(&self.local_buffer, 0, bytemuck::cast_slice(&self.bunnies));
 
-        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
+        let mut encoder =
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
         {
             let clear_color = etalon::Color {
                 r: 0.1,
@@ -430,7 +431,12 @@ impl crate::framework::Example for Example {
         self.global_group = global_group;
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         self.render_inner(view, device, queue);
     }
 }

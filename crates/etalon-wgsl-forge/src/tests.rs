@@ -73,10 +73,12 @@ fn emit_kernel_high_level_ops_wgsl_validates_with_naga() {
 
 #[test]
 fn coopmat_m1_decode_bypass_and_tile_shapes() {
-    assert!(
-        !WGPU_COOPMAT_BLOCKED,
-        "Runbook 01 Bug 1.5: WGPU_COOPMAT_BLOCKED must be false"
-    );
+    const {
+        assert!(
+            !WGPU_COOPMAT_BLOCKED,
+            "Runbook 01 Bug 1.5: WGPU_COOPMAT_BLOCKED must be false"
+        )
+    };
 
     // M <= 4 decode must bypass WMMA / CooperativeMatrix and use GEMV
     for m in 1..=4 {
@@ -150,7 +152,8 @@ fn cuda_c_emits_real_kernels_and_routes_m1_to_dp4a_gemv() {
         BuiltinKernel::Gemv,
         BuiltinKernel::Fft,
     ] {
-        let shader = emit_cuda_c(&builtin.spec(), Schedule::default()).expect("CUDA-C builtin emit");
+        let shader =
+            emit_cuda_c(&builtin.spec(), Schedule::default()).expect("CUDA-C builtin emit");
         assert!(
             shader.source.contains("extern \"C\" __global__"),
             "CUDA-C for {} must contain extern \"C\" __global__",

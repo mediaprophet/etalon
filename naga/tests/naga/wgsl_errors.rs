@@ -6028,10 +6028,10 @@ fn check_ray_tracing_pipeline_incoming_payload_required() {
         check(
             &format!("enable etalon_ray_tracing_pipeline; @{stage} fn main() {{}}"),
             &format!("error: incoming payload is missing on a `closest_hit`, `any_hit` or `miss` shader entry point
-  ┌─ wgsl:1:36
+  ┌─ wgsl:1:38
   │
 1 │ enable etalon_ray_tracing_pipeline; @{stage} fn main() {{}}
-  │                                    {stage_arrows} must be paired with a `@incoming_payload` attribute
+  │                                      {stage_arrows} must be paired with a `@incoming_payload` attribute
 
 "),
         );

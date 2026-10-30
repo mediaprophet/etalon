@@ -99,7 +99,9 @@ impl GpuRadixSorter {
     pub fn new(device: &etalon::Device) -> Self {
         let hist_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("etalon-radix-hist-shader"),
-            source: etalon::ShaderSource::Wgsl(include_str!("shaders/graph_radix_hist.wgsl").into()),
+            source: etalon::ShaderSource::Wgsl(
+                include_str!("shaders/graph_radix_hist.wgsl").into(),
+            ),
         });
         let prefix_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("etalon-radix-prefix-shader"),
@@ -478,9 +480,18 @@ mod tests {
     #[test]
     fn radix_wgsl_shaders_parse_and_validate() {
         for (name, src) in [
-            ("graph_radix_hist.wgsl", include_str!("shaders/graph_radix_hist.wgsl")),
-            ("graph_radix_prefix.wgsl", include_str!("shaders/graph_radix_prefix.wgsl")),
-            ("graph_radix_scatter.wgsl", include_str!("shaders/graph_radix_scatter.wgsl")),
+            (
+                "graph_radix_hist.wgsl",
+                include_str!("shaders/graph_radix_hist.wgsl"),
+            ),
+            (
+                "graph_radix_prefix.wgsl",
+                include_str!("shaders/graph_radix_prefix.wgsl"),
+            ),
+            (
+                "graph_radix_scatter.wgsl",
+                include_str!("shaders/graph_radix_scatter.wgsl"),
+            ),
         ] {
             let module = naga::front::wgsl::parse_str(src)
                 .unwrap_or_else(|e| panic!("{name} failed WGSL parse: {e}"));

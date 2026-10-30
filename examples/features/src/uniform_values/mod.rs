@@ -151,19 +151,20 @@ impl EtalonContext {
         });
 
         // (3)
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[etalon::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
-                ty: etalon::BindingType::Buffer {
-                    ty: etalon::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
         let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
@@ -457,22 +458,23 @@ impl ApplicationHandler<UniformAction> for App {
                     .device
                     .create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
                 {
-                    let mut render_pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
-                        label: None,
-                        color_attachments: &[Some(etalon::RenderPassColorAttachment {
-                            view: &view,
-                            depth_slice: None,
-                            resolve_target: None,
-                            ops: etalon::Operations {
-                                load: etalon::LoadOp::Clear(etalon::Color::GREEN),
-                                store: etalon::StoreOp::Store,
-                            },
-                        })],
-                        depth_stencil_attachment: None,
-                        occlusion_query_set: None,
-                        timestamp_writes: None,
-                        multiview_mask: None,
-                    });
+                    let mut render_pass =
+                        encoder.begin_render_pass(&etalon::RenderPassDescriptor {
+                            label: None,
+                            color_attachments: &[Some(etalon::RenderPassColorAttachment {
+                                view: &view,
+                                depth_slice: None,
+                                resolve_target: None,
+                                ops: etalon::Operations {
+                                    load: etalon::LoadOp::Clear(etalon::Color::GREEN),
+                                    store: etalon::StoreOp::Store,
+                                },
+                            })],
+                            depth_stencil_attachment: None,
+                            occlusion_query_set: None,
+                            timestamp_writes: None,
+                            multiview_mask: None,
+                        });
                     render_pass.set_pipeline(&etalon_ctx.pipeline);
                     // (9)
                     render_pass.set_bind_group(0, Some(&etalon_ctx.bind_group), &[]);

@@ -31,7 +31,7 @@ allow-wildcard-paths = true
 [advisories]
 ignore = [
     # `bincode` is no longer maintained https://rustsec.org/advisories/RUSTSEC-2025-0141
-    # We only use it directly for tests and tools. It is also used indirectly via deno.
+    # We only use it directly for tests and tools.
     "RUSTSEC-2025-0141",
 ]
 
@@ -46,10 +46,6 @@ allow = [
     "Unicode-3.0",
     "Zlib",
 ]
-# MPL-2.0 is allowed only for this crate and version. It is a dependency of
-# deno_core, used only by the cts_runner/deno_etalon conformance-test tooling.
-# Re-review if the version changes.
-exceptions = [{ allow = ["MPL-2.0"], crate = "cooked-waker@5.0.0" }]
 private = { ignore = true }
 
 [sources]

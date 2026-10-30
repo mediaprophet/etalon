@@ -7,7 +7,7 @@ use crate::{
     device::{queue::TempResource, Device, DeviceError},
     hal_label,
     lock::{rank, Mutex},
-    pipeline::{CreateComputePipelineError, CreateShaderModuleError},
+    pipeline::{CreatePipelineError, CreateShaderModuleError},
     resource::{RawResourceAccess as _, StagingBuffer, Trackable},
     snatch::SnatchGuard,
     track::TrackerIndex,
@@ -254,7 +254,9 @@ impl Draw {
                         instance_flags,
                     ),
                     hal_label(
-                        Some("(etalon internal) Indirect draw validation metadata bind group layout"),
+                        Some(
+                            "(etalon internal) Indirect draw validation metadata bind group layout",
+                        ),
                         instance_flags,
                     ),
                 )
@@ -631,19 +633,8 @@ fn create_validation_pipeline(
         },
         cache: None,
     };
-    let pipeline =
-        unsafe { device.create_compute_pipeline(&pipeline_desc) }.map_err(|err| match err {
-            hal::PipelineError::Device(error) => {
-                CreateComputePipelineError::Device(DeviceError::from_hal(error))
-            }
-            hal::PipelineError::Linkage(_stages, msg) => CreateComputePipelineError::Internal(msg),
-            hal::PipelineError::EntryPoint(_stage) => CreateComputePipelineError::Internal(
-                crate::device::ENTRYPOINT_FAILURE_ERROR.to_string(),
-            ),
-            hal::PipelineError::PipelineConstants(_, error) => {
-                CreateComputePipelineError::PipelineConstants(error)
-            }
-        })?;
+    let pipeline = unsafe { device.create_compute_pipeline(&pipeline_desc) }
+        .map_err(CreatePipelineError::from_hal_without_device_loss)?;
 
     Ok(pipeline)
 }

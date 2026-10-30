@@ -3,7 +3,7 @@
 use nanorand::Rng;
 
 /// Generate (deterministic) random staging belt operations to exercise its logic.
-fn staging_belt_random_test(use_recall_on_submit: bool) {
+fn staging_belt_random_test(use_recall_on_submit: bool, discard_free_chunks: bool) {
     let (device, queue) = etalon::Device::noop(&etalon::DeviceDescriptor::default());
     let mut rng = nanorand::WyRand::new_seed(0xDEAD_BEEF);
     let buffer_size = 1024;
@@ -17,7 +17,8 @@ fn staging_belt_random_test(use_recall_on_submit: bool) {
     });
 
     for _batch in 0..100 {
-        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
+        let mut encoder =
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
 
         for _write in 0..5 {
             let offset: u64 = rng.generate_range(0..=(buffer_size - align) / align) * align;
@@ -43,17 +44,32 @@ fn staging_belt_random_test(use_recall_on_submit: bool) {
             queue.submit([encoder.finish()]);
             belt.recall();
         }
+        if discard_free_chunks {
+            device.poll(etalon::PollType::wait_indefinitely()).unwrap();
+            belt.discard_free_chunks();
+            belt.discard_free_chunks();
+        }
     }
 }
 
 #[test]
 fn staging_belt_manual_recall() {
-    staging_belt_random_test(false);
+    staging_belt_random_test(false, false);
 }
 
 #[test]
 fn staging_belt_finish_and_recall_on_submit() {
-    staging_belt_random_test(true);
+    staging_belt_random_test(true, false);
+}
+
+#[test]
+fn staging_belt_reuses_after_discard_manual_recall() {
+    staging_belt_random_test(false, true);
+}
+
+#[test]
+fn staging_belt_reuses_after_discard_on_submit() {
+    staging_belt_random_test(true, true);
 }
 
 #[test]
@@ -62,7 +78,8 @@ fn staging_belt_panics_with_invalid_buffer_usages() {
     fn test_if_panics(usage: etalon::BufferUsages) {
         let result = std::panic::catch_unwind(|| {
             let (device, _queue) = etalon::Device::noop(&etalon::DeviceDescriptor::default());
-            let _belt = etalon::util::StagingBelt::new_with_buffer_usages(device.clone(), 512, usage);
+            let _belt =
+                etalon::util::StagingBelt::new_with_buffer_usages(device.clone(), 512, usage);
         });
 
         if let Err(panic) = result {

@@ -22,7 +22,6 @@ Top level categories:
 - Performance
 - Documentation
 - Dependency Updates
-- deno_webgpu
 - Examples
 - Testing/Internal
 
@@ -50,6 +49,8 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 ### Major changes
 
+- `etalon-tensor` residency-key sets now use `hashbrown::HashSet`: callers assigning `CudaMegaPassExecutor::resident_weights` or calling `collect_and_validate_layer_keys` must use that collection type. `register_resident_weight` is unchanged.
+- `Queue::submit` now returns `Option<SubmissionIndex>`. A failed native submission has no waitable index; the browser backend always returns `None`, and synchronous browser waits return `PollError::CantWait`.
 - Renamed the `wgpu` crates, modules and documentation to `etalon` (`etalon`, `etalon-core`, `etalon-hal`, `etalon-types`, `etalon-core-remote`, `etalon-core-remote-types`, `etalon-sync`, `etalon-naga-bridge`, `etalon-info`). `naga` and `naga-types` keep their names. (5e1908e38 and earlier)
 - Set every workspace package to version `0.0.1` with `publish = false`. Etalon is consumed through git, not crates.io. (f20f5abaf, ed0b671d8)
 - Licensing: Etalon modifications and additions are CC BY-NC-ND 4.0 (`LICENSE`, `LICENSE-QUALIA`). Upstream wgpu license texts are kept in `upstream-licenses/`. (bcfb954fb, 29df9cf5e)
@@ -66,6 +67,8 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 #### General
 
+- Buffer-mapping failures invalidate the device immediately and deliver device-loss callbacks after resource locks are released, allowing callbacks to reenter the API safely.
+- Experimental buffer device addresses and host-memory imports now require explicit unsafe experimental-feature opt-in.
 - Identifiers broken by the rename are back to Rust naming conventions: `Etalon*` types and enum variants (for example `ImplementedEnableExtension::EtalonRayQuery`, `EtalonContext`) and upper-case constants and statics (`INSIDE_ETALON_PASSES`, `ETALON_CTS_XTASK`).
 - `etalon-wgsl-forge`: generated shaders now use `enable etalon_cooperative_matrix;` and `enable etalon_ray_query;`, which Etalon's WGSL front end accepts. They previously used upstream's `wgpu_*` spellings, which it rejects.
 - `etalon-core`: a range-tracking test called a non-existent `RangedStates::append` and stopped the crate's tests from compiling. It now uses `isolate` and `coalesce`.
@@ -78,11 +81,18 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 #### Vulkan
 
+- Naga folds subgroup gathers from the current invocation into their evaluated input, preserving argument side effects and avoiding unnecessary self-shuffle instructions.
 - `BFLOAT16_KHR` is matched by its raw discriminant (`1000141000`). (dfbaad4c3)
+
+#### DX12
+
+- Pipeline state streams now enforce native descriptor alignment and copy C-structure padding without reading uninitialized bytes.
+- Intel device `0x5917` with driver `31.0.101.2141` no longer advertises non-uniform storage texture array indexing after reproduced incorrect reads. Uniform arrays remain supported; see `docs/dx12-intel-storage-array-limitation.md`.
 
 #### Hal
 
-- The `static-dxc` feature is stubbed to remove the dependency on the unmaintained `mach-dxcompiler-rs`. (7957b224a)
+- The `static-dxc` feature links the pinned `mach-dxcompiler-rs` 0.1.7 compiler and derives supported shader models from the compiler version. Native dependency provenance is documented separately.
+- GLES buffer storage and mapping use separate access masks, fixing invalid readback mappings for buffers that also receive copies or query results.
 
 ### Documentation
 
@@ -98,5 +108,8 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 ### Testing/Internal
 
+- Reviewed all 62 upstream commits after the 18 October fork point and ported applicable resource-validation, pipeline-override, MSL, Metal, browser-cache, staging and texture-blit fixes with regression coverage. See `docs/upstream-review-2026-10-30.md`.
+- Added bounded NPU discovery and separate discovery/runtime/workload/execution states in `etalon-agent`; submitted commands and scalar CUDA fallback work no longer claim verified hardware execution.
+- Retired the embedded Deno WebGPU CTS tooling and its dependencies. QualiaDB now provides a VibeScript integration harness; the resulting conformance coverage loss is documented in `docs/conformance-coverage.md`. Existing Rust tests are retained.
 - Removed wgpu's community, governance and contribution setup (contributing, governance, code of conduct and security policies; issue and PR templates; maintainer approval and changelog PR gates; merge-queue, review and release checklists).
 - Removed legacy CI services and automation (Renovate, Codecov, daily scheduled runs, the `Lazy` workflow). Docs and examples deploy to this repository's `gh-pages` branch.

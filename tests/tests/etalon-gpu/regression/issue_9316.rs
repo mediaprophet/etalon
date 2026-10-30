@@ -40,12 +40,12 @@ fn dynamic_offset_bounds_with_unordered_entries(ctx: TestingContext) {
         count: None,
     };
 
-    let bind_group_layout = ctx
-        .device
-        .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[make_bgle(0), make_bgle(1)],
-        });
+    let bind_group_layout =
+        ctx.device
+            .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[make_bgle(0), make_bgle(1)],
+            });
 
     let binding = |buffer| {
         etalon::BindingResource::Buffer(etalon::BufferBinding {

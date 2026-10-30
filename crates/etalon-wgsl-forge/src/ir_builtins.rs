@@ -1,7 +1,7 @@
 //! Built-in kernel specifications and shape validation for Etalon WGSL Forge.
 
-use std::str::FromStr;
 use serde::{Deserialize, Serialize};
+use std::str::FromStr;
 
 use crate::ir::{
     BufferAccess, BufferElement, BufferSpec, ForgeError, Intrinsic, KernelSpec, Op, ScalarType,
@@ -61,9 +61,24 @@ impl BuiltinKernel {
                 entry_point: "affine_f32".to_string(),
                 description: "out[i] = input[i] * scale + bias".to_string(),
                 buffers: vec![
-                    buf(0, "input", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "output", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(2, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        2,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: vec![
                     Op::StructLoad {
@@ -101,11 +116,36 @@ impl BuiltinKernel {
                 entry_point: "fused_ffn".to_string(),
                 description: "out[o] = sum_h w2[o,h] * gelu(sum_i w1[h,i] * in[i])".to_string(),
                 buffers: vec![
-                    buf(0, "input", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "w1", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(2, "w2", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(3, "output", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(4, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "w1",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        2,
+                        "w2",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        3,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        4,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: vec![Op::Gelu {
                     operand: "hv".to_string(),
@@ -119,9 +159,24 @@ impl BuiltinKernel {
                 entry_point: "p64_project".to_string(),
                 description: "out[r] = sum_w weights[w] * f32(p64[r].word[w])".to_string(),
                 buffers: vec![
-                    buf(0, "input", BufferElement::P64Words64, BufferAccess::StorageRead),
-                    buf(1, "weights", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(2, "output", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::P64Words64,
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "weights",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        2,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
                 ],
                 ops: Vec::new(),
                 shared_memory: Vec::new(),
@@ -132,9 +187,24 @@ impl BuiltinKernel {
                 entry_point: "topk".to_string(),
                 description: "out[block*k + i] = i-th largest of input[block]".to_string(),
                 buffers: vec![
-                    buf(0, "input", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "output", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(2, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        2,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: vec![Op::Barrier],
                 shared_memory: vec![
@@ -150,9 +220,24 @@ impl BuiltinKernel {
                 entry_point: "ray_probe".to_string(),
                 description: "hits[i] = ray_query(scene, rays[i]) committed t or -1".to_string(),
                 buffers: vec![
-                    buf(0, "scene", BufferElement::AccelerationStructure, BufferAccess::StorageRead),
-                    buf(1, "rays", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(2, "hits", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
+                    buf(
+                        0,
+                        "scene",
+                        BufferElement::AccelerationStructure,
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "rays",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        2,
+                        "hits",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
                 ],
                 ops: vec![Op::Intrinsic(Intrinsic::RayQuery {
                     acceleration_structure: "scene".to_string(),
@@ -170,11 +255,36 @@ impl BuiltinKernel {
                 entry_point: "ternary_gemv".to_string(),
                 description: "out[o] = scale[o] * sum_i ternary(w[o,i]) * x[i]".to_string(),
                 buffers: vec![
-                    buf(0, "x", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "w_packed", BufferElement::Scalar(ScalarType::U32), BufferAccess::StorageRead),
-                    buf(2, "scale", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(3, "output", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(4, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "x",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "w_packed",
+                        BufferElement::Scalar(ScalarType::U32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        2,
+                        "scale",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        3,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        4,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: Vec::new(),
                 shared_memory: Vec::new(),
@@ -185,10 +295,30 @@ impl BuiltinKernel {
                 entry_point: "gemm".to_string(),
                 description: "C[i][j] = sum_k A[i*K+k] * B[k*N+j]".to_string(),
                 buffers: vec![
-                    buf(0, "a", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "b", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(2, "c", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(3, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "a",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "b",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        2,
+                        "c",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        3,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: Vec::new(),
                 shared_memory: Vec::new(),
@@ -199,10 +329,30 @@ impl BuiltinKernel {
                 entry_point: "gemv".to_string(),
                 description: "y[i] = sum_j a[i*N+j] * x[j]".to_string(),
                 buffers: vec![
-                    buf(0, "a", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "x", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(2, "y", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(3, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "a",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "x",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        2,
+                        "y",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        3,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: Vec::new(),
                 shared_memory: Vec::new(),
@@ -213,9 +363,24 @@ impl BuiltinKernel {
                 entry_point: "fft".to_string(),
                 description: "out = forward DFT(in) via workgroup radix-2 DIT".to_string(),
                 buffers: vec![
-                    buf(0, "input", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-                    buf(1, "output", BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-                    buf(2, "params", BufferElement::AffineParams, BufferAccess::Uniform),
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        2,
+                        "params",
+                        BufferElement::AffineParams,
+                        BufferAccess::Uniform,
+                    ),
                 ],
                 ops: vec![Op::Barrier],
                 shared_memory: vec![
@@ -267,18 +432,58 @@ impl FromStr for BuiltinKernel {
 pub(crate) fn validate_builtin_shape(spec: &KernelSpec) -> Result<(), ForgeError> {
     if spec.id == BuiltinKernel::AffineF32.name() || spec.id == BuiltinKernel::TopK.name() {
         let expected = [
-            ("input", 0, BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-            ("output", 1, BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-            ("params", 2, BufferElement::AffineParams, BufferAccess::Uniform),
+            (
+                "input",
+                0,
+                BufferElement::Scalar(ScalarType::F32),
+                BufferAccess::StorageRead,
+            ),
+            (
+                "output",
+                1,
+                BufferElement::Scalar(ScalarType::F32),
+                BufferAccess::StorageReadWrite,
+            ),
+            (
+                "params",
+                2,
+                BufferElement::AffineParams,
+                BufferAccess::Uniform,
+            ),
         ];
         check_bindings(&spec.id, &spec.buffers, &expected)?;
     } else if spec.id == BuiltinKernel::FusedFfn.name() {
         let expected = [
-            ("input", 0, BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-            ("w1", 1, BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-            ("w2", 2, BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageRead),
-            ("output", 3, BufferElement::Scalar(ScalarType::F32), BufferAccess::StorageReadWrite),
-            ("params", 4, BufferElement::AffineParams, BufferAccess::Uniform),
+            (
+                "input",
+                0,
+                BufferElement::Scalar(ScalarType::F32),
+                BufferAccess::StorageRead,
+            ),
+            (
+                "w1",
+                1,
+                BufferElement::Scalar(ScalarType::F32),
+                BufferAccess::StorageRead,
+            ),
+            (
+                "w2",
+                2,
+                BufferElement::Scalar(ScalarType::F32),
+                BufferAccess::StorageRead,
+            ),
+            (
+                "output",
+                3,
+                BufferElement::Scalar(ScalarType::F32),
+                BufferAccess::StorageReadWrite,
+            ),
+            (
+                "params",
+                4,
+                BufferElement::AffineParams,
+                BufferAccess::Uniform,
+            ),
         ];
         check_bindings(&spec.id, &spec.buffers, &expected)?;
     }

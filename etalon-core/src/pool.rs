@@ -1,8 +1,8 @@
 use alloc::sync::{Arc, Weak};
 use core::hash::Hash;
 
-use hashbrown::{hash_map::Entry, HashMap};
 use etalon_sync::OnceCell;
+use hashbrown::{hash_map::Entry, HashMap};
 
 use crate::lock::{rank, Mutex};
 use crate::FastHashMap;

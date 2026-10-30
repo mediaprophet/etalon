@@ -1,4 +1,3 @@
-use std::time::Duration;
 use etalon::wgt::BufferDescriptor;
 use etalon::{
     include_wgsl, BindGroupDescriptor, BindGroupEntry, BindingResource, BufferUsages,
@@ -9,6 +8,7 @@ use etalon::{
 use etalon_test::{
     apply, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters, TestingContext,
 };
+use std::time::Duration;
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.extend([TEXTURE_BINDING, SINGLE_SCALAR_LOAD]);

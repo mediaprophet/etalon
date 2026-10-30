@@ -28,9 +28,9 @@ pub use wgt::{
     math::*, DispatchIndirectArgs, DrawIndexedIndirectArgs, DrawIndirectArgs, TextureDataOrder,
 };
 
+pub(crate) use etalon_sync::Mutex;
 #[cfg(webgpu)]
 pub(crate) use panicking::is_panicking;
-pub(crate) use etalon_sync::Mutex;
 
 use crate::BufferUsages;
 

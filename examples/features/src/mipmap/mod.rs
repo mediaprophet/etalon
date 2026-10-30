@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
-use std::f32::consts;
 use etalon::util::DeviceExt;
+use std::f32::consts;
 
 const TEXTURE_FORMAT: etalon::TextureFormat = etalon::TextureFormat::Rgba8UnormSrgb;
 const MIP_LEVEL_COUNT: u32 = 10;
@@ -54,7 +54,8 @@ type TimestampQueries = [TimestampData; MIP_PASS_COUNT as usize];
 type PipelineStatisticsQueries = [u64; MIP_PASS_COUNT as usize];
 
 fn pipeline_statistics_offset() -> etalon::BufferAddress {
-    (size_of::<TimestampQueries>() as etalon::BufferAddress).max(etalon::QUERY_RESOLVE_BUFFER_ALIGNMENT)
+    (size_of::<TimestampQueries>() as etalon::BufferAddress)
+        .max(etalon::QUERY_RESOLVE_BUFFER_ALIGNMENT)
 }
 
 struct Example {
@@ -477,7 +478,12 @@ impl crate::framework::Example for Example {
         queue.write_buffer(&self.uniform_buf, 0, bytemuck::cast_slice(mx_ref));
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder =
             device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {

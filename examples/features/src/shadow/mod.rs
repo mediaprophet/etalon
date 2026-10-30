@@ -383,7 +383,8 @@ impl crate::framework::Example for Example {
             sample_count: 1,
             dimension: etalon::TextureDimension::D2,
             format: Self::SHADOW_FORMAT,
-            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TEXTURE_BINDING,
             label: None,
             view_formats: &[],
         });
@@ -431,7 +432,8 @@ impl crate::framework::Example for Example {
                 target_view: shadow_target_views[1].take().unwrap(),
             },
         ];
-        let light_uniform_size = (Self::MAX_LIGHTS * size_of::<LightRaw>()) as etalon::BufferAddress;
+        let light_uniform_size =
+            (Self::MAX_LIGHTS * size_of::<LightRaw>()) as etalon::BufferAddress;
         let light_storage_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: None,
             size: light_uniform_size,
@@ -470,11 +472,12 @@ impl crate::framework::Example for Example {
                         count: None,
                     }],
                 });
-            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-                label: Some("shadow"),
-                bind_group_layouts: &[Some(&bind_group_layout), Some(&local_bind_group_layout)],
-                immediate_size: 0,
-            });
+            let pipeline_layout =
+                device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                    label: Some("shadow"),
+                    bind_group_layouts: &[Some(&bind_group_layout), Some(&local_bind_group_layout)],
+                    immediate_size: 0,
+                });
 
             let uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
                 label: None,
@@ -543,7 +546,8 @@ impl crate::framework::Example for Example {
                     entries: &[
                         etalon::BindGroupLayoutEntry {
                             binding: 0, // global
-                            visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                            visibility: etalon::ShaderStages::VERTEX
+                                | etalon::ShaderStages::FRAGMENT,
                             ty: etalon::BindingType::Buffer {
                                 ty: etalon::BufferBindingType::Uniform,
                                 has_dynamic_offset: false,
@@ -580,17 +584,20 @@ impl crate::framework::Example for Example {
                         etalon::BindGroupLayoutEntry {
                             binding: 3,
                             visibility: etalon::ShaderStages::FRAGMENT,
-                            ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Comparison),
+                            ty: etalon::BindingType::Sampler(
+                                etalon::SamplerBindingType::Comparison,
+                            ),
                             count: None,
                         },
                     ],
                     label: None,
                 });
-            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-                label: Some("main"),
-                bind_group_layouts: &[Some(&bind_group_layout), Some(&local_bind_group_layout)],
-                immediate_size: 0,
-            });
+            let pipeline_layout =
+                device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                    label: Some("main"),
+                    bind_group_layouts: &[Some(&bind_group_layout), Some(&local_bind_group_layout)],
+                    immediate_size: 0,
+                });
 
             let mx_total = Self::generate_matrix(config.width as f32 / config.height as f32);
             let forward_uniforms = GlobalUniforms {
@@ -708,7 +715,12 @@ impl crate::framework::Example for Example {
         self.forward_depth = Self::create_depth_texture(config, device);
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         // update uniforms
         for entity in self.entities.iter_mut() {
             if entity.rotation_speed != 0.0 {

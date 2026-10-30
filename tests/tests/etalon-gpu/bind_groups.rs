@@ -51,21 +51,21 @@ fn multiple_bindings_with_differing_sizes(ctx: TestingContext) {
         mapped_at_creation: false,
     });
 
-    let bind_group_layout = ctx
-        .device
-        .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("bgl"),
-            entries: &[etalon::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: etalon::ShaderStages::COMPUTE,
-                ty: etalon::BindingType::Buffer {
-                    ty: etalon::BufferBindingType::Uniform,
-                    has_dynamic_offset: true,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+    let bind_group_layout =
+        ctx.device
+            .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("bgl"),
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
+                        has_dynamic_offset: true,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
 
     let pipeline_layout = ctx
         .device
@@ -137,17 +137,17 @@ fn try_sampler_nonfiltering_layout(
     good: bool,
 ) {
     let label = descriptor.label;
-    let bind_group_layout = ctx
-        .device
-        .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label,
-            entries: &[etalon::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: etalon::ShaderStages::FRAGMENT,
-                ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::NonFiltering),
-                count: None,
-            }],
-        });
+    let bind_group_layout =
+        ctx.device
+            .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label,
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::NonFiltering),
+                    count: None,
+                }],
+            });
 
     let sampler = ctx.device.create_sampler(descriptor);
 
@@ -365,7 +365,8 @@ static BIND_GROUP_WITH_MAX_BINDING_INDEX: GpuTestConfiguration = GpuTestConfigur
             ],
         });
 
-        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
+        let mut encoder =
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
         {
             let mut pass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor::default());
             pass.set_bind_group(0, &bg, &[]);
@@ -428,16 +429,17 @@ async fn bind_group_stage_order(ctx: TestingContext) {
         contents: bytemuck::bytes_of(&COMPUTE_VALUE),
     });
 
-    let filler_entry = |binding: u32, visibility: etalon::ShaderStages| etalon::BindGroupLayoutEntry {
-        binding,
-        visibility,
-        ty: etalon::BindingType::Buffer {
-            ty: etalon::BufferBindingType::Storage { read_only: false },
-            has_dynamic_offset: false,
-            min_binding_size: None,
-        },
-        count: None,
-    };
+    let filler_entry =
+        |binding: u32, visibility: etalon::ShaderStages| etalon::BindGroupLayoutEntry {
+            binding,
+            visibility,
+            ty: etalon::BindingType::Buffer {
+                ty: etalon::BufferBindingType::Storage { read_only: false },
+                has_dynamic_offset: false,
+                min_binding_size: None,
+            },
+            count: None,
+        };
 
     let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("bgl"),

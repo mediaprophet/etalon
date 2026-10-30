@@ -86,7 +86,9 @@ impl State {
         // (e.g., when the window is occluded on macOS).
         let surface_texture = match self.surface.get_current_texture() {
             etalon::CurrentSurfaceTexture::Success(texture) => texture,
-            etalon::CurrentSurfaceTexture::Occluded | etalon::CurrentSurfaceTexture::Timeout => return,
+            etalon::CurrentSurfaceTexture::Occluded | etalon::CurrentSurfaceTexture::Timeout => {
+                return;
+            }
             etalon::CurrentSurfaceTexture::Suboptimal(texture) => {
                 drop(texture);
                 self.configure_surface();

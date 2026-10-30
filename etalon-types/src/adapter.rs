@@ -3,7 +3,7 @@ use core::{fmt, mem};
 
 use macro_rules_attribute::derive;
 
-use crate::{link_to_wgc_docs, link_to_etalon_docs, Backend, Backends, ConstDefault};
+use crate::{link_to_etalon_docs, link_to_wgc_docs, Backend, Backends, ConstDefault};
 
 #[cfg(any(feature = "serde", test))]
 use serde::{Deserialize, Serialize};

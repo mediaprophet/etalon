@@ -116,8 +116,9 @@ impl From<&DmlError> for DmlStatus {
             DmlError::DirectStorageFailed(_) | DmlError::InvalidPageAlignment { .. } => {
                 Self::DirectStorageFailed
             }
-            DmlError::InvalidGemmDimensions { .. }
-            | DmlError::TruncatedQuantizedTensor { .. } => Self::InvalidDimensions,
+            DmlError::InvalidGemmDimensions { .. } | DmlError::TruncatedQuantizedTensor { .. } => {
+                Self::InvalidDimensions
+            }
             DmlError::UnsupportedPlatform => Self::UnsupportedPlatform,
         }
     }
@@ -225,12 +226,14 @@ pub struct AdapterMemoryInfo {
 impl AdapterMemoryInfo {
     #[inline]
     pub const fn available_local_bytes(&self) -> u64 {
-        self.local_budget_bytes.saturating_sub(self.local_usage_bytes)
+        self.local_budget_bytes
+            .saturating_sub(self.local_usage_bytes)
     }
 
     #[inline]
     pub const fn available_shared_bytes(&self) -> u64 {
-        self.shared_budget_bytes.saturating_sub(self.shared_usage_bytes)
+        self.shared_budget_bytes
+            .saturating_sub(self.shared_usage_bytes)
     }
 }
 
@@ -472,7 +475,9 @@ mod tests {
         let op_id = DmlGemmOp { m: 2, k: 2, n: 2 };
         let a = [3.5f32, -2.0, 7.25, 4.0];
         let eye = [1.0f32, 0.0, 0.0, 1.0];
-        let c = lane.execute_gemm(&op_id, &a, &eye).expect("2x2 identity GEMM");
+        let c = lane
+            .execute_gemm(&op_id, &a, &eye)
+            .expect("2x2 identity GEMM");
         assert_eq!(c, a);
 
         // Transformer Q4_K projection: 1x32 activation * 32x1 Q4_K weight (all 7.0) = 32 * 7.0 = 224.0

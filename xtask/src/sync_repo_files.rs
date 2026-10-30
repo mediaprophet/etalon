@@ -215,8 +215,10 @@ mod tests {
     impl TempDirectory {
         fn new() -> Self {
             let id = NEXT_TEMP_DIRECTORY.fetch_add(1, Ordering::Relaxed);
-            let path = std::env::temp_dir()
-                .join(format!("etalon-sync-repo-files-{}-{id}", std::process::id()));
+            let path = std::env::temp_dir().join(format!(
+                "etalon-sync-repo-files-{}-{id}",
+                std::process::id()
+            ));
             fs::create_dir(&path).unwrap();
             git(&path, &["init"]);
             // Keep the developer's global ignore rules out of the test.

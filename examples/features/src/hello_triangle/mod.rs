@@ -1,5 +1,5 @@
-use std::{borrow::Cow, future::Future, sync::Arc};
 use etalon::CurrentSurfaceTexture;
+use std::{borrow::Cow, future::Future, sync::Arc};
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -119,10 +119,11 @@ impl ApplicationHandler<TriangleAction> for App {
             size.width = size.width.max(1);
             size.height = size.height.max(1);
 
-            let instance =
-                etalon::Instance::new(etalon::InstanceDescriptor::new_with_display_handle_from_env(
-                    Box::new(display_handle),
-                ));
+            let instance = etalon::Instance::new(
+                etalon::InstanceDescriptor::new_with_display_handle_from_env(Box::new(
+                    display_handle,
+                )),
+            );
 
             let surface = instance.create_surface(window.clone()).unwrap();
             let adapter = instance
@@ -158,36 +159,38 @@ impl ApplicationHandler<TriangleAction> for App {
                 source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
             });
 
-            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: &[],
-                immediate_size: 0,
-            });
+            let pipeline_layout =
+                device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &[],
+                    immediate_size: 0,
+                });
 
             let swapchain_capabilities = surface.get_capabilities(&adapter);
             let swapchain_format = swapchain_capabilities.formats[0];
 
-            let render_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
-                label: None,
-                layout: Some(&pipeline_layout),
-                vertex: etalon::VertexState {
-                    module: &shader,
-                    entry_point: Some("vs_main"),
-                    buffers: &[],
-                    compilation_options: Default::default(),
-                },
-                fragment: Some(etalon::FragmentState {
-                    module: &shader,
-                    entry_point: Some("fs_main"),
-                    compilation_options: Default::default(),
-                    targets: &[Some(swapchain_format.into())],
-                }),
-                primitive: etalon::PrimitiveState::default(),
-                depth_stencil: None,
-                multisample: etalon::MultisampleState::default(),
-                multiview_mask: None,
-                cache: None,
-            });
+            let render_pipeline =
+                device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
+                    label: None,
+                    layout: Some(&pipeline_layout),
+                    vertex: etalon::VertexState {
+                        module: &shader,
+                        entry_point: Some("vs_main"),
+                        buffers: &[],
+                        compilation_options: Default::default(),
+                    },
+                    fragment: Some(etalon::FragmentState {
+                        module: &shader,
+                        entry_point: Some("fs_main"),
+                        compilation_options: Default::default(),
+                        targets: &[Some(swapchain_format.into())],
+                    }),
+                    primitive: etalon::PrimitiveState::default(),
+                    depth_stencil: None,
+                    multisample: etalon::MultisampleState::default(),
+                    multiview_mask: None,
+                    cache: None,
+                });
 
             let config = surface
                 .get_default_config(&adapter, size.width, size.height)

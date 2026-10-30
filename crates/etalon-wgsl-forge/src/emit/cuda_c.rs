@@ -2,7 +2,7 @@
 
 use std::fmt::Write;
 
-use crate::emit::coopmat::{CoopMatShape, should_use_coopmat};
+use crate::emit::coopmat::{should_use_coopmat, CoopMatShape};
 use crate::emit::GeneratedShader;
 use crate::ir::{DType, ForgeError, KernelSpec, Op};
 use crate::schedule::Schedule;

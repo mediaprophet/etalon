@@ -35,7 +35,10 @@ pub trait ComputeLane {
     fn prepare(&mut self, plan: &Self::PreparedPlan) -> Result<(), Self::Error>;
 
     /// Hot path: zero-allocation submission to hardware queues.
-    fn submit(&mut self, submission: Self::Submission) -> Result<PerQueueCompletionToken, Self::Error>;
+    fn submit(
+        &mut self,
+        submission: Self::Submission,
+    ) -> Result<PerQueueCompletionToken, Self::Error>;
 
     /// Non-blocking check for token completion.
     fn poll_completion(&self, token: PerQueueCompletionToken) -> bool;

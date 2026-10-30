@@ -1,5 +1,4 @@
 use crate::ray_tracing::acceleration_structure_limits;
-use std::{iter, mem};
 use etalon::{
     include_wgsl,
     util::{BufferInitDescriptor, DeviceExt},
@@ -11,6 +10,7 @@ use etalon::{
     PollType, TlasInstance, VertexFormat,
 };
 use etalon_test::{apply, gpu_test, GpuTestConfiguration, TestParameters, TestingContext};
+use std::{iter, mem};
 
 pub fn all_tests(tests: &mut Vec<etalon_test::GpuTestInitializer>) {
     tests.push(ACCELERATION_STRUCTURE_USE_AFTER_FREE);

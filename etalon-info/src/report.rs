@@ -1,12 +1,12 @@
 use std::io;
 
-use exhaust::Exhaust;
-use hashbrown::HashMap;
-use serde::{Deserialize, Serialize};
 use etalon::{
     AdapterInfo, DownlevelCapabilities, Dx12Compiler, Features, Limits, TextureFormat,
     TextureFormatFeatures,
 };
+use exhaust::Exhaust;
+use hashbrown::HashMap;
+use serde::{Deserialize, Serialize};
 
 /// Report specifying the capabilities of the GPUs on the system.
 ///

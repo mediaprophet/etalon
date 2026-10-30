@@ -30,28 +30,36 @@ fn request_no_experimental_features() {
 fn request_experimental_features() {
     let adapter = noop_adapter();
 
-    let dq = pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
-        // Experimental
-        required_features: etalon::Features::EXPERIMENTAL_MESH_SHADER,
-        experimental_features: unsafe { etalon::ExperimentalFeatures::enabled() },
-        ..Default::default()
-    }));
-
-    assert!(dq.is_ok());
+    for feature in [
+        etalon::Features::EXPERIMENTAL_MESH_SHADER,
+        etalon::Features::EXPERIMENTAL_BUFFER_DEVICE_ADDRESS,
+        etalon::Features::EXPERIMENTAL_EXTERNAL_MEMORY_HOST,
+    ] {
+        let dq = pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
+            required_features: feature,
+            experimental_features: unsafe { etalon::ExperimentalFeatures::enabled() },
+            ..Default::default()
+        }));
+        assert!(dq.is_ok(), "{feature:?}: {dq:?}");
+    }
 }
 
 #[test]
 fn request_experimental_features_when_not_enabled() {
     let adapter = noop_adapter();
 
-    let dq = pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
-        // Experimental
-        required_features: etalon::Features::EXPERIMENTAL_MESH_SHADER,
-        experimental_features: etalon::ExperimentalFeatures::disabled(),
-        ..Default::default()
-    }));
-
-    assert!(dq.is_err());
+    for feature in [
+        etalon::Features::EXPERIMENTAL_MESH_SHADER,
+        etalon::Features::EXPERIMENTAL_BUFFER_DEVICE_ADDRESS,
+        etalon::Features::EXPERIMENTAL_EXTERNAL_MEMORY_HOST,
+    ] {
+        let dq = pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
+            required_features: feature,
+            experimental_features: etalon::ExperimentalFeatures::disabled(),
+            ..Default::default()
+        }));
+        assert!(dq.is_err(), "{feature:?}: {dq:?}");
+    }
 }
 
 #[test]

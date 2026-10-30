@@ -3,7 +3,7 @@
 //! Includes Runbook 01 Bug 1.4 fix: uses `DXC_CACHE_SCHEMA_V2` with length-delimited
 //! `blake3` hashing so `("ab", "c")` and `("a", "bc")` never collide.
 
-use std::collections::HashMap;
+use hashbrown::HashMap;
 use std::sync::{Mutex, OnceLock};
 
 use crate::ir::ForgeError;

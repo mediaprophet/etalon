@@ -226,7 +226,10 @@ fn planar_texture_bad_view_format() {
     };
     for (tex_format, view_format) in [
         (etalon::TextureFormat::NV12, etalon::TextureFormat::Rg8Unorm),
-        (etalon::TextureFormat::P010, etalon::TextureFormat::Rg16Unorm),
+        (
+            etalon::TextureFormat::P010,
+            etalon::TextureFormat::Rg16Unorm,
+        ),
     ] {
         fail(
             &device,
@@ -656,7 +659,8 @@ fn transient_invalid_storeop() {
         sample_count: 1,
         dimension: etalon::TextureDimension::D2,
         format: etalon::TextureFormat::Rgba8Unorm,
-        usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TRANSIENT_ATTACHMENT,
+        usage: etalon::TextureUsages::RENDER_ATTACHMENT
+            | etalon::TextureUsages::TRANSIENT_ATTACHMENT,
         view_formats: &[],
     });
 

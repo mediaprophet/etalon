@@ -199,7 +199,10 @@ fn create_discarded_texture_and_view(ctx: &TestingContext) -> etalon::TextureVie
     // Store the sentinel, then discard it in a second pass. A single
     // clear-and-discard pass would let the backend elide the write.
     for (load, store) in [
-        (etalon::LoadOp::Clear(etalon::Color::RED), etalon::StoreOp::Store),
+        (
+            etalon::LoadOp::Clear(etalon::Color::RED),
+            etalon::StoreOp::Store,
+        ),
         (etalon::LoadOp::Load, etalon::StoreOp::Discard),
     ] {
         encoder.begin_render_pass(&etalon::RenderPassDescriptor {

@@ -2,8 +2,8 @@ use alloc::vec::Vec;
 use core::fmt;
 
 use bit_set::BitSet;
-use range_alloc::RangeAllocator;
 use etalon_sync::Mutex;
+use range_alloc::RangeAllocator;
 use windows::Win32::Graphics::Direct3D12;
 
 use crate::auxil::dxgi::result::HResult as _;

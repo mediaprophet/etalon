@@ -18,7 +18,8 @@ static NUM_WORKGROUPS_BUILTIN: GpuTestConfiguration = GpuTestConfiguration::new(
         TestParameters::default()
             .features(etalon::Features::IMMEDIATES)
             .downlevel_flags(
-                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+                etalon::DownlevelFlags::COMPUTE_SHADERS
+                    | etalon::DownlevelFlags::INDIRECT_EXECUTION,
             )
             .limits(etalon::Limits {
                 max_immediate_size: 4,
@@ -38,7 +39,8 @@ static DISCARD_DISPATCH: GpuTestConfiguration = GpuTestConfiguration::new()
         TestParameters::default()
             .features(etalon::Features::IMMEDIATES)
             .downlevel_flags(
-                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+                etalon::DownlevelFlags::COMPUTE_SHADERS
+                    | etalon::DownlevelFlags::INDIRECT_EXECUTION,
             )
             .limits(etalon::Limits {
                 max_compute_workgroups_per_dimension: 10,
@@ -111,7 +113,8 @@ static ZERO_SIZED_BUFFER: GpuTestConfiguration = GpuTestConfiguration::new()
         TestParameters::default()
             .features(etalon::Features::IMMEDIATES)
             .downlevel_flags(
-                etalon::DownlevelFlags::COMPUTE_SHADERS | etalon::DownlevelFlags::INDIRECT_EXECUTION,
+                etalon::DownlevelFlags::COMPUTE_SHADERS
+                    | etalon::DownlevelFlags::INDIRECT_EXECUTION,
             )
             .limits(etalon::Limits {
                 max_immediate_size: 4,

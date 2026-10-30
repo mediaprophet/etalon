@@ -15,6 +15,7 @@ use std::{
     thread,
 };
 
+use etalon_sync::{Lazy, Mutex, MutexGuard, RwLock};
 use glow::HasContext;
 use glutin_wgl_sys::wgl_extra::{
     Wgl, CONTEXT_CORE_PROFILE_BIT_ARB, CONTEXT_DEBUG_BIT_ARB, CONTEXT_FLAGS_ARB,
@@ -22,7 +23,6 @@ use glutin_wgl_sys::wgl_extra::{
 };
 use hashbrown::HashSet;
 use raw_window_handle::{RawDisplayHandle, RawWindowHandle};
-use etalon_sync::{Lazy, Mutex, MutexGuard, RwLock};
 use wgt::InstanceFlags;
 use windows::{
     core::{Error, PCSTR},

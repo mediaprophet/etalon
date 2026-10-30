@@ -9,6 +9,7 @@
 ## Task 3.1: Create `crates/etalon-agent` (Silicon Steward & Safe Resource Lease Layer)
 
 ### Module Layout (`< 500` lines per file, `Rule 0-B`)
+
 ```text
 c:\github\etalon\crates\etalon-agent\
 ├── Cargo.toml
@@ -26,6 +27,7 @@ c:\github\etalon\crates\etalon-agent\
 ### Mandatory Implementation Contracts
 
 1. **Truthful Capability State Machine (`capability.rs`):**
+
 ```rust
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum CapabilityState {
@@ -36,10 +38,12 @@ pub enum CapabilityState {
     Verified,   // Passed 1-step micro-oracle self-check
 }
 ```
-   - Never route production workloads to a lane unless its state is `CapabilityState::Verified`.
+
+- Never route production workloads to a lane unless its state is `CapabilityState::Verified`.
 
 2. **Safe Resource Ownership & Lease Hierarchy (`lease.rs`):**
    - Implement the four-stage ownership chain from Codex Review §3 Q2:
+
 ```rust
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
 pub struct AllocationId {
@@ -76,7 +80,8 @@ impl BufferRegion {
     }
 }
 ```
-   - When an external host `mmap` (`Arc<Mmap>`) is imported, wrap the `Arc<Mmap>` inside `OwnedAllocation` and retain an `Arc` clone inside every in-flight `SubmissionLease` until the specific hardware queue reaches the submission's `PerQueueCompletionToken(QueueId, u64)`. This guarantees the OS file mapping can **never** be unmapped or truncated while GPU reads are in flight.
+
+- When an external host `mmap` (`Arc<Mmap>`) is imported, wrap the `Arc<Mmap>` inside `OwnedAllocation` and retain an `Arc` clone inside every in-flight `SubmissionLease` until the specific hardware queue reaches the submission's `PerQueueCompletionToken(QueueId, u64)`. This guarantees the OS file mapping can **never** be unmapped or truncated while GPU reads are in flight.
 
 3. **Source Files to Migrate from `QualiaDB` into `crates/etalon-agent`:**
    - [`qualiaDB/crates/qualia-core-db/src/wgsl_forge/execute/memory.rs`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/wgsl_forge/execute/memory.rs) $\rightarrow$ `crates/etalon-agent/src/slab.rs`
@@ -89,6 +94,7 @@ impl BufferRegion {
 ## Task 3.2: Create `crates/etalon-wgsl-forge` (Pure IR, Multi-Target Emitter & Certifier)
 
 ### Module Layout (`< 500` lines per file)
+
 ```text
 c:\github\etalon\crates\etalon-wgsl-forge\
 ├── Cargo.toml
@@ -108,6 +114,7 @@ c:\github\etalon\crates\etalon-wgsl-forge\
 ```
 
 ### Mandatory Decoupling Rules
+
 1. **No Database or `P64` File Coupling:**
    - Keep `P64` file header parsing and CRC-32C validation (`qualiaDB/crates/qualia-core-db/src/q42/p64_weight/layout.rs`) inside `QualiaDB`.
    - `etalon-wgsl-forge` only defines `P64GpuWords64` (`[u32; 16]`, `#[repr(C, align(16))]`) and validated `TensorViewDesc` (dtype, dimensions, strides, quantization block size).
@@ -119,6 +126,7 @@ c:\github\etalon\crates\etalon-wgsl-forge\
 ## Task 3.3: Create `crates/etalon-nquin` (48-Byte Semantic Scan & Stable GPU Radix Sort)
 
 ### Module Layout
+
 ```text
 c:\github\etalon\crates\etalon-nquin\
 ├── Cargo.toml
@@ -135,7 +143,9 @@ c:\github\etalon\crates\etalon-nquin\
 ```
 
 ### Mandatory ABI & Verification Gates
+
 1. **Compile-Time Layout Assertions (`layout.rs`):**
+
 ```rust
 #[repr(C, align(16))]
 #[derive(Clone, Copy, Debug, PartialEq, Eq, bytemuck::Pod, bytemuck::Zeroable)]
@@ -153,6 +163,7 @@ const _: () = {
     assert!(core::mem::align_of::<NQuinWire>() == 16);
 };
 ```
+
 2. **Immediate Consumer & Oracle Gate:**
    - Wire `qualia-core-db::query::graph_accel` to delegate to `etalon-nquin`.
    - Run `cargo nextest run -p etalon-nquin` covering:

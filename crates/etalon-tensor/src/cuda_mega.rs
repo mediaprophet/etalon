@@ -4,7 +4,7 @@
 //! Chains RMSNorm, Q4_K / Q8_0 / FP32 weight projections, RoPE, KV cache update, GQA online-softmax
 //! SDPA, SwiGLU FFN, output RMSNorm, LM Head, and argmax token selection into a single execution pass.
 
-use std::collections::HashSet;
+use hashbrown::HashSet;
 use thiserror::Error;
 
 use super::attention::online_softmax_rescale;
@@ -306,12 +306,16 @@ pub fn collect_and_validate_layer_keys(
         let row_o = layout
             .row_bytes(dims.o_in)
             .ok_or(MegaPassError::InvalidDimensions("invalid o_in alignment"))?;
-        let row_gate = layout.row_bytes(dims.gate_in).ok_or(
-            MegaPassError::InvalidDimensions("invalid gate_in alignment"),
-        )?;
-        let row_down = layout.row_bytes(dims.down_in).ok_or(
-            MegaPassError::InvalidDimensions("invalid down_in alignment"),
-        )?;
+        let row_gate = layout
+            .row_bytes(dims.gate_in)
+            .ok_or(MegaPassError::InvalidDimensions(
+                "invalid gate_in alignment",
+            ))?;
+        let row_down = layout
+            .row_bytes(dims.down_in)
+            .ok_or(MegaPassError::InvalidDimensions(
+                "invalid down_in alignment",
+            ))?;
 
         if weights.q_raw.len() < row_in.saturating_mul(dims.q_out)
             || weights.k_raw.len() < row_in.saturating_mul(dims.kv_out)
@@ -324,9 +328,11 @@ pub fn collect_and_validate_layer_keys(
             return Err(MegaPassError::TruncatedLayerWeight { layer: layer_idx });
         }
 
-        let [kq, kk, kvw, ko, kg, ku, kd] = plan
-            .layer_weight_keys(layer_idx)
-            .ok_or(MegaPassError::InvalidDimensions("missing layer weight keys"))?;
+        let [kq, kk, kvw, ko, kg, ku, kd] =
+            plan.layer_weight_keys(layer_idx)
+                .ok_or(MegaPassError::InvalidDimensions(
+                    "missing layer weight keys",
+                ))?;
         let [attn_norm, ffn_norm] = plan
             .layer_norm_keys(layer_idx)
             .ok_or(MegaPassError::InvalidDimensions("missing layer norm keys"))?;
@@ -424,9 +430,27 @@ pub fn build_parameter_packs(
 
     Ok(MegaPassParameterPacks {
         step_params: [desc.token_idx, ring_slot, input_token_id],
-        common_qkv: [desc.n_embd as u32, q_dim as u32, kv_dim as u32, row_embd, eps_bits],
-        common_rope_q: [desc.n_head as u32, desc.head_dim as u32, 0, rope_base_bits, rope_scale_bits],
-        common_rope_k: [desc.n_kv as u32, desc.head_dim as u32, 0, rope_base_bits, rope_scale_bits],
+        common_qkv: [
+            desc.n_embd as u32,
+            q_dim as u32,
+            kv_dim as u32,
+            row_embd,
+            eps_bits,
+        ],
+        common_rope_q: [
+            desc.n_head as u32,
+            desc.head_dim as u32,
+            0,
+            rope_base_bits,
+            rope_scale_bits,
+        ],
+        common_rope_k: [
+            desc.n_kv as u32,
+            desc.head_dim as u32,
+            0,
+            rope_base_bits,
+            rope_scale_bits,
+        ],
         common_kv: [
             desc.n_kv as u32,
             desc.head_dim as u32,
@@ -446,8 +470,17 @@ pub fn build_parameter_packs(
             attention_segments,
         ],
         common_o: [first_dims.o_in as u32, first_dims.o_out as u32, row_o],
-        common_ffn: [first_dims.gate_in as u32, first_dims.gate_out as u32, row_gate, eps_bits],
-        common_down: [first_dims.down_in as u32, first_dims.down_out as u32, row_down],
+        common_ffn: [
+            first_dims.gate_in as u32,
+            first_dims.gate_out as u32,
+            row_gate,
+            eps_bits,
+        ],
+        common_down: [
+            first_dims.down_in as u32,
+            first_dims.down_out as u32,
+            row_down,
+        ],
         common_sdpa_scale: [sdpa_scale_bits],
         common_output_norm: [desc.n_embd as u32, eps_bits],
         common_argmax: [desc.lm_head_out as u32],
@@ -529,7 +562,14 @@ fn project_gemv(
     Ok(())
 }
 
-fn apply_rope_in_place(vec: &mut [f32], n_heads: usize, head_dim: usize, pos: u32, base: f32, scale: f32) {
+fn apply_rope_in_place(
+    vec: &mut [f32],
+    n_heads: usize,
+    head_dim: usize,
+    pos: u32,
+    base: f32,
+    scale: f32,
+) {
     let eff_pos = (pos as f32) / scale.max(1e-6);
     for h in 0..n_heads {
         let head = &mut vec[h * head_dim..(h + 1) * head_dim];
@@ -545,9 +585,15 @@ fn apply_rope_in_place(vec: &mut [f32], n_heads: usize, head_dim: usize, pos: u3
     }
 }
 
-/// Complete multi-layer transformer mega-pass executor with resident KV cache.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum MegaPassExecutionPath {
+    ScalarCpu,
+}
+
+/// Scalar transformer reference executor with a resident KV cache.
 #[derive(Debug, Default)]
 pub struct CudaMegaPassExecutor {
+    pub last_execution: Option<MegaPassExecutionPath>,
     pub graph_instantiated: bool,
     pub graph_key: u64,
     pub node_count: u64,
@@ -567,7 +613,7 @@ impl CudaMegaPassExecutor {
     pub fn cuda_available() -> bool {
         #[cfg(feature = "cuda")]
         {
-            cudarc::driver::result::init().is_ok()
+            etalon_agent::CudaDriverApi::probe().is_some()
         }
         #[cfg(not(feature = "cuda"))]
         {
@@ -606,6 +652,11 @@ impl CudaMegaPassExecutor {
         output_norm: Option<&[f32]>,
         lm_head_raw: Option<&[u8]>,
     ) -> Result<u32, MegaPassError> {
+        self.last_execution = None;
+        self.graph_instantiated = false;
+        self.graph_key = 0;
+        self.node_count = 0;
+        self.h2d_bytes_per_token = 0;
         let packs = self.prepare_step(desc, plan)?;
         if hidden.len() < desc.n_embd {
             return Err(MegaPassError::InvalidDimensions("hidden buffer < n_embd"));
@@ -630,13 +681,32 @@ impl CudaMegaPassExecutor {
             let lw = plan.layer_weights(l).unwrap();
             let ld = plan.layer_dims(l).unwrap();
 
-            rmsnorm_into(&hidden[..desc.n_embd], lw.attn_norm, desc.rms_eps, &mut norm_buf);
+            rmsnorm_into(
+                &hidden[..desc.n_embd],
+                lw.attn_norm,
+                desc.rms_eps,
+                &mut norm_buf,
+            );
             project_gemv(layout, lw.q_raw, &norm_buf, ld.q_in, ld.q_out, &mut q_buf)?;
             project_gemv(layout, lw.k_raw, &norm_buf, ld.kv_in, ld.kv_out, &mut k_buf)?;
             project_gemv(layout, lw.v_raw, &norm_buf, ld.kv_in, ld.kv_out, &mut v_buf)?;
 
-            apply_rope_in_place(&mut q_buf, desc.n_head, desc.head_dim, desc.token_idx, desc.rope_base, desc.rope_scale);
-            apply_rope_in_place(&mut k_buf, desc.n_kv, desc.head_dim, desc.token_idx, desc.rope_base, desc.rope_scale);
+            apply_rope_in_place(
+                &mut q_buf,
+                desc.n_head,
+                desc.head_dim,
+                desc.token_idx,
+                desc.rope_base,
+                desc.rope_scale,
+            );
+            apply_rope_in_place(
+                &mut k_buf,
+                desc.n_kv,
+                desc.head_dim,
+                desc.token_idx,
+                desc.rope_base,
+                desc.rope_scale,
+            );
 
             let slot = (desc.token_idx % desc.max_context) as usize;
             let kv_base = (l * (desc.max_context as usize) + slot) * kv_dim;
@@ -655,10 +725,16 @@ impl CudaMegaPassExecutor {
                 let mut m_prev = -3.4e38f32;
                 let mut l_prev = 0.0f32;
                 for t in 0..seq_len {
-                    let t_base = (l * (desc.max_context as usize) + t) * kv_dim + kv_h * desc.head_dim;
+                    let t_base =
+                        (l * (desc.max_context as usize) + t) * kv_dim + kv_h * desc.head_dim;
                     let k_head = &self.k_cache[t_base..t_base + desc.head_dim];
                     let v_head = &self.v_cache[t_base..t_base + desc.head_dim];
-                    let score = q_head.iter().zip(k_head.iter()).map(|(&a, &b)| a * b).sum::<f32>() * scale;
+                    let score = q_head
+                        .iter()
+                        .zip(k_head.iter())
+                        .map(|(&a, &b)| a * b)
+                        .sum::<f32>()
+                        * scale;
                     let m_new = m_prev.max(score);
                     let (rescale, _) = online_softmax_rescale(m_prev, m_new);
                     let p = (score - m_new).exp();
@@ -669,47 +745,88 @@ impl CudaMegaPassExecutor {
                     m_prev = m_new;
                 }
                 let inv_l = if l_prev > 0.0 { 1.0 / l_prev } else { 0.0 };
-                for d in 0..desc.head_dim {
-                    out_head[d] *= inv_l;
+                for value in out_head {
+                    *value *= inv_l;
                 }
             }
 
-            project_gemv(layout, lw.o_raw, &attn_out, ld.o_in, ld.o_out, &mut proj_out)?;
+            project_gemv(
+                layout,
+                lw.o_raw,
+                &attn_out,
+                ld.o_in,
+                ld.o_out,
+                &mut proj_out,
+            )?;
             for i in 0..desc.n_embd {
                 hidden[i] += proj_out[i];
             }
 
             // SwiGLU FFN + residual
-            rmsnorm_into(&hidden[..desc.n_embd], lw.ffn_norm, desc.rms_eps, &mut norm_buf);
+            rmsnorm_into(
+                &hidden[..desc.n_embd],
+                lw.ffn_norm,
+                desc.rms_eps,
+                &mut norm_buf,
+            );
             let mut gate_buf = vec![0.0f32; ld.gate_out];
             let mut up_buf = vec![0.0f32; ld.up_out];
-            project_gemv(layout, lw.gate_raw, &norm_buf, ld.gate_in, ld.gate_out, &mut gate_buf)?;
-            project_gemv(layout, lw.up_raw, &norm_buf, ld.up_in, ld.up_out, &mut up_buf)?;
+            project_gemv(
+                layout,
+                lw.gate_raw,
+                &norm_buf,
+                ld.gate_in,
+                ld.gate_out,
+                &mut gate_buf,
+            )?;
+            project_gemv(
+                layout,
+                lw.up_raw,
+                &norm_buf,
+                ld.up_in,
+                ld.up_out,
+                &mut up_buf,
+            )?;
             for i in 0..ld.gate_out {
                 let g = gate_buf[i];
                 let silu = g / (1.0 + (-g).exp());
                 gate_buf[i] = silu * up_buf[i];
             }
-            project_gemv(layout, lw.down_raw, &gate_buf, ld.down_in, ld.down_out, &mut proj_out)?;
+            project_gemv(
+                layout,
+                lw.down_raw,
+                &gate_buf,
+                ld.down_in,
+                ld.down_out,
+                &mut proj_out,
+            )?;
             for i in 0..desc.n_embd {
                 hidden[i] += proj_out[i];
             }
         }
 
         if let Some(out_norm_w) = output_norm {
-            rmsnorm_into(&hidden[..desc.n_embd], out_norm_w, desc.rms_eps, &mut norm_buf);
+            rmsnorm_into(
+                &hidden[..desc.n_embd],
+                out_norm_w,
+                desc.rms_eps,
+                &mut norm_buf,
+            );
             hidden[..desc.n_embd].copy_from_slice(&norm_buf);
         }
 
         self.graph_key = packs.graph_key;
-        self.node_count = (desc.n_layer as u64) * 9 + 2;
-        self.h2d_bytes_per_token = 12 + (desc.n_embd * 4) as u64;
-        self.graph_instantiated = Self::cuda_available();
-
         if let Some(lm_raw) = lm_head_raw {
             if desc.lm_head_in > 0 && desc.lm_head_out > 0 {
                 let mut logits = vec![0.0f32; desc.lm_head_out];
-                project_gemv(layout, lm_raw, &hidden[..desc.lm_head_in], desc.lm_head_in, desc.lm_head_out, &mut logits)?;
+                project_gemv(
+                    layout,
+                    lm_raw,
+                    &hidden[..desc.lm_head_in],
+                    desc.lm_head_in,
+                    desc.lm_head_out,
+                    &mut logits,
+                )?;
                 let mut best_idx = 0u32;
                 let mut best_val = f32::NEG_INFINITY;
                 for (idx, &val) in logits.iter().enumerate() {
@@ -718,9 +835,11 @@ impl CudaMegaPassExecutor {
                         best_idx = idx as u32;
                     }
                 }
+                self.last_execution = Some(MegaPassExecutionPath::ScalarCpu);
                 return Ok(best_idx);
             }
         }
+        self.last_execution = Some(MegaPassExecutionPath::ScalarCpu);
         Ok(u32::MAX)
     }
 }
@@ -797,11 +916,8 @@ mod tests {
 
         // Construct LM head (4 vocab rows x 32 cols) where row 2 has the strongest positive weights
         let mut lm_head = vec![0.0f32; 4 * n_embd];
-        for c in 0..n_embd {
-            lm_head[0 * n_embd + c] = -1.0;
-            lm_head[1 * n_embd + c] = 0.1;
-            lm_head[2 * n_embd + c] = 2.5;
-            lm_head[3 * n_embd + c] = 0.5;
+        for (row, weight) in lm_head.chunks_exact_mut(n_embd).zip([-1.0, 0.1, 2.5, 0.5]) {
+            row.fill(weight);
         }
         let mut hidden = vec![1.0f32; n_embd];
         let tok = exec
@@ -814,7 +930,17 @@ mod tests {
             )
             .expect("mega-pass execution must succeed");
         assert_eq!(tok, 2, "expected vocabulary token 2 to win argmax");
+        assert_eq!(exec.last_execution, Some(MegaPassExecutionPath::ScalarCpu));
+        assert!(!exec.graph_instantiated);
+        assert_eq!(exec.node_count, 0);
+        assert_eq!(exec.h2d_bytes_per_token, 0);
         assert_ne!(exec.graph_key, 0);
+        assert!(exec
+            .execute_mega_pass(&desc, &plan, &mut [], None, None)
+            .is_err());
+        assert_eq!(exec.last_execution, None);
+        assert!(!exec.graph_instantiated);
+        assert_eq!(exec.graph_key, 0);
         assert!(wmma_usable_for_batch(8, 512, 512));
         assert!(!wmma_usable_for_batch(1, 512, 512));
     }

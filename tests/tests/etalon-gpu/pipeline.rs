@@ -1,4 +1,6 @@
-use etalon_test::{apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters};
+use etalon_test::{
+    apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters,
+};
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.extend([
@@ -16,12 +18,13 @@ const INVALID_SHADER_DESC: etalon::ShaderModuleDescriptor = etalon::ShaderModule
     source: etalon::ShaderSource::Wgsl(std::borrow::Cow::Borrowed("not valid wgsl")),
 };
 
-const TRIVIAL_COMPUTE_SHADER_DESC: etalon::ShaderModuleDescriptor = etalon::ShaderModuleDescriptor {
-    label: Some("trivial compute shader"),
-    source: etalon::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(
-        "@compute @workgroup_size(1) fn main() {}",
-    )),
-};
+const TRIVIAL_COMPUTE_SHADER_DESC: etalon::ShaderModuleDescriptor =
+    etalon::ShaderModuleDescriptor {
+        label: Some("trivial compute shader"),
+        source: etalon::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(
+            "@compute @workgroup_size(1) fn main() {}",
+        )),
+    };
 
 const TRIVIAL_VERTEX_SHADER_DESC: etalon::ShaderModuleDescriptor = etalon::ShaderModuleDescriptor {
     label: Some("trivial vertex shader"),
@@ -30,12 +33,13 @@ const TRIVIAL_VERTEX_SHADER_DESC: etalon::ShaderModuleDescriptor = etalon::Shade
     )),
 };
 
-const TRIVIAL_FRAGMENT_SHADER_DESC: etalon::ShaderModuleDescriptor = etalon::ShaderModuleDescriptor {
-    label: Some("trivial fragment shader"),
-    source: etalon::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(
-        "@fragment fn main() -> @location(0) vec4<f32> { return vec4<f32>(0); }",
-    )),
-};
+const TRIVIAL_FRAGMENT_SHADER_DESC: etalon::ShaderModuleDescriptor =
+    etalon::ShaderModuleDescriptor {
+        label: Some("trivial fragment shader"),
+        source: etalon::ShaderSource::Wgsl(std::borrow::Cow::Borrowed(
+            "@fragment fn main() -> @location(0) vec4<f32> { return vec4<f32>(0); }",
+        )),
+    };
 
 // Create an invalid shader and a compute pipeline that uses it
 // with a default bindgroup layout, and then ask for that layout.

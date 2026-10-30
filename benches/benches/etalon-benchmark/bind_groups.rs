@@ -1,7 +1,7 @@
 use std::{num::NonZeroU32, time::Instant};
 
-use nanorand::{Rng, WyRand};
 use etalon_benchmark::{iter, BenchmarkContext, SubBenchResult};
+use nanorand::{Rng, WyRand};
 
 use crate::DeviceState;
 

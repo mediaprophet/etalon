@@ -147,8 +147,12 @@ fn emit_kernel_body(
             writeln!(source, "        }}")
                 .map_err(|error| ForgeError::Emission(error.to_string()))?;
         } else {
-            writeln!(source, "        if (global_id + {} < params.length) {{", schedule.vector_width - 1)
-                .map_err(|error| ForgeError::Emission(error.to_string()))?;
+            writeln!(
+                source,
+                "        if (global_id + {} < params.length) {{",
+                schedule.vector_width - 1
+            )
+            .map_err(|error| ForgeError::Emission(error.to_string()))?;
             for index in 0..schedule.vector_width {
                 writeln!(
                     source,
@@ -352,7 +356,11 @@ void {entry}(uint3 gid : SV_DispatchThreadID) {{
     .map_err(|e| ForgeError::Emission(e.to_string()))
 }
 
-fn emit_p64_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) -> Result<(), ForgeError> {
+fn emit_p64_hlsl(
+    source: &mut String,
+    kernel: &KernelSpec,
+    schedule: Schedule,
+) -> Result<(), ForgeError> {
     let wg = schedule.workgroup_size;
     writeln!(
         source,
@@ -362,7 +370,11 @@ fn emit_p64_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) -
     .map_err(|e| ForgeError::Emission(e.to_string()))
 }
 
-fn emit_gemm_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) -> Result<(), ForgeError> {
+fn emit_gemm_hlsl(
+    source: &mut String,
+    kernel: &KernelSpec,
+    schedule: Schedule,
+) -> Result<(), ForgeError> {
     let wg = schedule.workgroup_size;
     writeln!(
         source,
@@ -372,7 +384,11 @@ fn emit_gemm_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) 
     .map_err(|e| ForgeError::Emission(e.to_string()))
 }
 
-fn emit_ternary_gemv_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) -> Result<(), ForgeError> {
+fn emit_ternary_gemv_hlsl(
+    source: &mut String,
+    kernel: &KernelSpec,
+    schedule: Schedule,
+) -> Result<(), ForgeError> {
     let wg = schedule.workgroup_size;
     writeln!(
         source,
@@ -382,7 +398,11 @@ fn emit_ternary_gemv_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Sc
     .map_err(|e| ForgeError::Emission(e.to_string()))
 }
 
-fn emit_fft_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) -> Result<(), ForgeError> {
+fn emit_fft_hlsl(
+    source: &mut String,
+    kernel: &KernelSpec,
+    schedule: Schedule,
+) -> Result<(), ForgeError> {
     let wg = schedule.workgroup_size;
     writeln!(
         source,
@@ -395,27 +415,52 @@ fn emit_fft_hlsl(source: &mut String, kernel: &KernelSpec, schedule: Schedule) -
 fn emit_ops(source: &mut String, ops: &[Op], indent: &str) -> Result<(), ForgeError> {
     for op in ops {
         match op {
-            Op::StructLoad { buffer, field, destination } => {
+            Op::StructLoad {
+                buffer,
+                field,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {buffer}.{field};")
                     .map_err(|e| ForgeError::Emission(e.to_string()))?;
             }
-            Op::Load { buffer, index, destination } => {
+            Op::Load {
+                buffer,
+                index,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {buffer}[{index}];")
                     .map_err(|e| ForgeError::Emission(e.to_string()))?;
             }
-            Op::Store { buffer, index, value } => {
+            Op::Store {
+                buffer,
+                index,
+                value,
+            } => {
                 writeln!(source, "{indent}{buffer}[{index}] = {value};")
                     .map_err(|e| ForgeError::Emission(e.to_string()))?;
             }
-            Op::Fma { a, b, c, destination } => {
+            Op::Fma {
+                a,
+                b,
+                c,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {a} * {b} + {c};")
                     .map_err(|e| ForgeError::Emission(e.to_string()))?;
             }
-            Op::Mul { left, right, destination } => {
+            Op::Mul {
+                left,
+                right,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {left} * {right};")
                     .map_err(|e| ForgeError::Emission(e.to_string()))?;
             }
-            Op::Add { left, right, destination } => {
+            Op::Add {
+                left,
+                right,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {left} + {right};")
                     .map_err(|e| ForgeError::Emission(e.to_string()))?;
             }

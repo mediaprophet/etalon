@@ -12,7 +12,7 @@ description = "Silicon steward, capability state machine, and safe resource leas
 [features]
 default = ["std"]
 std = []
-cuda = ["dep:cudarc"]
+cuda = []
 
 [dependencies]
 etalon = { workspace = true }
@@ -20,5 +20,14 @@ etalon-types = { workspace = true }
 etalon-hal = { workspace = true, optional = true }
 log = { workspace = true }
 bytemuck = { workspace = true }
-cudarc = { version = "0.18", optional = true }
 thiserror = "2"
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = [
+    "Win32_Foundation",
+    "Win32_Graphics_DXCore",
+    "Win32_System_LibraryLoader",
+] }
+
+[dev-dependencies]
+tempfile.workspace = true

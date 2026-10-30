@@ -1,9 +1,9 @@
 use std::{borrow::Cow, iter, mem};
 
 use bytemuck::{Pod, Zeroable};
-use glam::{Mat4, Vec3};
 use etalon::util::DeviceExt;
 use etalon::{vertex_attr_array, IndexFormat, VertexBufferLayout};
+use glam::{Mat4, Vec3};
 
 use crate::utils;
 
@@ -159,29 +159,30 @@ impl crate::framework::Example for Example {
             source: etalon::ShaderSource::Wgsl(Cow::Borrowed(include_str!("shader.wgsl"))),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::AccelerationStructure {
-                        vertex_return: false,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::AccelerationStructure {
+                            vertex_return: false,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                ],
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
@@ -291,7 +292,12 @@ impl crate::framework::Example for Example {
         queue.submit(None);
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         //device.push_error_scope(etalon::ErrorFilter::Validation);
         const LIGHT_DISTANCE: f32 = 5.0;
         const TIME_SCALE: f32 = -0.2;

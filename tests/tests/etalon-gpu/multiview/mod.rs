@@ -11,6 +11,7 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(DRAW_MULTIVIEW);
     vec.push(DRAW_MULTIVIEW_NONCONTIGUOUS);
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE);
+    vec.push(DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD);
 }
 
 #[apply(gpu_test!)]
@@ -78,7 +79,35 @@ static DRAW_MULTIVIEW_MULTISAMPLE: GpuTestConfiguration = GpuTestConfiguration::
     .run_async(|ctx| run_test(ctx, 0b11, 4));
 
 async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
+    run_test_with_range(ctx, layer_mask, sample_count, 0, etalon::StoreOp::Store).await;
+}
+
+#[apply(gpu_test!)]
+static DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD: GpuTestConfiguration =
+    GpuTestConfiguration::new()
+        .parameters(
+            TestParameters::default()
+                .features(
+                    Features::MULTIVIEW
+                        | Features::MULTISAMPLE_ARRAY
+                        | Features::SELECTIVE_MULTIVIEW,
+                )
+                .limits(Limits {
+                    max_multiview_view_count: 4,
+                    ..Limits::defaults()
+                }),
+        )
+        .run_async(|ctx| run_test_with_range(ctx, 0b1001, 4, 1, etalon::StoreOp::Discard));
+
+async fn run_test_with_range(
+    ctx: TestingContext,
+    layer_mask: u32,
+    sample_count: u32,
+    base_layer: u32,
+    store: etalon::StoreOp,
+) {
     let num_layers = 32 - layer_mask.leading_zeros();
+    let total_layers = num_layers + base_layer + u32::from(base_layer != 0);
 
     let shader_src = include_str!("shader.wgsl");
 
@@ -126,7 +155,7 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
         size: etalon::Extent3d {
             width: TEXTURE_SIZE,
             height: TEXTURE_SIZE,
-            depth_or_array_layers: 32 - layer_mask.leading_zeros(),
+            depth_or_array_layers: total_layers,
         },
         mip_level_count: 1,
         sample_count,
@@ -144,7 +173,7 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
         aspect: etalon::TextureAspect::All,
         base_mip_level: 0,
         mip_level_count: None,
-        base_array_layer: 0,
+        base_array_layer: base_layer,
         array_layer_count: Some(num_layers),
         swizzle: etalon::TextureComponentSwizzle::default(),
     };
@@ -164,7 +193,7 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
 
     let readback_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
         label: None,
-        size: TEXTURE_SIZE as u64 * TEXTURE_SIZE as u64 * num_layers as u64,
+        size: TEXTURE_SIZE as u64 * TEXTURE_SIZE as u64 * total_layers as u64,
         usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
         mapped_at_creation: false,
     });
@@ -183,7 +212,7 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
                 resolve_target: resolve_texture_view.as_ref(),
                 ops: etalon::Operations {
                     load: etalon::LoadOp::Clear(etalon::Color::TRANSPARENT),
-                    store: etalon::StoreOp::Store,
+                    store,
                 },
             })],
             depth_stencil_attachment: None,
@@ -212,7 +241,7 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
         etalon::Extent3d {
             width: TEXTURE_SIZE,
             height: TEXTURE_SIZE,
-            depth_or_array_layers: num_layers,
+            depth_or_array_layers: total_layers,
         },
     );
     ctx.queue.submit([encoder.finish()]);
@@ -226,15 +255,19 @@ async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
 
     let data = slice.get_mapped_range().unwrap();
     let each_texture_size = (TEXTURE_SIZE * TEXTURE_SIZE) as usize;
-    assert_eq!(data.len(), each_texture_size * num_layers as usize);
-    for view_idx in 0..num_layers as usize {
-        let target_value = if (layer_mask & (1 << view_idx)) != 0 {
-            (32 + 64 * view_idx) as u8
+    assert_eq!(data.len(), each_texture_size * total_layers as usize);
+    for layer in 0..total_layers as usize {
+        let view = layer
+            .checked_sub(base_layer as usize)
+            .filter(|&view| view < num_layers as usize);
+        let target_value = if let Some(view) = view.filter(|&view| (layer_mask & (1 << view)) != 0)
+        {
+            (32 + 64 * view) as u8
         } else {
             (clear_color * 255.0) as u8
         };
         // Some metal devices automatically initialize stuff to 255, so I decided to use 128 instead of that
-        let failed_value = data[each_texture_size * view_idx..each_texture_size * (view_idx + 1)]
+        let failed_value = data[each_texture_size * layer..each_texture_size * (layer + 1)]
             .iter()
             .copied()
             .find(|b| b.abs_diff(target_value) > 1);

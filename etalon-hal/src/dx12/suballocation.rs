@@ -1,7 +1,7 @@
 use alloc::sync::Arc;
 
-use gpu_allocator::{d3d12::AllocationCreateDesc, MemoryLocation};
 use etalon_sync::Mutex;
+use gpu_allocator::{d3d12::AllocationCreateDesc, MemoryLocation};
 use windows::Win32::Graphics::{Direct3D12, Dxgi};
 
 use crate::{

@@ -6011,8 +6011,8 @@ fn snoise2(v: vec2<f32>) -> f32 {
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
-//This is a test 这是测试 これはテストだ 테스트입니다 T"
-OpSourceContinued "his is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
+//This is a test 这是测试 これはテストだ 테스트입니다"
+OpSourceContinued " This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
@@ -6325,8 +6325,8 @@ OpSourceContinued "his is a test 这是测试 これはテストだ 테스트입
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
-//This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ "
-OpSourceContinued "테스트입니다
+//This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテスト"
+OpSourceContinued "だ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
@@ -6640,8 +6640,8 @@ OpSourceContinued "테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
-//This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 "
-OpSourceContinued "これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
+//This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测"
+OpSourceContinued "试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
@@ -6955,8 +6955,8 @@ OpSourceContinued "これはテストだ 테스트입니다 This is a test 这�
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
-//This i"
-OpSourceContinued "s a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
+//Th"
+OpSourceContinued "is is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
 //This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다 This is a test 这是测试 これはテストだ 테스트입니다
@@ -7346,7 +7346,6 @@ fn gen_terrain_vertex(@builtin(vertex_index) vindex: u32) -> GenVertexOutput {
 
     let position = vec4<f32>(-1.0 + uv * 2.0, 0.0, 1.0);
 
-    // TODO: maybe replace this with u32(dot(uv, vec2(f32(gen_data.texture_dim.x))))
     let index = u32(uv.x * f32(gen_data.texture_size) + uv.y * f32(gen_data.texture_size)) + gen_data.start_index;
 
     return GenVertexOutput(index, position, uv);
@@ -8219,27 +8218,27 @@ OpFunctionEnd
 %340 = OpLabel
 OpBranch %350
 %350 = OpLabel
-OpLine %3 7413 9
+OpLine %3 7412 9
 %351 = OpFunctionCall  %4  %67 %341
-OpLine %3 7413 9
+OpLine %3 7412 9
 %352 = OpFMul  %4  %351 %78
-OpLine %3 7413 9
+OpLine %3 7412 9
 %353 = OpFAdd  %4  %352 %78
-OpLine %3 7414 17
+OpLine %3 7413 17
 %354 = OpFAdd  %6  %341 %346
-OpLine %3 7414 9
+OpLine %3 7413 9
 %355 = OpFunctionCall  %4  %67 %354
-OpLine %3 7414 9
+OpLine %3 7413 9
 %356 = OpFMul  %4  %355 %78
-OpLine %3 7414 9
+OpLine %3 7413 9
 %357 = OpFAdd  %4  %356 %78
-OpLine %3 7415 17
+OpLine %3 7414 17
 %358 = OpFAdd  %6  %341 %349
-OpLine %3 7415 9
+OpLine %3 7414 9
 %359 = OpFunctionCall  %4  %67 %358
-OpLine %3 7415 9
+OpLine %3 7414 9
 %360 = OpFMul  %4  %359 %78
-OpLine %3 7412 12
+OpLine %3 7411 12
 %361 = OpFAdd  %4  %360 %78
 %362 = OpCompositeConstruct  %5  %353 %357 %361
 OpReturnValue %362
@@ -8379,15 +8378,15 @@ OpLine %3 7308 30
 %460 = OpFAdd  %6  %448 %459
 OpLine %3 7308 20
 %461 = OpCompositeConstruct  %7  %460 %74 %56
-OpLine %3 7311 21
+OpLine %3 7310 21
 %462 = OpCompositeExtract  %4  %458 0
-OpLine %3 7311 21
+OpLine %3 7310 21
 %463 = OpAccessChain  %393  %446 %373
 %464 = OpLoad  %8  %463
 %465 = OpConvertUToF  %4  %464
 %466 = OpFMul  %4  %462 %465
 %467 = OpCompositeExtract  %4  %458 1
-OpLine %3 7311 17
+OpLine %3 7310 17
 %468 = OpAccessChain  %393  %446 %373
 %469 = OpLoad  %8  %468
 %470 = OpConvertUToF  %4  %469
@@ -8395,11 +8394,11 @@ OpLine %3 7311 17
 %472 = OpFAdd  %4  %466 %471
 %474 = OpExtInst  %4  %1 FClamp %472 %74 %473
 %475 = OpConvertFToU  %8  %474
-OpLine %3 7311 17
+OpLine %3 7310 17
 %476 = OpAccessChain  %393  %446 %374
 %477 = OpLoad  %8  %476
 %478 = OpIAdd  %8  %475 %477
-OpLine %3 7313 12
+OpLine %3 7312 12
 %479 = OpCompositeConstruct  %21  %478 %461 %458
 %480 = OpCompositeExtract  %8  %479 0
 OpStore %438 %480
@@ -8420,20 +8419,20 @@ OpFunctionEnd
 %496 = OpAccessChain  %445  %36 %135
 OpBranch %500
 %500 = OpLabel
-OpLine %3 7324 17
+OpLine %3 7323 17
 %501 = OpCompositeExtract  %6  %484 2
 %502 = OpCompositeExtract  %4  %501 0
-OpLine %3 7324 17
+OpLine %3 7323 17
 %503 = OpAccessChain  %393  %496 %373
 %504 = OpLoad  %8  %503
 %505 = OpConvertUToF  %4  %504
 %506 = OpFMul  %4  %502 %505
 %507 = OpCompositeExtract  %6  %484 2
 %508 = OpCompositeExtract  %4  %507 1
-OpLine %3 7324 70
+OpLine %3 7323 70
 %509 = OpAccessChain  %393  %496 %373
 %510 = OpLoad  %8  %509
-OpLine %3 7324 13
+OpLine %3 7323 13
 %511 = OpAccessChain  %393  %496 %373
 %512 = OpLoad  %8  %511
 %513 = OpIMul  %8  %510 %512
@@ -8442,125 +8441,125 @@ OpLine %3 7324 13
 %516 = OpFAdd  %4  %506 %515
 %517 = OpExtInst  %4  %1 FClamp %516 %74 %473
 %518 = OpConvertFToU  %8  %517
-OpLine %3 7324 13
+OpLine %3 7323 13
 %519 = OpAccessChain  %393  %496 %374
 %520 = OpLoad  %8  %519
 %521 = OpIAdd  %8  %518 %520
-OpLine %3 7325 32
+OpLine %3 7324 32
 %522 = OpConvertUToF  %4  %521
-OpLine %3 7325 22
+OpLine %3 7324 22
 %523 = OpFDiv  %4  %522 %497
 %524 = OpExtInst  %4  %1 Floor %523
 %525 = OpExtInst  %4  %1 FClamp %524 %74 %473
 %526 = OpConvertFToU  %8  %525
-OpLine %3 7326 22
+OpLine %3 7325 22
 %527 = OpFunctionCall  %8  %427 %521 %371
-OpLine %3 7328 36
+OpLine %3 7327 36
 %528 = OpAccessChain  %377  %496 %135
 %529 = OpLoad  %10  %528
-OpLine %3 7328 57
+OpLine %3 7327 57
 %530 = OpAccessChain  %380  %496 %126
 %531 = OpLoad  %11  %530
-OpLine %3 7328 13
+OpLine %3 7327 13
 %532 = OpFunctionCall  %6  %325 %526 %529 %531
-OpLine %3 7329 31
+OpLine %3 7328 31
 %533 = OpAccessChain  %386  %496 %372
 %534 = OpLoad  %6  %533
-OpLine %3 7329 13
+OpLine %3 7328 13
 %535 = OpFunctionCall  %14  %284 %532 %534
-OpLine %3 7333 5
+OpLine %3 7332 5
 OpSelectionMerge %536 None
 OpSwitch %527 %543 0 %537 1 %538 2 %539 3 %540 4 %541 5 %542
 %537 = OpLabel
-OpLine %3 7334 37
+OpLine %3 7333 37
 %544 = OpCompositeExtract  %5  %535 0
 %545 = OpCompositeExtract  %4  %544 0
-OpLine %3 7334 20
+OpLine %3 7333 20
 OpStore %498 %545
 OpBranch %536
 %538 = OpLabel
-OpLine %3 7335 37
+OpLine %3 7334 37
 %546 = OpCompositeExtract  %5  %535 0
 %547 = OpCompositeExtract  %4  %546 1
-OpLine %3 7335 20
+OpLine %3 7334 20
 OpStore %498 %547
 OpBranch %536
 %539 = OpLabel
-OpLine %3 7336 37
+OpLine %3 7335 37
 %548 = OpCompositeExtract  %5  %535 0
 %549 = OpCompositeExtract  %4  %548 2
-OpLine %3 7336 20
+OpLine %3 7335 20
 OpStore %498 %549
 OpBranch %536
 %540 = OpLabel
-OpLine %3 7337 37
+OpLine %3 7336 37
 %550 = OpCompositeExtract  %5  %535 1
 %551 = OpCompositeExtract  %4  %550 0
-OpLine %3 7337 20
+OpLine %3 7336 20
 OpStore %498 %551
 OpBranch %536
 %541 = OpLabel
-OpLine %3 7338 37
+OpLine %3 7337 37
 %552 = OpCompositeExtract  %5  %535 1
 %553 = OpCompositeExtract  %4  %552 1
-OpLine %3 7338 20
+OpLine %3 7337 20
 OpStore %498 %553
 OpBranch %536
 %542 = OpLabel
-OpLine %3 7339 37
+OpLine %3 7338 37
 %554 = OpCompositeExtract  %5  %535 1
 %555 = OpCompositeExtract  %4  %554 2
-OpLine %3 7339 20
+OpLine %3 7338 20
 OpStore %498 %555
 OpBranch %536
 %543 = OpLabel
 OpBranch %536
 %536 = OpLabel
-OpLine %3 7343 15
+OpLine %3 7342 15
 %556 = OpAccessChain  %393  %496 %135 %135
 %557 = OpLoad  %8  %556
 %558 = OpFunctionCall  %8  %313 %526 %557
 %559 = OpIAdd  %8  %526 %558
-OpLine %3 7344 15
+OpLine %3 7343 15
 %560 = OpIAdd  %8  %559 %126
-OpLine %3 7345 15
+OpLine %3 7344 15
 %561 = OpAccessChain  %393  %496 %135 %135
 %562 = OpLoad  %8  %561
 %563 = OpIAdd  %8  %559 %562
-OpLine %3 7345 15
+OpLine %3 7344 15
 %564 = OpIAdd  %8  %563 %126
-OpLine %3 7346 15
+OpLine %3 7345 15
 %565 = OpIAdd  %8  %564 %126
-OpLine %3 7349 5
+OpLine %3 7348 5
 OpSelectionMerge %566 None
 OpSwitch %527 %571 0 %567 3 %567 2 %568 4 %568 1 %569 5 %570
 %567 = OpLabel
-OpLine %3 7350 24
+OpLine %3 7349 24
 OpStore %499 %559
 OpBranch %566
 %568 = OpLabel
-OpLine %3 7351 24
+OpLine %3 7350 24
 OpStore %499 %565
 OpBranch %566
 %569 = OpLabel
-OpLine %3 7352 20
+OpLine %3 7351 20
 OpStore %499 %564
 OpBranch %566
 %570 = OpLabel
-OpLine %3 7353 20
+OpLine %3 7352 20
 OpStore %499 %560
 OpBranch %566
 %571 = OpLabel
 OpBranch %566
 %566 = OpLabel
-OpLine %3 7356 13
+OpLine %3 7355 13
 %572 = OpCompositeExtract  %8  %484 0
-OpLine %3 7356 5
+OpLine %3 7355 5
 OpStore %499 %572
-OpLine %3 7365 27
+OpLine %3 7364 27
 %573 = OpLoad  %4  %498
 %574 = OpBitcast  %8  %573
-OpLine %3 7366 12
+OpLine %3 7365 12
 %575 = OpLoad  %8  %499
 %576 = OpCompositeConstruct  %22  %574 %575
 %577 = OpCompositeExtract  %8  %576 0
@@ -8577,16 +8576,16 @@ OpFunctionEnd
 %592 = OpAccessChain  %591  %39 %135
 OpBranch %593
 %593 = OpLabel
-OpLine %3 7397 25
+OpLine %3 7396 25
 %595 = OpAccessChain  %594  %592 %126
 %596 = OpLoad  %23  %595
 %597 = OpCompositeExtract  %5  %580 0
-OpLine %3 7397 25
+OpLine %3 7396 25
 %598 = OpCompositeConstruct  %7  %597 %56
 %599 = OpMatrixTimesVector  %7  %596 %598
-OpLine %3 7398 18
+OpLine %3 7397 18
 %600 = OpCompositeExtract  %5  %580 1
-OpLine %3 7399 12
+OpLine %3 7398 12
 %601 = OpCompositeExtract  %5  %580 0
 %602 = OpCompositeConstruct  %26  %599 %600 %601
 %603 = OpCompositeExtract  %7  %602 0
@@ -8612,19 +8611,19 @@ OpFunctionEnd
 %622 = OpLoad  %28  %50
 OpBranch %631
 %631 = OpLabel
-OpLine %3 7426 13
-OpLine %3 7426 13
-OpLine %3 7426 5
+OpLine %3 7425 13
+OpLine %3 7425 13
+OpLine %3 7425 5
 %632 = OpFunctionCall  %5  %342 %623
-OpLine %3 7428 28
-OpLine %3 7428 17
+OpLine %3 7427 28
+OpLine %3 7427 17
 %633 = OpCompositeExtract  %5  %607 2
 %634 = OpExtInst  %5  %1 Fract %633
 %635 = OpExtInst  %5  %1 SmoothStep %80 %624 %634
-OpLine %3 7428 5
+OpLine %3 7427 5
 OpStore %629 %635
-OpLine %3 7429 17
-OpLine %3 7429 13
+OpLine %3 7428 17
+OpLine %3 7428 13
 %636 = OpAccessChain  %125  %629 %135
 %637 = OpLoad  %4  %636
 %638 = OpAccessChain  %125  %629 %126
@@ -8635,54 +8634,54 @@ OpLine %3 7429 13
 %643 = OpFMul  %4  %640 %642
 %644 = OpCompositeConstruct  %5  %643 %643 %643
 %645 = OpExtInst  %5  %1 FMix %626 %628 %644
-OpLine %3 7429 5
+OpLine %3 7428 5
 OpStore %629 %645
-OpLine %3 7432 25
+OpLine %3 7431 25
 %647 = OpAccessChain  %646  %618 %126
 %648 = OpLoad  %5  %647
 %649 = OpVectorTimesScalar  %5  %648 %286
-OpLine %3 7434 21
+OpLine %3 7433 21
 %650 = OpAccessChain  %646  %618 %135
 %651 = OpLoad  %5  %650
 %652 = OpCompositeExtract  %5  %607 2
 %653 = OpFSub  %5  %651 %652
 %654 = OpExtInst  %5  %1 Normalize %653
-OpLine %3 7435 20
+OpLine %3 7434 20
 %656 = OpAccessChain  %655  %616 %135
 %657 = OpLoad  %7  %656
 %658 = OpVectorShuffle  %5  %657 %657 0 1 2
 %659 = OpCompositeExtract  %5  %607 2
 %660 = OpFSub  %5  %658 %659
 %661 = OpExtInst  %5  %1 Normalize %660
-OpLine %3 7436 20
+OpLine %3 7435 20
 %662 = OpFAdd  %5  %661 %654
 %663 = OpExtInst  %5  %1 Normalize %662
-OpLine %3 7438 32
+OpLine %3 7437 32
 %664 = OpCompositeExtract  %5  %607 1
 %665 = OpDot  %4  %664 %654
-OpLine %3 7438 28
+OpLine %3 7437 28
 %666 = OpExtInst  %4  %1 FMax %665 %74
-OpLine %3 7439 25
+OpLine %3 7438 25
 %667 = OpAccessChain  %646  %618 %126
 %668 = OpLoad  %5  %667
 %669 = OpVectorTimesScalar  %5  %668 %666
-OpLine %3 7441 37
+OpLine %3 7440 37
 %670 = OpCompositeExtract  %5  %607 1
 %671 = OpDot  %4  %670 %663
-OpLine %3 7441 33
+OpLine %3 7440 33
 %672 = OpExtInst  %4  %1 FMax %671 %74
-OpLine %3 7441 29
+OpLine %3 7440 29
 %673 = OpExtInst  %4  %1 Pow %672 %345
-OpLine %3 7442 26
+OpLine %3 7441 26
 %674 = OpAccessChain  %646  %618 %126
 %675 = OpLoad  %5  %674
 %676 = OpVectorTimesScalar  %5  %675 %673
-OpLine %3 7444 18
+OpLine %3 7443 18
 %677 = OpFAdd  %5  %649 %669
 %678 = OpFAdd  %5  %677 %676
 %679 = OpLoad  %5  %629
 %680 = OpFMul  %5  %678 %679
-OpLine %3 7446 12
+OpLine %3 7445 12
 %681 = OpCompositeConstruct  %7  %680 %56
 OpStore %614 %681
 OpReturn

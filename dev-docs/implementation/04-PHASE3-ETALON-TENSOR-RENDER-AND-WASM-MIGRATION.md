@@ -9,6 +9,7 @@
 ## Task 4.1: Create `crates/etalon-tensor` (Prepared Tensor Execution & Unified Forward Arena)
 
 ### Module Layout (`< 500` lines per file, `Rule 0-B`)
+
 ```text
 c:\github\etalon\crates\etalon-tensor\
 ├── Cargo.toml
@@ -34,6 +35,7 @@ c:\github\etalon\crates\etalon-tensor\
 
 2. **Explicit All-Masked Guard in Online Softmax (`attention.rs`):**
    - In `fused_attention.wgsl` / `flash_attn_wgsl.rs`, ensure that if all keys in a tile or row are masked out (`m_new == -FLT_MAX`), `exp(m_old - m_new)` does **not** evaluate `exp(-inf - (-inf)) = exp(NaN)`. Guard with:
+
 ```wgsl
 let safe_diff = select(m_old - m_new, 0.0, m_new <= -3.0e38);
 let rescale = select(exp(safe_diff), 0.0, m_old <= -3.0e38);
@@ -47,11 +49,13 @@ let rescale = select(exp(safe_diff), 0.0, m_old <= -3.0e38);
 ## Task 4.2: Create `crates/etalon-render` (Decoupled Volumetric, HUD, Audio & EMF Substrate)
 
 ### Problem Statement (`Codex Review §2.2 P2`)
+
 In [`c:\github\qualiaDB\crates\qualia-core-db\src\render\gpu\mod.rs:66-76, 430-565`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/render/gpu/mod.rs#L66-L76), `PortalGpu` directly imports database-specific types (`Camera`, `Telemetry`, `Tensor10D`, `VramLedger`, container opacity rules). Moving the folder as-is would force `etalon-render` to depend on `QualiaDB`.
 
 ### Step-by-Step Decoupling Instructions
 
 1. **Define Pure POD Scene & Frame Contracts in `crates/etalon-render/src/scene_contract.rs`:**
+
 ```rust
 #[repr(C, align(16))]
 #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
@@ -70,6 +74,7 @@ pub struct ManifoldProjectionPod {
     pub flags: u32,
 }
 ```
+
 2. **Use `TextureUsages::TRANSIENT` Correctly (`etalon-types/src/texture.rs:191`):**
    - Apply `TextureUsages::TRANSIENT` **only** to intermediate per-frame depth/MSAA targets whose contents are discarded at the end of the render pass.
    - **Never** mark `temporal_resolve_gpu.rs` history textures or picking readback textures as `TRANSIENT`.
@@ -81,6 +86,7 @@ pub struct ManifoldProjectionPod {
 ## Task 4.3: Create `crates/etalon-wasm` (Dual-Transport Worker & `OffscreenCanvas` Steward)
 
 ### Module Layout
+
 ```text
 c:\github\etalon\crates\etalon-wasm\
 ├── Cargo.toml
@@ -92,6 +98,7 @@ c:\github\etalon\crates\etalon-wasm\
 ```
 
 ### Mandatory SPSC & Browser Safety Rules
+
 1. **Never Block the Worker Event Loop:**
    - Inside the Web Worker owning the `GPUDevice`, use `wasm_bindgen_futures::spawn_local` + async `Buffer::map_async` for the 4-byte token readback. Never run a synchronous `for _ in 0..10_000` spin-poll loop.
 2. **Dual-Transport Negotiation (`worker_steward.rs`):**
@@ -107,6 +114,7 @@ c:\github\etalon\crates\etalon-wasm\
 ## Final End-to-End Acceptance Checklist
 
 Before closing the migration:
+
 1. [ ] `cargo tree -d` in both `c:\github\etalon` and `c:\github\qualiaDB` shows **zero** duplicate `naga`, `etalon`, or `wgpu` crates.
 2. [ ] All 6 bugs in [`01-CRITICAL-BUG-FIXES-AND-TRUTHFULNESS-GATES.md`](./01-CRITICAL-BUG-FIXES-AND-TRUTHFULNESS-GATES.md) have passing regression tests.
 3. [ ] `cargo check --workspace --all-targets` and `cargo clippy --workspace --all-targets` pass in both repositories.

@@ -15,8 +15,7 @@ type CuDeviceGetFn = unsafe extern "C" fn(device: *mut i32, ordinal: i32) -> i32
 type CuDevicePrimaryCtxRetainFn = unsafe extern "C" fn(pctx: *mut *mut c_void, dev: i32) -> i32;
 type CuCtxGetCurrentFn = unsafe extern "C" fn(pctx: *mut *mut c_void) -> i32;
 type CuCtxSetCurrentFn = unsafe extern "C" fn(ctx: *mut c_void) -> i32;
-type CuMemHostRegisterFn =
-    unsafe extern "C" fn(p: *mut c_void, bytesize: usize, flags: u32) -> i32;
+type CuMemHostRegisterFn = unsafe extern "C" fn(p: *mut c_void, bytesize: usize, flags: u32) -> i32;
 type CuMemHostUnregisterFn = unsafe extern "C" fn(p: *mut c_void) -> i32;
 type CuStreamSynchronizeFn = unsafe extern "C" fn(h_stream: *mut c_void) -> i32;
 type CuStreamQueryFn = unsafe extern "C" fn(h_stream: *mut c_void) -> i32;
@@ -78,13 +77,17 @@ impl CudaDriverApi {
             .as_ref()
     }
 
+    #[cfg(not(any(windows, unix)))]
+    unsafe fn load_and_init() -> Option<Self> {
+        None
+    }
+
+    #[cfg(any(windows, unix))]
     unsafe fn load_and_init() -> Option<Self> {
         #[cfg(windows)]
-        let module = unsafe { LoadLibraryA(b"nvcuda.dll\0".as_ptr()) };
+        let module = unsafe { LoadLibraryA(c"nvcuda.dll".as_ptr().cast()) };
         #[cfg(unix)]
-        let module = unsafe { dlopen(b"libcuda.so.1\0".as_ptr(), 1) };
-        #[cfg(not(any(windows, unix)))]
-        let module: *mut c_void = core::ptr::null_mut();
+        let module = unsafe { dlopen(c"libcuda.so.1".as_ptr().cast(), 1) };
 
         if module.is_null() {
             return None;
@@ -95,8 +98,6 @@ impl CudaDriverApi {
             let ptr = unsafe { GetProcAddress(module, name.as_ptr()) };
             #[cfg(unix)]
             let ptr = unsafe { dlsym(module, name.as_ptr()) as *const c_void };
-            #[cfg(not(any(windows, unix)))]
-            let ptr: *const c_void = core::ptr::null();
 
             if ptr.is_null() {
                 None
@@ -105,17 +106,13 @@ impl CudaDriverApi {
             }
         }
 
-        let cu_init: CuInitFn =
-            unsafe { core::mem::transmute(get_sym(module, b"cuInit\0")?) };
+        let cu_init: CuInitFn = unsafe { core::mem::transmute(get_sym(module, b"cuInit\0")?) };
         let cu_device_get_count: CuDeviceGetCountFn =
             unsafe { core::mem::transmute(get_sym(module, b"cuDeviceGetCount\0")?) };
         let cu_device_get: CuDeviceGetFn =
             unsafe { core::mem::transmute(get_sym(module, b"cuDeviceGet\0")?) };
-        let cu_device_primary_ctx_retain: CuDevicePrimaryCtxRetainFn = unsafe {
-            core::mem::transmute(
-                get_sym(module, b"cuDevicePrimaryCtxRetain\0")?,
-            )
-        };
+        let cu_device_primary_ctx_retain: CuDevicePrimaryCtxRetainFn =
+            unsafe { core::mem::transmute(get_sym(module, b"cuDevicePrimaryCtxRetain\0")?) };
         let cu_ctx_get_current: CuCtxGetCurrentFn =
             unsafe { core::mem::transmute(get_sym(module, b"cuCtxGetCurrent\0")?) };
         let cu_ctx_set_current: CuCtxSetCurrentFn =
@@ -432,8 +429,7 @@ impl ComputeLane for CudaComputeLane {
 
         if let Some(driver) = self.driver {
             if driver.ensure_current_context() {
-                let status =
-                    unsafe { (driver.cu_stream_synchronize)(core::ptr::null_mut()) };
+                let status = unsafe { (driver.cu_stream_synchronize)(core::ptr::null_mut()) };
                 if status != CUDA_SUCCESS {
                     return Err("CUDA stream synchronization failed during submission");
                 }
@@ -507,7 +503,9 @@ mod tests {
         let mut buf = [0u128; 256];
         let ptr = buf.as_mut_ptr().cast::<u8>();
 
-        let state = lane.register_host_pinned(ptr, core::mem::size_of_val(&buf)).unwrap();
+        let state = lane
+            .register_host_pinned(ptr, core::mem::size_of_val(&buf))
+            .unwrap();
         assert!(state >= CapabilityState::Prepared);
         assert_eq!(lane.pinned_regions().len(), 1);
         lane.unregister_host_pinned(ptr).unwrap();

@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
-use std::num::{NonZeroU32, NonZeroU64};
 use etalon::util::DeviceExt;
+use std::num::{NonZeroU32, NonZeroU64};
 
 #[repr(C)]
 #[derive(Clone, Copy, Pod, Zeroable)]
@@ -92,7 +92,8 @@ impl crate::framework::Example for Example {
         queue: &etalon::Queue,
     ) -> Self {
         let mut uniform_workaround = false;
-        let base_shader_module = device.create_shader_module(etalon::include_wgsl!("indexing.wgsl"));
+        let base_shader_module =
+            device.create_shader_module(etalon::include_wgsl!("indexing.wgsl"));
         let env_override = match std::env::var("ETALON_TEXTURE_ARRAY_STYLE") {
             Ok(value) => match &*value.to_lowercase() {
                 "nonuniform" | "non_uniform" => Some(true),
@@ -192,9 +193,11 @@ impl crate::framework::Example for Example {
         });
 
         let red_texture_view = red_texture.create_view(&etalon::TextureViewDescriptor::default());
-        let green_texture_view = green_texture.create_view(&etalon::TextureViewDescriptor::default());
+        let green_texture_view =
+            green_texture.create_view(&etalon::TextureViewDescriptor::default());
         let blue_texture_view = blue_texture.create_view(&etalon::TextureViewDescriptor::default());
-        let white_texture_view = white_texture.create_view(&etalon::TextureViewDescriptor::default());
+        let white_texture_view =
+            white_texture.create_view(&etalon::TextureViewDescriptor::default());
 
         queue.write_texture(
             red_texture.as_image_copy(),
@@ -239,37 +242,38 @@ impl crate::framework::Example for Example {
 
         let sampler = device.create_sampler(&etalon::SamplerDescriptor::default());
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("bind group layout"),
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Texture {
-                        sample_type: etalon::TextureSampleType::Float { filterable: true },
-                        view_dimension: etalon::TextureViewDimension::D2,
-                        multisampled: false,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("bind group layout"),
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: NonZeroU32::new(2),
                     },
-                    count: NonZeroU32::new(2),
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Texture {
-                        sample_type: etalon::TextureSampleType::Float { filterable: true },
-                        view_dimension: etalon::TextureViewDimension::D2,
-                        multisampled: false,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: NonZeroU32::new(2),
                     },
-                    count: NonZeroU32::new(2),
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
-                    count: NonZeroU32::new(2),
-                },
-            ],
-        });
+                    etalon::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
+                        count: NonZeroU32::new(2),
+                    },
+                ],
+            });
 
         let uniform_bind_group_layout =
             device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
@@ -382,7 +386,12 @@ impl crate::framework::Example for Example {
     fn update(&mut self, _event: winit::event::WindowEvent) {
         // noop
     }
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
             label: Some("primary"),
         });

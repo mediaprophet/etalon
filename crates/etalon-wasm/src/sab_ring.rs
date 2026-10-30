@@ -62,7 +62,10 @@ pub struct SharedArrayBufferRing<'a> {
 }
 
 impl<'a> SharedArrayBufferRing<'a> {
-    pub fn new(header: &'a SabRingHeader, payload_buffer: &'a mut [u8]) -> Result<Self, &'static str> {
+    pub fn new(
+        header: &'a SabRingHeader,
+        payload_buffer: &'a mut [u8],
+    ) -> Result<Self, &'static str> {
         let expected_bytes = (header.capacity as usize) * (header.slot_size as usize);
         if payload_buffer.len() < expected_bytes {
             return Err("Payload buffer is smaller than capacity * slot_size");
@@ -102,7 +105,9 @@ impl<'a> SharedArrayBufferRing<'a> {
             self.payload_buffer[offset + slot_data.len()..offset + slot_sz].fill(0);
         }
 
-        self.header.head.store(head.wrapping_add(1), Ordering::Release);
+        self.header
+            .head
+            .store(head.wrapping_add(1), Ordering::Release);
         true
     }
 
@@ -120,7 +125,9 @@ impl<'a> SharedArrayBufferRing<'a> {
 
         out_slot[..slot_sz].copy_from_slice(&self.payload_buffer[offset..offset + slot_sz]);
 
-        self.header.tail.store(tail.wrapping_add(1), Ordering::Release);
+        self.header
+            .tail
+            .store(tail.wrapping_add(1), Ordering::Release);
         true
     }
 }

@@ -38,8 +38,10 @@ impl ExternalTexture {
         core_external_texture: alloc::sync::Arc<wgc::resource::ExternalTexture>,
     ) -> Self {
         Self {
-            inner: crate::backend::etalon_core::CoreExternalTexture::from_core(core_external_texture)
-                .into(),
+            inner: crate::backend::etalon_core::CoreExternalTexture::from_core(
+                core_external_texture,
+            )
+            .into(),
         }
     }
 

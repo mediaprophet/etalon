@@ -46,8 +46,10 @@ impl ComputePipeline {
         core_compute_pipeline: alloc::sync::Arc<wgc::pipeline::ComputePipeline>,
     ) -> Self {
         Self {
-            inner: crate::backend::etalon_core::CoreComputePipeline::from_core(core_compute_pipeline)
-                .into(),
+            inner: crate::backend::etalon_core::CoreComputePipeline::from_core(
+                core_compute_pipeline,
+            )
+            .into(),
         }
     }
 

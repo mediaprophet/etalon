@@ -144,9 +144,17 @@ fn emit_kernel_body(
             }
             _ => "device float*",
         };
-        let sep = if i < kernel.buffers.len() - 1 { "," } else { "" };
-        writeln!(source, "    {} {} [[buffer({})]]{}", type_decl, buffer.name, buffer.binding, sep)
-            .map_err(|error| ForgeError::Emission(error.to_string()))?;
+        let sep = if i < kernel.buffers.len() - 1 {
+            ","
+        } else {
+            ""
+        };
+        writeln!(
+            source,
+            "    {} {} [[buffer({})]]{}",
+            type_decl, buffer.name, buffer.binding, sep
+        )
+        .map_err(|error| ForgeError::Emission(error.to_string()))?;
     }
     writeln!(
         source,
@@ -169,8 +177,12 @@ fn emit_kernel_body(
             writeln!(source, "        }}")
                 .map_err(|error| ForgeError::Emission(error.to_string()))?;
         } else {
-            writeln!(source, "        if (global_id + {}u < params.length) {{", schedule.vector_width - 1)
-                .map_err(|error| ForgeError::Emission(error.to_string()))?;
+            writeln!(
+                source,
+                "        if (global_id + {}u < params.length) {{",
+                schedule.vector_width - 1
+            )
+            .map_err(|error| ForgeError::Emission(error.to_string()))?;
             for index in 0..schedule.vector_width {
                 writeln!(
                     source,
@@ -285,49 +297,96 @@ pub(crate) fn msl_scalar(element: ScalarType) -> &'static str {
 fn emit_ops(source: &mut String, ops: &[Op], indent: &str) -> Result<(), ForgeError> {
     for op in ops {
         match op {
-            Op::StructLoad { buffer, field, destination } => {
+            Op::StructLoad {
+                buffer,
+                field,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {buffer}.{field};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Load { buffer, index, destination } => {
+            Op::Load {
+                buffer,
+                index,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {buffer}[{index}];")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Store { buffer, index, value } => {
+            Op::Store {
+                buffer,
+                index,
+                value,
+            } => {
                 writeln!(source, "{indent}{buffer}[{index}] = {value};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Fma { a, b, c, destination } => {
+            Op::Fma {
+                a,
+                b,
+                c,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {a} * {b} + {c};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Mul { left, right, destination } => {
+            Op::Mul {
+                left,
+                right,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {left} * {right};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Add { left, right, destination } => {
+            Op::Add {
+                left,
+                right,
+                destination,
+            } => {
                 writeln!(source, "{indent}float {destination} = {left} + {right};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::DotProduct { left_buffer, left_base, right_buffer, right_base, len, destination } => {
+            Op::DotProduct {
+                left_buffer,
+                left_base,
+                right_buffer,
+                right_base,
+                len,
+                destination,
+            } => {
                 writeln!(
                     source,
                     "{indent}float {destination} = 0.0;\n{indent}for (uint i = 0; i < {len}; i++) {destination} += {left_buffer}[{left_base} + i] * {right_buffer}[{right_base} + i];"
                 )
                 .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Loop { induction_var, start, end, step, body } => {
+            Op::Loop {
+                induction_var,
+                start,
+                end,
+                step,
+                body,
+            } => {
                 writeln!(source, "{indent}for (uint {induction_var} = {start}; {induction_var} < {end}; {induction_var} += {step}) {{")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
                 emit_ops(source, body, &format!("{indent}    "))?;
                 writeln!(source, "{indent}}}")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Relu { operand, destination } => {
-                writeln!(source, "{indent}float {destination} = max(0.0f, {operand});")
-                    .map_err(|error| ForgeError::Emission(error.to_string()))?;
+            Op::Relu {
+                operand,
+                destination,
+            } => {
+                writeln!(
+                    source,
+                    "{indent}float {destination} = max(0.0f, {operand});"
+                )
+                .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Gelu { operand, destination } => {
+            Op::Gelu {
+                operand,
+                destination,
+            } => {
                 writeln!(
                     source,
                     "{indent}float {destination} = 0.5f * {operand} * (1.0f + tanh(0.7978845608f * ({operand} + 0.044715f * {operand} * {operand} * {operand})));"
@@ -335,8 +394,11 @@ fn emit_ops(source: &mut String, ops: &[Op], indent: &str) -> Result<(), ForgeEr
                 .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
             Op::Barrier => {
-                writeln!(source, "{indent}threadgroup_barrier(mem_flags::mem_threadgroup);")
-                    .map_err(|error| ForgeError::Emission(error.to_string()))?;
+                writeln!(
+                    source,
+                    "{indent}threadgroup_barrier(mem_flags::mem_threadgroup);"
+                )
+                .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
             other => {
                 return Err(ForgeError::Emission(format!(

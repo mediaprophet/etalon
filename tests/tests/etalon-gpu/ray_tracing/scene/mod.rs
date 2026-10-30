@@ -85,16 +85,18 @@ fn acceleration_structure_build(ctx: &TestingContext, use_index_buffer: bool) {
     encoder.build_acceleration_structures(
         iter::once(&etalon::BlasBuildEntry {
             blas: &blas,
-            geometry: etalon::BlasGeometries::TriangleGeometries(vec![etalon::BlasTriangleGeometry {
-                size: &blas_geo_size_desc,
-                vertex_buffer: &vertex_buf,
-                first_vertex: 0,
-                vertex_stride: mem::size_of::<mesh_gen::Vertex>() as u64,
-                index_buffer: use_index_buffer.then_some(&index_buffer),
-                first_index: use_index_buffer.then_some(0),
-                transform_buffer: None,
-                transform_buffer_offset: None,
-            }]),
+            geometry: etalon::BlasGeometries::TriangleGeometries(vec![
+                etalon::BlasTriangleGeometry {
+                    size: &blas_geo_size_desc,
+                    vertex_buffer: &vertex_buf,
+                    first_vertex: 0,
+                    vertex_stride: mem::size_of::<mesh_gen::Vertex>() as u64,
+                    index_buffer: use_index_buffer.then_some(&index_buffer),
+                    first_index: use_index_buffer.then_some(0),
+                    transform_buffer: None,
+                    transform_buffer_offset: None,
+                },
+            ]),
         }),
         iter::once(&tlas),
     );

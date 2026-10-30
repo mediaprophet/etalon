@@ -1,8 +1,8 @@
 //! Atomic, adapter-keyed storage and manifests for certification and tuning evidence.
 
+use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 use std::sync::atomic::{AtomicU64, Ordering};
-use serde::{Deserialize, Serialize};
 
 use crate::autotune::TuningResult;
 use crate::certify::{ComparisonReport, ValidationReport};

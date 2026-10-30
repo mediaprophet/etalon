@@ -50,7 +50,12 @@ pub trait Example: 'static + Sized {
 
     fn update(&mut self, event: WindowEvent);
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue);
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    );
 }
 
 // Initialize logging in platform dependent ways.
@@ -676,7 +681,8 @@ impl<E: Example + etalon::WasmNotSendSync> From<ExampleTestParams<E>>
                     sample_count: 1,
                     dimension: etalon::TextureDimension::D2,
                     format,
-                    usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::COPY_SRC,
+                    usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                        | etalon::TextureUsages::COPY_SRC,
                     view_formats: &[],
                 });
 

@@ -154,57 +154,52 @@ struct Corpus {
     tests: Vec<String>,
 }
 
-const BACKENDS: &[wgt::Backend] = &[
-    wgt::Backend::Vulkan,
-    wgt::Backend::Metal,
-    wgt::Backend::Dx12,
-    wgt::Backend::Gl,
-];
-
 impl Corpus {
-    fn run_from(path: PathBuf) {
+    fn run_from(path: PathBuf, backend: wgt::Backend) {
         println!("Corpus {path:?}");
         let dir = path.parent().unwrap();
         let corpus: Corpus = ron::de::from_reader(File::open(&path).unwrap()).unwrap();
 
-        for &backend in BACKENDS {
-            if !corpus.backends.contains(backend.into()) {
+        if !corpus.backends.contains(backend.into()) {
+            println!("Backend {backend:?} not requested by corpus");
+            return;
+        }
+        let mut instance_desc = wgt::InstanceDescriptor::new_without_display_handle_from_env();
+        instance_desc.backends &= wgt::Backends::from(backend);
+        let instance = wgc::instance::Instance::new("test", instance_desc, None);
+        let adapter = match instance.request_adapter(
+            &wgt::RequestAdapterOptions::default(),
+            wgt::Backends::from(backend),
+        ) {
+            Ok(adapter) => adapter,
+            Err(error) => {
+                println!("Backend {backend:?} unavailable; corpus not executed: {error}");
+                return;
+            }
+        };
+        let supported_features = adapter.features();
+        let downlevel_caps = adapter.downlevel_capabilities();
+        for test_path in &corpus.tests {
+            println!("\t\tTest '{test_path:?}'");
+
+            println!("\tBackend {backend:?}");
+
+            let test = Test::load(dir.join(test_path), backend);
+            if !supported_features.contains(test.features) {
+                println!(
+                    "\t\tSkipped due to missing features {:?}",
+                    test.features - supported_features
+                );
                 continue;
             }
-            for test_path in &corpus.tests {
-                println!("\t\tTest '{test_path:?}'");
-
-                let instance_desc = wgt::InstanceDescriptor::new_without_display_handle_from_env();
-                let instance = wgc::instance::Instance::new("test", instance_desc, None);
-                let adapter = match instance.request_adapter(
-                    &wgt::RequestAdapterOptions::default(),
-                    wgt::Backends::from(backend),
-                ) {
-                    Ok(adapter) => adapter,
-                    Err(_) => continue,
-                };
-
-                println!("\tBackend {backend:?}");
-                let supported_features = adapter.features();
-                let downlevel_caps = adapter.downlevel_capabilities();
-
-                let test = Test::load(dir.join(test_path), backend);
-                if !supported_features.contains(test.features) {
-                    println!(
-                        "\t\tSkipped due to missing features {:?}",
-                        test.features - supported_features
-                    );
-                    continue;
-                }
-                if !downlevel_caps
-                    .flags
-                    .contains(wgt::DownlevelFlags::COMPUTE_SHADERS)
-                {
-                    println!("\t\tSkipped due to missing compute shader capability");
-                    continue;
-                }
-                test.run(dir, adapter);
+            if !downlevel_caps
+                .flags
+                .contains(wgt::DownlevelFlags::COMPUTE_SHADERS)
+            {
+                println!("\t\tSkipped due to missing compute shader capability");
+                continue;
             }
+            test.run(dir, Arc::clone(&adapter));
         }
     }
 }
@@ -212,14 +207,37 @@ impl Corpus {
 #[cfg(test)]
 mod tests {
     use super::*;
-    #[cfg_attr(miri, ignore)]
-    #[test]
-    fn test_api() {
+    fn test_backend(backend: wgt::Backend) {
         // Millisecond timestamps; see <https://github.com/mediaprophet/etalon/issues/9248>.
-        env_logger::builder().format_timestamp_millis().init();
+        let _ = env_logger::builder().format_timestamp_millis().try_init();
 
         Corpus::run_from(
             PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/player/data/all.ron"),
+            backend,
         )
+    }
+
+    #[cfg_attr(miri, ignore)]
+    #[test]
+    fn test_api_vulkan() {
+        test_backend(wgt::Backend::Vulkan);
+    }
+
+    #[cfg_attr(miri, ignore)]
+    #[test]
+    fn test_api_metal() {
+        test_backend(wgt::Backend::Metal);
+    }
+
+    #[cfg_attr(miri, ignore)]
+    #[test]
+    fn test_api_dx12() {
+        test_backend(wgt::Backend::Dx12);
+    }
+
+    #[cfg_attr(miri, ignore)]
+    #[test]
+    fn test_api_gl() {
+        test_backend(wgt::Backend::Gl);
     }
 }

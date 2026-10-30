@@ -58,7 +58,8 @@ async fn run(_path: Option<String>) {
         usage: etalon::TextureUsages::STORAGE_BINDING | etalon::TextureUsages::COPY_SRC,
         view_formats: &[],
     });
-    let storage_texture_view = storage_texture.create_view(&etalon::TextureViewDescriptor::default());
+    let storage_texture_view =
+        storage_texture.create_view(&etalon::TextureViewDescriptor::default());
     let output_staging_buffer = device.create_buffer(&etalon::BufferDescriptor {
         label: None,
         size: size_of_val(&texture_data[..]) as u64,

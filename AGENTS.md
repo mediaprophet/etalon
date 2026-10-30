@@ -12,13 +12,12 @@ etalon is a GPU API written in pure rust. Changes of any significance need to ap
 - `etalon-core-remote` provides the ID abstraction needed by Firefox and Deno.
 - `etalon-core-remote-types` holds the IPC types that `etalon-core-remote` sends between the untrusted content process and the trusted GPU process. They are defined separately from the `etalon-core` types, so untrusted content cannot express non-standard features.
 - `etalon` is an ergonomic Rust interface to `etalon-core`
-- `deno_webgpu` contains the WebGPU bindings for Deno.
 
 `etalon-core-remote`, `etalon-core`, `etalon-hal`, `etalon-types` and `naga` are used by Firefox and Servo to implement WebGPU. These crates process untrusted API and shader input. Preserve validation at the safe boundary, and do not rely on `etalon-hal` to reject invalid input. Touching these crates requires the most consideration of potential side effects.
 
 Safe `etalon` APIs must not cause undefined behavior unless the user first accepted that risk through an unsafe API, such as enabling experimental features.
 
-We use deno's webgpu bindings to run the WebGPU CTS. Change `deno_webgpu` only if the issue is specific to Deno. If the issue also affects Firefox or the `etalon` Rust API, fix it in the shared crate that supplies the affected behavior.
+The QualiaDB/VibeScript integration harness lives in the consuming QualiaDB repository. Keep Etalon's Rust tests independent of it. The embedded Deno CTS runner has been retired; see `docs/conformance-coverage.md` for the coverage loss. Fix shared behavior in the crate that supplies it, preserving validation at the safe boundary.
 
 Repository documentation exists in `docs/`. For info on where tests live, read `docs/testing.md`. For info about cargo dependencies, read `docs/managing-cargo-dependencies.md`.
 
@@ -29,7 +28,6 @@ One of the best ways to prove that a change is correct is to write tests to prov
 `AGENTS.md` and `.agents/` are the source of truth for agent instructions and skills. `CLAUDE.md` and `.claude/` are generated copies. Do not edit the generated copies directly. After you edit any source-of-truth agent file or a root license file, run `cargo xtask sync-repo-files`. This command also copies the root license files to every publishable default member of the Cargo workspace.
 
 Run `cargo xtask sync-repo-files --check` to verify that all generated files have the same contents and file list as their sources.
-
 
 ## Code Style
 
@@ -48,7 +46,7 @@ All changes are expected to pass CI. The commands below are useful local checks,
 - After the work is complete, run a full `cargo xtask test` if the change affects GPU behavior or would affect a GPU test.
 - Report every test failure. You may identify a failure as suspected to be unrelated, but do not assume it is unrelated until you validate that conclusion.
 - Do not run tests at the `trunk` revision without explicit permission. A baseline test run can take a while.
-- For more thorough testing, you can run `cargo xtask cts --backend <backend>`. Only do this if you are explicitly asked to run the CTS.
+- The QualiaDB/VibeScript harness is application integration coverage, not WebGPU conformance. Do not claim CTS coverage without a separate runner that actually exercises this Etalon implementation.
 - Never commit anything without being asked, ever. If you are asked to make a commit, _never_ co-author yourself.
 - Use the WebGPU and WGSL specifications as a reference to determine the correct behavior. Do not assume that a behavior is correct just because the CTS expects it. Use the `webgpu-specs` skill if you need to check either spec.
 

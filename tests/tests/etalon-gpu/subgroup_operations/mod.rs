@@ -7,30 +7,13 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
 }
 
 const THREAD_COUNT: u64 = 128;
-const TEST_COUNT: u32 = 37;
+const TEST_COUNT: u32 = 40;
 
 #[apply(gpu_test!)]
 static SUBGROUP_OPERATIONS: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(TestParameters {
         required_features: etalon::Features::SUBGROUP,
         required_limits: etalon::Limits::downlevel_defaults(),
-        // Expect metal to fail on tests involving operations in divergent control flow
-        // <https://github.com/mediaprophet/etalon/issues/10019>
-        //
-        // Newlines are included in the panic message to ensure that _additional_ failures
-        // are not matched against.
-        failures: etalon_test::FailureCase::mac()
-            .into_iter()
-            .map(|case| {
-                case
-                    // 26.0 fails only test 28, and not on thread 0
-                    .panic("thread 1 failed tests: 28,\n")
-                    // 14.3 fails 27 and 28
-                    .panic("thread 0 failed tests: 27,\nthread 1 failed tests: 27, 28,\n")
-                    // Prior versions fail 27, 28, and 29
-                    .panic("thread 0 failed tests: 27, 29,\nthread 1 failed tests: 27, 28, 29,\n")
-            })
-            .collect(),
         ..Default::default()
     })
     .run_sync(|ctx| {
@@ -45,19 +28,20 @@ static SUBGROUP_OPERATIONS: GpuTestConfiguration = GpuTestConfiguration::new()
             mapped_at_creation: false,
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("bind group layout"),
-            entries: &[etalon::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: etalon::ShaderStages::COMPUTE,
-                ty: etalon::BindingType::Buffer {
-                    ty: etalon::BufferBindingType::Storage { read_only: false },
-                    has_dynamic_offset: false,
-                    min_binding_size: NonZeroU64::new(THREAD_COUNT * size_of::<u64>() as u64),
-                },
-                count: None,
-            }],
-        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("bind group layout"),
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: false },
+                        has_dynamic_offset: false,
+                        min_binding_size: NonZeroU64::new(THREAD_COUNT * size_of::<u64>() as u64),
+                    },
+                    count: None,
+                }],
+            });
 
         let cs_module = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
 

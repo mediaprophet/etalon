@@ -7,10 +7,7 @@ use super::lease::AllocationId;
 pub enum ExternalMemoryHandle {
     OpaqueFd(i32),
     OpaqueWin32(*mut core::ffi::c_void),
-    HostPointer {
-        ptr: *mut u8,
-        size_bytes: usize,
-    },
+    HostPointer { ptr: *mut u8, size_bytes: usize },
 }
 
 unsafe impl Send for ExternalMemoryHandle {}

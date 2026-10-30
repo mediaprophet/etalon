@@ -111,40 +111,24 @@ fn main(
     add_result_to_mask(&passed, 25u, subgroupShuffleUp(subgroup_invocation_id, 1u) == subgroup_invocation_id - 1u || subgroup_invocation_id == 0u);
     add_result_to_mask(&passed, 26u, subgroupShuffleXor(subgroup_invocation_id, subgroup_size - 1u) == (subgroup_invocation_id ^ (subgroup_size - 1u)));
 
-    // Mac/Apple will fail this test.
-    var passed_27 = false;
-    if subgroup_invocation_id % 2u == 0u {
-        passed_27 |= subgroupAdd(1u) == (subgroup_size / 2u);
-    } else {
-        passed_27 |= subgroupAdd(1u) == (subgroup_size / 2u);
-    }
-    add_result_to_mask(&passed, 27u, passed_27);
+    let even_count = subgroupAdd(u32(subgroup_invocation_id % 2u == 0u));
+    let odd_count = subgroupAdd(u32(subgroup_invocation_id % 2u == 1u));
+    add_result_to_mask(&passed, 27u, even_count == subgroup_size / 2u && odd_count == subgroup_size / 2u);
 
-    // Mac/Apple will fail this test.
-    var passed_28 = false;
-    switch subgroup_invocation_id % 3u {
-        case 0u: {
-            passed_28 = subgroupBroadcastFirst(subgroup_invocation_id) == 0u;
-        }
-        case 1u: {
-            passed_28 = subgroupBroadcastFirst(subgroup_invocation_id) == 1u;
-        }
-        case 2u: {
-            passed_28 = subgroupBroadcastFirst(subgroup_invocation_id) == 2u;
-        }
-        default {  }
-    }
-    add_result_to_mask(&passed, 28u, passed_28);
+    let payload = vec4<u32>(subgroup_invocation_id, subgroup_invocation_id * 17u + 3u,
+        subgroup_invocation_id ^ 0xa5a5a5a5u, subgroup_invocation_id * subgroup_invocation_id);
+    let source = 2u;
+    let expected_source = vec4<u32>(source, source * 17u + 3u, source ^ 0xa5a5a5a5u, source * source);
+    let first_payload = subgroupBroadcastFirst(payload);
+    let middle_payload = subgroupBroadcast(payload, 2u);
+    add_result_to_mask(&passed, 28u, all(first_payload == vec4<u32>(0u, 3u, 0xa5a5a5a5u, 0u)) && all(middle_payload == expected_source));
 
-    // Mac/Apple will sometimes fail this test. MacOS 14.3 passes it, so the bug in the metal compiler seems to be fixed.
-    expected = 0u;
-    for (var i = subgroup_size; i >= 0u; i -= 1u) {
-        expected = subgroupAdd(1u);
-        if i == subgroup_invocation_id {
-            break;
-        }
+    var passed_29 = true;
+    for (var cutoff = 0u; cutoff <= subgroup_size; cutoff += 1u) {
+        let count = subgroupAdd(u32(subgroup_invocation_id < cutoff));
+        passed_29 &= count == cutoff;
     }
-    add_result_to_mask(&passed, 29u, expected == (subgroup_invocation_id + 1u));
+    add_result_to_mask(&passed, 29u, passed_29);
 
     if global_id.x == 0u {
         workgroup_buffer = subgroup_size;
@@ -157,6 +141,13 @@ fn main(
     add_result_to_mask(&passed, 33u, quadBroadcast(quadBroadcast(subgroup_invocation_id, 2u) ^ quadSwapY(subgroup_invocation_id), 0u) == 0u);
     add_result_to_mask(&passed, 34u, quadBroadcast(quadBroadcast(subgroup_invocation_id, 3u) ^ quadSwapDiagonal(subgroup_invocation_id), 0u) == 0u);
     add_result_to_mask(&passed, 35u, quadSwapX(quadSwapY(subgroup_invocation_id)) == quadSwapDiagonal(subgroup_invocation_id));
+
+    let scalar_payload = global_id.x * 1664525u + 1013904223u;
+    add_result_to_mask(&passed, 37u, subgroupShuffle(scalar_payload, subgroup_invocation_id) == scalar_payload);
+    add_result_to_mask(&passed, 38u, all(subgroupShuffle(payload, subgroup_invocation_id) == payload));
+    let other_lane = subgroup_size - 1u - subgroup_invocation_id;
+    let other_payload = vec4<u32>(other_lane, other_lane * 17u + 3u, other_lane ^ 0xa5a5a5a5u, other_lane * other_lane);
+    add_result_to_mask(&passed, 39u, all(subgroupShuffle(payload, other_lane) == other_payload));
 
     // Keep this test last, verify we are still convergent after running other tests
     add_result_to_mask(&passed, 36u, subgroupAdd(1u) == subgroup_size);

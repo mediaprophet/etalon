@@ -1,9 +1,9 @@
 use std::collections::HashMap;
 
-use serde::{Deserialize, Serialize};
 use etalon::{
     AdapterInfo, DownlevelCapabilities, Features, Limits, TextureFormat, TextureFormatFeatures,
 };
+use serde::{Deserialize, Serialize};
 
 /// Report specifying the capabilities of the GPUs on the system.
 ///

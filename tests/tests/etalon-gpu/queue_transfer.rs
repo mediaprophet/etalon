@@ -1,7 +1,9 @@
 //! Tests for buffer copy validation.
 
 use etalon::PollType;
-use etalon_test::{apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters};
+use etalon_test::{
+    apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters,
+};
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.extend([

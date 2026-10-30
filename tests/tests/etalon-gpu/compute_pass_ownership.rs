@@ -238,7 +238,9 @@ async fn assert_compute_pass_executed_normally(
 ) {
     encoder.copy_buffer_to_buffer(&gpu_buffer, 0, &cpu_buffer, 0, buffer_size);
     ctx.queue.submit([encoder.finish()]);
-    cpu_buffer.slice(..).map_async(etalon::MapMode::Read, |_| ());
+    cpu_buffer
+        .slice(..)
+        .map_async(etalon::MapMode::Read, |_| ());
     ctx.async_poll(etalon::PollType::wait_indefinitely())
         .await
         .unwrap();

@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Purpose
 
-Historically, [QualiaDB](https://github.com/mediaprophet/qualiaDB) developed an extensive array of GPU compute shaders, JIT compilers (WGSL Forge), tensor execution loops (GGUF bridge), and volumetric rendering pipelines embedded directly inside `crates/qualia-core-db`. 
+Historically, [QualiaDB](https://github.com/mediaprophet/qualiaDB) developed an extensive array of GPU compute shaders, JIT compilers (WGSL Forge), tensor execution loops (GGUF bridge), and volumetric rendering pipelines embedded directly inside `crates/qualia-core-db`.
 
 Because standard `wgpu` lacked zero-copy host imports, raw 64-bit pointers (BDA), cooperative matrix quantization, and dedicated async compute queues, QualiaDB was forced to carry heavy low-level graphics plumbing, raw FFI bridges, and complex browser workarounds directly within its database codebase.
 
@@ -37,13 +37,13 @@ qualiaDB/
 
 ### Detailed Component Mapping
 
-| Subsystem | Source Path in `qualiaDB` | New Target Crate in `etalon` | Responsibilities & Core Assets |
-| :--- | :--- | :--- | :--- |
-| **1. WGSL Forge** | `qualia-core-db/src/wgsl_forge/` | **`crates/etalon-forge`** | • Typed kernel IR and schedule composition.<br>• Naga validation, CPU oracle verification, GPU timing.<br>• GEMM f32, f16, reduced-precision, and tiled cooperative matrix (`matmul_tc_wgsl_tiled`).<br>• Hardware adapter-keyed persistent shader cache. |
-| **2. Tensor Engine** | `qualia-core-db/src/gguf_bridge/` | **`crates/etalon-tensor`** | • Autoregressive token decode loop (`resident_decode.rs`).<br>• Prefill and verify ring-buffer arenas (`prefill_arena.rs`).<br>• Zero-copy token embedding dequantization (`embedding.rs`).<br>• Ternary and Top-K compute shaders (`ternary_gpu.rs`, `topk_gpu.rs`).<br>• Multi-channel 8-bit WASM compression (`mc8_wasm/`). |
-| **3. Graph Accel** | `qualia-core-db/src/query/graph_accel/gpu.rs` | **`crates/etalon-nquin`** | • 48-byte `NQuin` quad parallel scan and filter.<br>• Radix joins and graph pattern matching over bit-packed opcodes.<br>• Rule-firing bitmask evaluators for N3Logic forward chaining.<br>• Zero-copy `.q42` memory page streaming. |
-| **4. Volumetric Render** | `qualia-core-db/src/render/gpu/` & `webizen-render/` | **`crates/etalon-render`** | • `PortalGpu` volumetric 10D manifold renderer.<br>• Temporal resolve (`temporal_resolve_gpu.rs`) & TAA producers.<br>• Ambient occlusion (`ao.rs`), bloom (`bloom.rs`), water simulation.<br>• Image-based lighting cubemaps (`ibl_cubemap.rs`).<br>• Skeletal GPU skinning and morph targets (`gpu_skin.rs`, `gpu_morph.rs`).<br>• EMF quantum field visualizer pipeline (`emf_pipeline.rs`). |
-| **5. Domain Compute** | `qualia-core-db/src/specialized_libs/` | **`crates/etalon-math`** & **`extensions/`** | • Computational geometry oracles (`computational_geometry/gpu.rs`).<br>• Vision resize and bicubic filtering (`computer_vision/gpu/`).<br>• Quantum biology ODE/DFT solvers (`quantum_biology/gpu_pipeline.rs`). |
+| Subsystem                | Source Path in `qualiaDB`                            | New Target Crate in `etalon`                 | Responsibilities & Core Assets                                                                                                                                                                                                                                                                                                                                                                  |
+| :----------------------- | :--------------------------------------------------- | :------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1. WGSL Forge**        | `qualia-core-db/src/wgsl_forge/`                     | **`crates/etalon-forge`**                    | • Typed kernel IR and schedule composition.<br>• Naga validation, CPU oracle verification, GPU timing.<br>• GEMM f32, f16, reduced-precision, and tiled cooperative matrix (`matmul_tc_wgsl_tiled`).<br>• Hardware adapter-keyed persistent shader cache.                                                                                                                                       |
+| **2. Tensor Engine**     | `qualia-core-db/src/gguf_bridge/`                    | **`crates/etalon-tensor`**                   | • Autoregressive token decode loop (`resident_decode.rs`).<br>• Prefill and verify ring-buffer arenas (`prefill_arena.rs`).<br>• Zero-copy token embedding dequantization (`embedding.rs`).<br>• Ternary and Top-K compute shaders (`ternary_gpu.rs`, `topk_gpu.rs`).<br>• Multi-channel 8-bit WASM compression (`mc8_wasm/`).                                                                  |
+| **3. Graph Accel**       | `qualia-core-db/src/query/graph_accel/gpu.rs`        | **`crates/etalon-nquin`**                    | • 48-byte `NQuin` quad parallel scan and filter.<br>• Radix joins and graph pattern matching over bit-packed opcodes.<br>• Rule-firing bitmask evaluators for N3Logic forward chaining.<br>• Zero-copy `.q42` memory page streaming.                                                                                                                                                            |
+| **4. Volumetric Render** | `qualia-core-db/src/render/gpu/` & `webizen-render/` | **`crates/etalon-render`**                   | • `PortalGpu` volumetric 10D manifold renderer.<br>• Temporal resolve (`temporal_resolve_gpu.rs`) & TAA producers.<br>• Ambient occlusion (`ao.rs`), bloom (`bloom.rs`), water simulation.<br>• Image-based lighting cubemaps (`ibl_cubemap.rs`).<br>• Skeletal GPU skinning and morph targets (`gpu_skin.rs`, `gpu_morph.rs`).<br>• EMF quantum field visualizer pipeline (`emf_pipeline.rs`). |
+| **5. Domain Compute**    | `qualia-core-db/src/specialized_libs/`               | **`crates/etalon-math`** & **`extensions/`** | • Computational geometry oracles (`computational_geometry/gpu.rs`).<br>• Vision resize and bicubic filtering (`computer_vision/gpu/`).<br>• Quantum biology ODE/DFT solvers (`quantum_biology/gpu_pipeline.rs`).                                                                                                                                                                                |
 
 ---
 
@@ -73,6 +73,7 @@ Migrating these components into Etalon creates a clean, decoupled boundary that 
 ```
 
 ### Boundary Rules:
+
 1. **No Semantic Types in Etalon**: Etalon knows nothing about RDF triples, ontologies, or fiduciary business policies. It operates purely on byte buffers, 48-byte uniform records (`NQuin`), tensors, float/half arrays, and geometric vertex streams.
 2. **Zero-Copy Memory Hand-Off**: QualiaDB maps its `.q42` file memory pages directly into Etalon via `etalon-agent::import_host_memory`. Etalon processes the memory in-place and signals completion via hardware timeline semaphores without copying across the PCIe bus twice.
 3. **No Database Locks in the GPU Hot Path**: Etalon executes asynchronously on dedicated hardware queues (Compute and Transfer), completely decoupling database transactional locking from GPU execution latency.
@@ -92,7 +93,7 @@ sequenceDiagram
 
     Note over EF: Phase 1: Migrate WGSL Forge
     Q->>EF: Move wgsl_forge/ & shaders to crates/etalon-forge
-    
+
     Note over EN,EA: Phase 2: Migrate Super-Quin Graph Acceleration
     Q->>EN: Move graph_accel/gpu.rs to crates/etalon-nquin
     Q->>EA: Wire BDA & zero-copy mmap host imports
@@ -111,6 +112,7 @@ sequenceDiagram
 ```
 
 ### Phase 1: WGSL Forge Consolidation (`crates/etalon-forge`)
+
 - Extract `crates/qualia-core-db/src/wgsl_forge/` into `c:\github\etalon\crates\etalon-forge`.
 - Retain the typed kernel generation, Naga validation, and caching architecture.
 - Expand support for Slang shader bundles and multi-target compilation (SPIR-V, PTX, MetalLib, DXIL).
@@ -124,6 +126,7 @@ sequenceDiagram
   ```
 
 ### Phase 2: Super-Quin Hardware Acceleration (`crates/etalon-nquin`)
+
 - Extract `crates/qualia-core-db/src/query/graph_accel/gpu.rs` into `c:\github\etalon\crates\etalon-nquin`.
 - Standardize the 48-byte `NQuin` struct definition across Rust and WGSL:
   ```rust
@@ -141,18 +144,21 @@ sequenceDiagram
 - Connect directly to `etalon-agent` for zero-copy `.q42` file mmap streaming.
 
 ### Phase 3: Tensor & GGUF Local Model Engine (`crates/etalon-tensor`)
+
 - Extract `crates/qualia-core-db/src/gguf_bridge/` into `c:\github\etalon\crates\etalon-tensor`.
 - Consolidate autoregressive decode loops (`resident_decode.rs`, `ternary_gpu.rs`, `topk_gpu.rs`).
 - Connect cooperative matrix operations directly to `etalon-hal` Vulkan/DX12/Metal tensor-core pipelines.
 - Provide zero-copy token embedding dequantization from mmap GGUF weight files.
 
 ### Phase 4: Volumetric & Portal GPU Rendering (`crates/etalon-render`)
+
 - Consolidate `crates/qualia-core-db/src/render/gpu/` and `crates/webizen-render` into `c:\github\etalon\crates\etalon-render`.
 - Implement `PortalRenderer` for high-throughput spatial 10D manifold rendering.
 - Maintain full support for native desktop windows (via [Aether](https://github.com/mediaprophet/rust-app-framework)) and browser WASM contexts.
 - Integrate the EMF quantum visualizer and skeletal skinning pipelines.
 
 ### Phase 5: QualiaDB Integration & Cleanup
+
 - In `qualiaDB/Cargo.toml`, replace embedded GPU modules with clean dependencies on Etalon:
   ```toml
   [dependencies]

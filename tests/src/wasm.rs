@@ -7,9 +7,9 @@ use crate::{
     GpuTestInitializer,
 };
 
+use etalon::{Backends, TextureFormat};
 use exhaust::Exhaust;
 use wasm_bindgen::prelude::wasm_bindgen;
-use etalon::{Backends, TextureFormat};
 
 #[wasm_bindgen(inline_js = "
   export function test_success() {

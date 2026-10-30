@@ -45,7 +45,10 @@ mod ranked;
 #[cfg_attr(etalon_validate_locks, allow(dead_code))]
 mod observing;
 
-#[cfg_attr(any(etalon_validate_locks, feature = "observe_locks"), allow(dead_code))]
+#[cfg_attr(
+    any(etalon_validate_locks, feature = "observe_locks"),
+    allow(dead_code)
+)]
 mod vanilla;
 
 #[cfg(etalon_validate_locks)]

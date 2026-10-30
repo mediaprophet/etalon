@@ -1,5 +1,7 @@
 use etalon::{DownlevelFlags, Limits};
-use etalon_test::{apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters};
+use etalon_test::{
+    apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters,
+};
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(NON_FATAL_ERRORS_IN_QUEUE_SUBMIT);

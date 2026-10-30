@@ -832,6 +832,11 @@ impl Buffer {
             self.size.saturating_sub(offset)
         };
 
+        let device = &self.device;
+        if let Err(e) = device.check_is_valid() {
+            return Err((op, e.into()));
+        }
+
         if let Err(e) = self.check_is_valid() {
             return Err((op, e.into()));
         }
@@ -877,11 +882,6 @@ impl Buffer {
         };
 
         if let Err(e) = self.check_usage(pub_usage) {
-            return Err((op, e.into()));
-        }
-
-        let device = &self.device;
-        if let Err(e) = device.check_is_valid() {
             return Err((op, e.into()));
         }
 
@@ -1067,13 +1067,8 @@ impl Buffer {
         // Hold the lock on `map_state` until we have updated it with the
         // outcome of the mapping, to prevent concurrent activity from
         // observing an intermediate state.
-        //
-        // Unfortunately this does mean that we hold the guard across
-        // `crate::device::map_buffer` and the associated call to
-        // `handle_hal_error`, which may invoke a device loss callback.
-        // See <https://github.com/mediaprophet/etalon/issues/10031>.
         let mut map_state = self.map_state.write();
-        let pending_mapping = match mem::replace(&mut *map_state, BufferMapState::Idle) {
+        let mut pending_mapping = match mem::replace(&mut *map_state, BufferMapState::Idle) {
             BufferMapState::Waiting(pending_mapping) => pending_mapping,
             // Mapping cancelled
             BufferMapState::Idle => return None,
@@ -1090,12 +1085,16 @@ impl Buffer {
         } else if pending_mapping.range.start != pending_mapping.range.end {
             let host = pending_mapping.op.mode;
             let size = pending_mapping.range.end - pending_mapping.range.start;
-            match crate::device::map_buffer(
+            match crate::device::map_buffer_with_error_handler(
                 self,
                 pending_mapping.range.start,
                 size,
                 host,
                 snatch_guard,
+                |error| {
+                    self.device
+                        .defer_mapping_error(error, &mut pending_mapping.op)
+                },
             ) {
                 Ok(mapping) => {
                     *map_state = BufferMapState::Active {
@@ -1179,13 +1178,9 @@ impl Buffer {
                         dst_offset: 0,
                         size: staging_buffer.size,
                     });
-                    let transition_src = hal::BufferBarrier {
-                        buffer: staging_buffer.raw(),
-                        usage: hal::StateTransition {
-                            from: wgt::BufferUses::MAP_WRITE,
-                            to: wgt::BufferUses::COPY_SRC,
-                        },
-                    };
+                    // The staging buffer's `MAP_WRITE` -> `COPY_SRC` transition
+                    // is hoisted to the front of the batch by
+                    // `PendingWrites::consume`, below.
                     let transition_dst = hal::BufferBarrier::<dyn hal::DynBuffer> {
                         buffer: raw_buf,
                         usage: hal::StateTransition {
@@ -1196,7 +1191,7 @@ impl Buffer {
                     let mut pending_writes = queue.pending_writes.lock();
                     let encoder = pending_writes.activate();
                     unsafe {
-                        encoder.transition_buffers(&[transition_src, transition_dst]);
+                        encoder.transition_buffers(&[transition_dst]);
                         // Buffers allocate at least `COPY_BUFFER_ALIGNMENT` bytes, so
                         // there's always something to copy here.
                         encoder.copy_buffer_to_buffer(
@@ -3642,7 +3637,8 @@ impl Blas {
                             #[expect(clippy::single_range_in_vec_init, reason = "intentional")]
                             self.device.raw().invalidate_mapped_ranges(
                                 compaction_buffer,
-                                &[0..size_of::<etalon_types::BufferAddress>() as wgt::BufferAddress],
+                                &[0..size_of::<etalon_types::BufferAddress>()
+                                    as wgt::BufferAddress],
                             );
                         }
                         let size = core::ptr::read_unaligned(

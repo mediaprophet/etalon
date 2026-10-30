@@ -577,7 +577,8 @@ static DIFFERENT_BGL_ORDER_BW_SHADER_AND_API: GpuTestConfiguration = GpuTestConf
             sample_count: 1,
             dimension: etalon::TextureDimension::D2,
             format: etalon::TextureFormat::Rgba8Unorm,
-            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
 
@@ -598,35 +599,35 @@ static DIFFERENT_BGL_ORDER_BW_SHADER_AND_API: GpuTestConfiguration = GpuTestConf
             .device
             .create_sampler(&etalon::SamplerDescriptor::default());
 
-        let render_pipeline = ctx
-            .device
-            .create_render_pipeline(&etalon::RenderPipelineDescriptor {
-                fragment: Some(etalon::FragmentState {
-                    module: &trivial_shaders_with_some_reversed_bindings,
-                    entry_point: Some("fs_main"),
-                    compilation_options: Default::default(),
-                    targets: &[Some(etalon::ColorTargetState {
-                        format: etalon::TextureFormat::Bgra8Unorm,
-                        blend: None,
-                        write_mask: etalon::ColorWrites::ALL,
-                    })],
-                }),
-                layout: None,
+        let render_pipeline =
+            ctx.device
+                .create_render_pipeline(&etalon::RenderPipelineDescriptor {
+                    fragment: Some(etalon::FragmentState {
+                        module: &trivial_shaders_with_some_reversed_bindings,
+                        entry_point: Some("fs_main"),
+                        compilation_options: Default::default(),
+                        targets: &[Some(etalon::ColorTargetState {
+                            format: etalon::TextureFormat::Bgra8Unorm,
+                            blend: None,
+                            write_mask: etalon::ColorWrites::ALL,
+                        })],
+                    }),
+                    layout: None,
 
-                // Other fields below aren't interesting for this text.
-                label: None,
-                vertex: etalon::VertexState {
-                    module: &trivial_shaders_with_some_reversed_bindings,
-                    entry_point: Some("vs_main"),
-                    compilation_options: Default::default(),
-                    buffers: &[],
-                },
-                primitive: etalon::PrimitiveState::default(),
-                depth_stencil: None,
-                multisample: etalon::MultisampleState::default(),
-                multiview_mask: None,
-                cache: None,
-            });
+                    // Other fields below aren't interesting for this text.
+                    label: None,
+                    vertex: etalon::VertexState {
+                        module: &trivial_shaders_with_some_reversed_bindings,
+                        entry_point: Some("vs_main"),
+                        compilation_options: Default::default(),
+                        buffers: &[],
+                    },
+                    primitive: etalon::PrimitiveState::default(),
+                    depth_stencil: None,
+                    multisample: etalon::MultisampleState::default(),
+                    multiview_mask: None,
+                    cache: None,
+                });
 
         // fail(&ctx.device, || {
         // }, "");

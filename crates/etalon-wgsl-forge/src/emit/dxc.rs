@@ -25,9 +25,9 @@ pub fn compile_hlsl_to_spirv(hlsl_source: &str, entry_point: &str) -> Result<Vec
     std::fs::write(&in_path, hlsl_source)
         .map_err(|e| ForgeError::Emission(format!("Failed to write HLSL temp file: {e:?}")))?;
 
-    let in_path_str = in_path.to_str().ok_or_else(|| {
-        ForgeError::Emission("Non-UTF8 temporary input path for DXC".to_string())
-    })?;
+    let in_path_str = in_path
+        .to_str()
+        .ok_or_else(|| ForgeError::Emission("Non-UTF8 temporary input path for DXC".to_string()))?;
     let out_path_str = out_path.to_str().ok_or_else(|| {
         ForgeError::Emission("Non-UTF8 temporary output path for DXC".to_string())
     })?;
@@ -48,9 +48,7 @@ pub fn compile_hlsl_to_spirv(hlsl_source: &str, entry_point: &str) -> Result<Vec
         .arg(out_path_str)
         .output()
         .map_err(|e| {
-            ForgeError::Emission(format!(
-                "Failed to execute DXC CLI at {dxc_path}: {e:?}"
-            ))
+            ForgeError::Emission(format!("Failed to execute DXC CLI at {dxc_path}: {e:?}"))
         })?;
 
     if !output.status.success() {

@@ -180,8 +180,7 @@ fn emit_affine_body(
         writeln!(source, "        if (global_id < params.length) {{")
             .map_err(|error| ForgeError::Emission(error.to_string()))?;
         emit_ops(source, &kernel.ops, "            ")?;
-        writeln!(source, "        }}")
-            .map_err(|error| ForgeError::Emission(error.to_string()))?;
+        writeln!(source, "        }}").map_err(|error| ForgeError::Emission(error.to_string()))?;
     } else {
         let constructor = (0..schedule.vector_width)
             .map(|index| format!("input[global_id + {index}u]"))

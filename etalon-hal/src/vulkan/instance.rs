@@ -210,7 +210,8 @@ unsafe extern "system" fn debug_utils_messenger_callback(
 fn cts_error_is_waived(message_id_number: i32) -> bool {
     use etalon_sync::Lazy;
 
-    static ETALON_CTS_XTASK: Lazy<bool> = Lazy::new(|| std::env::var_os("ETALON_CTS_XTASK").is_some());
+    static ETALON_CTS_XTASK: Lazy<bool> =
+        Lazy::new(|| std::env::var_os("ETALON_CTS_XTASK").is_some());
 
     if !*ETALON_CTS_XTASK {
         return false;

@@ -52,7 +52,7 @@ impl super::CommandEncoder {
         }
     }
 
-    fn make_framebuffer(
+    pub(super) fn make_framebuffer(
         &mut self,
         key: super::FramebufferKey,
     ) -> Result<vk::Framebuffer, crate::DeviceError> {
@@ -73,13 +73,14 @@ impl super::CommandEncoder {
                     .layers(extent.depth_or_array_layers)
                     .attachments(attachment_views);
 
-                let raw = unsafe { self.device.raw.create_framebuffer(&vk_info, None).unwrap() };
+                let raw = unsafe { self.device.raw.create_framebuffer(&vk_info, None) }
+                    .map_err(super::map_host_device_oom_err)?;
                 *e.insert(raw)
             }
         })
     }
 
-    fn make_temp_texture_view(
+    pub(super) fn make_temp_texture_view(
         &mut self,
         key: super::TempTextureViewKey,
     ) -> Result<super::IdentifiedTextureView, crate::DeviceError> {
@@ -617,7 +618,8 @@ impl crate::CommandEncoder for super::CommandEncoder {
         for desc in descriptors {
             let (geometries, ranges) = match *desc.entries {
                 crate::AccelerationStructureEntries::Instances(ref instances) => {
-                    let instance_data = vk::AccelerationStructureGeometryInstancesDataKHR::default()
+                    let instance_data = vk::AccelerationStructureGeometryInstancesDataKHR::default(
+                    )
                     .data(vk::DeviceOrHostAddressConstKHR {
                         device_address: get_device_address(instances.buffer),
                     });
@@ -823,6 +825,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
         &mut self,
         desc: &crate::RenderPassDescriptor<super::QuerySet, super::TextureView>,
     ) -> Result<(), crate::DeviceError> {
+        self.multiview_resolves.clear();
         let mut vk_clear_values =
             ArrayVec::<vk::ClearValue, { super::MAX_TOTAL_ATTACHMENTS }>::new();
         let mut rp_key = super::RenderPassKey {
@@ -858,18 +861,43 @@ impl crate::CommandEncoder for super::CommandEncoder {
                 vk_clear_values.push(vk::ClearValue {
                     color: unsafe { cat.make_vk_clear_color() },
                 });
+                let mut color_ops = cat.ops;
+                let mut fallback_resolve = false;
+                if let (Some(mask), Some(resolve)) = (desc.multiview_mask, &cat.resolve_target) {
+                    if mask.get() > 1
+                        && self
+                            .device
+                            .workarounds
+                            .contains(super::Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO)
+                    {
+                        self.prepare_multiview_resolve(super::resolve::MultiviewResolve::new(
+                            cat,
+                            resolve,
+                            desc.extent,
+                            desc.sample_count,
+                            mask,
+                        ))?;
+                        color_ops.remove(crate::AttachmentOps::STORE_DISCARD);
+                        color_ops.insert(crate::AttachmentOps::STORE);
+                        fallback_resolve = true;
+                    }
+                }
                 let color = super::ColorAttachmentKey {
-                    base: cat.target.make_attachment_key(cat.ops),
-                    resolve: cat.resolve_target.as_ref().map(|target| {
-                        target.make_attachment_key(
-                            crate::AttachmentOps::LOAD_CLEAR | crate::AttachmentOps::STORE,
-                        )
-                    }),
+                    base: cat.target.make_attachment_key(color_ops),
+                    resolve: cat
+                        .resolve_target
+                        .as_ref()
+                        .filter(|_| !fallback_resolve)
+                        .map(|target| {
+                            target.make_attachment_key(
+                                crate::AttachmentOps::LOAD_CLEAR | crate::AttachmentOps::STORE,
+                            )
+                        }),
                 };
 
                 rp_key.colors.push(Some(color));
                 fb_key.push_view(color_view);
-                if let Some(ref at) = cat.resolve_target {
+                if let Some(at) = cat.resolve_target.as_ref().filter(|_| !fallback_resolve) {
                     vk_clear_values.push(unsafe { mem::zeroed() });
                     fb_key.push_view(at.view.identified_raw_view());
                 }
@@ -900,35 +928,18 @@ impl crate::CommandEncoder for super::CommandEncoder {
                 height: desc.extent.height,
             },
         };
-        let vk_viewports = if self
-            .device
-            .workarounds
-            .contains(super::Workarounds::IGNORED_NEGATIVE_VIEWPORT_HEIGHT)
-        {
-            // The Y-flip happens in the vertex shader epilogue instead; see the
-            // workaround's documentation.
-            [vk::Viewport {
-                x: 0.0,
-                y: 0.0,
-                width: desc.extent.width as f32,
-                height: desc.extent.height as f32,
-                min_depth: 0.0,
-                max_depth: 1.0,
-            }]
-        } else {
-            [vk::Viewport {
-                x: 0.0,
-                y: desc.extent.height as f32,
-                width: desc.extent.width as f32,
-                height: -(desc.extent.height as f32),
-                min_depth: 0.0,
-                max_depth: 1.0,
-            }]
-        };
+        let vk_viewports = [vk::Viewport {
+            x: 0.0,
+            y: desc.extent.height as f32,
+            width: desc.extent.width as f32,
+            height: -(desc.extent.height as f32),
+            min_depth: 0.0,
+            max_depth: 1.0,
+        }];
 
-        let raw_pass = self.device.make_render_pass(rp_key).unwrap();
+        let raw_pass = self.device.make_render_pass(rp_key)?;
         fb_key.raw_pass = raw_pass;
-        let raw_framebuffer = self.make_framebuffer(fb_key).unwrap();
+        let raw_framebuffer = self.make_framebuffer(fb_key)?;
 
         let vk_info = vk::RenderPassBeginInfo::default()
             .render_pass(raw_pass)
@@ -954,17 +965,18 @@ impl crate::CommandEncoder for super::CommandEncoder {
         }
 
         unsafe {
+            self.device.raw.cmd_begin_render_pass(
+                self.active,
+                &vk_info,
+                vk::SubpassContents::INLINE,
+            );
+            // Beginning a multiview subpass invalidates non-render-pass state.
             self.device
                 .raw
                 .cmd_set_viewport(self.active, 0, &vk_viewports);
             self.device
                 .raw
                 .cmd_set_scissor(self.active, 0, &[render_area]);
-            self.device.raw.cmd_begin_render_pass(
-                self.active,
-                &vk_info,
-                vk::SubpassContents::INLINE,
-            );
         };
 
         self.bind_point = vk::PipelineBindPoint::GRAPHICS;
@@ -975,6 +987,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
         unsafe {
             self.device.raw.cmd_end_render_pass(self.active);
         }
+        self.finish_multiview_resolves();
 
         // After all other commands but before debug marker, so this is still seen as part of this pass.
         self.write_pass_end_timestamp_if_requested();
@@ -1082,31 +1095,14 @@ impl crate::CommandEncoder for super::CommandEncoder {
         };
     }
     unsafe fn set_viewport(&mut self, rect: &crate::Rect<f32>, depth_range: Range<f32>) {
-        let vk_viewports = if self
-            .device
-            .workarounds
-            .contains(super::Workarounds::IGNORED_NEGATIVE_VIEWPORT_HEIGHT)
-        {
-            // The Y-flip happens in the vertex shader epilogue instead; see the
-            // workaround's documentation.
-            [vk::Viewport {
-                x: rect.x,
-                y: rect.y,
-                width: rect.w,
-                height: rect.h,
-                min_depth: depth_range.start,
-                max_depth: depth_range.end,
-            }]
-        } else {
-            [vk::Viewport {
-                x: rect.x,
-                y: rect.y + rect.h,
-                width: rect.w,
-                height: -rect.h, // flip Y
-                min_depth: depth_range.start,
-                max_depth: depth_range.end,
-            }]
-        };
+        let vk_viewports = [vk::Viewport {
+            x: rect.x,
+            y: rect.y + rect.h,
+            width: rect.w,
+            height: -rect.h, // flip Y
+            min_depth: depth_range.start,
+            max_depth: depth_range.end,
+        }];
         unsafe {
             self.device
                 .raw

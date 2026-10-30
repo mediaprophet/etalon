@@ -116,7 +116,12 @@ impl crate::framework::Example for Example {
         self.texture_view = texture_view;
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let now = Instant::now();
         let start = *self.start_time.get_or_insert(now);
         let time_since_start = (now - start).as_secs_f32();

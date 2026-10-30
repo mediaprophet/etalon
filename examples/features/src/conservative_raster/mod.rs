@@ -186,17 +186,20 @@ impl crate::framework::Example for Example {
                         etalon::BindGroupLayoutEntry {
                             binding: 1,
                             visibility: etalon::ShaderStages::FRAGMENT,
-                            ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::NonFiltering),
+                            ty: etalon::BindingType::Sampler(
+                                etalon::SamplerBindingType::NonFiltering,
+                            ),
                             count: None,
                         },
                     ],
                 });
 
-            let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-                label: None,
-                bind_group_layouts: &[Some(&bind_group_layout)],
-                immediate_size: 0,
-            });
+            let pipeline_layout =
+                device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                    label: None,
+                    bind_group_layouts: &[Some(&bind_group_layout)],
+                    immediate_size: 0,
+                });
             let shader = device.create_shader_module(etalon::include_wgsl!("upscale.wgsl"));
             (
                 device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
@@ -253,7 +256,12 @@ impl crate::framework::Example for Example {
 
     fn update(&mut self, _event: winit::event::WindowEvent) {}
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
             label: Some("primary"),
         });

@@ -200,7 +200,9 @@ impl CoreAdapter {
         let device = CoreDevice {
             etalon_device: device.clone(),
         };
-        let queue = CoreQueue { etalon_queue: queue };
+        let queue = CoreQueue {
+            etalon_queue: queue,
+        };
         Ok((device, queue))
     }
 
@@ -274,7 +276,10 @@ impl CoreDevice {
     #[cfg(webgl)]
     pub fn texture_belongs_to_device(&self, texture: &CoreTexture) -> bool {
         use wgc::resource::ParentDevice as _;
-        texture.etalon_texture.same_device(&self.etalon_device).is_ok()
+        texture
+            .etalon_texture
+            .same_device(&self.etalon_device)
+            .is_ok()
     }
 
     pub(crate) fn from_core(core_device: Arc<wgc::device::Device>) -> Self {
@@ -897,7 +902,9 @@ impl dispatch::AdapterInterface for CoreAdapter {
         let device = CoreDevice {
             etalon_device: device,
         };
-        let queue = CoreQueue { etalon_queue: queue };
+        let queue = CoreQueue {
+            etalon_queue: queue,
+        };
         Box::pin(ready(Ok((device.into(), queue.into()))))
     }
 
@@ -1010,7 +1017,10 @@ impl dispatch::DeviceInterface for CoreDevice {
         };
         let etalon_shader_module = self.etalon_device.create_shader_module(&descriptor, source);
 
-        CoreShaderModule { etalon_shader_module }.into()
+        CoreShaderModule {
+            etalon_shader_module,
+        }
+        .into()
     }
 
     unsafe fn create_shader_module_passthrough(
@@ -1021,7 +1031,10 @@ impl dispatch::DeviceInterface for CoreDevice {
         let etalon_shader_module =
             unsafe { self.etalon_device.create_shader_module_passthrough(&desc) };
 
-        CoreShaderModule { etalon_shader_module }.into()
+        CoreShaderModule {
+            etalon_shader_module,
+        }
+        .into()
     }
 
     fn create_bind_group_layout(
@@ -1335,7 +1348,13 @@ impl dispatch::DeviceInterface for CoreDevice {
             }),
             mesh: pipe::MeshState {
                 stage: pipe::ProgrammableStageDescriptor {
-                    module: desc.mesh.module.inner.as_core().etalon_shader_module.clone(),
+                    module: desc
+                        .mesh
+                        .module
+                        .inner
+                        .as_core()
+                        .etalon_shader_module
+                        .clone(),
                     entry_point: desc.mesh.entry_point.map(Borrowed),
                     constants: mesh_constants,
                     zero_initialize_workgroup_memory: desc
@@ -1471,7 +1490,9 @@ impl dispatch::DeviceInterface for CoreDevice {
             .iter()
             .map(|plane| plane.inner.as_core().etalon_texture_view.clone())
             .collect::<Vec<_>>();
-        let etalon_external_texture = self.etalon_device.create_external_texture(&wgt_desc, &planes);
+        let etalon_external_texture = self
+            .etalon_device
+            .create_external_texture(&wgt_desc, &planes);
 
         CoreExternalTexture {
             etalon_external_texture,
@@ -1748,7 +1769,7 @@ impl dispatch::QueueInterface for CoreQueue {
     fn submit(
         &self,
         command_buffers: &mut dyn Iterator<Item = dispatch::DispatchCommandBuffer>,
-    ) -> u64 {
+    ) -> Option<u64> {
         let temp_command_buffers = command_buffers.collect::<SmallVec<[_; 4]>>();
         let command_buffers = temp_command_buffers
             .iter()
@@ -1881,7 +1902,10 @@ impl dispatch::TextureInterface for CoreTexture {
             swizzle: desc.swizzle,
         };
         let etalon_texture_view = self.etalon_texture.create_view(&descriptor);
-        CoreTextureView { etalon_texture_view }.into()
+        CoreTextureView {
+            etalon_texture_view,
+        }
+        .into()
     }
 
     fn destroy(&self) {
@@ -2558,8 +2582,11 @@ impl dispatch::RenderPassInterface for CoreRenderPass {
     ) {
         let indirect_buffer = indirect_buffer.as_core();
 
-        self.pass
-            .multi_draw_indirect(indirect_buffer.etalon_buffer.clone(), indirect_offset, count);
+        self.pass.multi_draw_indirect(
+            indirect_buffer.etalon_buffer.clone(),
+            indirect_offset,
+            count,
+        );
     }
 
     fn multi_draw_indexed_indirect(
@@ -2829,7 +2856,10 @@ impl dispatch::RenderBundleEncoderInterface for CoreRenderBundleEncoder {
         Self: Sized,
     {
         let etalon_render_bundle = self.encoder.finish(&desc.map_label(|l| l.map(Borrowed)));
-        CoreRenderBundle { etalon_render_bundle }.into()
+        CoreRenderBundle {
+            etalon_render_bundle,
+        }
+        .into()
     }
 
     #[cfg(custom)]
@@ -2878,7 +2908,8 @@ impl dispatch::SurfaceInterface for CoreSurface {
     fn display_hdr_info(&self, adapter: &dispatch::DispatchAdapter) -> wgt::DisplayHdrInfo {
         let adapter = adapter.as_core();
 
-        self.etalon_surface.display_hdr_info(&adapter.etalon_adapter)
+        self.etalon_surface
+            .display_hdr_info(&adapter.etalon_adapter)
     }
 
     fn configure(&self, device: &dispatch::DispatchDevice, config: &crate::SurfaceConfiguration) {
