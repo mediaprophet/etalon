@@ -69,8 +69,8 @@ pub struct ExternalTextureDescriptor<L> {
     /// desired destination color space rather than the source color space of
     /// the underlying planes.
     ///
-    /// [`ImageSample`]: https://docs.rs/naga/latest/naga/ir/enum.Expression.html#variant.ImageSample
-    /// [`ImageLoad`]: https://docs.rs/naga/latest/naga/ir/enum.Expression.html#variant.ImageLoad
+    /// [`ImageSample`]: https://mediaprophet.github.io/etalon/doc/naga/ir/enum.Expression.html#variant.ImageSample
+    /// [`ImageLoad`]: https://mediaprophet.github.io/etalon/doc/naga/ir/enum.Expression.html#variant.ImageLoad
     pub gamut_conversion_matrix: [f32; 9],
 
     /// Transfer function for the source color space. The *inverse* of this
@@ -93,7 +93,7 @@ pub struct ExternalTextureDescriptor<L> {
     /// must be an axis-aligned rectangle that falls within the bounds of
     /// (0,0)..(1,1).
     ///
-    /// [`ImageSample`]: https://docs.rs/naga/latest/naga/ir/enum.Expression.html#variant.ImageSample
+    /// [`ImageSample`]: https://mediaprophet.github.io/etalon/doc/naga/ir/enum.Expression.html#variant.ImageSample
     pub sample_transform: [f32; 6],
 
     /// Transform to apply to [`ImageLoad`] coordinates.
@@ -109,7 +109,7 @@ pub struct ExternalTextureDescriptor<L> {
     /// [`height`]) must be an axis-aligned rectangle that falls within the bounds
     /// of (0,0)..([`width`], [`height`]).
     ///
-    /// [`ImageLoad`]: https://docs.rs/naga/latest/naga/ir/enum.Expression.html#variant.ImageLoad
+    /// [`ImageLoad`]: https://mediaprophet.github.io/etalon/doc/naga/ir/enum.Expression.html#variant.ImageLoad
     /// [`width`]: Self::width
     /// [`height`]: Self::height
     pub load_transform: [f32; 6],

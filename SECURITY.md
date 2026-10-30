@@ -46,11 +46,6 @@ version may also be provided for the previous major release.
 Mozilla provides security support for versions of etalon used in [current
 versions of Firefox](https://whattrainisitnow.com/).
 
-The version of etalon that is active can be found in the Firefox repositories:
-
-- [release](https://github.com/mozilla-firefox/firefox/blob/release/gfx/etalon_bindings/Cargo.toml),
-- [beta](https://github.com/mozilla-firefox/firefox/blob/beta/gfx/etalon_bindings/Cargo.toml), and
-- [nightly](https://github.com/mozilla-firefox/firefox/blob/main/gfx/etalon_bindings/Cargo.toml),
 
 We welcome reports of security vulnerabilities in any of these released
 versions or in the latest code on the `trunk` branch.

@@ -4,7 +4,7 @@ This example demonstrates how to use cooperative matrix operations (also known a
 
 For the full description of the cooperative matrix feature (supported configurations, WGSL types and operations, validation rules, and backend support), see the central API spec:
 
-- [`etalon::documentation::extensions::cooperative_matrices`](https://docs.rs/etalon/latest/etalon/documentation/extensions/cooperative_matrices/index.html)
+- [`etalon::documentation::extensions::cooperative_matrices`](https://mediaprophet.github.io/etalon/doc/etalon/documentation/extensions/cooperative_matrices/index.html)
 
 ## Example specifics
 
@@ -23,7 +23,7 @@ The example:
 
 - A GPU and backend that expose `Features::EXPERIMENTAL_COOPERATIVE_MATRIX`
 - A configuration returned from `adapter.cooperative_matrix_properties()` that matches the tile size and element types used by this example
-- See [`etalon::documentation::extensions::cooperative_matrices`](https://docs.rs/etalon/latest/etalon/documentation/extensions/cooperative_matrices/index.html) for details on hardware / backend support
+- See [`etalon::documentation::extensions::cooperative_matrices`](https://mediaprophet.github.io/etalon/doc/etalon/documentation/extensions/cooperative_matrices/index.html) for details on hardware / backend support
 
 ## Running
 

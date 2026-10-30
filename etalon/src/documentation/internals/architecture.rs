@@ -81,8 +81,8 @@ Working through this diagram from the bottom up:
 [OpenGL]: https://www.opengl.org/
 [MoltenVK]: https://github.com/KhronosGroup/MoltenVK
 [Mesa]: https://mesa3d.org/
-[`etalon_hal`]: https://docs.rs/etalon-hal/latest/etalon_hal/
-[`etalon_core`]: https://docs.rs/etalon-core/latest/etalon_core/
+[`etalon_hal`]: https://mediaprophet.github.io/etalon/doc/etalon_hal/
+[`etalon_core`]: https://mediaprophet.github.io/etalon/doc/etalon_core/
 
 ## etalon
 
@@ -123,7 +123,7 @@ Beyond safety, `etalon_core` also implements a few convenience APIs (for
 example, mapped-at-creation buffers) on top of `etalon_hal`'s more primitive
 features.
 
-[hal safety]: https://docs.rs/etalon-hal/latest/etalon_hal/#validation-is-the-calling-codes-responsibility-not-etalon-hals
+[hal safety]: https://mediaprophet.github.io/etalon/doc/etalon_hal/#validation-is-the-calling-codes-responsibility-not-etalon-hals
 
 ### Lifetime tracking
 
@@ -139,7 +139,7 @@ This `etalon_hal` requirement arises mostly from the Vulkan backend. Direct3D
 and Metal both use reference counting internally for most operations, but
 Vulkan foists the entire problem off on its users.
 
-[`etalon_hal::Device`]: https://docs.rs/etalon-hal/latest/etalon_hal/trait.Device.html
+[`etalon_hal::Device`]: https://mediaprophet.github.io/etalon/doc/etalon_hal/trait.Device.html
 
 ### Synchronization
 
@@ -153,8 +153,8 @@ There are a few other interesting requirements; for example, calls to
 simultaneously must use different `Fence`s. `etalon_core` addresses this by
 simply wrapping `etalon_hal::Queue` in a `Mutex`.
 
-[`etalon_hal::CommandEncoder`]: https://docs.rs/etalon-hal/latest/etalon_hal/trait.CommandEncoder.html
-[`etalon_hal::Queue::submit`]: https://docs.rs/etalon-hal/latest/etalon_hal/trait.Queue.html#tymethod.submit
+[`etalon_hal::CommandEncoder`]: https://mediaprophet.github.io/etalon/doc/etalon_hal/trait.CommandEncoder.html
+[`etalon_hal::Queue::submit`]: https://mediaprophet.github.io/etalon/doc/etalon_hal/trait.Queue.html#tymethod.submit
 
 ### Barrier generation
 
@@ -204,8 +204,8 @@ the commands have been submitted and finished running.
 
 [ResourceBarrier]: https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12graphicscommandlist-resourcebarrier
 [VkCmdPipelineBarrier]: https://docs.vulkan.org/refpages/latest/refpages/source/vkCmdPipelineBarrier.html
-[`transition_buffers`]: https://docs.rs/etalon-hal/latest/etalon_hal/trait.DynCommandEncoder.html#tymethod.transition_buffers
-[`transition_textures`]: https://docs.rs/etalon-hal/latest/etalon_hal/trait.DynCommandEncoder.html#tymethod.transition_textures
+[`transition_buffers`]: https://mediaprophet.github.io/etalon/doc/etalon_hal/trait.DynCommandEncoder.html#tymethod.transition_buffers
+[`transition_textures`]: https://mediaprophet.github.io/etalon/doc/etalon_hal/trait.DynCommandEncoder.html#tymethod.transition_textures
 
 ### MemoryInitTracker
 

@@ -1027,9 +1027,9 @@ pub enum TypeInner {
     /// [`Sampler`]: TypeInner::Sampler
     /// [`Uniform`]: AddressSpace::Uniform
     /// [`Storage`]: AddressSpace::Storage
-    /// [`TextureViewArray`]: https://docs.rs/etalon/latest/etalon/enum.BindingResource.html#variant.TextureViewArray
-    /// [`SamplerArray`]: https://docs.rs/etalon/latest/etalon/enum.BindingResource.html#variant.SamplerArray
-    /// [`BufferArray`]: https://docs.rs/etalon/latest/etalon/enum.BindingResource.html#variant.BufferArray
+    /// [`TextureViewArray`]: https://mediaprophet.github.io/etalon/doc/etalon/enum.BindingResource.html#variant.TextureViewArray
+    /// [`SamplerArray`]: https://mediaprophet.github.io/etalon/doc/etalon/enum.BindingResource.html#variant.SamplerArray
+    /// [`BufferArray`]: https://mediaprophet.github.io/etalon/doc/etalon/enum.BindingResource.html#variant.BufferArray
     /// [`DATA`]: crate::valid::TypeFlags::DATA
     /// [`ARGUMENT`]: crate::valid::TypeFlags::ARGUMENT
     /// [naga#1864]: https://github.com/mediaprophet/naga/issues/1864

@@ -6,7 +6,7 @@ labels: bug
 assignees: ""
 ---
 
-<!-- Thank you for filing this! Please read the [debugging tips](https://docs.rs/etalon/latest/etalon/documentation/debugging/debugging_applications/index.html).
+<!-- Thank you for filing this! Please read the [debugging tips](https://mediaprophet.github.io/etalon/doc/etalon/documentation/debugging/debugging_applications/index.html).
 That may let you investigate on your own, or provide additional information that helps us to assist.-->
 
 **Description**

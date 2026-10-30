@@ -24,7 +24,8 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    permissions: {}
+    permissions:
+      contents: write
 
     steps:
       - name: Checkout repo
@@ -65,8 +66,8 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
         if: github.ref == 'refs/heads/trunk'
         with:
-          token: ${{ secrets.WEB_DEPLOY }}
+          token: ${{ secrets.GITHUB_TOKEN }}
           folder: target/doc
-          repository-name: mediaprophet/etalon-rs.github.io
-          branch: master
+          repository-name: mediaprophet/etalon
+          branch: gh-pages
           target-folder: doc

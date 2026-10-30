@@ -8,9 +8,9 @@ external learning resources and a primer on the core concepts of the API.
 
 Learning materials:
 
-- [Learn etalon tutorial](https://sotrh.github.io/learn-etalon/)
-- [Draw You a Triangle for Great Good](https://github.com/dwbrite/etalon-rendering-project/wiki/Draw-You-a-Triangle-for-Great-Good)
-- Chinese version of [学习 etalon](https://jinleili.github.io/learn-etalon-zh/)
+- [Learn Wgpu tutorial](https://sotrh.github.io/learn-wgpu/)
+- [Draw You a Triangle for Great Good](https://github.com/dwbrite/wgpu-rendering-project/wiki/Draw-You-a-Triangle-for-Great-Good)
+- Chinese version of [学习 etalon](https://jinleili.github.io/learn-wgpu-zh/)
 - [GPU Architecture](https://docs.google.com/presentation/d/1qi2j-SZuzew7Rrf5VKEPDZAQQEitV40k9fKvwJNyicM/edit),
   a presentation by Kangz on how GPUs work under the hood.
 

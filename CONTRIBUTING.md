@@ -38,18 +38,6 @@ contribute. If you are unfamiliar with the etalon project, we recommend you read
 
 The etalon project has multiple official platforms for community engagement:
 
-- The Matrix channel [`etalon:matrix.org`](https://matrix.to/#/#etalon:matrix.org)
-  is dedicated to informal chat about contributions the project. It is
-  particularly useful for:
-  - Saying hello, and introducing yourself.
-  - Validating contributions (i.e., determining if they'll be accepted,
-    ensuring your approach is correct, making sure you aren't wasting effort,
-    etc.).
-  - Setting expectations for contributions.
-
-  Notification in Matrix can sometimes be unreliable. Feel free to explicitly
-  tag people from whom you would like attention, esp. to follow-up after a day
-  or so if you do not get a response to your contributions.
 
 - The [#etalon channel on the Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ)
   is dedicated to information chat about both contributing and using the project. Not
