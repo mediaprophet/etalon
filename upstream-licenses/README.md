@@ -1,15 +1,25 @@
-# Upstream / Historical License Qualification Notice
+# Upstream License Notice
 
-This directory preserves the historical licenses of the upstream etalon project (Apache-2.0 and MIT) for source provenance.
+Etalon is a fork of [wgpu](https://github.com/gfx-rs/wgpu) by the gfx-rs developers.
+Upstream wgpu is dual-licensed under the Apache License 2.0 and the MIT License.
+This directory preserves those upstream license texts and copyright notices:
 
-### Qualification & Governing Terms
+- [`LICENSE-APACHE`](LICENSE-APACHE) — Apache License 2.0
+- [`LICENSE-MIT`](LICENSE-MIT) — MIT License, Copyright (c) The gfx-rs developers
 
-This codebase (`etalon`) has been forked and is being maintained for the Webizen and Qualia ecosystems.
+Material that originates from upstream wgpu remains available under those
+upstream terms, wherever it appears in this repository.
 
-All subsequent architectures, modifications, refactorings, extensions, and integrations are governed by:
+### Etalon modifications and additions
+
+This codebase (`etalon`) has been forked and is maintained for the Webizen and
+Qualia ecosystems. All subsequent architectures, modifications, refactorings,
+extensions, and integrations are governed by:
 
 **Copyright (c) 2026 Timothy Charles Holborn**  
 **https://www.linkedin.com/in/ubiquitous/ | timothy.holborn@gmail.com**  
 **License:** Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)
 
-The definitive and legally binding terms governing this repository reside in the root [`/LICENSE`](../LICENSE) file. The upstream licenses preserved herein apply strictly to unmodified upstream historical source files and do not grant rights to the derivative architecture, modifications, or Qualia-specific systems developed herein.
+See the root [`LICENSE`](../LICENSE) file for those terms. The upstream licenses
+preserved here do not grant rights to the Etalon-specific modifications,
+architecture, or Qualia-specific systems.
