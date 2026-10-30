@@ -229,7 +229,7 @@ impl GpuQuinSieve {
         #[cfg(target_arch = "wasm32")]
         {
             let _ = (count_stage, matches_stage);
-            return None;
+            None
         }
 
         #[cfg(not(target_arch = "wasm32"))]

@@ -145,7 +145,16 @@ fn run_tests(
                 "-v",
             ])
             .env("RUSTFLAGS", "--cfg wasm_test")
+            .ignore_status()
             .output()?;
+
+        if !build_output.status.success() {
+            bail!(
+                "Failed to build {name} WASM test binary ({}):\n{}",
+                build_output.status,
+                String::from_utf8_lossy(&build_output.stderr)
+            );
+        }
 
         let list_output = String::from_utf8(build_output.stdout)?;
         let executable_path = parse_wasm_list(list_output);
