@@ -7,6 +7,10 @@ on:
       - trunk
       - qualia-main
       - main
+      - dev
+      - latest
+      - stable
+      - "v[0-9]*"
   workflow_dispatch:
 
 env:
