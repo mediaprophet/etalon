@@ -8,33 +8,35 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(CLEAR_BUFFER_RANGE_RESPECTED);
 }
 
-async fn fill_test(ctx: &TestingContext, range: Range<u64>, size: u64) -> bool {
-    let gpu_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
-        label: Some("gpu_buffer"),
-        size,
-        usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::COPY_SRC,
-        mapped_at_creation: false,
-    });
-
+async fn fill_tests(ctx: &TestingContext, ranges: &[Range<u64>], size: u64) -> bool {
     let cpu_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
         label: Some("cpu_buffer"),
-        size,
+        size: size * ranges.len() as u64,
         usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
         mapped_at_creation: false,
     });
 
     // Initialize the whole buffer with values.
     let buffer_contents = vec![0xFF_u8; size as usize];
-    ctx.queue.write_buffer(&gpu_buffer, 0, &buffer_contents);
-
     let mut encoder = ctx
         .device
         .create_command_encoder(&etalon::CommandEncoderDescriptor {
             label: Some("encoder"),
         });
 
-    encoder.clear_buffer(&gpu_buffer, range.start, Some(range.end - range.start));
-    encoder.copy_buffer_to_buffer(&gpu_buffer, 0, &cpu_buffer, 0, size);
+    let mut gpu_buffers = Vec::with_capacity(ranges.len());
+    for (index, range) in ranges.iter().enumerate() {
+        let gpu_buffer = ctx.device.create_buffer(&etalon::BufferDescriptor {
+            label: Some("gpu_buffer"),
+            size,
+            usage: etalon::BufferUsages::COPY_DST | etalon::BufferUsages::COPY_SRC,
+            mapped_at_creation: false,
+        });
+        ctx.queue.write_buffer(&gpu_buffer, 0, &buffer_contents);
+        encoder.clear_buffer(&gpu_buffer, range.start, Some(range.end - range.start));
+        encoder.copy_buffer_to_buffer(&gpu_buffer, 0, &cpu_buffer, index as u64 * size, size);
+        gpu_buffers.push(gpu_buffer);
+    }
 
     ctx.queue.submit(Some(encoder.finish()));
     cpu_buffer
@@ -47,6 +49,14 @@ async fn fill_test(ctx: &TestingContext, range: Range<u64>, size: u64) -> bool {
     let buffer_slice = cpu_buffer.slice(..);
     let buffer_data = buffer_slice.get_mapped_range().unwrap();
 
+    let mut succeeded = true;
+    for (data, range) in buffer_data.chunks_exact(size as usize).zip(ranges) {
+        succeeded &= check_range(data, range, size);
+    }
+    succeeded
+}
+
+fn check_range(buffer_data: &[u8], range: &Range<u64>, size: u64) -> bool {
     let first_clear_byte = buffer_data
         .iter()
         .enumerate()
@@ -73,7 +83,7 @@ async fn fill_test(ctx: &TestingContext, range: Range<u64>, size: u64) -> bool {
 
     let cleared_range = first_clear_byte as u64..first_dirty_byte as u64;
 
-    if cleared_range != range {
+    if cleared_range != *range {
         eprintln!(
             "Cleared range is {}..{}, but the clear range is {}..{} on a buffer of size {}.",
             cleared_range.start, cleared_range.end, range.start, range.end, size
@@ -101,14 +111,13 @@ static CLEAR_BUFFER_RANGE_RESPECTED: GpuTestConfiguration = GpuTestConfiguration
         let mut succeeded = true;
         for power in 4..14 {
             let size = 1 << power;
+            let mut ranges = Vec::with_capacity(100);
             for start_offset in (0..=36).step_by(4) {
                 for size_offset in (0..=36).step_by(4) {
-                    let range = start_offset..size + size_offset + start_offset;
-                    let result = fill_test(&ctx, range, 1 << 16).await;
-
-                    succeeded &= result;
+                    ranges.push(start_offset..size + size_offset + start_offset);
                 }
             }
+            succeeded &= fill_tests(&ctx, &ranges, 1 << 16).await;
         }
         assert!(succeeded);
     });

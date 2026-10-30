@@ -1,6 +1,7 @@
 import { chromium } from "playwright";
 import express from "express";
 import path from "path";
+import { runTestPage } from "./test-page.js";
 
 const PORT = 3000;
 const TIMEOUT = 10000;
@@ -55,26 +56,8 @@ app.get("/run_test", async (req, res) => {
 
   let test_url = new URL(BASE_URL);
   test_url.search = new URLSearchParams({ name, wasm }).toString();
-  await page.goto(test_url.toString());
-
-  await Promise.race([
-    page
-      .waitForFunction(() => {
-        return window.sessionStorage.test_success;
-      })
-      .then(() => {
-        res.sendStatus(200);
-      }),
-    page
-      .waitForFunction(() => {
-        return window.sessionStorage.test_failure;
-      })
-      .then((message) => {
-        res.status(500).send(message.toString());
-      }),
-  ]);
-
-  await page.close();
+  const result = await runTestPage(page, test_url.toString());
+  res.status(result.status).type("text/plain").send(result.body);
 });
 
 app.use("/", express.static(path.join(import.meta.dirname, "../dist")));

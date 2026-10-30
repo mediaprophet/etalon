@@ -42,7 +42,7 @@ use crate::link_to_etalon_item;
 /// Unlike standard Rust mutable references (`&mut T`), which benefit from compiler-level
 /// implicit reborrowing at function call sites, custom smart wrappers such as `WriteOnly<'a, T>`
 /// cannot have compiler-synthesized reborrows without moving `self`. Consequently, reborrowing
-/// or subslicing a `WriteOnly` slice requires explicit method calls like [`reborrow()`][Self::reborrow]
+/// or subslicing a `WriteOnly` slice requires explicit method calls like [`slice(..)`][Self::slice]
 /// or [`into_slice()`][Self::into_slice].
 ///
 /// [write combining]: https://en.wikipedia.org/wiki/Write_combining

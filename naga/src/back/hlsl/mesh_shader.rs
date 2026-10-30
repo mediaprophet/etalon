@@ -445,6 +445,7 @@ impl<W: fmt::Write> super::Writer<'_, W> {
             struct_name,
             Some(arg_name),
             out_members,
+            None,
         )
     }
 

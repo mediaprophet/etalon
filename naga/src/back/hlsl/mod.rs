@@ -145,6 +145,7 @@ it works for our purposes.
 
 mod conv;
 mod help;
+mod interface;
 mod keywords;
 mod mesh_shader;
 mod ray;
@@ -549,6 +550,10 @@ pub struct Options {
     /// to think the number of iterations is bounded.
     pub force_loop_bounding: bool,
 
+    /// Forward fragment view indices through a flat vertex output instead of pixel `SV_ViewID`.
+    /// Vertex translation requires the paired [`FragmentEntryPoint`].
+    pub force_vertex_view_index: bool,
+
     /// Limits to the mesh shader dispatch group a task workgroup can dispatch.
     ///
     /// Metal for example limits to 1024 workgroups per task shader dispatch. Dispatching more is
@@ -579,6 +584,7 @@ impl Default for Options {
             zero_initialize_workgroup_memory: true,
             restrict_indexing: true,
             force_loop_bounding: true,
+            force_vertex_view_index: false,
             task_dispatch_limits: None,
             mesh_shader_primitive_indices_clamp: true,
             ray_query_initialization_tracking: true,
@@ -720,6 +726,8 @@ impl Wrapped {
 /// If this is provided, vertex outputs will be removed if they are not inputs of this fragment
 /// entry point. This is necessary for generating correct HLSL when some of the vertex shader
 /// outputs are not consumed by the fragment shader.
+/// With [`Options::force_vertex_view_index`], this also identifies whether the vertex
+/// interface must supply a flat view index to the fragment shader.
 #[derive(Debug)]
 pub struct FragmentEntryPoint<'a> {
     module: &'a crate::Module,

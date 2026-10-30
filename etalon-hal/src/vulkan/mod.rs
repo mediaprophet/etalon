@@ -562,6 +562,8 @@ bitflags::bitflags!(
         const FORCE_FILL_BUFFER_WITH_SIZE_GREATER_4096_ALIGNED_OFFSET_16 = 0x4;
         /// Resolve multiview attachments through ordinary single-layer passes.
         const MULTIVIEW_RESOLVE_LAYER_ZERO = 0x8;
+        /// Avoid Lavapipe's attachment-index corruption while poisoning multiview discards.
+        const MULTIVIEW_DISCARD_STORE = 0x10;
     }
 );
 

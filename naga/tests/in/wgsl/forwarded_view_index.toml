@@ -1,0 +1,7 @@
+targets = "HLSL"
+capabilities = "MULTIVIEW"
+fragment_module = { entry_point = "fragment_view", path = "forwarded_view_index.wgsl" }
+
+[hlsl]
+shader_model = "V6_1"
+force_vertex_view_index = true

@@ -582,6 +582,7 @@ struct Workarounds {
     // On WARP 1.0.13+, debug information in shaders in certain situations causes the device
     // to hang. https://github.com/mediaprophet/etalon/issues/8368
     avoid_shader_debug_info: bool,
+    force_vertex_view_index: bool,
 }
 
 pub struct Adapter {

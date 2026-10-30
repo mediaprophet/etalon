@@ -2411,6 +2411,10 @@ impl super::Instance {
                     phd_capabilities.driver.map(|driver| driver.driver_id),
                 ),
             );
+            workarounds.set(
+                super::Workarounds::MULTIVIEW_DISCARD_STORE,
+                phd_capabilities.is_driver(vk::DriverId::MESA_LLVMPIPE),
+            );
         };
 
         if let Some(driver) = phd_capabilities.driver {

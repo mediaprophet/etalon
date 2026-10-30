@@ -25,4 +25,4 @@ log = { workspace = true }
 serde = { workspace = true, features = ["derive", "std"] }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
-thiserror = "2"
+thiserror = "2.0.21"

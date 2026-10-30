@@ -60,6 +60,7 @@ First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-
 
 ### Added/New Features
 
+- Naga's HLSL `Options::force_vertex_view_index` forwards fragment view indices through a flat vertex output for drivers that mishandle pixel `SV_ViewID`.
 - Extension crates under `crates/`: `etalon-agent`, `etalon-nquin`, `etalon-render`, `etalon-tensor`, `etalon-wasm` and `etalon-wgsl-forge`. (e1193443a)
 - Implementation work across the foundation/types/sync, naga IR/frontends/validation, naga backends, `etalon-core`, `etalon-hal`, and surface/deno/examples layers. (9ebe40ef3, 2aa8295a5, baf80e4c5, 38c7237d2, e6ac82c3d, 38723252e)
 
