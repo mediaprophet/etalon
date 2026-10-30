@@ -34,7 +34,15 @@ fn supports_non_uniform_storage_texture_arrays(
     device: u32,
     driver_version: Option<[u16; 4]>,
 ) -> bool {
-    !(vendor == 0x8086 && device == 0x5917 && driver_version == Some([31, 0, 101, 2141]))
+    !needs_intel_2141_shader_workarounds(vendor, device, driver_version)
+}
+
+fn needs_intel_2141_shader_workarounds(
+    vendor: u32,
+    device: u32,
+    driver_version: Option<[u16; 4]>,
+) -> bool {
+    vendor == 0x8086 && device == 0x5917 && driver_version == Some([31, 0, 101, 2141])
 }
 
 impl Drop for super::Adapter {
@@ -194,6 +202,11 @@ impl super::Adapter {
                 desc.DeviceId,
                 driver_version.as_ref().ok().copied(),
             );
+        workarounds.force_vertex_view_index = needs_intel_2141_shader_workarounds(
+            desc.VendorId,
+            desc.DeviceId,
+            driver_version.as_ref().ok().copied(),
+        );
 
         let driver_version_string = {
             let driver_version = driver_version.unwrap_or([0, 0, 0, 0]);
@@ -1574,11 +1587,16 @@ fn get_adapter_pci_info(vendor_id: u32, device_id: u32) -> String {
 
 #[cfg(test)]
 mod storage_texture_array_tests {
-    use super::supports_non_uniform_storage_texture_arrays;
+    use super::{needs_intel_2141_shader_workarounds, supports_non_uniform_storage_texture_arrays};
 
     #[test]
     fn non_uniform_guard_matches_only_reproduced_adapter_driver() {
         assert!(!supports_non_uniform_storage_texture_arrays(
+            0x8086,
+            0x5917,
+            Some([31, 0, 101, 2141])
+        ));
+        assert!(needs_intel_2141_shader_workarounds(
             0x8086,
             0x5917,
             Some([31, 0, 101, 2141])
@@ -1591,6 +1609,9 @@ mod storage_texture_array_tests {
             (0x8086, 0x5917, None),
         ] {
             assert!(supports_non_uniform_storage_texture_arrays(
+                vendor, device, version
+            ));
+            assert!(!needs_intel_2141_shader_workarounds(
                 vendor, device, version
             ));
         }

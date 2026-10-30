@@ -5,6 +5,15 @@ use xshell::Shell;
 /// Keep this in sync with .github/actions/install-warp/action.yml
 const WARP_VERSION: &str = "1.0.20";
 
+fn warp_artifacts_present(shell: &Shell, target_dir: &str) -> bool {
+    ["d3d10warp.dll", "deps/d3d10warp.dll"]
+        .iter()
+        .all(|relative| {
+            std::fs::metadata(shell.current_dir().join(target_dir).join(relative))
+                .is_ok_and(|metadata| metadata.is_file() && metadata.len() > 0)
+        })
+}
+
 /// Run the install-warp subcommand
 pub fn run_install_warp(shell: Shell, mut args: Arguments) -> anyhow::Result<()> {
     if cfg!(not(target_os = "windows")) {
@@ -44,12 +53,12 @@ pub fn install_warp(shell: &Shell, target_dir: &str) -> anyhow::Result<()> {
     // Check if WARP is already installed with the correct version
     let version_file = format!("{target_dir}/warp.txt");
     if let Ok(installed_version) = shell.read_file(&version_file) {
-        if installed_version.trim() == WARP_VERSION {
+        if installed_version.trim() == WARP_VERSION && warp_artifacts_present(shell, target_dir) {
             log::info!("WARP {WARP_VERSION} already installed, skipping download");
             return Ok(());
         } else {
             log::info!(
-                "WARP version mismatch (installed: {}, required: {}), re-downloading",
+                "WARP incomplete or version mismatch (installed: {}, required: {}), re-downloading",
                 installed_version.trim(),
                 WARP_VERSION
             );
@@ -65,7 +74,7 @@ pub fn install_warp(shell: &Shell, target_dir: &str) -> anyhow::Result<()> {
     log::info!("Downloading WARP from {warp_url}");
     shell
         .cmd("curl.exe")
-        .args(["-L", "--retry", "5", &warp_url, "-o", "warp.zip"])
+        .args(["--fail", "-L", "--retry", "5", &warp_url, "-o", "warp.zip"])
         .run()
         .context("Failed to download WARP package")?;
 
@@ -120,4 +129,27 @@ pub fn install_warp(shell: &Shell, target_dir: &str) -> anyhow::Result<()> {
     log::info!("WARP installation complete");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::warp_artifacts_present;
+    use xshell::Shell;
+
+    #[test]
+    fn stale_receipt_requires_both_nonempty_dlls() -> anyhow::Result<()> {
+        let shell = Shell::new()?;
+        let directory = shell.create_temp_dir()?;
+        shell.change_dir(directory.path());
+        shell.write_file("warp.txt", super::WARP_VERSION)?;
+        assert!(!warp_artifacts_present(&shell, "."));
+        shell.write_file("d3d10warp.dll", b"test artifact")?;
+        assert!(!warp_artifacts_present(&shell, "."));
+        shell.create_dir("deps")?;
+        shell.write_file("deps/d3d10warp.dll", b"test artifact")?;
+        assert!(warp_artifacts_present(&shell, "."));
+        shell.write_file("deps/d3d10warp.dll", b"")?;
+        assert!(!warp_artifacts_present(&shell, "."));
+        Ok(())
+    }
 }

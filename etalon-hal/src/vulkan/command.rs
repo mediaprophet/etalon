@@ -861,7 +861,11 @@ impl crate::CommandEncoder for super::CommandEncoder {
                 vk_clear_values.push(vk::ClearValue {
                     color: unsafe { cat.make_vk_clear_color() },
                 });
-                let mut color_ops = cat.ops;
+                let mut color_ops = super::resolve::color_attachment_ops(
+                    cat.ops,
+                    desc.multiview_mask,
+                    self.device.workarounds,
+                );
                 let mut fallback_resolve = false;
                 if let (Some(mask), Some(resolve)) = (desc.multiview_mask, &cat.resolve_target) {
                     if mask.get() > 1

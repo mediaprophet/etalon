@@ -161,7 +161,7 @@ image = { version = "0.25", default-features = false, features = ["png"] }
 indexmap = { version = "2.14.2", default-features = false }
 indicatif = "0.18"
 itertools = { version = "0.15" }
-jobserver = "0.1"
+jobserver = "0.1.30"
 ktx2 = "0.5"
 libc = { version = "0.2.191", default-features = false }
 # See https://github.com/rust-fuzz/libfuzzer/issues/126

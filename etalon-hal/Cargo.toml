@@ -255,7 +255,7 @@ renderdoc-sys = { workspace = true, optional = true }
 # Backend: Vulkan
 libc = { workspace = true, optional = true }
 # backend: GLES
-wayland-sys = { version = "0.31.3", features = [
+wayland-sys = { version = "0.31.6", features = [
     "client",
     "dlopen",
     "egl",

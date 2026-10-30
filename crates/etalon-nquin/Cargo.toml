@@ -17,7 +17,7 @@ gpu = ["dep:etalon"]
 [dependencies]
 bytemuck = { workspace = true, features = ["derive"] }
 log = { workspace = true }
-thiserror = "2"
+thiserror = "2.0.21"
 etalon = { workspace = true, optional = true }
 
 [dev-dependencies]

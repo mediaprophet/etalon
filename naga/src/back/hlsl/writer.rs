@@ -14,6 +14,7 @@ use super::{
         WrappedArrayLength, WrappedConstructor, WrappedImageQuery, WrappedStructMatrixAccess,
         WrappedZeroValue,
     },
+    interface::{is_view_index, view_index_source, ForwardedViewIndex, VIEW_INDEX_SEMANTIC},
     storage::StoreValue,
     BackendResult, Error, FragmentEntryPoint, Options, PipelineOptions, ShaderModel,
 };
@@ -81,6 +82,7 @@ pub(super) struct EntryPointBinding {
 }
 
 pub(super) struct EntryPointInterface {
+    vertex_view_index: Option<ForwardedViewIndex>,
     /// If `Some`, the input of an entry point is gathered in a special
     /// struct with members sorted by binding.
     /// The `EntryPointBinding::members` array is sorted by index,
@@ -623,7 +625,12 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                         ShaderModel::V6_1,
                     ));
                 }
-                if let Some(builtin_str) = builtin.to_hlsl_str()? {
+                if builtin == crate::BuiltIn::ViewIndex
+                    && self.options.force_vertex_view_index
+                    && stage == Some((ShaderStage::Fragment, Io::Input))
+                {
+                    write!(self.out, " : {VIEW_INDEX_SEMANTIC}")?;
+                } else if let Some(builtin_str) = builtin.to_hlsl_str()? {
                     write!(self.out, " : {builtin_str}")?;
                 }
                 false
@@ -664,15 +671,29 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         struct_name: String,
         var_name: Option<&str>,
         mut members: Vec<EpStructMember>,
+        forwarded_view_index: Option<&str>,
     ) -> Result<EntryPointBinding, Error> {
         let struct_name = self.namer.call(&struct_name);
-        // Sort the members so that first come the user-defined varyings
-        // in ascending locations, and then built-ins. This allows VS and FS
-        // interfaces to match with regards to order.
-        members.sort_by_key(|m| InterfaceKey::new(m.binding.as_ref()));
+        // Put forwarded view indices first, then user locations and built-ins,
+        // so vertex outputs and fragment inputs have matching registers.
+        let forward_fragment = self.options.force_vertex_view_index
+            && shader_stage == (ShaderStage::Fragment, Io::Input);
+        members.sort_by_key(|m| {
+            (
+                !(forward_fragment && is_view_index(&m.binding)),
+                InterfaceKey::new(m.binding.as_ref()),
+            )
+        });
 
         write!(self.out, "struct {struct_name}")?;
         writeln!(self.out, " {{")?;
+        if let Some(name) = forwarded_view_index {
+            writeln!(
+                self.out,
+                "{}nointerpolation uint {name} : {VIEW_INDEX_SEMANTIC};",
+                back::INDENT
+            )?;
+        }
         let mut local_invocation_index_name = None;
         let mut subgroup_id_used = false;
         for m in members.iter() {
@@ -694,7 +715,9 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 continue;
             }
             write!(self.out, "{}", back::INDENT)?;
-            if let Some(ref binding) = m.binding {
+            if forward_fragment && is_view_index(&m.binding) {
+                write!(self.out, "nointerpolation ")?;
+            } else if let Some(ref binding) = m.binding {
                 self.write_modifier(binding)?;
             }
             self.write_type(module, m.ty)?;
@@ -775,7 +798,14 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
             }
         }
 
-        self.write_interface_struct(module, (stage, Io::Input), struct_name, None, fake_members)
+        self.write_interface_struct(
+            module,
+            (stage, Io::Input),
+            struct_name,
+            None,
+            fake_members,
+            None,
+        )
     }
 
     /// Flatten all entry point results into a single struct.
@@ -788,12 +818,14 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         stage: ShaderStage,
         entry_point_name: &str,
         frag_ep: Option<&FragmentEntryPoint<'_>>,
+        forwarded_view_index: Option<&str>,
     ) -> Result<EntryPointBinding, Error> {
         let struct_name = format!("{stage:?}Output_{entry_point_name}");
 
         let empty = [];
         let members = match module.types[result.ty].inner {
             TypeInner::Struct { ref members, .. } => members,
+            _ if result.binding.is_some() => &empty[..],
             ref other => {
                 log::error!("Unexpected {other:?} output type without a binding");
                 &empty[..]
@@ -830,6 +862,14 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         };
 
         let mut fake_members = Vec::new();
+        if result.binding.is_some() {
+            fake_members.push(EpStructMember {
+                name: self.namer.call("position"),
+                ty: result.ty,
+                binding: result.binding.clone(),
+                index: 0,
+            });
+        }
         for (index, member) in members.iter().enumerate() {
             if let Some(ref fs_input_locs) = fs_input_locs {
                 match member.binding {
@@ -851,7 +891,14 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
             });
         }
 
-        self.write_interface_struct(module, (stage, Io::Output), struct_name, None, fake_members)
+        self.write_interface_struct(
+            module,
+            (stage, Io::Output),
+            struct_name,
+            None,
+            fake_members,
+            forwarded_view_index,
+        )
     }
 
     /// Writes special interface structures for an entry point. The special structures have
@@ -866,6 +913,21 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
     ) -> Result<EntryPointInterface, Error> {
         let func = &ep.function;
         let stage = ep.stage;
+        let vertex_view_index = (self.options.force_vertex_view_index
+            && stage == ShaderStage::Vertex
+            && frag_ep.is_some_and(|fragment| {
+                view_index_source(fragment.module, fragment.func).is_some()
+            }))
+        .then(|| ForwardedViewIndex {
+            source: view_index_source(module, func),
+            name: self.namer.call("naga_view_index"),
+        });
+        if vertex_view_index.is_some() && self.options.shader_model < ShaderModel::V6_1 {
+            return Err(Error::ShaderModelTooLow(
+                "forwarded @builtin(view_index)".to_string(),
+                ShaderModel::V6_1,
+            ));
+        }
         Ok(EntryPointInterface {
             input: if !func.arguments.is_empty()
                 && (stage == ShaderStage::Fragment
@@ -879,8 +941,18 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 None
             },
             output: match func.result {
-                Some(ref fr) if fr.binding.is_none() && stage == ShaderStage::Vertex => {
-                    Some(self.write_ep_output_struct(module, fr, stage, ep_name, frag_ep)?)
+                Some(ref fr)
+                    if stage == ShaderStage::Vertex
+                        && (fr.binding.is_none() || vertex_view_index.is_some()) =>
+                {
+                    Some(self.write_ep_output_struct(
+                        module,
+                        fr,
+                        stage,
+                        ep_name,
+                        frag_ep,
+                        vertex_view_index.as_ref().map(|view| view.name.as_str()),
+                    )?)
                 }
                 _ => None,
             },
@@ -899,6 +971,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
             } else {
                 None
             },
+            vertex_view_index,
         })
     }
 
@@ -942,8 +1015,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 write!(
                     self.out,
                     "{{ GetAttributeAtVertex({0}.{1}, 0), GetAttributeAtVertex({0}.{1}, 1), GetAttributeAtVertex({0}.{1}, 2) }}",
-                    ep_input.arg_name,
-                    fake_member.name,
+                    ep_input.arg_name, fake_member.name,
                 )?;
             }
             _ => {
@@ -1662,11 +1734,21 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
             };
 
             // Write modifier
-            if let Some(
-                ref binding @ crate::Binding::BuiltIn(crate::BuiltIn::Position { invariant: true }),
-            ) = result.binding
-            {
-                self.write_modifier(binding)?;
+            let wrapped_output = match func_ctx.ty {
+                back::FunctionType::EntryPoint(index) => {
+                    self.entry_point_io[&(index as usize)].output.is_some()
+                }
+                back::FunctionType::Function(_) => false,
+            };
+            if !wrapped_output {
+                if let Some(
+                    ref binding @ crate::Binding::BuiltIn(crate::BuiltIn::Position {
+                        invariant: true,
+                    }),
+                ) = result.binding
+                {
+                    self.write_modifier(binding)?;
+                }
             }
 
             // Write return type
@@ -1797,6 +1879,11 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                     write!(self.out, " : SV_GroupIndex")?;
                     local_invocation_index_name = Some(name);
                 }
+                if let Some(ForwardedViewIndex { source: None, name }) =
+                    &self.entry_point_io[&(ep_index as usize)].vertex_view_index
+                {
+                    write!(self.out, "{}uint {name} : SV_ViewID", separator())?;
+                }
             }
         }
         // Ends of arguments
@@ -1805,8 +1892,10 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
         // Write semantic if it present
         if let back::FunctionType::EntryPoint(index) = func_ctx.ty {
             let stage = module.entry_points[index as usize].stage;
-            if let Some(crate::FunctionResult { ref binding, .. }) = func.result {
-                self.write_semantic(binding, Some((stage, Io::Output)))?;
+            if self.entry_point_io[&(index as usize)].output.is_none() {
+                if let Some(crate::FunctionResult { ref binding, .. }) = func.result {
+                    self.write_semantic(binding, Some((stage, Io::Output)))?;
+                }
             }
         }
 
@@ -1838,6 +1927,23 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
 
         if let back::FunctionType::EntryPoint(index) = func_ctx.ty {
             self.write_ep_arguments_initialization(module, func, index)?;
+            if let Some(ForwardedViewIndex {
+                source: Some(source),
+                name,
+            }) = &self.entry_point_io[&(index as usize)].vertex_view_index
+            {
+                let argument = &self.names[&NameKey::EntryPointArgument(index, source.argument)];
+                write!(self.out, "{}uint {name} = {argument}", back::INDENT)?;
+                if let Some(member) = source.member {
+                    let ty = func.arguments[source.argument as usize].ty;
+                    write!(
+                        self.out,
+                        ".{}",
+                        self.names[&NameKey::StructMember(ty, member)]
+                    )?;
+                }
+                writeln!(self.out, ";")?;
+            }
         }
 
         // Write function local variables
@@ -2261,6 +2367,13 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                 writeln!(self.out, "{level}return;")?;
             }
             Statement::Return { value: Some(expr) } => {
+                let vertex_view_index = match func_ctx.ty {
+                    back::FunctionType::EntryPoint(index) => self.entry_point_io[&(index as usize)]
+                        .vertex_view_index
+                        .as_ref()
+                        .map(|view| view.name.clone()),
+                    back::FunctionType::Function(_) => None,
+                };
                 let base_ty_res = &func_ctx.info[expr].ty;
                 let mut resolved = base_ty_res.inner_with(&module.types);
                 if let TypeInner::Pointer { base, space: _ } = *resolved {
@@ -2294,6 +2407,9 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                                 "{}const {} {} = {{ ",
                                 level, ep_output.ty_name, final_name,
                             )?;
+                            if let Some(name) = &vertex_view_index {
+                                write!(self.out, "{name}, ")?;
+                            }
                             for (index, m) in ep_output.members.iter().enumerate() {
                                 if index != 0 {
                                     write!(self.out, ", ")?;
@@ -2307,6 +2423,23 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                         None => variable_name,
                     };
                     writeln!(self.out, "{level}return {final_name};")?;
+                } else if let Some(name) = vertex_view_index {
+                    let back::FunctionType::EntryPoint(index) = func_ctx.ty else {
+                        unreachable!()
+                    };
+                    let output = self.entry_point_io[&(index as usize)]
+                        .output
+                        .as_ref()
+                        .unwrap();
+                    let result = self.namer.call("naga_output");
+                    write!(
+                        self.out,
+                        "{level}const {} {result} = {{ {name}, ",
+                        output.ty_name
+                    )?;
+                    self.write_expr(module, expr, func_ctx)?;
+                    writeln!(self.out, " }};")?;
+                    writeln!(self.out, "{level}return {result};")?;
                 } else {
                     write!(self.out, "{level}return ")?;
                     self.write_expr(module, expr, func_ctx)?;
@@ -2772,7 +2905,7 @@ impl<'a, W: fmt::Write> super::Writer<'a, W> {
                     ref other => {
                         return Err(Error::Custom(format!(
                             "invalid address space {other:?} for atomic statement"
-                        )))
+                        )));
                     }
                 }
                 if let Some(cmp) = compare_expr {
@@ -5103,7 +5236,7 @@ fn get_inner_matrix_of_global_uniform(
             {
                 return mat_data.or_else(|| {
                     array_base.and_then(|array_base| get_inner_matrix_data(module, array_base))
-                })
+                });
             }
             _ => break,
         };

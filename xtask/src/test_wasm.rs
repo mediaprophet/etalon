@@ -65,6 +65,10 @@ pub fn run_wasm_tests(
 ) -> anyhow::Result<()> {
     let runner_shell = Shell::new()?;
     runner_shell.change_dir(shell.current_dir().join("tests/wasm/runner"));
+    runner_shell
+        .cmd("node")
+        .args(["--test", "test-page.test.js"])
+        .run()?;
     runner_shell.cmd(NPM_COMMAND).arg("install").run()?;
     runner_shell
         .cmd(NPX_COMMAND)

@@ -20,5 +20,5 @@ etalon-types = { workspace = true }
 bytemuck = { workspace = true }
 hashbrown = { workspace = true }
 log = { workspace = true }
-thiserror = "2"
+thiserror = "2.0.21"
 etalon-agent = { workspace = true, optional = true }

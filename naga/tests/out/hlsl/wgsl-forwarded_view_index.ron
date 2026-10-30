@@ -1,0 +1,36 @@
+(
+    vertex:[
+        (
+            entry_point:"scalar_output",
+            target_profile:"vs_6_1",
+        ),
+        (
+            entry_point:"scalar_existing_view",
+            target_profile:"vs_6_1",
+        ),
+        (
+            entry_point:"struct_existing_view",
+            target_profile:"vs_6_1",
+        ),
+    ],
+    fragment:[
+        (
+            entry_point:"fragment_view",
+            target_profile:"ps_6_1",
+        ),
+        (
+            entry_point:"fragment_struct",
+            target_profile:"ps_6_1",
+        ),
+        (
+            entry_point:"fragment_without_view",
+            target_profile:"ps_6_1",
+        ),
+    ],
+    compute:[
+    ],
+    task:[
+    ],
+    mesh:[
+    ],
+)

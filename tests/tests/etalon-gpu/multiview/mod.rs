@@ -12,6 +12,8 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(DRAW_MULTIVIEW_NONCONTIGUOUS);
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE);
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD);
+    vec.push(DRAW_MULTIVIEW_PIPELINE_ORDER);
+    vec.push(DRAW_MULTIVIEW_PIPELINE_ORDER_MIXED_IO);
 }
 
 #[apply(gpu_test!)]
@@ -79,7 +81,55 @@ static DRAW_MULTIVIEW_MULTISAMPLE: GpuTestConfiguration = GpuTestConfiguration::
     .run_async(|ctx| run_test(ctx, 0b11, 4));
 
 async fn run_test(ctx: TestingContext, layer_mask: u32, sample_count: u32) {
-    run_test_with_range(ctx, layer_mask, sample_count, 0, etalon::StoreOp::Store).await;
+    run_test_with_range(
+        &ctx,
+        layer_mask,
+        sample_count,
+        0,
+        etalon::StoreOp::Store,
+        None,
+        None,
+    )
+    .await;
+}
+
+#[apply(gpu_test!)]
+static DRAW_MULTIVIEW_PIPELINE_ORDER: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(pipeline_order_parameters())
+    .run_async(|ctx| run_pipeline_order(ctx, None));
+
+#[apply(gpu_test!)]
+static DRAW_MULTIVIEW_PIPELINE_ORDER_MIXED_IO: GpuTestConfiguration = GpuTestConfiguration::new()
+    .parameters(pipeline_order_parameters())
+    .run_async(|ctx| run_pipeline_order(ctx, Some(include_str!("mixed_io.wgsl"))));
+
+fn pipeline_order_parameters() -> TestParameters {
+    TestParameters::default()
+        .features(Features::MULTIVIEW | Features::SELECTIVE_MULTIVIEW)
+        .limits(Limits {
+            max_multiview_view_count: 4,
+            ..Limits::defaults()
+        })
+        .skip(FailureCase::backend(!etalon::Backends::DX12))
+}
+
+async fn run_pipeline_order(ctx: TestingContext, shader_source: Option<&str>) {
+    for (index, mask) in [0b1, 0b11, 0b1001, 0b1001, 0b11, 0b1]
+        .into_iter()
+        .enumerate()
+    {
+        let label = (index % 2 != 0).then_some("view index dependency reuse");
+        run_test_with_range(
+            &ctx,
+            mask,
+            1,
+            0,
+            etalon::StoreOp::Store,
+            label,
+            shader_source,
+        )
+        .await;
+    }
 }
 
 #[apply(gpu_test!)]
@@ -97,24 +147,28 @@ static DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD: GpuTestConfiguration =
                     ..Limits::defaults()
                 }),
         )
-        .run_async(|ctx| run_test_with_range(ctx, 0b1001, 4, 1, etalon::StoreOp::Discard));
+        .run_async(|ctx| async move {
+            run_test_with_range(&ctx, 0b1001, 4, 1, etalon::StoreOp::Discard, None, None).await;
+        });
 
 async fn run_test_with_range(
-    ctx: TestingContext,
+    ctx: &TestingContext,
     layer_mask: u32,
     sample_count: u32,
     base_layer: u32,
     store: etalon::StoreOp,
+    shader_label: Option<&str>,
+    shader_source: Option<&str>,
 ) {
     let num_layers = 32 - layer_mask.leading_zeros();
     let total_layers = num_layers + base_layer + u32::from(base_layer != 0);
 
-    let shader_src = include_str!("shader.wgsl");
+    let shader_src = shader_source.unwrap_or(include_str!("shader.wgsl"));
 
     let shader = ctx
         .device
         .create_shader_module(etalon::ShaderModuleDescriptor {
-            label: None,
+            label: shader_label,
             source: etalon::ShaderSource::Wgsl(shader_src.into()),
         });
 

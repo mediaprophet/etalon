@@ -20,7 +20,7 @@ etalon-types = { workspace = true }
 etalon-hal = { workspace = true, optional = true }
 log = { workspace = true }
 bytemuck = { workspace = true }
-thiserror = "2"
+thiserror = "2.0.21"
 
 [target.'cfg(windows)'.dependencies]
 windows = { workspace = true, features = [

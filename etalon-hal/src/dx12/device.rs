@@ -1558,6 +1558,11 @@ impl crate::Device for super::Device {
             bind_group_infos,
             naga_options: hlsl::Options {
                 shader_model: self.shared.private_caps.shader_model,
+                force_vertex_view_index: self
+                    .shared
+                    .private_caps
+                    .workarounds
+                    .force_vertex_view_index,
                 binding_map,
                 fake_missing_bindings: false,
                 special_constants_binding,

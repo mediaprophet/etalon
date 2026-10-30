@@ -3,6 +3,21 @@ use core::num::NonZeroU32;
 use arrayvec::ArrayVec;
 use ash::vk;
 
+pub(super) fn color_attachment_ops(
+    mut ops: crate::AttachmentOps,
+    multiview_mask: Option<NonZeroU32>,
+    workarounds: super::Workarounds,
+) -> crate::AttachmentOps {
+    if multiview_mask.is_some()
+        && workarounds.contains(super::Workarounds::MULTIVIEW_DISCARD_STORE)
+        && ops.contains(crate::AttachmentOps::STORE_DISCARD)
+    {
+        ops.remove(crate::AttachmentOps::STORE_DISCARD);
+        ops.insert(crate::AttachmentOps::STORE);
+    }
+    ops
+}
+
 pub(super) struct MultiviewResolve {
     source: super::TempTextureViewKey,
     destination: super::TempTextureViewKey,
@@ -147,6 +162,44 @@ impl super::CommandEncoder {
                 &[dependency],
                 &[],
                 &[],
+            );
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::color_attachment_ops;
+    use crate::{vulkan::Workarounds, AttachmentOps};
+    use core::num::NonZeroU32;
+
+    #[test]
+    fn multiview_discard_promotion_preserves_load_and_store_contracts() {
+        for load in [
+            AttachmentOps::LOAD,
+            AttachmentOps::LOAD_CLEAR,
+            AttachmentOps::LOAD_DONT_CARE,
+        ] {
+            for mask in [NonZeroU32::new(1), NonZeroU32::new(9)] {
+                let discard = load | AttachmentOps::STORE_DISCARD;
+                assert_eq!(
+                    color_attachment_ops(discard, mask, Workarounds::MULTIVIEW_DISCARD_STORE),
+                    load | AttachmentOps::STORE
+                );
+                assert_eq!(
+                    color_attachment_ops(discard, mask, Workarounds::empty()),
+                    discard
+                );
+                let store = load | AttachmentOps::STORE;
+                assert_eq!(
+                    color_attachment_ops(store, mask, Workarounds::MULTIVIEW_DISCARD_STORE),
+                    store
+                );
+            }
+            let discard = load | AttachmentOps::STORE_DISCARD;
+            assert_eq!(
+                color_attachment_ops(discard, None, Workarounds::MULTIVIEW_DISCARD_STORE),
+                discard
             );
         }
     }
