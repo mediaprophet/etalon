@@ -16,7 +16,7 @@ page walks through attaching Xcode to a `etalon` application so you can enable
 Metal validation and capture frames.
 
 A Chinese version is also available:
-[使用 Xcode 调试 etalon 程序](https://jinleili.github.io/learn-etalon-zh/integration-and-debugging/ios/#xcode-%E4%B8%8E-metal).
+[使用 Xcode 调试 etalon 程序](https://jinleili.github.io/learn-wgpu-zh/integration-and-debugging/ios/#xcode-%E4%B8%8E-metal).
 
 First we'll start by opening Xcode and creating a new project using the menu
 or "Create a new Xcode project" in the startup dialog.

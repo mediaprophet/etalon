@@ -1,10 +1,6 @@
-> [!NOTE]  
-> These are the examples for the development version of etalon. If you want to see the examples for the latest crates.io release
-> of etalon, go to the [latest release branch](https://github.com/gfx-rs/etalon/tree/v30/examples#readme).
-
 # Examples
 
-If you are just starting your graphics programming journey entirely, we recommend going through [Learn-etalon](https://sotrh.github.io/learn-etalon/)
+If you are just starting your graphics programming journey entirely, we recommend going through [Learn Wgpu](https://sotrh.github.io/learn-wgpu/)
 for a mode guided tutorial, which will also teach you the basics of graphics programming.
 
 ## Standalone Examples

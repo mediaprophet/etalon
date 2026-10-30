@@ -785,7 +785,7 @@ Standard SPDX identifiers (like MIT or Apache-2.0) cannot express ontological ag
 `authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]`  
 `# Replaces the standard SPDX string with a direct file reference`  
 `license-file = "LICENSE.md"`   
-`repository = "https://github.com/ubiquitous/etalon"`
+`repository = "https://github.com/mediaprophet/etalon"`
 
 ### **2\. Standardized Source Code & Shader Header**
 

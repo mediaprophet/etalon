@@ -1,13 +1,6 @@
 # Naga
 
-[![Matrix](https://img.shields.io/badge/Matrix-%23naga%3Amatrix.org-blueviolet.svg)](https://matrix.to/#/#naga:matrix.org)
-[![Crates.io](https://img.shields.io/crates/v/naga.svg?label=naga)](https://crates.io/crates/naga)
-[![Docs.rs](https://docs.rs/naga/badge.svg)](https://docs.rs/naga)
-[![Build Status](https://github.com/gfx-rs/naga/workflows/pipeline/badge.svg)](https://github.com/gfx-rs/naga/actions)
-![MSRV](https://img.shields.io/badge/rustc-1.90-blue.svg)
-[![codecov.io](https://codecov.io/gh/gfx-rs/naga/branch/master/graph/badge.svg?token=9VOKYO8BM2)](https://codecov.io/gh/gfx-rs/naga)
-
-The shader translation library for the needs of [etalon](https://github.com/gfx-rs/etalon).
+The shader translation library for the needs of [etalon](https://github.com/mediaprophet/etalon). Derived from upstream [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga), part of [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu).
 
 ## Supported end-points
 
@@ -38,11 +31,7 @@ Naga can be used as a CLI, which allows testing the conversion of different code
 First, install `naga-cli` from crates.io or directly from GitHub.
 
 ```bash
-# release version
-cargo install naga-cli
-
-# development version
-cargo install naga-cli --git https://github.com/gfx-rs/etalon.git
+cargo install naga-cli --git https://github.com/mediaprophet/etalon.git
 ```
 
 Then, you can run `naga` command.
@@ -54,7 +43,7 @@ naga my_shader.spv my_shader.metal --flow-dir flow-dir # convert the SPV to Meta
 naga my_shader.wgsl my_shader.vert --profile es310 # convert the WGSL to GLSL vertex stage under ES 3.20 profile
 ```
 
-As naga includes a default binary target, you can also use `cargo run` without installation. This is useful when you develop naga itself or investigate the behavior of naga at a specific commit (e.g. [etalon](https://github.com/gfx-rs/etalon) might pin a different version of naga than the `HEAD` of this repository).
+As naga includes a default binary target, you can also use `cargo run` without installation. This is useful when you develop naga itself or investigate the behavior of naga at a specific commit (e.g. [etalon](https://github.com/mediaprophet/etalon) might pin a different version of naga than the `HEAD` of this repository).
 
 ```bash
 cargo run my_shader.wgsl

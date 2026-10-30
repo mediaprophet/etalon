@@ -69,8 +69,8 @@ are aware of a specific requirement that a backend imposes that is not
 ensured by the traits' documented rules, please file an issue. Or, if you are
 a capable technical writer, please file a pull request!
 
-[`etalon-core`]: https://crates.io/crates/etalon-core
-[`etalon`]: https://crates.io/crates/etalon
+[`etalon-core`]: https://github.com/mediaprophet/etalon/tree/qualia-main/etalon-core
+[`etalon`]: https://github.com/mediaprophet/etalon/tree/qualia-main/etalon
 [`vulkan::Api`]: vulkan/struct.Api.html
 [`metal::Api`]: metal/struct.Api.html
 
@@ -116,4 +116,4 @@ Most of the information in the [Debugging etalon Applications][debug-docs]
 documentation still applies to this API, with the exception of API
 tracing/replay functionality, which is only available in `etalon-core`.
 
-[debug-docs]: https://docs.rs/etalon/latest/etalon/documentation/debugging/debugging_applications/index.html
+[debug-docs]: https://mediaprophet.github.io/etalon/doc/etalon/documentation/debugging/debugging_applications/index.html

@@ -4,7 +4,7 @@ This crate contains infrastructure for running the WebGPU conformance tests on
 Deno's `etalon`-based implementation of WebGPU.
 
 Instructions for running the tests via the CTS `xtask` are in
-[docs/testing.md](https://github.com/gfx-rs/etalon/blob/trunk/docs/testing.md#webgpu-cts).
+[docs/testing.md](../docs/testing.md#webgpu-cts).
 The file [revision.txt](./revision.txt) specifies the version of the CTS that
 will be used by default.
 

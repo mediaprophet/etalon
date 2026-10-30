@@ -33,7 +33,7 @@
 //!
 //! `etalon`'s MSRV is **1.87**.
 //!
-//! [Learn etalon]: https://sotrh.github.io/learn-etalon/
+//! [Learn etalon]: https://sotrh.github.io/learn-wgpu/
 //! [WebGPU Fundamentals]: https://webgpufundamentals.org/
 //!
 #![doc = crate::macros::doc_image!("render_coordinates.webp")]

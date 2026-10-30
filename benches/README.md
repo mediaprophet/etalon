@@ -93,7 +93,7 @@ Within this benchmark, both single threaded and multi-threaded recording are tes
 the compute pass into multiple passes over multiple command buffers.
 If available, it also tests a bindless approach, binding all resources at once instead of switching
 the bind group for every draw call.
-TODO(https://github.com/gfx-rs/etalon/issues/5766): The bindless version uses only 1k dispatches with 6k resources since it would be too slow for a reasonable benchmarking time otherwise.
+TODO(https://github.com/gfx-rs/wgpu/issues/5766): The bindless version uses only 1k dispatches with 6k resources since it would be too slow for a reasonable benchmarking time otherwise.
 
 #### `Device::create_buffer`
 

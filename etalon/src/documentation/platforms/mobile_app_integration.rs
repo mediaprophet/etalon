@@ -19,11 +19,11 @@ taking over the entire app window is not suitable. So, it would be very
 useful to integrate `etalon` into existing iOS and Android apps without using
 third-party window-management libraries.
 
-[etalon-in-app](https://github.com/jinleili/etalon-in-app) is a complete doc and
+[wgpu-in-app](https://github.com/jinleili/wgpu-in-app) is a complete doc and
 example of how to do it. The doc section also has two Chinese versions:
-[与 iOS App 集成](https://jinleili.github.io/learn-etalon-zh/integration-and-debugging/ios/)
+[与 iOS App 集成](https://jinleili.github.io/learn-wgpu-zh/integration-and-debugging/ios/)
 and
-[与 Android App 集成](https://jinleili.github.io/learn-etalon-zh/integration-and-debugging/android/).
+[与 Android App 集成](https://jinleili.github.io/learn-wgpu-zh/integration-and-debugging/android/).
 */
 
 use crate::Surface;

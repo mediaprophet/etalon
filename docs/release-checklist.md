@@ -58,7 +58,6 @@ Day of Release:
   - Crosspost to [r/rust_gamedev](https://www.reddit.com/r/rust_gamedev/).
     - Add an AMA comment.
   - Include the r/rust post shortlink in the following posts as well:
-  - [etalon matrix](https://matrix.to/#/#etalon:matrix.org)
   - [Rust Gamedev Discord](https://discord.gg/X3MYBNXUMJ) in the #crates and #etalon channel
   - [Bevy Discord](https://discord.com/invite/bevy) in the #rendering-dev channel
   - [Graphics Programming Discord](https://discord.gg/6mgNGk7) in the #webgpu channel
@@ -66,7 +65,7 @@ Day of Release:
 
 ## Patch Release Process
 
-- Enumerate all PRs that haven't been backported yet. These use the `PR: needs back-porting` label. [GH Link](https://github.com/gfx-rs/etalon/pulls?q=sort%3Aupdated-desc+is%3Apr+label%3A%22PR%3A+needs+back-porting%22)
+- Enumerate all PRs that haven't been backported yet. These use the `PR: needs back-porting` label. [GH Link](https://github.com/mediaprophet/etalon/pulls?q=sort%3Aupdated-desc+is%3Apr+label%3A%22PR%3A+needs+back-porting%22)
 - On _your own branch_ based on the latest release branch. Cherry-pick the PRs that need to be backported. When modifying the commits, use --append to retain their original authorship.
 - Remove the `needs-backport` label from the PRs.
 - Fix the changelogs items and add a new header for the patch release with the release version and date.

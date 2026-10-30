@@ -113,11 +113,6 @@ When looking at a crash/panic, the first step is typically enabling
 `RUST_BACKTRACE=1` in the environment. This will spew out the stack trace,
 which helps you locate the problem.
 
-## Rubber-duck debugging
-
-Hop on to [`#etalon:matrix.org`](https://matrix.to/#/#etalon:matrix.org) and try
-to explain what happens and why. Maybe we listen. Maybe you'll figure out
-the answer by then ;)
 
 ## Tracing infrastructure
 

@@ -818,7 +818,7 @@ features! {
         ///
         /// This is a native only feature.
         ///
-        /// [`EarlyDepthTest`]: https://docs.rs/naga/latest/naga/ir/enum.EarlyDepthTest.html
+        /// [`EarlyDepthTest`]: https://mediaprophet.github.io/etalon/doc/naga/ir/enum.EarlyDepthTest.html
         #[name("etalon-shader-early-depth-test", "shader-early-depth-test")]
         const SHADER_EARLY_DEPTH_TEST = 1 << 36;
         /// Allows shaders to use i64 and u64.
@@ -1005,7 +1005,7 @@ features! {
         ///
         /// This is a native only feature.
         ///
-        /// [`Device::create_shader_module_trusted`]: https://docs.rs/etalon/latest/etalon/struct.Device.html#method.create_shader_module_trusted
+        /// [`Device::create_shader_module_trusted`]: https://mediaprophet.github.io/etalon/doc/etalon/struct.Device.html#method.create_shader_module_trusted
         /// [`ShaderRuntimeChecks::unchecked()`]: crate::ShaderRuntimeChecks::unchecked
         #[name("etalon-mesh-shader")]
         const EXPERIMENTAL_MESH_SHADER = 1 << 48;
