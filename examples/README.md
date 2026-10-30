@@ -15,7 +15,7 @@ be cloned out of the repository to serve as a starting point for your own projec
 | [2. hello window](standalone/02_hello_window/)   | Shows how to create a window and render into it.                                                              | Native-Only |
 | [3. hdr surface](standalone/03_hdr_surface/)     | Prints a surface's (format, color space) capabilities and renders an HDR luminance test pattern.              | All         |
 | ---                                              | Special Examples                                                                                              | ---         |
-| [custom backend](standalone/custom_backend/)     | Shows how to implement and use custom etalon context                                                            | All         |
+| [custom backend](standalone/custom_backend/)     | Shows how to implement and use custom etalon context                                                          | All         |
 
 You can also use [`cargo-generate`](https://github.com/cargo-generate/cargo-generate) to easily use these as a basis for your own projects.
 

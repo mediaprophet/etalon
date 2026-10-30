@@ -12,12 +12,13 @@ description = "Prepared tensor execution, unified forward arena, and fused atten
 [features]
 default = ["std"]
 std = []
-cuda = ["dep:cudarc"]
+cuda = ["dep:etalon-agent"]
 
 [dependencies]
 etalon = { workspace = true }
 etalon-types = { workspace = true }
 bytemuck = { workspace = true }
+hashbrown = { workspace = true }
 log = { workspace = true }
 thiserror = "2"
-cudarc = { version = "0.18", optional = true }
+etalon-agent = { workspace = true, optional = true }

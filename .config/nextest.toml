@@ -46,6 +46,7 @@ retries = 1
 [[profile.default.overrides]]
 filter = 'test(compile_fail)'
 slow-timeout = { period = "3m", terminate-after = 2 }
+threads-required = "num-test-threads"
 
 [[profile.default.overrides]]
 filter = 'test(~oom_test)'

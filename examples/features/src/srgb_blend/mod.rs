@@ -85,10 +85,11 @@ impl<const SRGB: bool> crate::framework::Example for Example<SRGB> {
         });
 
         // Create pipeline layout
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[],
-        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[],
+            });
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: None,
             bind_group_layouts: &[Some(&bind_group_layout)],
@@ -172,7 +173,12 @@ impl<const SRGB: bool> crate::framework::Example for Example<SRGB> {
     ) {
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder =
             device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {

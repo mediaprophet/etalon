@@ -1,6 +1,36 @@
 use super::{Block, BlockContext, Error, Instruction, NumericType};
 use crate::{arena::Handle, TypeInner};
 
+fn is_own_subgroup_id(
+    module: &crate::Module,
+    function: &crate::Function,
+    expression: Handle<crate::Expression>,
+) -> bool {
+    let binding = match function.expressions[expression] {
+        crate::Expression::FunctionArgument(index) => {
+            function.arguments[index as usize].binding.as_ref()
+        }
+        crate::Expression::AccessIndex { base, index } => {
+            let crate::Expression::FunctionArgument(argument) = function.expressions[base] else {
+                return false;
+            };
+            let TypeInner::Struct { ref members, .. } =
+                module.types[function.arguments[argument as usize].ty].inner
+            else {
+                return false;
+            };
+            members[index as usize].binding.as_ref()
+        }
+        _ => None,
+    };
+    matches!(
+        binding,
+        Some(crate::Binding::BuiltIn(
+            crate::BuiltIn::SubgroupInvocationId
+        ))
+    )
+}
+
 impl BlockContext<'_> {
     pub(super) fn write_subgroup_ballot(
         &mut self,
@@ -126,6 +156,16 @@ impl BlockContext<'_> {
         block: &mut Block,
     ) -> Result<(), Error> {
         match *mode {
+            crate::GatherMode::Shuffle(index)
+                if is_own_subgroup_id(self.ir_module, self.ir_function, index) =>
+            {
+                // An active invocation gathering itself already has the evaluated scalar/vector value.
+                self.cached[result] = self.cached[argument];
+                return Ok(());
+            }
+            _ => {}
+        }
+        match *mode {
             crate::GatherMode::BroadcastFirst => {
                 self.writer.require_any(
                     "GroupNonUniformBallot",
@@ -219,5 +259,85 @@ impl BlockContext<'_> {
         }
         self.cached[result] = id;
         Ok(())
+    }
+}
+
+#[cfg(all(test, feature = "wgsl-in"))]
+mod tests {
+    use crate::back::spv::{write_vec, Options, PipelineOptions};
+    use alloc::vec::Vec;
+
+    fn opcodes(words: &[u32]) -> Vec<u16> {
+        let mut result = Vec::new();
+        let mut cursor = 5;
+        while cursor < words.len() {
+            result.push(words[cursor] as u16);
+            cursor += (words[cursor] >> 16) as usize;
+        }
+        result
+    }
+
+    #[test]
+    fn own_lane_shuffle_preserves_values_and_input_evaluation() {
+        for parameter in ["@builtin(subgroup_invocation_id) lane: u32", "input: Input"] {
+            let lane = if parameter == "input: Input" {
+                "input.lane"
+            } else {
+                "lane"
+            };
+            let source = alloc::format!(
+                r#"
+                struct Input {{ @builtin(subgroup_invocation_id) lane: u32 }};
+                @group(0) @binding(0) var<storage, read_write> counter: atomic<u32>;
+                @group(0) @binding(1) var<storage, read_write> output: array<vec4<u32>>;
+                fn value() -> u32 {{ return atomicAdd(&counter, 1u); }}
+                @compute @workgroup_size(32) fn main({parameter}) {{
+                    let scalar = subgroupShuffle(value(), {lane});
+                    let vector = subgroupShuffle(vec4<u32>(value(), 3u, 5u, 7u), {lane});
+                    let other = subgroupShuffle(vec4<u32>({lane}), {lane} ^ 1u);
+                    output[{lane}] = vector + other + vec4<u32>(scalar);
+                }}
+            "#
+            );
+            let module = crate::front::wgsl::parse_str(&source).unwrap();
+            let info = crate::valid::Validator::new(
+                crate::valid::ValidationFlags::all(),
+                crate::valid::Capabilities::all(),
+            )
+            .validate(&module)
+            .unwrap();
+            let words = write_vec(
+                &module,
+                &info,
+                &Options {
+                    lang_version: (1, 3),
+                    ..Default::default()
+                },
+                Some(&PipelineOptions {
+                    shader_stage: crate::ShaderStage::Compute,
+                    entry_point: "main".into(),
+                }),
+            )
+            .unwrap();
+            let ops = opcodes(&words);
+            assert_eq!(
+                ops.iter()
+                    .filter(|&&op| op == spirv::Op::GroupNonUniformShuffle as u16)
+                    .count(),
+                1
+            );
+            assert_eq!(
+                ops.iter()
+                    .filter(|&&op| op == spirv::Op::FunctionCall as u16)
+                    .count(),
+                2
+            );
+            assert_eq!(
+                ops.iter()
+                    .filter(|&&op| op == spirv::Op::AtomicIAdd as u16)
+                    .count(),
+                1
+            );
+        }
     }
 }

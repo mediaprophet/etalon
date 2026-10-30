@@ -1,7 +1,7 @@
 use std::panic::AssertUnwindSafe;
 
-use futures_lite::FutureExt;
 use etalon::{Adapter, Device, Instance, Queue};
+use futures_lite::FutureExt;
 
 use crate::{
     expectations::{expectations_match_failures, ExpectationMatchResult, FailureResult},

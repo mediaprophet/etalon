@@ -5,9 +5,9 @@ fn main() {
     extern crate etalon_core as wgc;
     extern crate etalon_types as wgt;
 
+    use etalon_core::command::PointerReferences;
     use player::Player;
     use wgc::device::trace;
-    use etalon_core::command::PointerReferences;
 
     use std::{
         fs,

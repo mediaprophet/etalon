@@ -166,7 +166,11 @@ mod test {
         }
         rs.coalesce();
         rs.check_sanity();
-        assert_eq!(rs.ranges.len(), 2, "Adjacent ranges with identical value must coalesce");
+        assert_eq!(
+            rs.ranges.len(),
+            2,
+            "Adjacent ranges with identical value must coalesce"
+        );
         for (_, value) in rs.isolate(&(30..40), 0) {
             *value = 3;
         }

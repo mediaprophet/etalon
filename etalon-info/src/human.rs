@@ -1,8 +1,8 @@
 use std::io;
 
 use bitflags::Flags;
-use exhaust::Exhaust;
 use etalon::AdapterInfo;
+use exhaust::Exhaust;
 
 use crate::{
     report::{AdapterReport, GpuReport},

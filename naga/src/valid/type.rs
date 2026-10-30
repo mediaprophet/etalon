@@ -990,7 +990,9 @@ impl super::Validator {
 #[cfg(test)]
 mod tests {
     use crate::valid::{Capabilities, ValidationFlags, Validator};
-    use crate::{CooperativeRole, CooperativeSize, Module, Scalar, ScalarKind, Span, Type, TypeInner};
+    use crate::{
+        CooperativeRole, CooperativeSize, Module, Scalar, ScalarKind, Span, Type, TypeInner,
+    };
 
     #[test]
     fn validate_integer_and_float_cooperative_matrices() {
@@ -999,13 +1001,19 @@ mod tests {
             (
                 CooperativeSize::ThirtyTwo,
                 CooperativeSize::Sixteen,
-                Scalar { kind: ScalarKind::Sint, width: 1 },
+                Scalar {
+                    kind: ScalarKind::Sint,
+                    width: 1,
+                },
                 CooperativeRole::A,
             ),
             (
                 CooperativeSize::Sixteen,
                 CooperativeSize::ThirtyTwo,
-                Scalar { kind: ScalarKind::Uint, width: 1 },
+                Scalar {
+                    kind: ScalarKind::Uint,
+                    width: 1,
+                },
                 CooperativeRole::B,
             ),
             (

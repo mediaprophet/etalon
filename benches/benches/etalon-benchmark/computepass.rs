@@ -3,9 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use etalon_benchmark::{iter_auto, iter_many, BenchmarkContext, LoopControl};
 use nanorand::{Rng, WyRand};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use etalon_benchmark::{iter_auto, iter_many, BenchmarkContext, LoopControl};
 
 use crate::DeviceState;
 
@@ -186,12 +186,16 @@ impl ComputepassState {
 
         let mut storage_buffers = Vec::with_capacity(storage_buffer_count);
         for i in 0..storage_buffer_count {
-            storage_buffers.push(device_state.device.create_buffer(&etalon::BufferDescriptor {
-                label: Some(&format!("Buffer {i}")),
-                size: BUFFER_SIZE,
-                usage: etalon::BufferUsages::STORAGE,
-                mapped_at_creation: false,
-            }));
+            storage_buffers.push(
+                device_state
+                    .device
+                    .create_buffer(&etalon::BufferDescriptor {
+                        label: Some(&format!("Buffer {i}")),
+                        size: BUFFER_SIZE,
+                        usage: etalon::BufferUsages::STORAGE,
+                        mapped_at_creation: false,
+                    }),
+            );
         }
         random.shuffle(&mut storage_buffers);
         let storage_buffer_bindings: Vec<_> = storage_buffers
@@ -267,11 +271,10 @@ impl ComputepassState {
                     cache: None,
                 });
 
-        let (bindless_bind_group, bindless_pipeline) = if supports_bindless {
-            let bindless_bind_group_layout =
-                device_state
-                    .device
-                    .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+        let (bindless_bind_group, bindless_pipeline) =
+            if supports_bindless {
+                let bindless_bind_group_layout = device_state.device.create_bind_group_layout(
+                    &etalon::BindGroupLayoutDescriptor {
                         label: None,
                         entries: &[
                             etalon::BindGroupLayoutEntry {
@@ -307,65 +310,65 @@ impl ComputepassState {
                                 count: Some(NonZeroU32::new(storage_buffer_count as u32).unwrap()),
                             },
                         ],
-                    });
+                    },
+                );
 
-            let bindless_bind_group =
-                device_state
+                let bindless_bind_group =
+                    device_state
+                        .device
+                        .create_bind_group(&etalon::BindGroupDescriptor {
+                            label: None,
+                            layout: &bindless_bind_group_layout,
+                            entries: &[
+                                etalon::BindGroupEntry {
+                                    binding: 0,
+                                    resource: etalon::BindingResource::TextureViewArray(
+                                        &texture_view_refs[..dispatch_count_bindless],
+                                    ),
+                                },
+                                etalon::BindGroupEntry {
+                                    binding: 1,
+                                    resource: etalon::BindingResource::TextureViewArray(
+                                        &storage_texture_view_refs[..dispatch_count_bindless],
+                                    ),
+                                },
+                                etalon::BindGroupEntry {
+                                    binding: 2,
+                                    resource: etalon::BindingResource::BufferArray(
+                                        &storage_buffer_bindings[..dispatch_count_bindless],
+                                    ),
+                                },
+                            ],
+                        });
+
+                let bindless_sm = device_state
                     .device
-                    .create_bind_group(&etalon::BindGroupDescriptor {
-                        label: None,
-                        layout: &bindless_bind_group_layout,
-                        entries: &[
-                            etalon::BindGroupEntry {
-                                binding: 0,
-                                resource: etalon::BindingResource::TextureViewArray(
-                                    &texture_view_refs[..dispatch_count_bindless],
-                                ),
-                            },
-                            etalon::BindGroupEntry {
-                                binding: 1,
-                                resource: etalon::BindingResource::TextureViewArray(
-                                    &storage_texture_view_refs[..dispatch_count_bindless],
-                                ),
-                            },
-                            etalon::BindGroupEntry {
-                                binding: 2,
-                                resource: etalon::BindingResource::BufferArray(
-                                    &storage_buffer_bindings[..dispatch_count_bindless],
-                                ),
-                            },
-                        ],
-                    });
+                    .create_shader_module(etalon::include_wgsl!("computepass-bindless.wgsl"));
 
-            let bindless_sm = device_state
-                .device
-                .create_shader_module(etalon::include_wgsl!("computepass-bindless.wgsl"));
+                let bindless_pipeline_layout =
+                    device_state
+                        .device
+                        .create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                            label: None,
+                            bind_group_layouts: &[Some(&bindless_bind_group_layout)],
+                            immediate_size: 0,
+                        });
 
-            let bindless_pipeline_layout =
-                device_state
-                    .device
-                    .create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-                        label: None,
-                        bind_group_layouts: &[Some(&bindless_bind_group_layout)],
-                        immediate_size: 0,
-                    });
-
-            let bindless_pipeline =
-                device_state
-                    .device
-                    .create_compute_pipeline(&etalon::ComputePipelineDescriptor {
+                let bindless_pipeline = device_state.device.create_compute_pipeline(
+                    &etalon::ComputePipelineDescriptor {
                         label: Some("Compute Pipeline bindless"),
                         layout: Some(&bindless_pipeline_layout),
                         module: &bindless_sm,
                         entry_point: Some("cs_main"),
                         compilation_options: etalon::PipelineCompilationOptions::default(),
                         cache: None,
-                    });
+                    },
+                );
 
-            (Some(bindless_bind_group), Some(bindless_pipeline))
-        } else {
-            (None, None)
-        };
+                (Some(bindless_bind_group), Some(bindless_pipeline))
+            } else {
+                (None, None)
+            };
 
         Self {
             device_state,
@@ -436,7 +439,9 @@ impl ComputepassState {
     }
 }
 
-pub fn run_bench(mut ctx: BenchmarkContext) -> anyhow::Result<Vec<etalon_benchmark::SubBenchResult>> {
+pub fn run_bench(
+    mut ctx: BenchmarkContext,
+) -> anyhow::Result<Vec<etalon_benchmark::SubBenchResult>> {
     let state = ComputepassState::new(&ctx);
 
     ctx.default_iterations = LoopControl::Time(Duration::from_secs(3));

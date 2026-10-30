@@ -40,6 +40,7 @@ The ecosystem operates under a deliberate, two-stage licensing progression:
 ```
 
 ### Stage 1: Current Active Baseline
+
 All architectures, modifications, refactorings, extensions, and integrations created by **Timothy Charles Holborn** are governed by:
 
 > **Copyright (c) 2026 Timothy Charles Holborn**  
@@ -50,9 +51,11 @@ All architectures, modifications, refactorings, extensions, and integrations cre
 This strict baseline protects the core technology during its formative development, guaranteeing that proprietary platforms cannot absorb the compute engine without authorization.
 
 ### Stage 2: Target Model — The MediaProphet Permissive Commons
-Once the ecosystem is sufficiently functional, it will transition to the [MediaProphet License](https://github.com/mediaprophet/license). 
+
+Once the ecosystem is sufficiently functional, it will transition to the [MediaProphet License](https://github.com/mediaprophet/license).
 
 This model establishes an **ontologically defined rights framework**:
+
 - **Verified Individual Persons**: Granted unencumbered, royalty-free, permissive commons access for personal, academic, humanitarian, and collaborative use.
 - **Corporate & Commercial Entities**: Required to obtain commercial utilization licenses with fair payment ledgers cleared via W3C Web Payments and WebID identity attestation.
 
@@ -66,17 +69,19 @@ Instead of relying solely on post-hoc legal remedies, Etalon integrates rights e
 
 1. **Shader Metadata & N3Logic Capability Manifests**:
    Every compute kernel compiled by `etalon-forge` embeds an ontological license header declaring its data classification and permitted execution classes:
+
    ```wgsl
    // @license_graph: "urn:mediaprophet:license:v1"
    // @agent_class_exempt: "urn:class:individual-human"
    // @toll_endpoint: "https://trustfactory.org/payments/etalon-compute"
-   
+
    @compute @workgroup_size(64)
    fn main(@builtin(global_invocation_id) global_id: vec3<u32>) { ... }
    ```
 
 2. **Compile-Time Agent Verification (`etalon-forge`)**:
    During AST lowering, `etalon-forge` verifies the executing agent's credentials against the embedded rights graph:
+
    ```rust
    pub enum AgentClass {
        IndividualHuman(HumanAgencyToken),

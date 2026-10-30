@@ -197,7 +197,8 @@ async fn run() {
         println!("Adapter does not support timestamp queries, aborting.");
         return;
     }
-    let timestamps_inside_passes = features.contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES);
+    let timestamps_inside_passes =
+        features.contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES);
     if timestamps_inside_passes {
         println!("Adapter supports timestamp queries within passes.");
     } else {

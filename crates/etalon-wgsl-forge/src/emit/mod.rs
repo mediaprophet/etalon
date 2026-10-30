@@ -34,9 +34,10 @@ pub use hlsl_wave::{
 pub use msl::{emit_msl, emit_msl_kernel};
 pub use wgsl::{emit_wgsl, emit_wgsl_kernel};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum TargetBackend {
+    #[default]
     Wgsl,
     Msl,
     Hlsl,
@@ -44,12 +45,6 @@ pub enum TargetBackend {
     CudaC,
     Cuda,
     Spirv,
-}
-
-impl Default for TargetBackend {
-    fn default() -> Self {
-        Self::Wgsl
-    }
 }
 
 impl std::str::FromStr for TargetBackend {

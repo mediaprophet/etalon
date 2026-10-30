@@ -63,7 +63,9 @@ impl EnableExtensions {
             ImplementedEnableExtension::F16 => &mut self.f16,
             ImplementedEnableExtension::EtalonInt16 => &mut self.etalon_int16,
             ImplementedEnableExtension::ClipDistances => &mut self.clip_distances,
-            ImplementedEnableExtension::EtalonCooperativeMatrix => &mut self.etalon_cooperative_matrix,
+            ImplementedEnableExtension::EtalonCooperativeMatrix => {
+                &mut self.etalon_cooperative_matrix
+            }
             ImplementedEnableExtension::DrawIndex => &mut self.draw_index,
             ImplementedEnableExtension::PrimitiveIndex => &mut self.primitive_index,
             ImplementedEnableExtension::EtalonPerVertex => &mut self.per_vertex,
@@ -81,7 +83,9 @@ impl EnableExtensions {
             ImplementedEnableExtension::EtalonRayQueryVertexReturn => {
                 self.etalon_ray_query_vertex_return
             }
-            ImplementedEnableExtension::EtalonRayTracingPipeline => self.etalon_ray_tracing_pipeline,
+            ImplementedEnableExtension::EtalonRayTracingPipeline => {
+                self.etalon_ray_tracing_pipeline
+            }
             ImplementedEnableExtension::DualSourceBlending => self.dual_source_blending,
             ImplementedEnableExtension::F16 => self.f16,
             ImplementedEnableExtension::EtalonInt16 => self.etalon_int16,
@@ -173,7 +177,9 @@ impl EnableExtension {
             Self::DRAW_INDEX => Self::Implemented(ImplementedEnableExtension::DrawIndex),
             Self::PRIMITIVE_INDEX => Self::Implemented(ImplementedEnableExtension::PrimitiveIndex),
             Self::PER_VERTEX => Self::Implemented(ImplementedEnableExtension::EtalonPerVertex),
-            Self::BINDING_ARRAY => Self::Implemented(ImplementedEnableExtension::EtalonBindingArray),
+            Self::BINDING_ARRAY => {
+                Self::Implemented(ImplementedEnableExtension::EtalonBindingArray)
+            }
             Self::INT16 => Self::Implemented(ImplementedEnableExtension::EtalonInt16),
             Self::DEBUG_PRINTF => Self::Implemented(ImplementedEnableExtension::EtalonDebugPrintf),
             _ => return Err(Box::new(Error::UnknownEnableExtension(span, word))),

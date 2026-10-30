@@ -33,7 +33,11 @@ fn test_hash(ctx: &TestingContext, name: &str) -> u64 {
     hasher.finish()
 }
 
-fn test_with_module(ctx: TestingContext, vertex: etalon::ShaderModule, fragment: etalon::ShaderModule) {
+fn test_with_module(
+    ctx: TestingContext,
+    vertex: etalon::ShaderModule,
+    fragment: etalon::ShaderModule,
+) {
     let layout = ctx
         .device
         .create_pipeline_layout(&PipelineLayoutDescriptor {

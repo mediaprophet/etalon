@@ -66,7 +66,11 @@ impl Schedule {
         }
     }
 
-    pub const fn from_1d(workgroup_size: u32, items_per_invocation: u32, vector_width: u32) -> Self {
+    pub const fn from_1d(
+        workgroup_size: u32,
+        items_per_invocation: u32,
+        vector_width: u32,
+    ) -> Self {
         Self {
             workgroup_size,
             items_per_invocation,
@@ -96,9 +100,7 @@ impl Schedule {
                 "workgroup size must be a power of two in 1..=1024".to_string(),
             ));
         }
-        if wg > constraints.max_workgroup_size_x
-            || wg > constraints.max_invocations_per_workgroup
-        {
+        if wg > constraints.max_workgroup_size_x || wg > constraints.max_invocations_per_workgroup {
             return Err(ForgeError::InvalidSchedule(format!(
                 "workgroup {} exceeds adapter limit {}",
                 wg,
@@ -210,11 +212,8 @@ impl ScheduleSpace {
         for &workgroup_size in &self.workgroup_sizes {
             for &items_per_invocation in &self.items_per_invocation {
                 for &vector_width in &self.vector_widths {
-                    let schedule = Schedule::from_1d(
-                        workgroup_size,
-                        items_per_invocation,
-                        vector_width,
-                    );
+                    let schedule =
+                        Schedule::from_1d(workgroup_size, items_per_invocation, vector_width);
                     let warp_aligned =
                         constraints.warp_size <= 1 || workgroup_size % constraints.warp_size == 0;
                     if warp_aligned && schedule.validate(kernel, constraints).is_ok() {

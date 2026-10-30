@@ -1607,12 +1607,14 @@ impl Features {
         Self::from_parts(
             Featuresetalon::from_bits_truncate(
                 Featuresetalon::EXPERIMENTAL_MESH_SHADER.bits()
+                    | Featuresetalon::EXPERIMENTAL_BUFFER_DEVICE_ADDRESS.bits()
                     | Featuresetalon::EXPERIMENTAL_MESH_SHADER_MULTIVIEW.bits()
                     | Featuresetalon::EXPERIMENTAL_MESH_SHADER_POINTS.bits()
                     | Featuresetalon::EXPERIMENTAL_RAY_QUERY.bits()
                     | Featuresetalon::EXPERIMENTAL_RAY_HIT_VERTEX_RETURN.bits()
                     | Featuresetalon::EXPERIMENTAL_COOPERATIVE_MATRIX.bits()
-                    | Featuresetalon::EXPERIMENTAL_RAY_TRACING_PIPELINES.bits(),
+                    | Featuresetalon::EXPERIMENTAL_RAY_TRACING_PIPELINES.bits()
+                    | Featuresetalon::EXPERIMENTAL_EXTERNAL_MEMORY_HOST.bits(),
             ),
             FeaturesWebGPU::empty(),
         )
@@ -1639,7 +1641,7 @@ impl Features {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Features, Featuresetalon, FeaturesWebGPU};
+    use crate::{Features, FeaturesWebGPU, Featuresetalon};
     use bitflags::{Flag, Flags};
 
     #[cfg(feature = "serde")]
@@ -1729,7 +1731,10 @@ mod tests {
         }
 
         let bits = Featuresetalon::all().bits();
-        assert_eq!(Featuresetalon::from_bits(bits).unwrap(), Featuresetalon::all());
+        assert_eq!(
+            Featuresetalon::from_bits(bits).unwrap(),
+            Featuresetalon::all()
+        );
 
         let bits = Featuresetalon::empty().bits();
         assert_eq!(
@@ -1833,7 +1838,7 @@ mod tests {
         for (name, feature) in Features::all().iter_names() {
             let prefixed_with_experimental = name.starts_with("EXPERIMENTAL_");
             let in_experimental_mask = Features::all_experimental_mask().contains(feature);
-            assert_eq!(in_experimental_mask, prefixed_with_experimental);
+            assert_eq!(in_experimental_mask, prefixed_with_experimental, "{name}");
         }
     }
 }

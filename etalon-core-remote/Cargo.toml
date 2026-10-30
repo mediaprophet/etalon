@@ -30,11 +30,10 @@ workspace = true
 
 [features]
 ## Enables serialization via `serde` on common etalon types.
-serde = ["dep:serde", "etalon-types/serde", "etalon-core/serde"]
+serde = ["etalon-types/serde", "etalon-core/serde"]
 
 [dependencies]
 raw-window-handle.workspace = true
-serde = { workspace = true, optional = true }
 static_assertions = { workspace = true }
 etalon-core = { workspace = true, default-features = false }
 etalon-core-remote-types.workspace = true

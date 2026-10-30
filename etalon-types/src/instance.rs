@@ -120,7 +120,10 @@ impl InstanceDescriptor {
 
     /// Appends the given `display` object to the descriptor.
     #[must_use]
-    pub fn with_display_handle(self, display: alloc::boxed::Box<dyn EtalonHasDisplayHandle>) -> Self {
+    pub fn with_display_handle(
+        self,
+        display: alloc::boxed::Box<dyn EtalonHasDisplayHandle>,
+    ) -> Self {
         Self {
             display: Some(display),
             ..self

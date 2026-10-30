@@ -1,9 +1,9 @@
 use alloc::{string::String, sync::Arc, vec::Vec};
 use core::{ffi, mem::ManuallyDrop, ptr, time::Duration};
 
+use etalon_sync::{Lazy, MappedMutexGuard, Mutex, MutexGuard, RwLock};
 use glow::HasContext;
 use hashbrown::HashMap;
-use etalon_sync::{Lazy, MappedMutexGuard, Mutex, MutexGuard, RwLock};
 
 /// The amount of time to wait while trying to obtain a lock to the adapter context
 const CONTEXT_LOCK_TIMEOUT_SECS: u64 = 6;

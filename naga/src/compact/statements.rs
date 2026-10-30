@@ -7,17 +7,30 @@ use crate::compact::handle_set_map::HandleMap;
 
 impl FunctionTracer<'_> {
     pub fn trace_block(&mut self, block: &[crate::Statement]) {
+        self.trace_block_impl(block, false)
+    }
+
+    /// Include emitted definitions because MSL writes them even when their values are unused.
+    #[cfg(msl_out)]
+    pub fn trace_block_including_emits(&mut self, block: &[crate::Statement]) {
+        self.trace_block_impl(block, true)
+    }
+
+    fn trace_block_impl(&mut self, block: &[crate::Statement], emits_are_used: bool) {
         let mut worklist: Vec<&[crate::Statement]> = vec![block];
         while let Some(last) = worklist.pop() {
             for stmt in last {
                 use crate::Statement as St;
                 match *stmt {
-                    St::Emit(ref _range) => {
+                    St::Emit(ref range) => {
                         // If we come across a statement that actually uses an
                         // expression in this range, it'll get traced from
                         // there. But since evaluating expressions has no
                         // effect, we don't need to assume that everything
-                        // emitted is live.
+                        // emitted is live - unless our caller says otherwise.
+                        if emits_are_used {
+                            self.expressions_used.insert_iter(range.clone());
+                        }
                     }
                     St::Block(ref block) => worklist.push(block),
                     St::If {

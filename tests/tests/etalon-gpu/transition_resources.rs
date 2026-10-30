@@ -19,7 +19,8 @@ static TRANSITION_RESOURCES: GpuTestConfiguration = GpuTestConfiguration::new()
             sample_count: 1,
             dimension: etalon::TextureDimension::D2,
             format: etalon::TextureFormat::Rgba8Unorm,
-            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
 

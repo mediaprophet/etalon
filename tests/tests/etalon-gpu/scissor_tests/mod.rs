@@ -1,4 +1,6 @@
-use etalon_test::{apply, gpu_test, image, GpuTestConfiguration, GpuTestInitializer, TestingContext};
+use etalon_test::{
+    apply, gpu_test, image, GpuTestConfiguration, GpuTestInitializer, TestingContext,
+};
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.extend([

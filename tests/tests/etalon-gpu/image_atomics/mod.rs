@@ -89,12 +89,12 @@ async fn test_format(
         count: None,
     };
 
-    let bind_group_layout = ctx
-        .device
-        .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[bind_group_layout_entry],
-        });
+    let bind_group_layout =
+        ctx.device
+            .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[bind_group_layout_entry],
+            });
 
     let pipeline_layout = ctx
         .device

@@ -24,8 +24,8 @@ use alloc::{
     vec::Vec,
 };
 use core::{ops::Range, ptr::NonNull};
-use smallvec::SmallVec;
 use etalon_sync::atomic;
+use smallvec::SmallVec;
 
 // has to match `Temp::binding_sizes`
 const WORD_SIZE: usize = 4;

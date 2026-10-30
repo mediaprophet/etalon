@@ -4,8 +4,6 @@
 //! eliminating ~420 bind groups per model and reducing speculative verify readback
 //! from 9.72 MB down to 4-64 bytes.
 
-
-
 /// Operational mode of the forward execution arena.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ForwardMode {
@@ -107,7 +105,9 @@ impl ForwardArena {
         slice.map_async(etalon::MapMode::Read, move |res| {
             let _ = tx.send(res);
         });
-        let _ = device.poll(etalon::PollType::wait_or_timeout(core::time::Duration::from_millis(5000)));
+        let _ = device.poll(etalon::PollType::wait_or_timeout(
+            core::time::Duration::from_millis(5000),
+        ));
         rx.recv().ok()?.ok()?;
 
         let raw = slice.get_mapped_range().ok()?;

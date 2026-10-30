@@ -723,10 +723,23 @@ impl ReadbackBuffers {
             expected_data.len()
         );
         let result_buffer = &result_buffer[..expected_data.len()];
-        assert!(result_buffer
-            .iter()
-            .zip(expected_data)
-            .all(|(a, b)| a.abs_diff(*b) <= max_diff));
+        let mut first_mismatch = None;
+        let mut mismatch_count = 0;
+        for (index, (&actual, &expected)) in result_buffer.iter().zip(expected_data).enumerate() {
+            if actual.abs_diff(expected) > max_diff {
+                first_mismatch.get_or_insert((index, actual, expected));
+                mismatch_count += 1;
+            }
+        }
+        assert_eq!(
+            mismatch_count,
+            0,
+            "Readback mismatch: first (byte index, actual, expected)={first_mismatch:?}; \
+             compared={} bytes, tolerance={max_diff}, format={:?}, base extent={:?}",
+            expected_data.len(),
+            self.texture_format,
+            self.layouts.first().map(|layout| layout.size)
+        );
         self.buffer.unmap();
     }
 }

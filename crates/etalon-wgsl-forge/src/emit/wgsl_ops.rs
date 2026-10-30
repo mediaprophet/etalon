@@ -156,38 +156,76 @@ fn {entry}(@builtin(local_invocation_id) local_id: vec3<u32>) {{
 pub(crate) fn emit_ops(source: &mut String, ops: &[Op], indent: &str) -> Result<(), ForgeError> {
     for op in ops {
         match op {
-            Op::StructLoad { buffer, field, destination } => {
+            Op::StructLoad {
+                buffer,
+                field,
+                destination,
+            } => {
                 writeln!(source, "{indent}let {destination} = {buffer}.{field};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Load { buffer, index, destination } => {
+            Op::Load {
+                buffer,
+                index,
+                destination,
+            } => {
                 writeln!(source, "{indent}let {destination} = {buffer}[{index}];")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Store { buffer, index, value } => {
+            Op::Store {
+                buffer,
+                index,
+                value,
+            } => {
                 writeln!(source, "{indent}{buffer}[{index}] = {value};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Fma { a, b, c, destination } => {
+            Op::Fma {
+                a,
+                b,
+                c,
+                destination,
+            } => {
                 writeln!(source, "{indent}let {destination} = {a} * {b} + {c};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Mul { left, right, destination } => {
+            Op::Mul {
+                left,
+                right,
+                destination,
+            } => {
                 writeln!(source, "{indent}let {destination} = {left} * {right};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Add { left, right, destination } => {
+            Op::Add {
+                left,
+                right,
+                destination,
+            } => {
                 writeln!(source, "{indent}let {destination} = {left} + {right};")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::DotProduct { left_buffer, left_base, right_buffer, right_base, len, destination } => {
+            Op::DotProduct {
+                left_buffer,
+                left_base,
+                right_buffer,
+                right_base,
+                len,
+                destination,
+            } => {
                 writeln!(
                     source,
                     "{indent}var {destination} = 0.0;\n{indent}for (var i: u32 = 0u; i < {len}; i = i + 1u) {{\n{indent}    {destination} = {destination} + {left_buffer}[{left_base} + i] * {right_buffer}[{right_base} + i];\n{indent}}}"
                 )
                 .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Loop { induction_var, start, end, step, body } => {
+            Op::Loop {
+                induction_var,
+                start,
+                end,
+                step,
+                body,
+            } => {
                 writeln!(
                     source,
                     "{indent}for (var {induction_var}: u32 = {start}; {induction_var} < {end}; {induction_var} = {induction_var} + {step}) {{"
@@ -197,11 +235,17 @@ pub(crate) fn emit_ops(source: &mut String, ops: &[Op], indent: &str) -> Result<
                 writeln!(source, "{indent}}}")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Relu { operand, destination } => {
+            Op::Relu {
+                operand,
+                destination,
+            } => {
                 writeln!(source, "{indent}let {destination} = max(0.0, {operand});")
                     .map_err(|error| ForgeError::Emission(error.to_string()))?;
             }
-            Op::Gelu { operand, destination } => {
+            Op::Gelu {
+                operand,
+                destination,
+            } => {
                 writeln!(
                     source,
                     "{indent}let {destination} = 0.5 * {operand} * (1.0 + tanh(0.7978845608 * ({operand} + 0.044715 * {operand} * {operand} * {operand})));"

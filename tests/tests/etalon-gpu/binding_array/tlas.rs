@@ -149,16 +149,18 @@ async fn binding_array_tlas(ctx: TestingContext) {
     encoder.build_acceleration_structures(
         std::iter::once(&etalon::BlasBuildEntry {
             blas: &blas,
-            geometry: etalon::BlasGeometries::TriangleGeometries(vec![etalon::BlasTriangleGeometry {
-                size: &blas_geo_size_desc,
-                vertex_buffer: &vertex_buf,
-                first_vertex: 0,
-                vertex_stride: std::mem::size_of::<[f32; 3]>() as u64,
-                index_buffer: Some(&index_buf),
-                first_index: Some(0),
-                transform_buffer: None,
-                transform_buffer_offset: None,
-            }]),
+            geometry: etalon::BlasGeometries::TriangleGeometries(vec![
+                etalon::BlasTriangleGeometry {
+                    size: &blas_geo_size_desc,
+                    vertex_buffer: &vertex_buf,
+                    first_vertex: 0,
+                    vertex_stride: std::mem::size_of::<[f32; 3]>() as u64,
+                    index_buffer: Some(&index_buf),
+                    first_index: Some(0),
+                    transform_buffer: None,
+                    transform_buffer_offset: None,
+                },
+            ]),
         }),
         [&tlas_a, &tlas_b],
     );

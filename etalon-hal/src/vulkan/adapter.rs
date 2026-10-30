@@ -965,7 +965,10 @@ impl PhysicalDeviceFeatures {
         let supports_bda = caps.supports_extension(khr::buffer_device_address::NAME)
             || caps.device_api_version >= vk::API_VERSION_1_2;
         if supports_bda
-            && self.buffer_device_address.as_ref().is_some_and(|b| b.buffer_device_address == vk::TRUE)
+            && self
+                .buffer_device_address
+                .as_ref()
+                .is_some_and(|b| b.buffer_device_address == vk::TRUE)
         {
             features.insert(F::EXPERIMENTAL_BUFFER_DEVICE_ADDRESS);
         }
@@ -2400,11 +2403,13 @@ impl super::Instance {
                 phd_capabilities.properties.vendor_id == db::nvidia::VENDOR,
             );
             workarounds.set(
-                super::Workarounds::IGNORED_NEGATIVE_VIEWPORT_HEIGHT,
-                phd_capabilities
-                    .driver
-                    .as_ref()
-                    .is_some_and(|driver| driver.driver_id == vk::DriverId::ARM_PROPRIETARY),
+                super::Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO,
+                needs_per_layer_multiview_resolve(
+                    phd_capabilities.properties.vendor_id,
+                    phd_capabilities.properties.device_id,
+                    phd_capabilities.properties.driver_version,
+                    phd_capabilities.driver.map(|driver| driver.driver_id),
+                ),
             );
         };
 
@@ -2901,11 +2906,6 @@ impl super::Adapter {
             flags.set(
                 spv::WriterFlags::LABEL_VARYINGS,
                 self.phd_capabilities.properties.vendor_id != crate::auxil::db::qualcomm::VENDOR,
-            );
-            flags.set(
-                spv::WriterFlags::ADJUST_COORDINATE_SPACE,
-                self.workarounds
-                    .contains(super::Workarounds::IGNORED_NEGATIVE_VIEWPORT_HEIGHT),
             );
             flags.set(
                 spv::WriterFlags::FORCE_POINT_SIZE,
@@ -3538,6 +3538,19 @@ fn supports_bgra8unorm_storage(
     }
 }
 
+// This device/driver renders both MSAA views but implicitly resolves only view zero.
+fn needs_per_layer_multiview_resolve(
+    vendor: u32,
+    device: u32,
+    version: u32,
+    driver: Option<vk::DriverId>,
+) -> bool {
+    vendor == crate::auxil::db::intel::VENDOR
+        && device == 0x5917
+        && version == ((101 << 14) | 2141)
+        && driver == Some(vk::DriverId::INTEL_PROPRIETARY_WINDOWS)
+}
+
 // For https://github.com/mediaprophet/etalon/issues/4599
 // Intel iGPUs with outdated drivers can break rendering if `VK_EXT_robustness2` is used.
 // Driver version 31.0.101.2115 works, but there's probably an earlier functional version.
@@ -3686,4 +3699,40 @@ fn query_cooperative_matrix_properties(
         result.len()
     );
     result
+}
+
+#[cfg(test)]
+mod multiview_resolve_tests {
+    use super::needs_per_layer_multiview_resolve;
+    use ash::vk;
+
+    #[test]
+    fn workaround_matches_only_reproduced_device_and_driver() {
+        let version = (101 << 14) | 2141;
+        let driver = Some(vk::DriverId::INTEL_PROPRIETARY_WINDOWS);
+        assert!(needs_per_layer_multiview_resolve(
+            0x8086, 0x5917, version, driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086,
+            0x5917,
+            version + 1,
+            driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086, 0x5916, version, driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x10de, 0x5917, version, driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086, 0x5917, version, None
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086,
+            0x5917,
+            version,
+            Some(vk::DriverId::INTEL_OPEN_SOURCE_MESA)
+        ));
+    }
 }

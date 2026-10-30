@@ -37,7 +37,9 @@ async fn fill_test(ctx: &TestingContext, range: Range<u64>, size: u64) -> bool {
     encoder.copy_buffer_to_buffer(&gpu_buffer, 0, &cpu_buffer, 0, size);
 
     ctx.queue.submit(Some(encoder.finish()));
-    cpu_buffer.slice(..).map_async(etalon::MapMode::Read, |_| ());
+    cpu_buffer
+        .slice(..)
+        .map_async(etalon::MapMode::Read, |_| ());
     ctx.async_poll(etalon::PollType::wait_indefinitely())
         .await
         .unwrap();

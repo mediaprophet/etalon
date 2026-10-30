@@ -109,11 +109,12 @@ impl State {
         instance_desc.flags |= etalon::InstanceFlags::advanced_debugging();
         let instance = etalon::Instance::new(instance_desc);
         let surface = instance.create_surface(window.clone()).unwrap();
-        let adapter = pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions {
-            compatible_surface: Some(&surface),
-            ..Default::default()
-        }))
-        .expect("No adapter");
+        let adapter =
+            pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions {
+                compatible_surface: Some(&surface),
+                ..Default::default()
+            }))
+            .expect("No adapter");
 
         println!("Adapter: {:?}", adapter.get_info().name);
 

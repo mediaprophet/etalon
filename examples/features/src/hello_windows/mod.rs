@@ -1,7 +1,7 @@
 #![cfg_attr(target_arch = "wasm32", allow(dead_code, unused_imports))]
 
-use std::{collections::HashMap, sync::Arc};
 use etalon::CurrentSurfaceTexture;
+use std::{collections::HashMap, sync::Arc};
 use winit::{
     application::ApplicationHandler,
     event::WindowEvent,
@@ -125,10 +125,11 @@ impl ApplicationHandler for App {
         }
 
         // Initialize etalon synchronously (native-only).
-        let instance =
-            etalon::Instance::new(etalon::InstanceDescriptor::new_with_display_handle_from_env(
-                Box::new(event_loop.owned_display_handle()),
-            ));
+        let instance = etalon::Instance::new(
+            etalon::InstanceDescriptor::new_with_display_handle_from_env(Box::new(
+                event_loop.owned_display_handle(),
+            )),
+        );
         let viewport_descs: Vec<_> = windows
             .into_iter()
             .map(|(window, color)| ViewportDesc::new(window, color, &instance))

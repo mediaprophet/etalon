@@ -1,7 +1,7 @@
-use std::mem::size_of_val;
 use etalon::util::DeviceExt;
 use etalon::{BufferDescriptor, BufferUsages, MapMode, PollType};
 use etalon_test::{apply, fail_if, gpu_test, GpuTestConfiguration, TestParameters, TestingContext};
+use std::mem::size_of_val;
 
 pub fn all_tests(vec: &mut Vec<etalon_test::GpuTestInitializer>) {
     vec.push(ARRAY_SIZE_OVERRIDES);

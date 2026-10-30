@@ -29,6 +29,14 @@ use crate::{
     },
 };
 
+fn supports_non_uniform_storage_texture_arrays(
+    vendor: u32,
+    device: u32,
+    driver_version: Option<[u16; 4]>,
+) -> bool {
+    !(vendor == 0x8086 && device == 0x5917 && driver_version == Some([31, 0, 101, 2141]))
+}
+
 impl Drop for super::Adapter {
     fn drop(&mut self) {
         // Debug tracking alive objects
@@ -179,6 +187,13 @@ impl super::Adapter {
                 workarounds.avoid_shader_debug_info = true;
             }
         }
+
+        let non_uniform_storage_texture_arrays_supported =
+            supports_non_uniform_storage_texture_arrays(
+                desc.VendorId,
+                desc.DeviceId,
+                driver_version.as_ref().ok().copied(),
+            );
 
         let driver_version_string = {
             let driver_version = driver_version.unwrap_or([0, 0, 0, 0]);
@@ -511,6 +526,13 @@ impl super::Adapter {
                 | wgt::Features::PARTIALLY_BOUND_BINDING_ARRAY,
             shader_model >= naga::back::hlsl::ShaderModel::V5_1 && rbt >= ResourceBindingTier::T3,
         );
+        if !non_uniform_storage_texture_arrays_supported {
+            features.remove(wgt::Features::STORAGE_TEXTURE_ARRAY_NON_UNIFORM_INDEXING);
+            log::warn!(
+                "Intel 0x5917 driver 31.0.101.2141 returns zero from non-uniform storage texture \
+                 array loads; STORAGE_TEXTURE_ARRAY_NON_UNIFORM_INDEXING is unavailable"
+            );
+        }
 
         let bgra8unorm_storage_supported = {
             let mut bgra8unorm_info = Direct3D12::D3D12_FEATURE_DATA_FORMAT_SUPPORT {
@@ -1548,4 +1570,29 @@ fn get_adapter_pci_info(vendor_id: u32, device_id: u32) -> String {
     }
 
     String::new()
+}
+
+#[cfg(test)]
+mod storage_texture_array_tests {
+    use super::supports_non_uniform_storage_texture_arrays;
+
+    #[test]
+    fn non_uniform_guard_matches_only_reproduced_adapter_driver() {
+        assert!(!supports_non_uniform_storage_texture_arrays(
+            0x8086,
+            0x5917,
+            Some([31, 0, 101, 2141])
+        ));
+        for (vendor, device, version) in [
+            (0x10de, 0x5917, Some([31, 0, 101, 2141])),
+            (0x8086, 0x5916, Some([31, 0, 101, 2141])),
+            (0x8086, 0x5917, Some([31, 0, 101, 2140])),
+            (0x8086, 0x5917, Some([31, 0, 101, 2142])),
+            (0x8086, 0x5917, None),
+        ] {
+            assert!(supports_non_uniform_storage_texture_arrays(
+                vendor, device, version
+            ));
+        }
+    }
 }

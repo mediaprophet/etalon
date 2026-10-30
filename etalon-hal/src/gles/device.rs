@@ -10,9 +10,9 @@ use alloc::{
 use core::{cmp::max, convert::TryInto, num::NonZeroU32, ptr, sync::atomic::Ordering};
 
 use arrayvec::ArrayVec;
+use etalon_sync::Mutex;
 use glow::HasContext;
 use naga::FastHashMap;
-use etalon_sync::Mutex;
 
 use super::{conv, PrivateCapabilities};
 use crate::auxil::map_naga_stage;
@@ -758,11 +758,15 @@ impl crate::Device for super::Device {
                     map_flags |= glow::MAP_COHERENT_BIT;
                 }
             }
-            // Dynamic storage flag enables buffer sub-data updates, copies, and query resolution dispatches
-            if desc.usage.intersects(wgt::BufferUses::QUERY_RESOLVE | wgt::BufferUses::COPY_DST) {
-                map_flags |= glow::DYNAMIC_STORAGE_BIT;
+            let mut storage_flags = map_flags;
+            // Dynamic storage permits sub-data updates, but is not a mapping access flag.
+            if desc
+                .usage
+                .intersects(wgt::BufferUses::QUERY_RESOLVE | wgt::BufferUses::COPY_DST)
+            {
+                storage_flags |= glow::DYNAMIC_STORAGE_BIT;
             }
-            unsafe { gl.buffer_storage(target, raw_size, None, map_flags) };
+            unsafe { gl.buffer_storage(target, raw_size, None, storage_flags) };
         } else {
             assert!(!is_coherent);
             let usage = if is_host_visible {

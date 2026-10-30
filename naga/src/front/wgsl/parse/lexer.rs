@@ -807,11 +807,9 @@ fn test_numbers() {
             Token::Number(Ok(Number::AbstractFloat(43.75))),
             Token::Number(Ok(Number::F32(16.))),
             Token::Number(Ok(Number::AbstractFloat(0.1875))),
-            // https://github.com/mediaprophet/etalon/issues/7046
-            Token::Number(Err(NumberError::NotRepresentable)), // Should be 0.75
+            Token::Number(Ok(Number::F16(f16::from_f32(12.0)))),
             Token::Number(Ok(Number::AbstractFloat(0.12109375))),
-            // https://github.com/mediaprophet/etalon/issues/7046
-            Token::Number(Err(NumberError::NotRepresentable)), // Should be 12.5
+            Token::Number(Ok(Number::F16(f16::from_f32(12.5)))),
         ],
     );
 
@@ -923,6 +921,22 @@ fn test_numbers() {
         "0x1p128f 0x1.000001p0f",
         &[
             Token::Number(Err(NumberError::NotRepresentable)), // = 2^128
+            Token::Number(Err(NumberError::NotRepresentable)),
+        ],
+    );
+}
+
+#[test]
+fn test_f16_hexadecimal_boundaries() {
+    use half::f16;
+    sub_test(
+        "0x1.ffcp15h 0x1p-14h 0x1p-24h 0x1p16h 0x1.001p0h 0x1p-25h",
+        &[
+            Token::Number(Ok(Number::F16(f16::from_bits(0x7bff)))),
+            Token::Number(Ok(Number::F16(f16::from_bits(0x0400)))),
+            Token::Number(Ok(Number::F16(f16::from_bits(0x0001)))),
+            Token::Number(Err(NumberError::NotRepresentable)),
+            Token::Number(Err(NumberError::NotRepresentable)),
             Token::Number(Err(NumberError::NotRepresentable)),
         ],
     );

@@ -36,7 +36,12 @@ impl<'a> Lexer<'a> {
         let mut pp = Preprocessor::new(input);
         for (define, value) in defines {
             if let Err(e) = pp.add_define(define, value) {
-                log::warn!("Failed to add preprocessor define '{} = {}': {:?}", define, value, e);
+                log::warn!(
+                    "Failed to add preprocessor define '{} = {}': {:?}",
+                    define,
+                    value,
+                    e
+                );
             }
         }
         Lexer { pp }

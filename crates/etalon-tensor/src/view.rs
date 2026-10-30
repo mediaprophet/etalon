@@ -20,7 +20,12 @@ pub struct TensorView {
 }
 
 impl TensorView {
-    pub fn new(scheme: QuantScheme, shape: Vec<usize>, byte_offset: usize, total_bytes: usize) -> Self {
+    pub fn new(
+        scheme: QuantScheme,
+        shape: Vec<usize>,
+        byte_offset: usize,
+        total_bytes: usize,
+    ) -> Self {
         let mut strides = Vec::with_capacity(shape.len());
         let mut stride = 1usize;
         for &dim in shape.iter().rev() {

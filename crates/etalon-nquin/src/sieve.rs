@@ -251,12 +251,9 @@ impl GpuQuinSieve {
             rx_m.recv().ok()?.ok()?;
 
             let count_raw = count_slice.get_mapped_range().ok()?;
-            let match_count = u32::from_le_bytes([
-                count_raw[0],
-                count_raw[1],
-                count_raw[2],
-                count_raw[3],
-            ]) as usize;
+            let match_count =
+                u32::from_le_bytes([count_raw[0], count_raw[1], count_raw[2], count_raw[3]])
+                    as usize;
             drop(count_raw);
             count_stage.unmap();
 

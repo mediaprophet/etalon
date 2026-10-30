@@ -1,4 +1,3 @@
-use std::mem;
 use etalon::util::BufferInitDescriptor;
 use etalon::{
     util::DeviceExt, Blas, BlasBuildEntry, BlasGeometries, BlasGeometrySizeDescriptors,
@@ -10,6 +9,7 @@ use etalon::{
     AccelerationStructureUpdateMode, BufferAddress, BufferUsages, VertexFormat,
 };
 use etalon_test::TestingContext;
+use std::mem;
 
 mod as_aabb;
 mod as_build;

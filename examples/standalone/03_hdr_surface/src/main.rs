@@ -333,19 +333,20 @@ impl State {
             },
         );
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[etalon::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: etalon::ShaderStages::FRAGMENT,
-                ty: etalon::BindingType::Buffer {
-                    ty: etalon::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[etalon::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
+                        has_dynamic_offset: false,
+                        min_binding_size: None,
+                    },
+                    count: None,
+                }],
+            });
         let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
@@ -527,8 +528,9 @@ impl ApplicationHandler<UserEvent> for App {
         // `InstanceDescriptor::new_without_display_handle_from_env` honors
         // `ETALON_BACKEND` (e.g. `vulkan`, `dx12`) so each backend's color-space
         // path can be exercised separately.
-        let instance =
-            etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle_from_env());
+        let instance = etalon::Instance::new(
+            etalon::InstanceDescriptor::new_without_display_handle_from_env(),
+        );
         let surface = instance.create_surface(window.clone()).unwrap();
 
         // The async tail (adapter, device, pipeline) runs off the main thread

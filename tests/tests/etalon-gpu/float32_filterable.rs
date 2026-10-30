@@ -1,6 +1,8 @@
 //! Tests for FLOAT32_FILTERABLE feature.
 
-use etalon_test::{apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters};
+use etalon_test::{
+    apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters,
+};
 
 pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.extend([
@@ -9,7 +11,11 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     ]);
 }
 
-fn create_texture_binding(device: &etalon::Device, format: etalon::TextureFormat, filterable: bool) {
+fn create_texture_binding(
+    device: &etalon::Device,
+    format: etalon::TextureFormat,
+    filterable: bool,
+) {
     let texture = device.create_texture(&etalon::TextureDescriptor {
         label: None,
         size: etalon::Extent3d {

@@ -1,5 +1,5 @@
 **/*.frag
 **/*.vert
-deno_webgpu/**/*.js
+**/target/
 naga/tests/in/
 naga/tests/out/

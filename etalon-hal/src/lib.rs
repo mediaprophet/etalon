@@ -239,9 +239,9 @@
 )]
 
 extern crate alloc;
+extern crate etalon_types as wgt;
 #[allow(unused_extern_crates)]
 extern crate naga_types as nt;
-extern crate etalon_types as wgt;
 // Each of these backends needs `std` in some fashion; usually `std::thread` functions.
 #[cfg(any(dx12, gles_with_std, metal, vulkan, test))]
 #[macro_use]
@@ -305,9 +305,9 @@ use core::{
 };
 
 use bitflags::bitflags;
+use etalon_sync::Arc;
 use raw_window_handle::DisplayHandle;
 use thiserror::Error;
-use etalon_sync::Arc;
 use wgt::WasmNotSendSync;
 
 // - Vertex + Fragment

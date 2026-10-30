@@ -33,6 +33,7 @@ mod drm;
 mod instance;
 mod memory;
 mod pnext_chain;
+mod resolve;
 mod sampler;
 mod semaphore_list;
 mod swapchain;
@@ -53,8 +54,8 @@ use core::{
 use arrayvec::ArrayVec;
 use ash::{ext, khr, vk};
 use bytemuck::{Pod, Zeroable};
-use hashbrown::HashSet;
 use etalon_sync::{Mutex, RwLock};
+use hashbrown::HashSet;
 
 use naga::FastHashMap;
 use wgt::InternalCounter;
@@ -559,14 +560,8 @@ bitflags::bitflags!(
         /// As such, we need to make sure all calls to vkCmdFillBuffer are aligned to 16 bytes
         /// if they cover a range of 4096 bytes or more.
         const FORCE_FILL_BUFFER_WITH_SIZE_GREATER_4096_ALIGNED_OFFSET_16 = 0x4;
-        /// Arm's proprietary driver (observed on r54p2, Mali-G715 / Pixel 9 Pro,
-        /// Android 16) ignores negative viewport heights, so it does not do the
-        /// Y-flip that maps WebGPU clip space to Vulkan's.
-        ///
-        /// We flip Y in the vertex shader and use positive-height viewports instead.
-        /// This gives the same framebuffer coordinates, so facing does not change.
-        /// SPIR-V passthrough shaders do not get this flip.
-        const IGNORED_NEGATIVE_VIEWPORT_HEIGHT = 0x8;
+        /// Resolve multiview attachments through ordinary single-layer passes.
+        const MULTIVIEW_RESOLVE_LAYER_ZERO = 0x8;
     }
 );
 
@@ -995,6 +990,7 @@ pub struct TextureView {
     format: wgt::TextureFormat,
     raw_format: vk::Format,
     base_mip_level: u32,
+    base_array_layer: u32,
     dimension: wgt::TextureViewDimension,
     texture_identity: ResourceIdentity<vk::Image>,
     view_identity: ResourceIdentity<vk::ImageView>,
@@ -1034,6 +1030,7 @@ impl crate::DynSampler for Sampler {}
 struct BindingInfo {
     binding: u32,
     binding_array_size: Option<NonZeroU32>,
+    external_texture: bool,
 }
 
 #[derive(Debug)]
@@ -1221,6 +1218,8 @@ pub struct CommandEncoder {
     /// If set, the end of the next render/compute pass will write a timestamp at
     /// the given pool & location.
     end_of_pass_timer_query: Option<(vk::QueryPool, u32)>,
+
+    multiview_resolves: ArrayVec<resolve::PreparedResolve, { crate::MAX_COLOR_ATTACHMENTS * 32 }>,
 
     framebuffers: FastHashMap<FramebufferKey, vk::Framebuffer>,
     temp_texture_views: FastHashMap<TempTextureViewKey, IdentifiedTextureView>,

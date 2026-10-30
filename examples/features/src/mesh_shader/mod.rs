@@ -44,7 +44,12 @@ impl crate::framework::Example for Example {
         });
         Self { pipeline }
     }
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder =
             device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {
@@ -112,7 +117,9 @@ pub static TEST: crate::framework::ExampleTestParams = crate::framework::Example
     height: 768,
     optional_features: etalon::Features::default(),
     base_test_parameters: etalon_test::TestParameters::default()
-        .features(etalon::Features::EXPERIMENTAL_MESH_SHADER | etalon::Features::PASSTHROUGH_SHADERS)
+        .features(
+            etalon::Features::EXPERIMENTAL_MESH_SHADER | etalon::Features::PASSTHROUGH_SHADERS,
+        )
         .instance_flags(etalon::InstanceFlags::advanced_debugging())
         .limits(etalon::Limits::defaults().using_recommended_minimum_mesh_shader_values())
         .skip(etalon_test::FailureCase {

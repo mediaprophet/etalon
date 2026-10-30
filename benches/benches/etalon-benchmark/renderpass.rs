@@ -3,9 +3,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use etalon_benchmark::{iter_many, BenchmarkContext, LoopControl};
 use nanorand::{Rng, WyRand};
 use rayon::iter::{IntoParallelIterator, ParallelIterator};
-use etalon_benchmark::{iter_many, BenchmarkContext, LoopControl};
 
 use crate::DeviceState;
 
@@ -156,23 +156,31 @@ impl RenderpassState {
 
         let mut vertex_buffers = Vec::with_capacity(vertex_buffer_count as usize);
         for _ in 0..vertex_buffer_count {
-            vertex_buffers.push(device_state.device.create_buffer(&etalon::BufferDescriptor {
-                label: None,
-                size: 3 * 16,
-                usage: etalon::BufferUsages::VERTEX,
-                mapped_at_creation: false,
-            }));
+            vertex_buffers.push(
+                device_state
+                    .device
+                    .create_buffer(&etalon::BufferDescriptor {
+                        label: None,
+                        size: 3 * 16,
+                        usage: etalon::BufferUsages::VERTEX,
+                        mapped_at_creation: false,
+                    }),
+            );
         }
         random.shuffle(&mut vertex_buffers);
 
         let mut index_buffers = Vec::with_capacity(draw_count as usize);
         for _ in 0..draw_count {
-            index_buffers.push(device_state.device.create_buffer(&etalon::BufferDescriptor {
-                label: None,
-                size: 3 * 4,
-                usage: etalon::BufferUsages::INDEX,
-                mapped_at_creation: false,
-            }));
+            index_buffers.push(
+                device_state
+                    .device
+                    .create_buffer(&etalon::BufferDescriptor {
+                        label: None,
+                        size: 3 * 4,
+                        usage: etalon::BufferUsages::INDEX,
+                        mapped_at_creation: false,
+                    }),
+            );
         }
         random.shuffle(&mut index_buffers);
 
@@ -438,7 +446,9 @@ impl RenderpassState {
     }
 }
 
-pub fn run_bench(mut ctx: BenchmarkContext) -> anyhow::Result<Vec<etalon_benchmark::SubBenchResult>> {
+pub fn run_bench(
+    mut ctx: BenchmarkContext,
+) -> anyhow::Result<Vec<etalon_benchmark::SubBenchResult>> {
     let state = RenderpassState::new(&ctx);
 
     ctx.default_iterations = LoopControl::Time(Duration::from_secs(3));

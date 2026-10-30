@@ -24,7 +24,7 @@ This is a table of contents, in the form of the repository's directory structure
 
 - benches
   - [benches](#benchmark-tests)
-- [cts_runner](#webgpu-cts)
+- [QualiaDB/VibeScript integration](#qualiadbvibescript-integration)
 - examples
   - [features](#example-tests)
 - naga
@@ -242,36 +242,17 @@ does not support those features.
 Throughout the codebase we have standard `#[test]`s that test individual
 functions or small parts of the codebase. These don't run on the gpu.
 
-## WebGPU CTS
+## QualiaDB/VibeScript Integration
 
-WebGPU includes a Conformance Test Suite to validate that implementations are
-working correctly. We run cases from the CTS against etalon using
-[Deno](https://deno.com/). A [default list of enabled
-tests](../cts_runner/test.lst) is automatically run on pull requests in CI.
+The consuming QualiaDB repository provides a VibeScript harness that exercises
+its canonical host and real Etalon compute dispatch/readback against CPU references.
+Integrated GPUs are supported; NVIDIA/CUDA is not required. CPU-only mode is
+explicit and excludes GPU work.
 
-To run the default set of CTS tests locally, run:
-
-```
-cargo xtask cts
-```
-
-You can also specify a test selector on the command line:
-
-```
-cargo xtask cts 'webgpu:api,operation,command_buffer,basic:*'
-```
-
-Or supply your own test list in a file:
-
-```
-cargo xtask cts -f your_tests.lst
-```
-
-To find the full list of tests, go to the
-[web-based standalone CTS runner](https://gpuweb.github.io/cts/standalone/?runnow=0&worker=0&debug=0&q=webgpu:*).
-
-The version of the CTS used by `cargo xtask cts` is specified in
-[`cts_runner/revision.txt`](../cts_runner/revision.txt).
+See [conformance-coverage.md](conformance-coverage.md) for commands, the coverage
+matrix and the conformance coverage lost when the embedded Deno CTS runner was
+retired. This harness does not run the upstream WebGPU CTS. All Rust test suites
+listed above remain in place.
 
 ## Memory Initialization Testing
 

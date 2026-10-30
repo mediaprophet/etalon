@@ -102,7 +102,8 @@ impl TextureView {
     pub fn from_core(core_texture_view: alloc::sync::Arc<wgc::resource::TextureView>) -> Self {
         let texture = Texture::from_core(core_texture_view.texture().clone());
         Self {
-            inner: crate::backend::etalon_core::CoreTextureView::from_core(core_texture_view).into(),
+            inner: crate::backend::etalon_core::CoreTextureView::from_core(core_texture_view)
+                .into(),
             texture,
         }
     }

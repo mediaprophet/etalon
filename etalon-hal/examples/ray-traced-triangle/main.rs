@@ -5,13 +5,13 @@ use hal::{
 };
 use raw_window_handle::{HasDisplayHandle, HasWindowHandle};
 
+use etalon_types::Dx12BackendOptions;
 use glam::{Affine3A, Vec3};
 use std::{
     borrow::{Borrow, Cow},
     iter, ptr,
     time::Instant,
 };
-use etalon_types::Dx12BackendOptions;
 use winit::{
     application::ApplicationHandler,
     event_loop::{ActiveEventLoop, ControlFlow},
@@ -670,7 +670,8 @@ impl<A: hal::Api> Example<A> {
             sample_count: 1,
             dimension: etalon_types::TextureDimension::D2,
             format: etalon_types::TextureFormat::Rgba8Unorm,
-            usage: etalon_types::TextureUses::STORAGE_READ_WRITE | etalon_types::TextureUses::COPY_SRC,
+            usage: etalon_types::TextureUses::STORAGE_READ_WRITE
+                | etalon_types::TextureUses::COPY_SRC,
             memory_flags: hal::MemoryFlags::empty(),
             view_formats: vec![etalon_types::TextureFormat::Rgba8Unorm],
         };
@@ -680,7 +681,8 @@ impl<A: hal::Api> Example<A> {
             label: None,
             format: texture_desc.format,
             dimension: etalon_types::TextureViewDimension::D2,
-            usage: etalon_types::TextureUses::STORAGE_READ_WRITE | etalon_types::TextureUses::COPY_SRC,
+            usage: etalon_types::TextureUses::STORAGE_READ_WRITE
+                | etalon_types::TextureUses::COPY_SRC,
             range: etalon_types::ImageSubresourceRange::default(),
             swizzle: etalon_types::TextureComponentSwizzle::default(),
         };

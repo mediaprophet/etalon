@@ -7,8 +7,8 @@ use thiserror::Error;
 use alloc::format;
 use core::error;
 
-use hashbrown::HashMap;
 use etalon_sync::Mutex;
+use hashbrown::HashMap;
 use wgt::error::{Error, ErrorFilter, ErrorSource, ErrorType, UncapturedErrorHandler, WebGpuError};
 use wgt::WasmNotSendSync;
 

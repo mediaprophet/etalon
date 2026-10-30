@@ -1,10 +1,10 @@
 mod point_gen;
 
 use bytemuck::{Pod, Zeroable};
+use etalon::util::DeviceExt;
 use glam::Vec3;
 use nanorand::{Rng, WyRand};
 use std::{f32::consts, iter};
-use etalon::util::DeviceExt;
 
 ///
 /// Radius of the terrain.
@@ -364,7 +364,7 @@ impl crate::framework::Example for Example {
                             ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
                             min_binding_size: etalon::BufferSize::new(
-                                size_of::<WaterUniforms>() as _,
+                                size_of::<WaterUniforms>() as _
                             ),
                         },
                         count: None,
@@ -695,7 +695,12 @@ impl crate::framework::Example for Example {
         self.reflect_view = reflect_view;
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         // Increment frame count regardless of if we draw.
         self.current_frame += 1;
         #[expect(clippy::eq_op, reason = "keeping common divisor on all elements")]

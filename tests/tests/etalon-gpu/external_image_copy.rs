@@ -1,8 +1,8 @@
 #![cfg(all(target_arch = "wasm32", not(target_os = "emscripten")))]
 
-use wasm_bindgen::JsCast;
 use etalon::ExternalImageSource;
 use etalon_test::{apply, fail_if, gpu_test, GpuTestConfiguration};
+use wasm_bindgen::JsCast;
 
 #[apply(gpu_test!)]
 static IMAGE_BITMAP_IMPORT: GpuTestConfiguration =

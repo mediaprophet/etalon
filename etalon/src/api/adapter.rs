@@ -3,8 +3,8 @@ use alloc::vec::Vec;
 use core::future::Future;
 #[cfg(etalon_core)]
 use core::ops::Deref;
-use hashbrown::HashSet;
 use etalon_sync::Mutex;
+use hashbrown::HashSet;
 
 use crate::*;
 

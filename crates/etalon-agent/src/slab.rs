@@ -36,7 +36,9 @@ pub struct QualiaSlabAllocator {
 impl QualiaSlabAllocator {
     pub fn new(capacity_bytes: usize, alignment: usize) -> Self {
         Self {
-            topology: MemoryTopology::Discrete { staging_required: false },
+            topology: MemoryTopology::Discrete {
+                staging_required: false,
+            },
             capacity_bytes: capacity_bytes as u64,
             alignment: alignment as u64,
             write_count: 0,

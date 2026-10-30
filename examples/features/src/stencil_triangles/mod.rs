@@ -185,7 +185,12 @@ impl crate::framework::Example for Example {
         });
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder =
             device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
         {

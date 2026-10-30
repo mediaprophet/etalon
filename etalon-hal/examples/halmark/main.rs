@@ -219,7 +219,9 @@ impl<A: hal::Api> Example<A> {
                 etalon_types::BindGroupLayoutEntry {
                     binding: 2,
                     visibility: etalon_types::ShaderStages::FRAGMENT,
-                    ty: etalon_types::BindingType::Sampler(etalon_types::SamplerBindingType::Filtering),
+                    ty: etalon_types::BindingType::Sampler(
+                        etalon_types::SamplerBindingType::Filtering,
+                    ),
                     count: None,
                 },
             ],

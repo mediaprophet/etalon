@@ -25,6 +25,7 @@ mod life;
 pub mod queue;
 pub mod ray_tracing;
 pub mod resource;
+mod stage_compiler;
 pub(crate) mod surface_config;
 #[cfg(any(feature = "trace", feature = "replay"))]
 pub mod trace;
@@ -226,12 +227,25 @@ pub(crate) fn map_buffer(
     kind: MapMode,
     snatch_guard: &SnatchGuard,
 ) -> Result<hal::BufferMapping, BufferAccessError> {
+    map_buffer_with_error_handler(buffer, offset, size, kind, snatch_guard, |error| {
+        buffer.device.handle_hal_error(error)
+    })
+}
+
+pub(crate) fn map_buffer_with_error_handler(
+    buffer: &Buffer,
+    offset: BufferAddress,
+    size: BufferAddress,
+    kind: MapMode,
+    snatch_guard: &SnatchGuard,
+    on_error: impl FnOnce(hal::DeviceError) -> DeviceError,
+) -> Result<hal::BufferMapping, BufferAccessError> {
     let raw_device = buffer.device.raw();
     let raw_buffer = buffer.try_raw(snatch_guard)?;
     let mapping = unsafe {
         raw_device
             .map_buffer(raw_buffer, offset..offset + size)
-            .map_err(|e| buffer.device.handle_hal_error(e))?
+            .map_err(on_error)?
     };
 
     if !mapping.is_coherent && kind == MapMode::Read {

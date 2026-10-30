@@ -1,7 +1,7 @@
 use alloc::{borrow::ToOwned as _, format, string::String, sync::Arc, vec, vec::Vec};
 
-use glow::HasContext;
 use etalon_sync::{atomic::AtomicU8, Mutex};
+use glow::HasContext;
 use wgt::AstcChannel;
 
 use crate::auxil::db;
@@ -143,7 +143,9 @@ impl super::Adapter {
         let strings_that_imply_cpu = ["mesa offscreen", "swiftshader", "llvmpipe"];
 
         // Handle Intel Iris Xe and Arc graphics as discrete GPU where appropriate
-        let inferred_device_type = if vendor.contains("intel") && (renderer.contains("iris xe") || renderer.contains("arc")) {
+        let inferred_device_type = if vendor.contains("intel")
+            && (renderer.contains("iris xe") || renderer.contains("arc"))
+        {
             wgt::DeviceType::DiscreteGpu
         } else if vendor.contains("qualcomm")
             || vendor.contains("intel")

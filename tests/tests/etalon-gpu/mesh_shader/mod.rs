@@ -22,7 +22,11 @@ pub fn all_tests(tests: &mut Vec<GpuTestInitializer>) {
 
 fn create_depth(
     device: &etalon::Device,
-) -> (etalon::Texture, etalon::TextureView, etalon::DepthStencilState) {
+) -> (
+    etalon::Texture,
+    etalon::TextureView,
+    etalon::DepthStencilState,
+) {
     let image_size = etalon::Extent3d {
         width: 64,
         height: 64,

@@ -198,11 +198,17 @@ impl DeviceInterface for CustomDevice {
         unimplemented!()
     }
 
-    fn create_buffer(&self, _desc: &etalon::BufferDescriptor<'_>) -> etalon::custom::DispatchBuffer {
+    fn create_buffer(
+        &self,
+        _desc: &etalon::BufferDescriptor<'_>,
+    ) -> etalon::custom::DispatchBuffer {
         unimplemented!()
     }
 
-    fn create_texture(&self, _desc: &etalon::TextureDescriptor<'_>) -> etalon::custom::DispatchTexture {
+    fn create_texture(
+        &self,
+        _desc: &etalon::TextureDescriptor<'_>,
+    ) -> etalon::custom::DispatchTexture {
         unimplemented!()
     }
 
@@ -222,11 +228,17 @@ impl DeviceInterface for CustomDevice {
         unimplemented!()
     }
 
-    fn create_tlas(&self, _desc: &etalon::CreateTlasDescriptor<'_>) -> etalon::custom::DispatchTlas {
+    fn create_tlas(
+        &self,
+        _desc: &etalon::CreateTlasDescriptor<'_>,
+    ) -> etalon::custom::DispatchTlas {
         unimplemented!()
     }
 
-    fn create_sampler(&self, _desc: &etalon::SamplerDescriptor<'_>) -> etalon::custom::DispatchSampler {
+    fn create_sampler(
+        &self,
+        _desc: &etalon::SamplerDescriptor<'_>,
+    ) -> etalon::custom::DispatchSampler {
         unimplemented!()
     }
 
@@ -251,7 +263,10 @@ impl DeviceInterface for CustomDevice {
         unimplemented!()
     }
 
-    fn set_device_lost_callback(&self, _device_lost_callback: etalon::custom::BoxDeviceLostCallback) {
+    fn set_device_lost_callback(
+        &self,
+        _device_lost_callback: etalon::custom::BoxDeviceLostCallback,
+    ) {
         unimplemented!()
     }
 
@@ -355,7 +370,7 @@ impl QueueInterface for CustomQueue {
     fn submit(
         &self,
         _command_buffers: &mut dyn Iterator<Item = etalon::custom::DispatchCommandBuffer>,
-    ) -> u64 {
+    ) -> Option<u64> {
         unimplemented!()
     }
 

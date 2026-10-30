@@ -49,7 +49,9 @@ pub static COOPERATIVE_MATRIX_F32: GpuTestConfiguration = GpuTestConfiguration::
 pub static COOPERATIVE_MATRIX_F16: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
-            .features(etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX | etalon::Features::SHADER_F16)
+            .features(
+                etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX | etalon::Features::SHADER_F16,
+            )
             .limits(etalon::Limits::default()),
     )
     .run_async(|ctx| async move {

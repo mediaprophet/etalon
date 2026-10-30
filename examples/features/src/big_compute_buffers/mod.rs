@@ -4,8 +4,8 @@
 //! A lot of things aren't explained here via comments. See hello-compute and
 //! repeated-compute for code that is more thoroughly commented.
 
-use std::num::{NonZeroU32, NonZeroU64};
 use etalon::{util::DeviceExt, Features};
+use std::num::{NonZeroU32, NonZeroU64};
 
 // These are set by the minimum required defaults for webgpu.
 const MAX_BUFFER_SIZE: u64 = 1 << 27; // 134_217_728 // 134MB

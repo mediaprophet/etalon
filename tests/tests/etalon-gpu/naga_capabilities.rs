@@ -16,8 +16,7 @@ pub fn validate_capabilities(ctx: TestingContext) {
         etalon::Backend::Vulkan => naga::back::spv::supported_capabilities(),
         etalon::Backend::Dx12 => naga::back::hlsl::supported_capabilities(),
         etalon::Backend::Metal => {
-            naga::back::msl::supported_capabilities()
-                | Caps::BUFFER_BINDING_ARRAY
+            naga::back::msl::supported_capabilities() | Caps::BUFFER_BINDING_ARRAY
         }
         etalon::Backend::Gl => naga::back::glsl::supported_capabilities(),
         etalon::Backend::BrowserWebGpu => naga::back::wgsl::supported_capabilities(),

@@ -4,9 +4,9 @@
 //! we do testing to ensure the overall operation (which is very simple)
 //! works correctly.
 
-use nanorand::Rng;
 use etalon::{util::DeviceExt, Limits};
 use etalon_test::{apply, gpu_test, GpuTestConfiguration, TestParameters, TestingContext};
+use nanorand::Rng;
 
 pub fn all_tests(vec: &mut Vec<etalon_test::GpuTestInitializer>) {
     vec.extend([U64_MUL_U32, SHIFT_RIGHT_U96]);
@@ -197,7 +197,8 @@ fn test_shift_right_u96(ctx: TestingContext) {
 }
 
 fn process_shader(ctx: TestingContext, inputs: &[u8], entry_point_src: &str) -> Vec<u8> {
-    let common_src = include_str!("../../../../etalon-core/src/timestamp_normalization/common.wgsl");
+    let common_src =
+        include_str!("../../../../etalon-core/src/timestamp_normalization/common.wgsl");
 
     let full_source = format!("{common_src}\n{entry_point_src}");
 

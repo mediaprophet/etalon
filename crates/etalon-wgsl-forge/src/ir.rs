@@ -1,7 +1,7 @@
 //! Pure operation IR and tensor descriptors decoupled from database storage.
 
-use std::collections::BTreeSet;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeSet;
 use thiserror::Error;
 
 pub use crate::ir_builtins::BuiltinKernel;
@@ -64,7 +64,9 @@ pub enum DType {
 
 /// 64-byte aligned GPU descriptor container for P64 weight records.
 #[repr(C, align(16))]
-#[derive(Clone, Copy, Debug, PartialEq, Eq, bytemuck::Pod, bytemuck::Zeroable, Serialize, Deserialize)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, bytemuck::Pod, bytemuck::Zeroable, Serialize, Deserialize,
+)]
 pub struct P64GpuWords64 {
     pub lanes: [[u32; 4]; 4],
 }

@@ -9,12 +9,15 @@
 ## Bug 1.1: Fix Unstable Atomic Scatter in GPU LSD Radix Sort
 
 ### Root Cause
+
 In [`c:\github\qualiaDB\crates\qualia-core-db\src\shaders\graph_radix_scatter.wgsl`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/shaders/graph_radix_scatter.wgsl#L27-L38) (lines 27–38):
+
 ```wgsl
 let d = digit_at(i, params.shift);
 let pos = atomicAdd(&offsets[d], 1u);
 keys_out[pos * 2u] = keys_in[i * 2u];
 ```
+
 **Why this is a fatal correctness bug:** Least-Significant-Digit (LSD) radix sort requires **every digit pass to be a stable permutation** of the previous pass. Because `atomicAdd(&offsets[d], 1u)` assigns output slots in hardware thread/workgroup arrival order rather than input index order `i`, Pass 1..7 (where high bytes of `[1, 2]` are both `0x00`) can schedule thread `i = 1` before thread `i = 0`, turning the already-sorted `[1, 2]` into `[2, 1]`! The host loop at [`query/graph_accel/gpu.rs:323-336`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/query/graph_accel/gpu.rs#L323-L336) detects that the output is unsorted and silently falls back to CPU after wasting 16 GPU dispatches and 8 PCIe readbacks.
 
 ### Exact Fix Instructions
@@ -25,6 +28,7 @@ keys_out[pos * 2u] = keys_in[i * 2u];
    - **Pass C (`stable_scatter`):** Within each workgroup of 256 threads, compute the exact stable rank of element `lid.x` among threads `< lid.x` in the same workgroup that share digit `d`.
 
 2. **Replacement Shader for `graph_radix_scatter.wgsl`:**
+
 ```wgsl
 // Target: c:\github\qualiaDB\crates\qualia-core-db\src\shaders\graph_radix_scatter.wgsl
 // Stable intra-workgroup rank scatter for LSD radix sort.
@@ -86,6 +90,7 @@ fn main(
 ```
 
 3. **Update `c:\github\qualiaDB\crates\qualia-core-db\src\shaders\graph_radix_hist.wgsl`:**
+
 ```wgsl
 // Target: c:\github\qualiaDB\crates\qualia-core-db\src\shaders\graph_radix_hist.wgsl
 struct Params {
@@ -139,14 +144,18 @@ fn main(
 ## Bug 1.2: Fix False-Positive Metal Mega-Pass Capability Reporting
 
 ### Root Cause
+
 In [`c:\github\qualiaDB\crates\qualia-core-db\src\inference\metal_lane.rs:110-119`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/inference/metal_lane.rs#L110-L119):
+
 - `metal_mega_pass_available()` returns `true` whenever `#[cfg(all(target_os = "macos", feature = "metal-native"))]` is active, even though `try_metal_mega_pass()` at lines 97–105 unconditionally logs `"metal_mega_pass: not yet implemented on this build"` and returns `None`!
 - Similarly, [`wgsl_forge/execute/wgpu.rs:1109-1130`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/wgsl_forge/execute/wgpu.rs#L1109-L1130) (`compile_msl`) returns an unimplemented error.
 
 ### Exact Fix Instructions
+
 1. Edit [`c:\github\qualiaDB\crates\qualia-core-db\src\inference\metal_lane.rs`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/inference/metal_lane.rs#L108-L120):
    - Change `metal_mega_pass_available()` to return `false` until native `metal-rs` command-buffer execution is actually wired and passes parity tests.
    - Note that Apple Silicon GPU execution via `Etalon`'s Metal backend (`wgpu` WGSL $\rightarrow$ `naga::back::msl` with `simdgroup_matrix`) **is** implemented and active via `ResidentFullToken`; only the standalone `metal-rs` bypass in `metal_lane.rs` is a stub.
+
 ```rust
 // Target: c:\github\qualiaDB\crates\qualia-core-db\src\inference\metal_lane.rs:110
 pub fn metal_mega_pass_available() -> bool {
@@ -161,7 +170,9 @@ pub fn metal_mega_pass_available() -> bool {
 ## Bug 1.3: Remove WASM32 Synchronous 10,000-Iteration Spin-Poll in `map_read`
 
 ### Root Cause
+
 In [`c:\github\qualiaDB\crates\qualia-core-db\src\query\graph_accel\gpu.rs:94-113`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/query/graph_accel/gpu.rs#L94-L113):
+
 ```rust
 #[cfg(target_arch = "wasm32")]
 {
@@ -172,9 +183,11 @@ In [`c:\github\qualiaDB\crates\qualia-core-db\src\query\graph_accel\gpu.rs:94-11
     }
 }
 ```
+
 In a browser (`wasm32`), `Buffer::map_async` resolves via a JavaScript Promise on the microtask queue. A synchronous Rust `for _ in 0..10_000` loop never yields control to the browser event loop, so the callback can **never** fire during the loop! It simply burns 10,000 poll calls and returns `None`.
 
 ### Exact Fix Instructions
+
 1. In synchronous functions (`radix_sort_u64_indices_gpu`, `sieve_eq_indices_gpu`), immediately return `None` on `#[cfg(target_arch = "wasm32")]` (allowing the caller to use the zero-latency synchronous CPU path without burning 10,000 wasted WebGPU polls).
 2. Add an `async fn map_read_async(device: &wgpu::Device, staging: &wgpu::Buffer, size: u64) -> Option<Vec<u8>>` using `futures_channel::oneshot` (or `wasm_bindgen_futures`) for callers running inside the async Web Worker (`crates/etalon-wasm`).
 
@@ -183,6 +196,7 @@ In a browser (`wasm32`), `Buffer::map_async` resolves via a JavaScript Promise o
 ## Bug 1.4: Fix DXC Subprocess Temp-File Race & Cache-Key Concatenation Bug
 
 ### Root Cause
+
 1. **Hash Collision Vulnerability (`dxc_cache.rs:12-18`):**
    [`c:\github\qualiaDB\crates\qualia-core-db\src\wgsl_forge\emit\dxc_cache.rs:13-18`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/wgsl_forge/emit/dxc_cache.rs#L13-L18) computes:
    ```rust
@@ -194,7 +208,9 @@ In a browser (`wasm32`), `Buffer::map_async` resolves via a JavaScript Promise o
    [`c:\github\qualiaDB\crates\qualia-core-db\src\wgsl_forge\emit\dxc.rs:34-40`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/wgsl_forge/emit/dxc.rs#L34-L40) writes `qualia_dxc_in_{pid}_{entry_point}.hlsl` directly to `std::env::temp_dir()`. Two threads in the same process compiling the same `entry_point` overwrite each other's files and violate `Rule 0-B`.
 
 ### Exact Fix Instructions
+
 1. **Fix `cache_key` in `dxc_cache.rs:12-18`:**
+
 ```rust
 const DXC_CACHE_SCHEMA_V2: &[u8] = b"etalon-dxc-cache-v2";
 
@@ -214,6 +230,7 @@ fn cache_key(hlsl_source: &str, entry_point: &str, target_profile: &str, flags: 
     *hasher.finalize().as_bytes()
 }
 ```
+
 2. **Fix `dxc.rs:34-78`:**
    - Primary path: Use `naga` in-memory compilation (`naga::front::wgsl` $\rightarrow$ `naga::back::spv` / `naga::back::hlsl`).
    - If the external DXC fallback is invoked in cold tooling, allocate a thread-unique `tempfile::TempDir::with_prefix("etalon-dxc-")` that automatically cleans up on drop/panic (`Rule 0-B`).
@@ -223,10 +240,12 @@ fn cache_key(hlsl_source: &str, entry_point: &str, target_profile: &str, flags: 
 ## Bug 1.5: Unblock Vulkan Cooperative Matrix & Fix `M = 1` WMMA GEMV Waste
 
 ### Root Cause
+
 1. In [`c:\github\qualiaDB\crates\qualia-core-db\src\wgsl_forge\emit\coopmat.rs:14-18`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/wgsl_forge/emit/coopmat.rs#L14-L18), `WGPU_COOPMAT_BLOCKED` is hardcoded to `true` because of wgpu 29.0.3 bug #9729 (`coopMultiplyAdd` returning all zeros due to missing `vulkanMemoryModelDeviceScope`). In `etalon` (`etalon-hal/src/vulkan/adapter.rs:628-645`), `.vulkan_memory_model_device_scope(needed)` is **already enabled**!
 2. In [`c:\github\qualiaDB\crates\qualia-core-db\src\wgsl_forge\emit\cuda_c.rs:315-422`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/wgsl_forge/emit/cuda_c.rs#L315-L422), `Q4K_SOA_WMMA_GEMV_SRC` uses `16x16x16` `wmma::mma_sync` for `M = 1` by padding 15 rows of zeros (`cuda_c.rs:373-376`), wasting $93.75\%$ of Tensor Core compute.
 
 ### Exact Fix Instructions
+
 1. In `wgsl_forge/emit/coopmat.rs:14-18`, set:
    ```rust
    pub const WGPU_API_VERSION: &str = "30.0.0-etalon";
@@ -241,9 +260,11 @@ fn cache_key(hlsl_source: &str, entry_point: &str, target_profile: &str, flags: 
 ## Bug 1.6: Tighten Zero-Allocation Test Gate in `uniform_belt.rs`
 
 ### Root Cause
+
 In [`c:\github\qualiaDB\crates\qualia-core-db\src\render\gpu\uniform_belt.rs:266-313`](file:///c:/github/qualiaDB/crates/qualia-core-db/src/render/gpu/uniform_belt.rs#L266-L313), the test checks `allocs < 50` and silently passes if no GPU is found.
 
 ### Exact Fix Instructions
+
 1. Separate the test into two explicit assertions:
    - **Pure Ring/Sub-allocation Logic Test (No GPU Driver Required):** Test `QualiaSlabAllocator::allocate` (`wgsl_forge/execute/memory.rs:152`) and `UniformBelt` offset advancing over 1,000 frames with `assert_eq!(measured_allocs, 0)` (strictly zero allocations, never skipped).
    - **Hardware Submission Test:** Measure `UniformBelt::write` + `recall` after 1 warmup frame; record driver-internal allocations separately from Etalon/application-owned allocations.

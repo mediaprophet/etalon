@@ -90,7 +90,10 @@ impl ApplicationHandler for App {
     }
 }
 
-fn tex_bind_entry(binding: u32, resource: etalon::BindingResource<'_>) -> etalon::BindGroupEntry<'_> {
+fn tex_bind_entry(
+    binding: u32,
+    resource: etalon::BindingResource<'_>,
+) -> etalon::BindGroupEntry<'_> {
     etalon::BindGroupEntry { binding, resource }
 }
 
@@ -100,14 +103,16 @@ impl State {
         let width = size.width.max(1);
         let height = size.height.max(1);
 
-        let instance =
-            etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle_from_env());
+        let instance = etalon::Instance::new(
+            etalon::InstanceDescriptor::new_without_display_handle_from_env(),
+        );
         let surface = instance.create_surface(window.clone()).unwrap();
-        let adapter = pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions {
-            compatible_surface: Some(&surface),
-            ..Default::default()
-        }))
-        .expect("No adapter");
+        let adapter =
+            pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions {
+                compatible_surface: Some(&surface),
+                ..Default::default()
+            }))
+            .expect("No adapter");
 
         println!("Adapter: {:?}", adapter.get_info().name);
 
@@ -117,11 +122,12 @@ impl State {
             "Texture atomics not supported"
         );
 
-        let (device, queue) = pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
-            required_features: required,
-            ..Default::default()
-        }))
-        .unwrap();
+        let (device, queue) =
+            pollster::block_on(adapter.request_device(&etalon::DeviceDescriptor {
+                required_features: required,
+                ..Default::default()
+            }))
+            .unwrap();
 
         let surface_format = surface.get_capabilities(&adapter).formats[0];
         let surface_config = etalon::SurfaceConfiguration {

@@ -204,12 +204,12 @@ static BUFFERS_AND_ACCEL_STRUCTS_EXCEEDS_SINGLE_BGL: GpuTestConfiguration =
             fail(
                 &ctx.device,
                 || {
-                    let _ = ctx
-                        .device
-                        .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-                            label: None,
-                            entries: &entries,
-                        });
+                    let _ =
+                        ctx.device
+                            .create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                                label: None,
+                                entries: &entries,
+                            });
                 },
                 Some("max_buffers_and_acceleration_structures_per_shader_stage"),
             );

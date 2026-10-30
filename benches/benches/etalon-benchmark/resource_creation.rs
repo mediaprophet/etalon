@@ -1,7 +1,7 @@
 use std::time::Instant;
 
-use rayon::iter::{IntoParallelIterator, ParallelIterator};
 use etalon_benchmark::{iter, BenchmarkContext, SubBenchResult};
+use rayon::iter::{IntoParallelIterator, ParallelIterator};
 
 use crate::DeviceState;
 

@@ -1,8 +1,8 @@
 use alloc::{format, string::String, vec::Vec};
 
+use etalon_sync::{Mutex, RwLock};
 use glow::HasContext;
 use wasm_bindgen::{JsCast, JsValue};
-use etalon_sync::{Mutex, RwLock};
 
 use super::TextureFormatDesc;
 

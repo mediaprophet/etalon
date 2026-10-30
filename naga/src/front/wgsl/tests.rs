@@ -3,6 +3,33 @@ use alloc::format;
 use super::parse_str;
 
 #[test]
+fn parse_f16_hex_literals_require_enable_and_exact_representation() {
+    for (literal, bits) in [
+        ("0x3p+2h", 0x4a00),
+        ("0x3.2p+2h", 0x4a40),
+        ("0x1.ffcp15h", 0x7bff),
+        ("-0x1.ffcp15h", 0xfbff),
+        ("0x1p-24h", 0x0001),
+    ] {
+        assert!(parse_str(&format!("const value = {literal};")).is_err());
+        let module = parse_str(&format!("enable f16; const value = {literal};")).unwrap();
+        let (_, constant) = module.constants.iter().next().unwrap();
+        match module.global_expressions[constant.init] {
+            crate::Expression::Literal(crate::Literal::F16(value)) => {
+                assert_eq!(value.to_bits(), bits, "{literal}");
+            }
+            ref expression => panic!("unexpected literal {expression:?}"),
+        }
+    }
+    for literal in ["0x1p16h", "-0x1p16h", "0x1.001p0h", "0x1p-25h"] {
+        assert!(
+            parse_str(&format!("enable f16; const value = {literal};")).is_err(),
+            "{literal} must not be accepted"
+        );
+    }
+}
+
+#[test]
 fn parse_comment() {
     parse_str(
         "//

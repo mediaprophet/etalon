@@ -93,7 +93,9 @@ fn create_int64_atomic_min_max_test() -> Vec<ShaderTest> {
 static INT64_ATOMIC_MIN_MAX: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
-            .features(etalon::Features::SHADER_INT64 | etalon::Features::SHADER_INT64_ATOMIC_MIN_MAX)
+            .features(
+                etalon::Features::SHADER_INT64 | etalon::Features::SHADER_INT64_ATOMIC_MIN_MAX,
+            )
             .downlevel_flags(DownlevelFlags::COMPUTE_SHADERS)
             .limits(Limits::downlevel_defaults()),
     )
@@ -148,7 +150,9 @@ fn create_int64_atomic_all_ops_test() -> Vec<ShaderTest> {
 static INT64_ATOMIC_ALL_OPS: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
         TestParameters::default()
-            .features(etalon::Features::SHADER_INT64 | etalon::Features::SHADER_INT64_ATOMIC_ALL_OPS)
+            .features(
+                etalon::Features::SHADER_INT64 | etalon::Features::SHADER_INT64_ATOMIC_ALL_OPS,
+            )
             .downlevel_flags(DownlevelFlags::COMPUTE_SHADERS)
             .limits(Limits::downlevel_defaults()),
     )

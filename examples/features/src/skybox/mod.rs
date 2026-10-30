@@ -1,6 +1,6 @@
 use bytemuck::{Pod, Zeroable};
-use std::f32::consts;
 use etalon::{util::DeviceExt, AstcBlock, AstcChannel};
+use std::f32::consts;
 
 const IMAGE_SIZE: u32 = 256;
 
@@ -125,11 +125,12 @@ impl crate::framework::Example for Example {
                             }
                         }
                     }
-                    let vertex_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
-                        label: Some("Vertex"),
-                        contents: bytemuck::cast_slice(&vertices),
-                        usage: etalon::BufferUsages::VERTEX,
-                    });
+                    let vertex_buf =
+                        device.create_buffer_init(&etalon::util::BufferInitDescriptor {
+                            label: Some("Vertex"),
+                            contents: bytemuck::cast_slice(&vertices),
+                            usage: etalon::BufferUsages::VERTEX,
+                        });
                     entities.push(Entity {
                         vertex_count: vertices.len() as u32,
                         vertex_buf,
@@ -138,37 +139,38 @@ impl crate::framework::Example for Example {
             }
         }
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: None,
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: None,
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::VERTEX | etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Texture {
-                        sample_type: etalon::TextureSampleType::Float { filterable: true },
-                        multisampled: false,
-                        view_dimension: etalon::TextureViewDimension::Cube,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            multisampled: false,
+                            view_dimension: etalon::TextureViewDimension::Cube,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-        });
+                    etalon::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+            });
 
         // Create the render pipeline
         let shader = device.create_shader_module(etalon::include_wgsl!("shader.wgsl"));
@@ -271,7 +273,8 @@ impl crate::framework::Example for Example {
 
         let device_features = device.features();
 
-        let skybox_format = if device_features.contains(etalon::Features::TEXTURE_COMPRESSION_ASTC) {
+        let skybox_format = if device_features.contains(etalon::Features::TEXTURE_COMPRESSION_ASTC)
+        {
             log::info!("Using astc");
             etalon::TextureFormat::Astc {
                 block: AstcBlock::B4x4,
@@ -401,7 +404,12 @@ impl crate::framework::Example for Example {
         self.camera.screen_size = (config.width, config.height);
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let mut encoder =
             device.create_command_encoder(&etalon::CommandEncoderDescriptor { label: None });
 

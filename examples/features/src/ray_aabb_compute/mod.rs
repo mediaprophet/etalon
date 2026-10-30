@@ -1,8 +1,8 @@
 use std::{borrow::Cow, iter, mem};
 
 use bytemuck::{Pod, Zeroable};
-use glam::{Affine3A, Mat4, Quat, Vec3};
 use etalon::util::DeviceExt;
+use glam::{Affine3A, Mat4, Quat, Vec3};
 
 use etalon::StoreOp;
 
@@ -337,7 +337,12 @@ impl crate::framework::Example for Example {
     ) {
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         let anim_time = self.animation_timer.time();
 
         self.tlas[0].as_mut().unwrap().transform =

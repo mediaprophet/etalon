@@ -1,5 +1,3 @@
-use glam::{Mat4, Vec3};
-use std::mem;
 use etalon::util::{BufferInitDescriptor, DeviceExt};
 use etalon::{include_wgsl, BufferUsages, IndexFormat, SamplerDescriptor};
 use etalon::{
@@ -7,6 +5,8 @@ use etalon::{
     BlasGeometrySizeDescriptors, BlasTriangleGeometry, BlasTriangleGeometrySizeDescriptor,
     CreateBlasDescriptor, CreateTlasDescriptor, Tlas, TlasInstance,
 };
+use glam::{Mat4, Vec3};
+use std::mem;
 
 use crate::utils;
 
@@ -219,7 +219,8 @@ impl crate::framework::Example for Example {
             usage: BufferUsages::UNIFORM,
         });
 
-        let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
+        let mut encoder =
+            device.create_command_encoder(&etalon::CommandEncoderDescriptor::default());
 
         encoder.build_acceleration_structures(
             Some(&BlasBuildEntry {
@@ -287,11 +288,12 @@ impl crate::framework::Example for Example {
             cache: None,
         });
 
-        let blit_pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-            label: Some("pipeline layout for blit.wgsl"),
-            bind_group_layouts: &[Some(&blit_bgl)],
-            immediate_size: 0,
-        });
+        let blit_pipeline_layout =
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                label: Some("pipeline layout for blit.wgsl"),
+                bind_group_layouts: &[Some(&blit_bgl)],
+                immediate_size: 0,
+            });
 
         let blit_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("pipeline for blit.wgsl"),
@@ -378,7 +380,12 @@ impl crate::framework::Example for Example {
 
     fn update(&mut self, _event: winit::event::WindowEvent) {}
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         self.tlas[0].as_mut().unwrap().transform =
             Mat4::from_rotation_y(self.animation_timer.time())
                 .transpose()

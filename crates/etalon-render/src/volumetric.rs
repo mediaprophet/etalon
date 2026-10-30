@@ -539,9 +539,10 @@ impl VolumetricPipeline {
                     ty: etalon::BindingType::Buffer {
                         ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
-                        min_binding_size: core::num::NonZeroU64::new(
-                            core::mem::size_of::<CameraUniform>() as u64,
-                        ),
+                        min_binding_size: core::num::NonZeroU64::new(core::mem::size_of::<
+                            CameraUniform,
+                        >()
+                            as u64),
                     },
                     count: None,
                 },
@@ -551,9 +552,10 @@ impl VolumetricPipeline {
                     ty: etalon::BindingType::Buffer {
                         ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
-                        min_binding_size: core::num::NonZeroU64::new(
-                            core::mem::size_of::<ObserverStandpointUniform>() as u64,
-                        ),
+                        min_binding_size: core::num::NonZeroU64::new(core::mem::size_of::<
+                            ObserverStandpointUniform,
+                        >()
+                            as u64),
                     },
                     count: None,
                 },
@@ -568,9 +570,9 @@ impl VolumetricPipeline {
                 ty: etalon::BindingType::Buffer {
                     ty: etalon::BufferBindingType::Storage { read_only: true },
                     has_dynamic_offset: false,
-                    min_binding_size: core::num::NonZeroU64::new(
-                        core::mem::size_of::<HolographicNodeGpu>() as u64,
-                    ),
+                    min_binding_size: core::num::NonZeroU64::new(core::mem::size_of::<
+                        HolographicNodeGpu,
+                    >() as u64),
                 },
                 count: None,
             }],

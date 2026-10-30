@@ -2,8 +2,8 @@
 
 #![no_std]
 
-use naga::valid::Capabilities as Caps;
 use etalon_types as wgt;
+use naga::valid::Capabilities as Caps;
 
 /// Map [`wgt::Features`] and [`wgt::DownlevelFlags`] to [`naga::valid::Capabilities`].
 pub fn features_to_naga_capabilities(

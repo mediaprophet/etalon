@@ -138,7 +138,7 @@ pub const fn should_use_coopmat(shape: &CoopMatShape) -> bool {
     if !shape.is_valid_tile_config() {
         return false;
     }
-    shape.n % shape.tile_n == 0 && shape.k % shape.tile_k == 0
+    shape.n.is_multiple_of(shape.tile_n) && shape.k.is_multiple_of(shape.tile_k)
 }
 
 /// Emits the cooperative-matrix 8x8 GEMM tile `C = A * B`, all-f32.

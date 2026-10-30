@@ -31,10 +31,13 @@ impl BufferRegion {
     /// Validates alignment and capacity boundaries.
     pub fn validate(&self, total_capacity: u64, min_align: u32) -> Result<(), &'static str> {
         let align = self.alignment.max(min_align);
-        if align > 0 && (self.byte_offset % align as u64 != 0) {
+        if align > 0 && !self.byte_offset.is_multiple_of(u64::from(align)) {
             return Err("BufferRegion alignment violation");
         }
-        let end = self.byte_offset.checked_add(self.byte_len).ok_or("BufferRegion offset overflow")?;
+        let end = self
+            .byte_offset
+            .checked_add(self.byte_len)
+            .ok_or("BufferRegion offset overflow")?;
         if end > total_capacity {
             return Err("BufferRegion exceeds allocation bounds");
         }

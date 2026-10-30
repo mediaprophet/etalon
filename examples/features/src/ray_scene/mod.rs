@@ -1,10 +1,10 @@
 use crate::utils;
 use bytemuck::{Pod, Zeroable};
+use etalon::util::DeviceExt;
 use glam::{Mat4, Quat, Vec3};
 use std::f32::consts::PI;
 use std::ops::IndexMut;
 use std::{borrow::Cow, iter, mem, ops::Range};
-use etalon::util::DeviceExt;
 
 // from cube
 #[repr(C)]
@@ -442,7 +442,12 @@ impl crate::framework::Example for Example {
         queue.write_buffer(&self.uniform_buf, 0, bytemuck::cast_slice(&[self.uniforms]));
     }
 
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         // scene update
         {
             let dist = 3.5;

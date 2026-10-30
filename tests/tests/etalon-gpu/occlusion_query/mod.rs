@@ -31,7 +31,8 @@ static OCCLUSION_QUERY: GpuTestConfiguration = GpuTestConfiguration::new()
             usage: etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
-        let depth_texture_view = depth_texture.create_view(&etalon::TextureViewDescriptor::default());
+        let depth_texture_view =
+            depth_texture.create_view(&etalon::TextureViewDescriptor::default());
 
         // Setup pipeline using a simple shader with hardcoded vertices
         let shader = ctx

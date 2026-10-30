@@ -146,7 +146,9 @@ async fn partial_update_test(ctx: TestingContext) {
 
     encoder.copy_buffer_to_buffer(&gpu_buffer, 0, &cpu_buffer, 0, 32);
     ctx.queue.submit([encoder.finish()]);
-    cpu_buffer.slice(..).map_async(etalon::MapMode::Read, |_| ());
+    cpu_buffer
+        .slice(..)
+        .map_async(etalon::MapMode::Read, |_| ());
     ctx.async_poll(etalon::PollType::wait_indefinitely())
         .await
         .unwrap();

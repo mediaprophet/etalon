@@ -1,8 +1,8 @@
 // Flocking boids example with gpu compute update pass
 // adapted from https://github.com/austinEng/webgpu-samples/blob/master/src/examples/computeBoids.ts
 
-use nanorand::{Rng, WyRand};
 use etalon::util::DeviceExt;
+use nanorand::{Rng, WyRand};
 
 // number of boid particles to simulate
 
@@ -258,7 +258,12 @@ impl crate::framework::Example for Example {
 
     /// render is called each frame, dispatching compute groups proportional
     ///   a TriangleList draw call for all NUM_PARTICLES at 3 vertices each
-    fn render(&mut self, view: &etalon::TextureView, device: &etalon::Device, queue: &etalon::Queue) {
+    fn render(
+        &mut self,
+        view: &etalon::TextureView,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+    ) {
         // create render pass descriptor and its color attachments
         let color_attachments = [Some(etalon::RenderPassColorAttachment {
             view,

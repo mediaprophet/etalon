@@ -96,10 +96,10 @@ use alloc::{borrow::ToOwned as _, string::String, sync::Arc, vec::Vec};
 use core::{ffi, fmt, mem, ops::Deref};
 
 use arrayvec::ArrayVec;
-use hashbrown::HashMap;
-use suballocation::Allocator;
 use etalon_sync::atomic::AtomicU64;
 use etalon_sync::{Mutex, RwLock};
+use hashbrown::HashMap;
+use suballocation::Allocator;
 use windows::{
     core::{Free as _, Interface},
     Win32::{

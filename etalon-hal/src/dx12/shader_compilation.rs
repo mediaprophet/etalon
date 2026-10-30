@@ -52,16 +52,8 @@ impl CompilerContainer {
 
         let compiler = dxc.create_instance::<Dxc::IDxcCompiler3>()?;
 
-        let (mut major, mut minor) = (1, 0);
-        // DXC 1.0 didn't support this. If the cast fails assume it is DXC 1.0.
-        if let Ok(version_info) = compiler.cast::<Dxc::IDxcVersionInfo>() {
-            unsafe {
-                version_info.GetVersion(&mut major, &mut minor).unwrap();
-            }
-        }
-
         Ok(Self::DynamicDxc(CompilerDynamicDxc {
-            max_shader_model: wgt::DxcShaderModel::from_dxc_version(major, minor),
+            max_shader_model: compiler_shader_model(&compiler)?,
             compiler,
             _dxc: dxc,
         }))
@@ -81,7 +73,7 @@ impl CompilerContainer {
                 })?;
 
                 Ok(CompilerContainer::StaticDxc(CompilerStaticDxc {
-                    max_shader_model: wgt::DxcShaderModel::V6_7,
+                    max_shader_model: compiler_shader_model(&compiler)?,
                     compiler,
                 }))
             }
@@ -269,6 +261,88 @@ fn compile_fxc(
                 let _ = write!(full_msg, ": {}", String::from_utf8_lossy(message));
             }
             Err(crate::PipelineError::Linkage(stage_bit, full_msg))
+        }
+    }
+}
+
+fn compiler_shader_model(
+    compiler: &Dxc::IDxcCompiler3,
+) -> Result<wgt::DxcShaderModel, crate::DeviceError> {
+    let (mut major, mut minor) = (1, 0);
+    if let Ok(version_info) = compiler.cast::<Dxc::IDxcVersionInfo>() {
+        unsafe { version_info.GetVersion(&mut major, &mut minor) }
+            .into_device_result("IDxcVersionInfo::GetVersion")?;
+    }
+    Ok(wgt::DxcShaderModel::from_dxc_version(major, minor))
+}
+
+#[cfg(all(test, static_dxc))]
+#[test]
+fn bundled_dxc_compiles_its_reported_shader_model_and_rejects_invalid_source() {
+    let container = CompilerContainer::new_static_dxc().expect("bundled DXC initialization");
+    let CompilerContainer::StaticDxc(static_compiler) = &container else {
+        panic!("expected bundled DXC");
+    };
+    let compiler = &static_compiler.compiler;
+    let version = compiler
+        .cast::<Dxc::IDxcVersionInfo>()
+        .expect("bundled DXC version interface");
+    let (mut major, mut minor) = (0, 0);
+    unsafe { version.GetVersion(&mut major, &mut minor) }.expect("bundled DXC version");
+    assert!(major >= 1, "invalid bundled DXC version {major}.{minor}");
+    let model = container.max_shader_model().expect("DXC shader model");
+    assert_eq!(model, wgt::DxcShaderModel::from_dxc_version(major, minor));
+    let profile = match model {
+        wgt::DxcShaderModel::V6_0 => "cs_6_0",
+        wgt::DxcShaderModel::V6_1 => "cs_6_1",
+        wgt::DxcShaderModel::V6_2 => "cs_6_2",
+        wgt::DxcShaderModel::V6_3 => "cs_6_3",
+        wgt::DxcShaderModel::V6_4 => "cs_6_4",
+        wgt::DxcShaderModel::V6_5 => "cs_6_5",
+        wgt::DxcShaderModel::V6_6 => "cs_6_6",
+        wgt::DxcShaderModel::V6_7 => "cs_6_7",
+        wgt::DxcShaderModel::V6_8 => "cs_6_8",
+        wgt::DxcShaderModel::V6_9 => "cs_6_9",
+    };
+    let target = OPCWSTR::new(profile);
+    let args = [
+        windows::core::w!("-E"),
+        windows::core::w!("main"),
+        windows::core::w!("-T"),
+        target.ptr(),
+    ];
+    for (source, valid) in [
+        ("[numthreads(1, 1, 1)] void main() {}", true),
+        (
+            "[numthreads(1, 1, 1)] void main() { invalid syntax; }",
+            false,
+        ),
+    ] {
+        let buffer = Dxc::DxcBuffer {
+            Ptr: source.as_ptr().cast(),
+            Size: source.len(),
+            Encoding: Dxc::DXC_CP_UTF8.0,
+        };
+        let result: Dxc::IDxcResult = unsafe { compiler.Compile(&buffer, Some(&args), None) }
+            .expect("DXC compilation result");
+        let status = unsafe { result.GetStatus() }.expect("DXC compilation status");
+        let errors = get_output::<Dxc::IDxcBlobUtf8>(&result, Dxc::DXC_OUT_ERRORS)
+            .expect("DXC diagnostic output");
+        let errors = as_err_str(&errors).expect("UTF-8 DXC diagnostics");
+        assert_eq!(
+            status.is_ok(),
+            valid,
+            "bundled DXC {major}.{minor}, {profile}: {errors}"
+        );
+        if valid {
+            let object = get_output::<Dxc::IDxcBlob>(&result, Dxc::DXC_OUT_OBJECT)
+                .expect("compiled DXIL object");
+            assert!(unsafe { object.GetBufferSize() } > 0);
+        } else {
+            assert!(!errors.is_empty(), "invalid source must have diagnostics");
+            if let Ok(object) = get_output::<Dxc::IDxcBlob>(&result, Dxc::DXC_OUT_OBJECT) {
+                assert_eq!(unsafe { object.GetBufferSize() }, 0);
+            }
         }
     }
 }

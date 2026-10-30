@@ -69,13 +69,13 @@ pub fn validate_wgsl(source: &str) -> Result<ValidationReport, ForgeError> {
             .iter()
             .filter(|(_, variable)| variable.binding.is_some())
             .count();
-        return Ok(ValidationReport {
+        Ok(ValidationReport {
             source_hash: blake3::hash(source.as_bytes()).to_hex().to_string(),
             entry_points,
             binding_count,
             naga_validated: true,
             native_tool_validated: None,
-        });
+        })
     }
     #[cfg(not(feature = "naga-validate"))]
     {

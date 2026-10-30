@@ -61,11 +61,11 @@
 #![cfg_attr(not(send_sync), allow(clippy::arc_with_non_send_sync))]
 
 extern crate alloc;
+extern crate etalon_hal as hal;
+extern crate etalon_types as wgt;
 extern crate naga_types as nt;
 #[cfg(any(feature = "std", test))]
 extern crate std;
-extern crate etalon_hal as hal;
-extern crate etalon_types as wgt;
 
 mod as_hal;
 pub mod binding_model;

@@ -37,18 +37,13 @@ pub enum AlignItems {
     Stretch = 3,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq)]
 pub enum SizeRule {
     Fixed(f32),
     Percent(f32),
+    #[default]
     Auto,
     FlexGrow(f32),
-}
-
-impl Default for SizeRule {
-    fn default() -> Self {
-        Self::Auto
-    }
 }
 
 #[repr(C)]
@@ -62,10 +57,20 @@ pub struct Edges {
 
 impl Edges {
     pub const fn all(v: f32) -> Self {
-        Self { left: v, right: v, top: v, bottom: v }
+        Self {
+            left: v,
+            right: v,
+            top: v,
+            bottom: v,
+        }
     }
     pub const fn symmetric(h: f32, v: f32) -> Self {
-        Self { left: h, right: h, top: v, bottom: v }
+        Self {
+            left: h,
+            right: h,
+            top: v,
+            bottom: v,
+        }
     }
     pub fn horizontal(&self) -> f32 {
         self.left + self.right
@@ -179,11 +184,26 @@ impl UiLayoutTree {
                     align_items: AlignItems::Stretch,
                     width: SizeRule::Auto,
                     height: SizeRule::Auto,
-                    padding: Padding { left: 0.0, right: 0.0, top: 0.0, bottom: 0.0 },
-                    margin: Margin { left: 0.0, right: 0.0, top: 0.0, bottom: 0.0 },
+                    padding: Padding {
+                        left: 0.0,
+                        right: 0.0,
+                        top: 0.0,
+                        bottom: 0.0,
+                    },
+                    margin: Margin {
+                        left: 0.0,
+                        right: 0.0,
+                        top: 0.0,
+                        bottom: 0.0,
+                    },
                     gap: 0.0,
                 },
-                computed: ComputedUiRect { x: 0.0, y: 0.0, width: 0.0, height: 0.0 },
+                computed: ComputedUiRect {
+                    x: 0.0,
+                    y: 0.0,
+                    width: 0.0,
+                    height: 0.0,
+                },
                 intrinsic_width: 0.0,
                 intrinsic_height: 0.0,
                 bg_color: [0.0; 4],
@@ -196,7 +216,12 @@ impl UiLayoutTree {
         self.count = 0;
     }
 
-    pub fn add_node(&mut self, parent: u16, style: UiLayoutStyle, bg_color: [f32; 4]) -> Option<u16> {
+    pub fn add_node(
+        &mut self,
+        parent: u16,
+        style: UiLayoutStyle,
+        bg_color: [f32; 4],
+    ) -> Option<u16> {
         if self.count >= MAX_UI_NODES {
             return None;
         }
@@ -306,13 +331,37 @@ impl UiLayoutTree {
             let x1 = rect.x + rect.width;
             let y1 = rect.y + rect.height;
 
-            out[v_idx + 0] = HudVertex { pos: [x0, y0], uv: [0.0, 0.0], color: col };
-            out[v_idx + 1] = HudVertex { pos: [x1, y0], uv: [1.0, 0.0], color: col };
-            out[v_idx + 2] = HudVertex { pos: [x1, y1], uv: [1.0, 1.0], color: col };
+            out[v_idx] = HudVertex {
+                pos: [x0, y0],
+                uv: [0.0, 0.0],
+                color: col,
+            };
+            out[v_idx + 1] = HudVertex {
+                pos: [x1, y0],
+                uv: [1.0, 0.0],
+                color: col,
+            };
+            out[v_idx + 2] = HudVertex {
+                pos: [x1, y1],
+                uv: [1.0, 1.0],
+                color: col,
+            };
 
-            out[v_idx + 3] = HudVertex { pos: [x0, y0], uv: [0.0, 0.0], color: col };
-            out[v_idx + 4] = HudVertex { pos: [x1, y1], uv: [1.0, 1.0], color: col };
-            out[v_idx + 5] = HudVertex { pos: [x0, y1], uv: [0.0, 1.0], color: col };
+            out[v_idx + 3] = HudVertex {
+                pos: [x0, y0],
+                uv: [0.0, 0.0],
+                color: col,
+            };
+            out[v_idx + 4] = HudVertex {
+                pos: [x1, y1],
+                uv: [1.0, 1.0],
+                color: col,
+            };
+            out[v_idx + 5] = HudVertex {
+                pos: [x0, y1],
+                uv: [0.0, 1.0],
+                color: col,
+            };
 
             v_idx += 6;
         }

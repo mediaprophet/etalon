@@ -111,16 +111,16 @@ async fn pipeline_cache_test(ctx: TestingContext) {
                     fallback: false,
                 })
         };
-        let first_pipeline = ctx
-            .device
-            .create_compute_pipeline(&etalon::ComputePipelineDescriptor {
-                label: Some("pipeline"),
-                layout: Some(&pipeline_layout),
-                module: &sm,
-                entry_point: Some("main"),
-                compilation_options: Default::default(),
-                cache: Some(&first_cache),
-            });
+        let first_pipeline =
+            ctx.device
+                .create_compute_pipeline(&etalon::ComputePipelineDescriptor {
+                    label: Some("pipeline"),
+                    layout: Some(&pipeline_layout),
+                    module: &sm,
+                    entry_point: Some("main"),
+                    compilation_options: Default::default(),
+                    cache: Some(&first_cache),
+                });
         validate_pipeline(&ctx, first_pipeline, &bind_group, &gpu_buffer, &cpu_buffer).await;
         first_cache_data = first_cache.get_data();
     }
@@ -178,7 +178,9 @@ async fn validate_pipeline(
 
     encoder.copy_buffer_to_buffer(gpu_buffer, 0, cpu_buffer, 0, ARRAY_SIZE * 4);
     ctx.queue.submit([encoder.finish()]);
-    cpu_buffer.slice(..).map_async(etalon::MapMode::Read, |_| ());
+    cpu_buffer
+        .slice(..)
+        .map_async(etalon::MapMode::Read, |_| ());
     ctx.async_poll(etalon::PollType::wait_indefinitely())
         .await
         .unwrap();

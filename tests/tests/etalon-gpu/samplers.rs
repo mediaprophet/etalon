@@ -385,8 +385,14 @@ fn sampler_bind_group(ctx: TestingContext, group_type: GroupType) {
             etalon::AddressMode::ClampToEdge,
             etalon::AddressMode::ClampToEdge,
         ),
-        (etalon::AddressMode::Repeat, etalon::AddressMode::ClampToEdge),
-        (etalon::AddressMode::ClampToEdge, etalon::AddressMode::Repeat),
+        (
+            etalon::AddressMode::Repeat,
+            etalon::AddressMode::ClampToEdge,
+        ),
+        (
+            etalon::AddressMode::ClampToEdge,
+            etalon::AddressMode::Repeat,
+        ),
     ];
 
     let samplers = address_modes.map(|(address_mode_u, address_mode_v)| {
