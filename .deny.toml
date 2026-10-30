@@ -46,6 +46,10 @@ allow = [
     "Unicode-3.0",
     "Zlib",
 ]
+# MPL-2.0 is allowed only for this crate and version. It is a dependency of
+# deno_core, used only by the cts_runner/deno_etalon conformance-test tooling.
+# Re-review if the version changes.
+exceptions = [{ allow = ["MPL-2.0"], crate = "cooked-waker@5.0.0" }]
 private = { ignore = true }
 
 [sources]
