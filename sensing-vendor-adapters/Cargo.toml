@@ -1,0 +1,20 @@
+[workspace]
+resolver = "3"
+members = [
+    "etalon-sense-npu",
+    "etalon-sense-qnn",
+    "etalon-sense-deployment",
+    "etalon-sense-dsp",
+    "etalon-sense-dsp-hexagon",
+    "etalon-sense-dsp-wire",
+    "etalon-sense-dsp-service",
+    "etalon-sense-fastrpc",
+    "etalon-sense-rtlsdr",
+]
+
+[workspace.package]
+version = "0.0.1"
+edition = "2021"
+rust-version = "1.95"
+license = "CC-BY-NC-ND-4.0"
+publish = false

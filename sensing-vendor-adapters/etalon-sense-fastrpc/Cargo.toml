@@ -1,0 +1,17 @@
+[package]
+name = "etalon-sense-fastrpc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Explicitly admitted synchronous Qualcomm FastRPC sensing transport"
+
+[dependencies]
+etalon-sense-core = { path = "../../crates/etalon-sense-core" }
+etalon-sense-dsp = { path = "../etalon-sense-dsp" }
+etalon-sense-dsp-wire = { path = "../etalon-sense-dsp-wire" }
+etalon-sense-deployment = { path = "../etalon-sense-deployment" }
+
+[target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
+libloading = "=0.8.9"

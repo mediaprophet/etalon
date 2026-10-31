@@ -1,0 +1,41 @@
+{
+  "schema": "qualia.sdk-reference.supplement.v1",
+  "purpose": "Public FastRPC skeleton ABI and IDL source review only; not built or loaded",
+  "files": [
+    {
+      "path": "qualcomm-fastrpc/adspmsgd_apps_skel.c",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/src/adspmsgd_apps_skel.c",
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "bytes": 13807,
+      "sha256": "50238dac415232d4f0608a2ee69458c06504620df9a691da64331d56f937731d"
+    },
+    {
+      "path": "qualcomm-fastrpc/adspmsgd_apps.idl",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/idl/adspmsgd_apps.idl",
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "bytes": 433,
+      "sha256": "43d76e64f5253937e926ef805b3469ee9e87665bb3e9a965d69ed01539337b11"
+    },
+    {
+      "path": "qualcomm-fastrpc/AEEStdDef.idl",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/idl/AEEStdDef.idl",
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "bytes": 1793,
+      "sha256": "dda9bee2163b148be27365c101c11356cbefa691c3687a34586e705c074c7ddc"
+    },
+    {
+      "path": "qualcomm-fastrpc/mod_table.c",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/src/mod_table.c",
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "bytes": 34647,
+      "sha256": "1d785200a12ee1380af383fa582a7b486ae7a1d00e0d1ef5b72e0450d9b67fb7"
+    },
+    {
+      "path": "qualcomm-fastrpc/mod_table.h",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/inc/mod_table.h",
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "bytes": 3431,
+      "sha256": "95b9aee390f56dd481b71177e6e7488764f0c94aef5342cf5a3e8cd0933dc27e"
+    }
+  ]
+}
