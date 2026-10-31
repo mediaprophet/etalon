@@ -33,6 +33,7 @@ mod drm;
 mod instance;
 mod memory;
 mod pnext_chain;
+pub mod prepared;
 mod resolve;
 mod sampler;
 mod semaphore_list;

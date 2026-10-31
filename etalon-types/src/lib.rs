@@ -46,6 +46,7 @@ mod macros;
 pub mod markers;
 pub mod math;
 mod origin_extent;
+mod prepared;
 mod ray_tracing;
 mod render;
 #[doc(hidden)] // without this we get spurious missing_docs warnings
@@ -71,6 +72,7 @@ pub use features::*;
 pub use instance::*;
 pub use limits::*;
 pub use origin_extent::*;
+pub use prepared::*;
 pub use ray_tracing::*;
 pub use render::*;
 #[doc(hidden)]

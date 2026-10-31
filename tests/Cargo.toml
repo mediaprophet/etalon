@@ -30,6 +30,10 @@ harness = true
 name = "etalon-validation"
 harness = true
 
+[[test]]
+name = "etalon-prepared"
+harness = true
+
 [features]
 webgl = ["etalon/webgl"]
 exhaust = ["etalon/exhaust"]

@@ -246,7 +246,7 @@ impl super::DeviceShared {
         })
     }
 
-    fn make_memory_ranges<'a, I: 'a + Iterator<Item = crate::MemoryRange>>(
+    pub(super) fn make_memory_ranges<'a, I: 'a + Iterator<Item = crate::MemoryRange>>(
         &self,
         buffer: &'a super::Buffer,
         ranges: I,

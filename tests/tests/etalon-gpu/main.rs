@@ -57,6 +57,7 @@ mod pipeline;
 mod pipeline_cache;
 mod planar_texture;
 mod poll;
+mod prepared_compute;
 mod primitive_index;
 mod query_set;
 mod queue_transfer;
@@ -132,6 +133,7 @@ fn all_tests() -> Vec<etalon_test::GpuTestInitializer> {
     pipeline::all_tests(&mut tests);
     planar_texture::all_tests(&mut tests);
     poll::all_tests(&mut tests);
+    prepared_compute::all_tests(&mut tests);
     primitive_index::all_tests(&mut tests);
     immediates::all_tests(&mut tests);
     query_set::all_tests(&mut tests);

@@ -1249,6 +1249,15 @@ impl Adapter {
         hal_device: hal::DynOpenDevice,
         desc: &DeviceDescriptor,
     ) -> Result<(Arc<Device>, Arc<Queue>), RequestDeviceError> {
+        unsafe { self.create_device_and_queue_from_hal_inner(hal_device, desc, true) }
+    }
+
+    unsafe fn create_device_and_queue_from_hal_inner(
+        self: &Arc<Self>,
+        hal_device: hal::DynOpenDevice,
+        desc: &DeviceDescriptor,
+        register_with_instance: bool,
+    ) -> Result<(Arc<Device>, Arc<Queue>), RequestDeviceError> {
         profiling::scope!("Adapter::create_device_and_queue_from_hal");
         api_log!("Adapter::create_device_and_queue_from_hal");
 
@@ -1280,7 +1289,9 @@ impl Adapter {
         resource_log!("Created Device {:?}", Arc::as_ptr(&device));
         resource_log!("Created Queue {:?}", Arc::as_ptr(&queue));
 
-        self.instance.devices.push(&device);
+        if register_with_instance {
+            self.instance.devices.push(&device);
+        }
 
         self.consumed.store(true, Ordering::SeqCst);
 
@@ -1375,6 +1386,25 @@ impl Adapter {
         .map_err(DeviceError::from_hal)?;
 
         unsafe { self.create_device_and_queue_from_hal(open, &desc) }
+    }
+
+    #[cfg(all(vulkan, feature = "wgsl"))]
+    pub(crate) fn request_prepared_device(
+        self: &Arc<Self>,
+        desc: &DeviceDescriptor,
+    ) -> Result<(Arc<Device>, Arc<Queue>), RequestDeviceError> {
+        let mut desc = desc.clone();
+        self.validate_device_descriptor(&mut desc)?;
+        let open = unsafe {
+            self.raw.adapter.open(
+                desc.required_features,
+                &desc.required_limits,
+                &desc.memory_hints,
+            )
+        }
+        .map_err(DeviceError::from_hal)?;
+        // Private lanes own polling and retirement; global polling must not destroy their buffers.
+        unsafe { self.create_device_and_queue_from_hal_inner(open, &desc, false) }
     }
 }
 

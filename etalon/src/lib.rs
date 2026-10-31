@@ -129,6 +129,8 @@ pub use wgt::{
 #[expect(deprecated)]
 pub use wgt::VERTEX_STRIDE_ALIGNMENT;
 
+pub use wgt::{PrepareComputeError, PreparedComputeDescriptor, PreparedComputeError};
+
 // wasm-only types, we try to keep as many types non-platform
 // specific, but these need to depend on web-sys.
 #[cfg(web)]
