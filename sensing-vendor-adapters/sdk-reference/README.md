@@ -5,12 +5,8 @@ references, not an installed SDK, executable toolchain, firmware, or a qualified
 hardware backend. Nothing downloaded here was executed, compiled, linked, or
 loaded onto a device. No project data was uploaded.
 
-Etalon is licensed under CC-BY-NC-ND-4.0. The upstream files themselves are
-under their own licenses (GPL-2.0, BSD-3-Clause, BSD-3-Clause-Clear,
-Apache-2.0/MIT), so they are **not committed or redistributed** with Etalon.
-Only the project-authored provenance records, this review and `ABI-REVIEW.md`
-are tracked. To reproduce the local reference set, fetch each file from the
-pinned URL in the provenance records and verify its SHA-256 digest.
+Upstream files here keep their own licenses and are ring-fenced from the rest of
+Etalon. See [`THIRD-PARTY-LICENSES.md`](THIRD-PARTY-LICENSES.md).
 
 ## Sources retained locally
 
