@@ -1,0 +1,15 @@
+[package]
+name = "etalon-sense-rtlsdr"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Explicitly admitted synchronous native RTL-SDR receive support"
+
+[dependencies]
+etalon-sense-deployment = { path = "../etalon-sense-deployment" }
+etalon-sense-core = { path = "../../crates/etalon-sense-core" }
+
+[target.'cfg(any(windows, unix))'.dependencies]
+libloading = "=0.8.9"

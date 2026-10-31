@@ -1,0 +1,39 @@
+{
+  "project": "Osmocom RTL-SDR",
+  "repository": "https://github.com/osmocom/rtl-sdr",
+  "commit": "797f8143266d983c56d8f35d2d442527529dd8a5",
+  "purpose": "Read-only public ABI/source reference, never executed",
+  "license": "GPL-2.0-or-later; upstream notices retained",
+  "budget_bytes": 300000,
+  "total_bytes": 80417,
+  "files": [
+    {
+      "source_path": "include/rtl-sdr.h",
+      "url": "https://raw.githubusercontent.com/osmocom/rtl-sdr/797f8143266d983c56d8f35d2d442527529dd8a5/include/rtl-sdr.h",
+      "local_file": "rtl-sdr.h",
+      "bytes": 13318,
+      "sha256": "e97437079f7de47414b565b75ccf48a59f51e2d61709ee21980f93a35ea630c6"
+    },
+    {
+      "source_path": "src/librtlsdr.c",
+      "url": "https://raw.githubusercontent.com/osmocom/rtl-sdr/797f8143266d983c56d8f35d2d442527529dd8a5/src/librtlsdr.c",
+      "local_file": "librtlsdr.c",
+      "bytes": 48900,
+      "sha256": "8c872716cd6959b3cefb047c4808179b77bedb17dd9572ffc92445d3ded1275c"
+    },
+    {
+      "source_path": "COPYING",
+      "url": "https://raw.githubusercontent.com/osmocom/rtl-sdr/797f8143266d983c56d8f35d2d442527529dd8a5/COPYING",
+      "local_file": "COPYING",
+      "bytes": 17987,
+      "sha256": "ab15fd526bd8dd18a9e77ebc139656bf4d33e97fc7238cd11bf60e2b9b8666c6"
+    },
+    {
+      "source_path": "README",
+      "url": "https://raw.githubusercontent.com/osmocom/rtl-sdr/797f8143266d983c56d8f35d2d442527529dd8a5/README",
+      "local_file": "README",
+      "bytes": 212,
+      "sha256": "621f9cbaf1f4f05219c104943bc362b8c5d928296e530e30e14a75570e7dcb8b"
+    }
+  ]
+}

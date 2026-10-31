@@ -1,0 +1,70 @@
+{
+  "schema": "qualia.sdk-reference.supplement.v1",
+  "purpose": "Public QAIC forward loader ABI source review; no compiler or codegen executed",
+  "total_bytes": 129286,
+  "files": [
+    {
+      "path": "qualcomm-qaic/LICENSE.txt",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/LICENSE.txt",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 1689,
+      "sha256": "3a15c06f7c0f8e38e884e0a20e739fe0d92c1ac0996928af4ab119170603d1f8"
+    },
+    {
+      "path": "qualcomm-qaic/README.md",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/README.md",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 37846,
+      "sha256": "bce26b318f45a1aee6c46b0b94988e2cec8c59fdb17394a5401f964496a5f470"
+    },
+    {
+      "path": "qualcomm-qaic/Skel.c",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/src/Language/SO/Skel.c",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 1018,
+      "sha256": "8599e41d6349df9312ae8ee9b884e636824308171febe3575dd879f26346ce87"
+    },
+    {
+      "path": "qualcomm-qaic/ToCSkel.hs",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/src/Language/SO/ToCSkel.hs",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 25982,
+      "sha256": "215b66485b5da2254f16d983e17982f3b33070ea690a4d1535738d380eace691"
+    },
+    {
+      "path": "qualcomm-qaic/ToCStub.hs",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/src/Language/SO/ToCStub.hs",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 23831,
+      "sha256": "cf7e7f1b7f153ce84e0b50e8e124215f21e0441a721cc2e9817022ce01825177"
+    },
+    {
+      "path": "qualcomm-qaic/calculator.idl",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/testcases/calculator/inc/calculator.idl",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 281,
+      "sha256": "37bb606362d1da16968a813156421d8b40127429d101ab689cccccc319edbe3c"
+    },
+    {
+      "path": "qualcomm-qaic/ToHeader.hs",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/src/Language/SO/ToHeader.hs",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 33986,
+      "sha256": "1f4fbf3a1ec51fe3a8783b2f725de625cab34561835a49921bda3f944508c24f"
+    },
+    {
+      "path": "qualcomm-qaic/CStub.c",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/src/Language/SO/CStub.c",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 3111,
+      "sha256": "5f7bd861ad40c089bde8cc93b68d0687e3f3a240cbab1bcff9b60eb494ce4214"
+    },
+    {
+      "path": "qualcomm-qaic/remote.idl",
+      "source": "https://raw.githubusercontent.com/qualcomm/QAIC/a66a0019fb488abae955bbc9b3a9de3dc15962d0/inc/remote.idl",
+      "commit": "a66a0019fb488abae955bbc9b3a9de3dc15962d0",
+      "bytes": 1542,
+      "sha256": "beea202eb5ee1f0adca7af04850511620172898a6e0cd03f227931aba7f22caf"
+    }
+  ]
+}

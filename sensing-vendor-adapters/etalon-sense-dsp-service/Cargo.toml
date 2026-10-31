@@ -1,0 +1,17 @@
+[package]
+name = "etalon-sense-dsp-service"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Native Hexagon IQ power service and bounded DSP-side RPC boundary"
+
+[features]
+default = []
+ffi = []
+
+[dependencies]
+etalon-sense-core = { path = "../../crates/etalon-sense-core" }
+etalon-sense-dsp-hexagon = { path = "../etalon-sense-dsp-hexagon" }
+etalon-sense-dsp-wire = { path = "../etalon-sense-dsp-wire" }

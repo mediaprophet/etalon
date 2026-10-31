@@ -1,0 +1,12 @@
+[package]
+name = "etalon-sense-dsp-hexagon"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Native no-std Qualcomm Hexagon sensing DSP provider"
+
+[dependencies]
+etalon-sense-core = { path = "../../crates/etalon-sense-core" }
+etalon-sense-dsp = { path = "../etalon-sense-dsp" }

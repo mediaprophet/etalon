@@ -1,0 +1,71 @@
+{
+  "total_bytes": 181061,
+  "downloaded_utc": "2026-10-30T21:33:26.8854974Z",
+  "files": [
+    {
+      "sha256": "683e80f5436e6b0761139e626d2c764870ea0ed19b14916ef4c82772b99c4d44",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/LICENSE.txt",
+      "bytes": 1565,
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "path": "qualcomm-fastrpc/LICENSE.txt"
+    },
+    {
+      "sha256": "05ffa7f0a7a25b2494615427808ad76d2faa4fba550ec1c6c73422a7c53c4bc7",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/README.md",
+      "bytes": 14545,
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "path": "qualcomm-fastrpc/README.md"
+    },
+    {
+      "sha256": "f9d0690cfd8953697d6fc3163c2be448a7b5b801148808c9b1b360857aeabc44",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/inc/remote.h",
+      "bytes": 65625,
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "path": "qualcomm-fastrpc/remote.h"
+    },
+    {
+      "sha256": "363718de80ebcd7c1180477df0b3d5c005cb63fbec7cf6ff0863c3e7c46323b2",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/inc/rpcmem.h",
+      "bytes": 6036,
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "path": "qualcomm-fastrpc/rpcmem.h"
+    },
+    {
+      "sha256": "1a8c16290a34d9605120aba1eec87e767f5ac023b535c8ba62ab94f5fe15f9f9",
+      "source": "https://raw.githubusercontent.com/qualcomm/fastrpc/a56e9d4de3614a8d8f4b0e15ff561350c4b686e3/inc/fastrpc_ioctl.h",
+      "bytes": 7541,
+      "commit": "a56e9d4de3614a8d8f4b0e15ff561350c4b686e3",
+      "path": "qualcomm-fastrpc/fastrpc_ioctl.h"
+    },
+    {
+      "sha256": "1b75dd9e95a2cda193cff7b9ba4a306642c9f6e1454bf99771b3a1e5862b1132",
+      "source": "https://raw.githubusercontent.com/torvalds/linux/7d0a66e4bb9081d75c82ec4957c50034cb0ea449/include/uapi/misc/fastrpc.h",
+      "bytes": 4455,
+      "commit": "7d0a66e4bb9081d75c82ec4957c50034cb0ea449",
+      "path": "linux/fastrpc.h"
+    },
+    {
+      "sha256": "752b97f725116002ee7d813e05ac590024436a54443677868105dca39c91b4bc",
+      "source": "https://raw.githubusercontent.com/torvalds/linux/7d0a66e4bb9081d75c82ec4957c50034cb0ea449/drivers/misc/fastrpc.c",
+      "bytes": 61436,
+      "commit": "7d0a66e4bb9081d75c82ec4957c50034cb0ea449",
+      "path": "linux/fastrpc.c"
+    },
+    {
+      "sha256": "8e378ab93586eb55135d3bc119cce787f7324f48394777d00c34fa3d0be3303f",
+      "source": "https://raw.githubusercontent.com/torvalds/linux/7d0a66e4bb9081d75c82ec4957c50034cb0ea449/LICENSES/exceptions/Linux-syscall-note",
+      "bytes": 1258,
+      "commit": "7d0a66e4bb9081d75c82ec4957c50034cb0ea449",
+      "path": "linux/Linux-syscall-note"
+    },
+    {
+      "sha256": "8780e78a1a737e127f25a65f6d95269bffd36158dc261114de7859b490bfc5aa",
+      "source": "https://raw.githubusercontent.com/torvalds/linux/7d0a66e4bb9081d75c82ec4957c50034cb0ea449/LICENSES/preferred/GPL-2.0",
+      "bytes": 18600,
+      "commit": "7d0a66e4bb9081d75c82ec4957c50034cb0ea449",
+      "path": "linux/GPL-2.0"
+    }
+  ],
+  "purpose": "DSP source review only; not built or loaded",
+  "schema": "qualia.sdk-reference.v1"
+}

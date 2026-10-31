@@ -1,0 +1,27 @@
+{
+  "schema": "qualia.sdk-reference.supplement.v1",
+  "purpose": "Rust Hexagon atomic capability source review only",
+  "files": [
+    {
+      "path": "rust-target/hexagon_unknown_none_elf.rs",
+      "source": "https://raw.githubusercontent.com/rust-lang/rust/59807616e1fa2540724bfbac14d7976d7e4a3860/compiler/rustc_target/src/spec/targets/hexagon_unknown_none_elf.rs",
+      "commit": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "bytes": 1244,
+      "sha256": "4fa240ac868373af4810868af2582edea30ce8f10b879a71955223a892bae0b1"
+    },
+    {
+      "path": "rust-target/LICENSE-APACHE",
+      "source": "https://raw.githubusercontent.com/rust-lang/rust/59807616e1fa2540724bfbac14d7976d7e4a3860/LICENSE-APACHE",
+      "commit": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "bytes": 9723,
+      "sha256": "62c7a1e35f56406896d7aa7ca52d0cc0d272ac022b5d2796e7d6905db8a3636a"
+    },
+    {
+      "path": "rust-target/LICENSE-MIT",
+      "source": "https://raw.githubusercontent.com/rust-lang/rust/59807616e1fa2540724bfbac14d7976d7e4a3860/LICENSE-MIT",
+      "commit": "59807616e1fa2540724bfbac14d7976d7e4a3860",
+      "bytes": 1068,
+      "sha256": "b71bd43a069ca0641a9ecfe585ca7b3c53b5cc1608f8b68321168698e28b5ea1"
+    }
+  ]
+}
