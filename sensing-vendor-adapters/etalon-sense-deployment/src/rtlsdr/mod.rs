@@ -3,8 +3,8 @@
 mod validate;
 pub use validate::validate_rtl_sdr_deployment;
 
-use std::path::Path;
 use crate::{ArtifactSpec, DeploymentError};
+use std::path::Path;
 
 pub const MAX_RTLSDR_DEPENDENCIES: usize = 64;
 pub const MAX_RTLSDR_PAIRS: u32 = 1_048_576;
@@ -39,16 +39,33 @@ pub struct AdmittedRtlSdrDeployment<'manifest, 'path, 'authority> {
 }
 
 impl AdmittedRtlSdrDeployment<'_, '_, '_> {
-    pub fn manifest(&self) -> &RtlSdrManifest<'_> { self.manifest }
-    pub fn runtime_path(&self) -> &Path { self.manifest.runtime.path }
-    pub fn target_id(&self) -> u64 { self.manifest.target_id }
-    pub fn generation(&self) -> u32 { self.manifest.generation }
-    pub fn device_index(&self) -> u32 { self.manifest.device_index }
-    pub fn max_pairs(&self) -> u32 { self.manifest.max_pairs }
-    pub fn total_verified_bytes(&self) -> u64 { self.total_bytes }
+    pub fn manifest(&self) -> &RtlSdrManifest<'_> {
+        self.manifest
+    }
+    pub fn runtime_path(&self) -> &Path {
+        self.manifest.runtime.path
+    }
+    pub fn target_id(&self) -> u64 {
+        self.manifest.target_id
+    }
+    pub fn generation(&self) -> u32 {
+        self.manifest.generation
+    }
+    pub fn device_index(&self) -> u32 {
+        self.manifest.device_index
+    }
+    pub fn max_pairs(&self) -> u32 {
+        self.manifest.max_pairs
+    }
+    pub fn total_verified_bytes(&self) -> u64 {
+        self.total_bytes
+    }
     /// Rechecks the authority lease, not file hashes or physical device state.
     pub fn revalidate_authority(&self) -> Result<(), DeploymentError> {
-        if self.authority.admit(self.manifest) { Ok(()) }
-        else { Err(DeploymentError::NotAuthorized) }
+        if self.authority.admit(self.manifest) {
+            Ok(())
+        } else {
+            Err(DeploymentError::NotAuthorized)
+        }
     }
 }

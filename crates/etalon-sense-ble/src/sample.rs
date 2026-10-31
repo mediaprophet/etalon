@@ -1,5 +1,8 @@
 use etalon_sense_core::{
-    radio::{BluetoothAddressKind, RadioAddress48, RadioIdentifier, RadioIdentifierObservation, RadioObservationTime},
+    radio::{
+        BluetoothAddressKind, RadioAddress48, RadioIdentifier, RadioIdentifierObservation,
+        RadioObservationTime,
+    },
     ContractError,
 };
 use windows::Devices::Bluetooth::BluetoothAddressType;
@@ -30,15 +33,16 @@ impl BleAdvertisementSample {
     pub fn radio_identifier_observation(self) -> Result<RadioIdentifierObservation, ContractError> {
         let address = RadioAddress48::try_from_u64(self.bluetooth_address)?;
         Ok(RadioIdentifierObservation {
-            identifier: RadioIdentifier::Bluetooth { address, kind: self.bluetooth_address_kind() },
+            identifier: RadioIdentifier::Bluetooth {
+                address,
+                kind: self.bluetooth_address_kind(),
+            },
             observed_at: RadioObservationTime::WindowsUtc100ns(self.os_timestamp_100ns),
         })
     }
 }
 
-pub(super) fn raw_address_type<E>(
-    reported: Result<BluetoothAddressType, E>,
-) -> Option<i32> {
+pub(super) fn raw_address_type<E>(reported: Result<BluetoothAddressType, E>) -> Option<i32> {
     reported.ok().map(|value| value.0)
 }
 

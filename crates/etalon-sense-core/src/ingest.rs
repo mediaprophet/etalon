@@ -36,11 +36,7 @@ pub struct ExtendedIngestStream {
 }
 
 impl IngestStream {
-    pub fn new(
-        source_id: u64,
-        stream_id: u64,
-        generation: u32,
-    ) -> Result<Self, ContractError> {
+    pub fn new(source_id: u64, stream_id: u64, generation: u32) -> Result<Self, ContractError> {
         if source_id == 0 {
             return Err(ContractError::InvalidIdentifier);
         }
@@ -72,8 +68,16 @@ impl IngestStream {
         sequence: u64,
     ) -> Result<IngestedFrame<'a>, ContractError> {
         self.ingest_with_optional_timestamp(
-            payload, layout, region, source, capability, Some(timestamp), sample_rate,
-            calibration, quality, sequence,
+            payload,
+            layout,
+            region,
+            source,
+            capability,
+            Some(timestamp),
+            sample_rate,
+            calibration,
+            quality,
+            sequence,
         )
     }
 
@@ -161,7 +165,11 @@ impl ExtendedIngestStream {
         if source_id == 0 {
             return Err(ContractError::InvalidIdentifier);
         }
-        Ok(Self { source_id, capability, order: StreamOrder::new(stream_id, generation)? })
+        Ok(Self {
+            source_id,
+            capability,
+            order: StreamOrder::new(stream_id, generation)?,
+        })
     }
 
     /// Validate a byte view against an extended capability and admit one
@@ -181,7 +189,14 @@ impl ExtendedIngestStream {
         sequence: u64,
     ) -> Result<ExtendedIngestedFrame<'a>, ContractError> {
         self.ingest_with_optional_timestamp(
-            payload, layout, region, source, Some(timestamp), sample_rate, calibration, quality,
+            payload,
+            layout,
+            region,
+            source,
+            Some(timestamp),
+            sample_rate,
+            calibration,
+            quality,
             sequence,
         )
     }
@@ -208,23 +223,53 @@ impl ExtendedIngestStream {
             return Err(ContractError::OutOfBounds);
         }
         let measurement = ExtendedMeasurement::new_with_optional_timestamp(
-            self.capability, layout, region, source, timestamp, sample_rate, calibration, quality,
+            self.capability,
+            layout,
+            region,
+            source,
+            timestamp,
+            sample_rate,
+            calibration,
+            quality,
         )?;
         let stream_id = self.order.stream_id();
         let generation = self.order.generation();
-        let event = self.order.observe_optional(stream_id, generation, sequence, timestamp)?;
-        Ok(ExtendedIngestedFrame { payload, measurement, sequence_event: event, sequence, stream_id, generation })
+        let event = self
+            .order
+            .observe_optional(stream_id, generation, sequence, timestamp)?;
+        Ok(ExtendedIngestedFrame {
+            payload,
+            measurement,
+            sequence_event: event,
+            sequence,
+            stream_id,
+            generation,
+        })
     }
 
-    pub const fn source_id(&self) -> u64 { self.source_id }
-    pub const fn capability(&self) -> ExtendedCapability { self.capability }
-    pub const fn stream_id(&self) -> u64 { self.order.stream_id() }
-    pub const fn generation(&self) -> u32 { self.order.generation() }
+    pub const fn source_id(&self) -> u64 {
+        self.source_id
+    }
+    pub const fn capability(&self) -> ExtendedCapability {
+        self.capability
+    }
+    pub const fn stream_id(&self) -> u64 {
+        self.order.stream_id()
+    }
+    pub const fn generation(&self) -> u32 {
+        self.order.generation()
+    }
     /// Latest sequence paired with a known timestamp. Use `last_observation`
     /// for sequence preflight when the latest timestamp may be unknown.
-    pub const fn last_sequence(&self) -> Option<(u64, ClockStamp)> { self.order.last() }
-    pub const fn last_observation(&self) -> Option<(u64, Option<ClockStamp>)> { self.order.last_observation() }
-    pub const fn last_known_timestamp(&self) -> Option<ClockStamp> { self.order.last_known_timestamp() }
+    pub const fn last_sequence(&self) -> Option<(u64, ClockStamp)> {
+        self.order.last()
+    }
+    pub const fn last_observation(&self) -> Option<(u64, Option<ClockStamp>)> {
+        self.order.last_observation()
+    }
+    pub const fn last_known_timestamp(&self) -> Option<ClockStamp> {
+        self.order.last_known_timestamp()
+    }
 }
 
 /// A validated declaration paired with its borrowed bytes and sequence event.
@@ -263,20 +308,38 @@ impl<'a> IngestedFrame<'a> {
         self.sequence_event
     }
 
-    pub const fn sequence(&self) -> u64 { self.sequence }
+    pub const fn sequence(&self) -> u64 {
+        self.sequence
+    }
 
-    pub const fn stream_id(&self) -> u64 { self.stream_id }
+    pub const fn stream_id(&self) -> u64 {
+        self.stream_id
+    }
 
-    pub const fn generation(&self) -> u32 { self.generation }
+    pub const fn generation(&self) -> u32 {
+        self.generation
+    }
 }
 
 impl<'a> ExtendedIngestedFrame<'a> {
-    pub const fn payload(&self) -> &'a [u8] { self.payload }
-    pub const fn measurement(&self) -> &ExtendedMeasurement { &self.measurement }
-    pub const fn sequence_event(&self) -> SequenceEvent { self.sequence_event }
-    pub const fn sequence(&self) -> u64 { self.sequence }
-    pub const fn stream_id(&self) -> u64 { self.stream_id }
-    pub const fn generation(&self) -> u32 { self.generation }
+    pub const fn payload(&self) -> &'a [u8] {
+        self.payload
+    }
+    pub const fn measurement(&self) -> &ExtendedMeasurement {
+        &self.measurement
+    }
+    pub const fn sequence_event(&self) -> SequenceEvent {
+        self.sequence_event
+    }
+    pub const fn sequence(&self) -> u64 {
+        self.sequence
+    }
+    pub const fn stream_id(&self) -> u64 {
+        self.stream_id
+    }
+    pub const fn generation(&self) -> u32 {
+        self.generation
+    }
 }
 
 #[cfg(test)]

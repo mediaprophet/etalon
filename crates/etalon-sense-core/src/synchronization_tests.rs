@@ -96,10 +96,7 @@ fn rejects_invalid_anchor_domains_order_and_clock_pairing() {
 
 #[test]
 fn drift_limit_and_validity_interval_are_enforced() {
-    assert_eq!(
-        calibration(0, 20).measured_drift_ppb(),
-        0
-    );
+    assert_eq!(calibration(0, 20).measured_drift_ppb(), 0);
     let first = ClockAnchor::new(stamp(1, 0, 0, 0), stamp(2, 0, 0, 0));
     let second = ClockAnchor::new(stamp(1, 0, 1_000_000, 0), stamp(2, 0, 1_001_000, 0));
     assert_eq!(
@@ -186,10 +183,7 @@ fn source_clock_anchor_and_input_uncertainty_scale_into_reference_units() {
 
 #[test]
 fn constructor_rejects_anchor_uncertainty_sum_overflow() {
-    let first = ClockAnchor::new(
-        stamp(1, 0, 0, u64::MAX - 1),
-        stamp(2, 0, 0, u64::MAX - 1),
-    );
+    let first = ClockAnchor::new(stamp(1, 0, 0, u64::MAX - 1), stamp(2, 0, 0, u64::MAX - 1));
     let second = ClockAnchor::new(stamp(1, 0, u64::MAX, 0), stamp(2, 0, u64::MAX, 0));
     assert_eq!(
         ClockSynchronization::new(
@@ -233,19 +227,40 @@ fn uncertain_source_anchors_exclude_possible_extrapolation() {
     let second = ClockAnchor::new(stamp(1, 0, 2_000, 100), stamp(2, 0, 2_000, 0));
     // Actual anchors may be 1100 -> 1000 and 1900 -> 2000. Then x=1000
     // maps to 875, outside the nominal mapping's 1000 +/- 101 bound.
-    assert_eq!(ClockSynchronization::new(1, first, second,
-        TimeInterval::new(1_000, 2_000).unwrap(), 0, 0, 101),
-        Err(SynchronizationError::OutsideValidity));
-    let calibration = ClockSynchronization::new(1, first, second,
-        TimeInterval::new(1_100, 1_900).unwrap(), 0, 0, 101).unwrap();
-    assert_eq!(calibration.map(stamp(1, 0, 1_000, 0)),
-        Err(SynchronizationError::OutsideValidity));
+    assert_eq!(
+        ClockSynchronization::new(
+            1,
+            first,
+            second,
+            TimeInterval::new(1_000, 2_000).unwrap(),
+            0,
+            0,
+            101
+        ),
+        Err(SynchronizationError::OutsideValidity)
+    );
+    let calibration = ClockSynchronization::new(
+        1,
+        first,
+        second,
+        TimeInterval::new(1_100, 1_900).unwrap(),
+        0,
+        0,
+        101,
+    )
+    .unwrap();
+    assert_eq!(
+        calibration.map(stamp(1, 0, 1_000, 0)),
+        Err(SynchronizationError::OutsideValidity)
+    );
     for ticks in [1_100u64, 1_500, 1_900] {
         let mapped = calibration.map(stamp(1, 0, ticks, 0)).unwrap();
         let actual = ticks * 5 / 4 - 375;
         assert!(mapped.interval().lower_ns() <= actual);
         assert!(mapped.interval().upper_ns() >= actual);
     }
-    assert_eq!(calibration.map(stamp(1, 0, 1_100, 1)),
-        Err(SynchronizationError::OutsideValidity));
+    assert_eq!(
+        calibration.map(stamp(1, 0, 1_100, 1)),
+        Err(SynchronizationError::OutsideValidity)
+    );
 }

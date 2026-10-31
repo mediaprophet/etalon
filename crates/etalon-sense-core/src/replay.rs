@@ -5,9 +5,8 @@
 
 use crate::{
     adapter::{
-        AdapterDescriptor, AdapterError, AdapterId, AuthorizedCapture,
-        AuthorizedCaptureBuffer, CaptureSession, CapturedSamples, DiscoveredSource,
-        SensorAdapter,
+        AdapterDescriptor, AdapterError, AdapterId, AuthorizedCapture, AuthorizedCaptureBuffer,
+        CaptureSession, CapturedSamples, DiscoveredSource, SensorAdapter,
     },
     buffer::SampleLayout,
     capability::SensorCapability,
@@ -46,12 +45,22 @@ impl ReplayMetadata {
         evidence: EvidenceRecord,
         recorded_at: Option<ClockStamp>,
     ) -> Self {
-        Self { kind, evidence, recorded_at }
+        Self {
+            kind,
+            evidence,
+            recorded_at,
+        }
     }
 
-    pub const fn kind(self) -> ReplayKind { self.kind }
-    pub const fn evidence(self) -> EvidenceRecord { self.evidence }
-    pub const fn recorded_at(self) -> Option<ClockStamp> { self.recorded_at }
+    pub const fn kind(self) -> ReplayKind {
+        self.kind
+    }
+    pub const fn evidence(self) -> EvidenceRecord {
+        self.evidence
+    }
+    pub const fn recorded_at(self) -> Option<ClockStamp> {
+        self.recorded_at
+    }
 }
 
 /// External trusted authorization-time source required by the adapter trait.
@@ -107,12 +116,23 @@ impl<'a> ReplayBlock<'a> {
             return Err(AdapterError::Buffer(ContractError::OutOfBounds));
         }
         let source = DiscoveredSource::new(source_id, capability)?;
-        Ok(Self { source, layout, bytes, metadata })
+        Ok(Self {
+            source,
+            layout,
+            bytes,
+            metadata,
+        })
     }
 
-    pub const fn source(&self) -> DiscoveredSource { self.source }
-    pub const fn layout(&self) -> &SampleLayout { &self.layout }
-    pub const fn metadata(&self) -> ReplayMetadata { self.metadata }
+    pub const fn source(&self) -> DiscoveredSource {
+        self.source
+    }
+    pub const fn layout(&self) -> &SampleLayout {
+        &self.layout
+    }
+    pub const fn metadata(&self) -> ReplayMetadata {
+        self.metadata
+    }
 }
 
 /// In-memory one-shot replay source. Authorization is always supplied by the
@@ -133,30 +153,54 @@ impl<'data, 'clock> ReplayAdapter<'data, 'clock> {
         clock: &'clock mut dyn ReplayAuthorizationClock,
     ) -> Self {
         let descriptor = AdapterDescriptor::new(adapter_id, block.source.capability().modality());
-        Self { descriptor, block, clock, active: None, next_session_id: 1, consumed: false }
+        Self {
+            descriptor,
+            block,
+            clock,
+            active: None,
+            next_session_id: 1,
+            consumed: false,
+        }
     }
 
-    pub const fn metadata(&self) -> ReplayMetadata { self.block.metadata }
-    pub const fn is_consumed(&self) -> bool { self.consumed }
+    pub const fn metadata(&self) -> ReplayMetadata {
+        self.block.metadata
+    }
+    pub const fn is_consumed(&self) -> bool {
+        self.consumed
+    }
 }
 
 impl SensorAdapter for ReplayAdapter<'_, '_> {
-    fn descriptor(&self) -> AdapterDescriptor { self.descriptor }
+    fn descriptor(&self) -> AdapterDescriptor {
+        self.descriptor
+    }
 
     fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
         self.clock.trusted_now()
     }
 
     fn discover_backend(&mut self, out: &mut [DiscoveredSource]) -> Result<usize, AdapterError> {
-        if out.is_empty() { return Err(AdapterError::DiscoveryBufferTooSmall); }
+        if out.is_empty() {
+            return Err(AdapterError::DiscoveryBufferTooSmall);
+        }
         out[0] = self.block.source;
         Ok(1)
     }
 
-    fn start_backend(&mut self, request: AuthorizedCapture) -> Result<CaptureSession, AdapterError> {
-        if request.source() != self.block.source { return Err(AdapterError::AuthorizationDenied); }
-        if self.active.is_some() { return Err(AdapterError::Unavailable); }
-        if self.consumed { return Err(AdapterError::Unavailable); }
+    fn start_backend(
+        &mut self,
+        request: AuthorizedCapture,
+    ) -> Result<CaptureSession, AdapterError> {
+        if request.source() != self.block.source {
+            return Err(AdapterError::AuthorizationDenied);
+        }
+        if self.active.is_some() {
+            return Err(AdapterError::Unavailable);
+        }
+        if self.consumed {
+            return Err(AdapterError::Unavailable);
+        }
         let id = self.next_session_id;
         let next = id.checked_add(1).ok_or(AdapterError::InvalidIdentifier)?;
         let session = CaptureSession::new(self.descriptor.id(), self.block.source, id, 1)?;
@@ -175,7 +219,9 @@ impl SensorAdapter for ReplayAdapter<'_, '_> {
         {
             return Err(AdapterError::InvalidSession);
         }
-        if self.consumed { return Err(AdapterError::Unavailable); }
+        if self.consumed {
+            return Err(AdapterError::Unavailable);
+        }
         let dst = output.writable_bytes();
         if dst.len() != self.block.bytes.len() {
             return Err(AdapterError::Buffer(ContractError::OutOfBounds));
@@ -186,7 +232,9 @@ impl SensorAdapter for ReplayAdapter<'_, '_> {
     }
 
     fn stop_backend(&mut self, session: CaptureSession) -> Result<(), AdapterError> {
-        if self.active != Some(session) { return Err(AdapterError::InvalidSession); }
+        if self.active != Some(session) {
+            return Err(AdapterError::InvalidSession);
+        }
         self.active = None;
         Ok(())
     }

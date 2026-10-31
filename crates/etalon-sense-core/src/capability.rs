@@ -4,7 +4,10 @@
 //! that a backend exists, a device is connected, a stream is trusted, or an
 //! operation is authorized.
 
-use crate::{quantity::{PhysicalQuantity, SampleEncoding, SampleRate, Unit}, ContractError};
+use crate::{
+    quantity::{PhysicalQuantity, SampleEncoding, SampleRate, Unit},
+    ContractError,
+};
 
 /// Physical or logical class of sensor source.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -51,7 +54,10 @@ impl SensorCapability {
         if !quantity.accepts_encoding(encoding) {
             return Err(ContractError::IncompatibleEncoding);
         }
-        let rank = max_extents.iter().position(|&extent| extent == 0).unwrap_or(4);
+        let rank = max_extents
+            .iter()
+            .position(|&extent| extent == 0)
+            .unwrap_or(4);
         if rank == 0 || max_extents[rank..].iter().any(|&extent| extent != 0) {
             return Err(ContractError::InvalidExtent);
         }

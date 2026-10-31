@@ -1,19 +1,34 @@
-use std::{marker::PhantomData, panic::{catch_unwind, AssertUnwindSafe}, rc::Rc, sync::Mutex};
+use crate::{
+    abi::{self, RemoteArg, RemoteBuf},
+    FastRpcError,
+};
 use etalon_sense_deployment::fastrpc::AdmittedFastRpcDeployment;
-use crate::{abi::{self, RemoteArg, RemoteBuf}, FastRpcError};
+use std::{
+    marker::PhantomData,
+    panic::{catch_unwind, AssertUnwindSafe},
+    rc::Rc,
+    sync::Mutex,
+};
 
 // remote.h requires coordination across independently owned open/close calls.
 static RUNTIME_LIFECYCLE: Mutex<()> = Mutex::new(());
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SessionState { Open, Faulted, Closed, CloseFailed }
+pub enum SessionState {
+    Open,
+    Faulted,
+    Closed,
+    CloseFailed,
+}
 
 trait DeploymentLease {
     fn current(&self) -> bool;
 }
 
 impl DeploymentLease for AdmittedFastRpcDeployment<'_, '_, '_> {
-    fn current(&self) -> bool { self.revalidate_authority().is_ok() }
+    fn current(&self) -> bool {
+        self.revalidate_authority().is_ok()
+    }
 }
 
 /// One thread-affine, synchronous handle; dropping it attempts one close.
@@ -54,36 +69,55 @@ impl<'lease> FastRpcSession<'lease> {
     /// Exclude other bindings, isolate this provider in a process, or hold an
     /// outer coordinator around all wrapper/native lifecycle calls and drops.
     /// Successful close/unload must leave no outstanding native references.
-    pub unsafe fn open(deployment: &'lease AdmittedFastRpcDeployment<'_, '_, '_>,
-        max_pairs: u32) -> Result<Self, FastRpcError> {
+    pub unsafe fn open(
+        deployment: &'lease AdmittedFastRpcDeployment<'_, '_, '_>,
+        max_pairs: u32,
+    ) -> Result<Self, FastRpcError> {
         #[cfg(not(any(target_os = "linux", target_os = "android")))]
-        { let _ = (deployment, max_pairs); Err(FastRpcError::UnsupportedPlatform) }
+        {
+            let _ = (deployment, max_pairs);
+            Err(FastRpcError::UnsupportedPlatform)
+        }
         #[cfg(any(target_os = "linux", target_os = "android"))]
         {
-            use etalon_sense_dsp_wire::{MAX_PAIRS, SERVICE_ID, SCHEMA_SHA256};
-            if max_pairs == 0 || max_pairs > MAX_PAIRS || max_pairs > deployment.service_max_pairs() {
+            use etalon_sense_dsp_wire::{MAX_PAIRS, SCHEMA_SHA256, SERVICE_ID};
+            if max_pairs == 0 || max_pairs > MAX_PAIRS || max_pairs > deployment.service_max_pairs()
+            {
                 return Err(FastRpcError::InvalidLimits);
             }
             if deployment.service_schema_id() != SERVICE_ID
-                || deployment.service_schema_sha256() != SCHEMA_SHA256 {
+                || deployment.service_schema_sha256() != SCHEMA_SHA256
+            {
                 return Err(FastRpcError::ServiceSchema);
             }
-            let uri_generation = etalon_sense_dsp_wire::generation_from_uri(deployment.module_uri().to_bytes())
-                .map_err(|_| FastRpcError::ServiceSchema)?;
+            let uri_generation =
+                etalon_sense_dsp_wire::generation_from_uri(deployment.module_uri().to_bytes())
+                    .map_err(|_| FastRpcError::ServiceSchema)?;
             if uri_generation != deployment.provider_generation() {
                 return Err(FastRpcError::DeploymentAdmission);
             }
-            if !lease_current(deployment) { return Err(FastRpcError::DeploymentAdmission); }
-            let lifecycle = RUNTIME_LIFECYCLE.lock().map_err(|_| FastRpcError::RuntimeSynchronization)?;
+            if !lease_current(deployment) {
+                return Err(FastRpcError::DeploymentAdmission);
+            }
+            let lifecycle = RUNTIME_LIFECYCLE
+                .lock()
+                .map_err(|_| FastRpcError::RuntimeSynchronization)?;
             // Absolute protected path and closure were admitted; NOW avoids
             // deferred symbol resolution. It is not an isolation mechanism.
             let library: libloading::Library = unsafe {
-                libloading::os::unix::Library::open(Some(deployment.runtime_path()),
-                    libloading::os::unix::RTLD_NOW | libloading::os::unix::RTLD_LOCAL)
-            }.map_err(|_| FastRpcError::LibraryLoad)?.into();
+                libloading::os::unix::Library::open(
+                    Some(deployment.runtime_path()),
+                    libloading::os::unix::RTLD_NOW | libloading::os::unix::RTLD_LOCAL,
+                )
+            }
+            .map_err(|_| FastRpcError::LibraryLoad)?
+            .into();
             let (open, invoke, close) = match unsafe { symbols(&library) } {
                 Ok(symbols) => symbols,
-                Err(error) => { core::mem::forget(library); return Err(error); }
+                Err(error) => {
+                    core::mem::forget(library);
+                    return Err(error);
+                }
             };
             drop(lifecycle);
             if !lease_current(deployment) {
@@ -106,10 +140,20 @@ impl<'lease> FastRpcSession<'lease> {
                 return Err(FastRpcError::Open(status));
             }
             drop(lifecycle);
-            let mut owner = Self { lease: deployment, library: Some(library), invoke, close,
-                handle: Some(handle), state: SessionState::Open,
-                target_id: deployment.target_id(), generation: deployment.provider_generation(), domain: deployment.domain(),
-                session: deployment.session(), max_pairs, _thread_affinity: PhantomData };
+            let mut owner = Self {
+                lease: deployment,
+                library: Some(library),
+                invoke,
+                close,
+                handle: Some(handle),
+                state: SessionState::Open,
+                target_id: deployment.target_id(),
+                generation: deployment.provider_generation(),
+                domain: deployment.domain(),
+                session: deployment.session(),
+                max_pairs,
+                _thread_affinity: PhantomData,
+            };
             if !owner.authority_current() {
                 if let Err(FastRpcError::Close(code)) = owner.close() {
                     return Err(FastRpcError::AdmissionCleanupFailed(code));
@@ -120,68 +164,123 @@ impl<'lease> FastRpcSession<'lease> {
         }
     }
 
-    pub fn state(&self) -> SessionState { self.state }
-    pub fn target_id(&self) -> u64 { self.target_id }
-    pub fn domain(&self) -> u32 { self.domain }
-    pub fn session(&self) -> u32 { self.session }
-    pub fn max_pairs(&self) -> u32 { self.max_pairs }
+    pub fn state(&self) -> SessionState {
+        self.state
+    }
+    pub fn target_id(&self) -> u64 {
+        self.target_id
+    }
+    pub fn domain(&self) -> u32 {
+        self.domain
+    }
+    pub fn session(&self) -> u32 {
+        self.session
+    }
+    pub fn max_pairs(&self) -> u32 {
+        self.max_pairs
+    }
 
-    pub(crate) fn authority_current(&self) -> bool { lease_current(self.lease) }
+    pub(crate) fn authority_current(&self) -> bool {
+        lease_current(self.lease)
+    }
 
-    pub(crate) fn invoke_buffers(&mut self, request: &[u8], response: &mut [u8])
-        -> Result<(), FastRpcError> {
+    pub(crate) fn invoke_buffers(
+        &mut self,
+        request: &[u8],
+        response: &mut [u8],
+    ) -> Result<(), FastRpcError> {
         response.fill(0);
         let result = self.invoke_inner(request, response);
         if result.is_err() {
             response.fill(0);
-            if self.state == SessionState::Open { self.state = SessionState::Faulted; }
+            if self.state == SessionState::Open {
+                self.state = SessionState::Faulted;
+            }
         }
         result
     }
 
     fn invoke_inner(&mut self, request: &[u8], response: &mut [u8]) -> Result<(), FastRpcError> {
         use etalon_sense_dsp_wire::{request_bytes, response_bytes};
-        if self.state != SessionState::Open { return Err(FastRpcError::InvalidState); }
-        if !self.authority_current() { return Err(FastRpcError::DeploymentAdmission); }
+        if self.state != SessionState::Open {
+            return Err(FastRpcError::InvalidState);
+        }
+        if !self.authority_current() {
+            return Err(FastRpcError::DeploymentAdmission);
+        }
         let max_in = request_bytes(self.max_pairs).map_err(|_| FastRpcError::InvalidLimits)?;
         let max_out = response_bytes(self.max_pairs).map_err(|_| FastRpcError::InvalidLimits)?;
-        if request.is_empty() || response.is_empty() || request.len() > max_in || response.len() > max_out {
+        if request.is_empty()
+            || response.is_empty()
+            || request.len() > max_in
+            || response.len() > max_out
+        {
             return Err(FastRpcError::BufferSize);
         }
-        let (identity, pairs, _) = etalon_sense_dsp_wire::decode_request(request)
-            .map_err(|_| FastRpcError::Wire)?;
-        if identity.provider_id() != self.target_id || identity.generation() != self.generation
-            || pairs > self.max_pairs || response.len() != response_bytes(pairs).map_err(|_| FastRpcError::Wire)? {
+        let (identity, pairs, _) =
+            etalon_sense_dsp_wire::decode_request(request).map_err(|_| FastRpcError::Wire)?;
+        if identity.provider_id() != self.target_id
+            || identity.generation() != self.generation
+            || pairs > self.max_pairs
+            || response.len() != response_bytes(pairs).map_err(|_| FastRpcError::Wire)?
+        {
             return Err(FastRpcError::Wire);
         }
         let scalars = abi::buffer_scalars(etalon_sense_dsp_wire::METHOD_INDEX, 0)
             .ok_or(FastRpcError::ServiceSchema)?;
-        if scalars != etalon_sense_dsp_wire::METHOD_SCALARS { return Err(FastRpcError::ServiceSchema); }
+        if scalars != etalon_sense_dsp_wire::METHOD_SCALARS {
+            return Err(FastRpcError::ServiceSchema);
+        }
         let input_ptr = request.as_ptr().cast_mut().cast();
         let output_ptr = response.as_mut_ptr().cast();
-        let mut args = [RemoteArg { buf: RemoteBuf { pv: input_ptr, len: request.len() } },
-            RemoteArg { buf: RemoteBuf { pv: output_ptr, len: response.len() } }];
+        let mut args = [
+            RemoteArg {
+                buf: RemoteBuf {
+                    pv: input_ptr,
+                    len: request.len(),
+                },
+            },
+            RemoteArg {
+                buf: RemoteBuf {
+                    pv: output_ptr,
+                    len: response.len(),
+                },
+            },
+        ];
         let handle = self.handle.ok_or(FastRpcError::InvalidState)?;
         // &mut self serializes close/reset; both buffers remain borrowed until
         // synchronous return. The unsafe constructor established native trust.
         let status = unsafe { (self.invoke)(handle, scalars, args.as_mut_ptr()) };
-        if status != 0 { return Err(FastRpcError::Invoke(status)); }
+        if status != 0 {
+            return Err(FastRpcError::Invoke(status));
+        }
         let (input_arg, output_arg) = unsafe { (args[0].buf, args[1].buf) };
-        if input_arg.pv != input_ptr || input_arg.len != request.len()
-            || output_arg.pv != output_ptr || output_arg.len != response.len() {
+        if input_arg.pv != input_ptr
+            || input_arg.len != request.len()
+            || output_arg.pv != output_ptr
+            || output_arg.len != response.len()
+        {
             return Err(FastRpcError::ArgumentMutation);
         }
-        if !self.authority_current() { return Err(FastRpcError::DeploymentAdmission); }
+        if !self.authority_current() {
+            return Err(FastRpcError::DeploymentAdmission);
+        }
         Ok(())
     }
 
     /// Cleanup remains permitted after authority revocation. A nonzero status
     /// is an unknown outcome; do not retry or reuse that handle.
     pub fn close(&mut self) -> Result<(), FastRpcError> {
-        if self.state == SessionState::CloseFailed { return Err(FastRpcError::CloseOutcomeUnknown); }
-        let Some(handle) = self.handle.take() else { return Ok(()); };
+        if self.state == SessionState::CloseFailed {
+            return Err(FastRpcError::CloseOutcomeUnknown);
+        }
+        let Some(handle) = self.handle.take() else {
+            return Ok(());
+        };
         // Cleanup is still necessary after poisoning, but future opens fail.
-        let _lifecycle = RUNTIME_LIFECYCLE.lock().unwrap_or_else(|error| error.into_inner());
+        let _lifecycle = RUNTIME_LIFECYCLE
+            .lock()
+            .unwrap_or_else(|error| error.into_inner());
         let status = unsafe { (self.close)(handle) };
         if status != 0 {
             self.state = SessionState::CloseFailed;
@@ -194,7 +293,9 @@ impl<'lease> FastRpcSession<'lease> {
 
     fn retain_runtime(&mut self) {
         #[cfg(any(target_os = "linux", target_os = "android"))]
-        if let Some(library) = self.library.take() { core::mem::forget(library); }
+        if let Some(library) = self.library.take() {
+            core::mem::forget(library);
+        }
     }
 }
 
@@ -203,7 +304,9 @@ impl Drop for FastRpcSession<'_> {
         let _ = self.close();
         #[cfg(any(target_os = "linux", target_os = "android"))]
         if let Some(library) = self.library.take() {
-            let _lifecycle = RUNTIME_LIFECYCLE.lock().unwrap_or_else(|error| error.into_inner());
+            let _lifecycle = RUNTIME_LIFECYCLE
+                .lock()
+                .unwrap_or_else(|error| error.into_inner());
             drop(library);
         }
     }
@@ -214,7 +317,9 @@ fn lease_current(lease: &dyn DeploymentLease) -> bool {
 }
 
 #[cfg(any(target_os = "linux", target_os = "android"))]
-unsafe fn symbols(library: &libloading::Library) -> Result<(abi::Open, abi::Invoke, abi::Close), FastRpcError> {
+unsafe fn symbols(
+    library: &libloading::Library,
+) -> Result<(abi::Open, abi::Invoke, abi::Close), FastRpcError> {
     let open = *unsafe { library.get::<abi::Open>(b"remote_handle64_open\0") }
         .map_err(|_| FastRpcError::MissingSymbol)?;
     let invoke = *unsafe { library.get::<abi::Invoke>(b"remote_handle64_invoke\0") }

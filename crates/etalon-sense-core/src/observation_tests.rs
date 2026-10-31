@@ -18,14 +18,30 @@ fn directly_constructed_invalid_uncertainty_is_rejected() {
     for uncertainty in [
         MeasurementUncertainty::RelativeBound { fraction: f64::NAN },
         MeasurementUncertainty::RelativeBound { fraction: -1.0 },
-        MeasurementUncertainty::AbsoluteBound { magnitude: f64::INFINITY, unit_id: None },
-        MeasurementUncertainty::Interval { lower: 2.0, upper: 1.0, unit_id: None },
+        MeasurementUncertainty::AbsoluteBound {
+            magnitude: f64::INFINITY,
+            unit_id: None,
+        },
+        MeasurementUncertainty::Interval {
+            lower: 2.0,
+            upper: 1.0,
+            unit_id: None,
+        },
     ] {
         let result = ObservationEnvelope::new(
-            ObservationKind::HostDerived, source(5, SourceKind::Synthetic),
-            None, None, None, None, QuantityUnitIds::new(None, None).unwrap(),
-            uncertainty, QualityRecord::Unknown, calibration(), EvidenceOrigin::Unknown,
-            None, HostPolicyDecision::NotEvaluated,
+            ObservationKind::HostDerived,
+            source(5, SourceKind::Synthetic),
+            None,
+            None,
+            None,
+            None,
+            QuantityUnitIds::new(None, None).unwrap(),
+            uncertainty,
+            QualityRecord::Unknown,
+            calibration(),
+            EvidenceOrigin::Unknown,
+            None,
+            HostPolicyDecision::NotEvaluated,
         );
         assert_eq!(result, Err(ContractError::InvalidQuality));
     }
@@ -68,14 +84,24 @@ fn live_observation_preserves_host_declarations_and_clock_domain() {
         calibration(),
         evidence,
         None,
-        HostPolicyDecision::Evaluated { request: policy_request(), outcome },
-    ).unwrap();
+        HostPolicyDecision::Evaluated {
+            request: policy_request(),
+            outcome,
+        },
+    )
+    .unwrap();
 
     assert_eq!(envelope.timestamp(), Some(time));
     assert_eq!(envelope.sequence(), Some(0));
-    assert_eq!(envelope.source().trust_state(), crate::quality::TrustState::Unverified);
+    assert_eq!(
+        envelope.source().trust_state(),
+        crate::quality::TrustState::Unverified
+    );
     assert_eq!(envelope.evidence(), evidence);
-    assert!(matches!(envelope.policy(), HostPolicyDecision::Evaluated { .. }));
+    assert!(matches!(
+        envelope.policy(),
+        HostPolicyDecision::Evaluated { .. }
+    ));
 }
 
 #[test]
@@ -94,7 +120,8 @@ fn cached_query_can_keep_time_stream_and_provenance_unknown() {
         EvidenceOrigin::Unknown,
         None,
         HostPolicyDecision::NotEvaluated,
-    ).unwrap();
+    )
+    .unwrap();
 
     assert_eq!(envelope.timestamp(), None);
     assert_eq!(envelope.stream_id(), None);
@@ -166,9 +193,18 @@ fn direct_frame_kind_must_match_declared_source_kind() {
         )
     };
 
-    assert_eq!(build(ObservationKind::LiveFrame, SourceKind::Recorded), Err(ContractError::InvalidSource));
-    assert_eq!(build(ObservationKind::RecordedFrame, SourceKind::Synthetic), Err(ContractError::InvalidSource));
-    assert_eq!(build(ObservationKind::SyntheticFrame, SourceKind::Live), Err(ContractError::InvalidSource));
+    assert_eq!(
+        build(ObservationKind::LiveFrame, SourceKind::Recorded),
+        Err(ContractError::InvalidSource)
+    );
+    assert_eq!(
+        build(ObservationKind::RecordedFrame, SourceKind::Synthetic),
+        Err(ContractError::InvalidSource)
+    );
+    assert_eq!(
+        build(ObservationKind::SyntheticFrame, SourceKind::Live),
+        Err(ContractError::InvalidSource)
+    );
     assert!(build(ObservationKind::CachedQuery, SourceKind::Live).is_ok());
     assert!(build(ObservationKind::HostDerived, SourceKind::Recorded).is_ok());
 }
@@ -197,8 +233,14 @@ fn absolute_and_interval_uncertainty_require_the_declared_unit() {
 
     assert!(build(absolute, Some(8)).is_ok());
     assert_eq!(build(absolute, None), Err(ContractError::IncompatibleUnit));
-    assert_eq!(build(absolute, Some(9)), Err(ContractError::IncompatibleUnit));
-    assert_eq!(build(interval, Some(9)), Err(ContractError::IncompatibleUnit));
+    assert_eq!(
+        build(absolute, Some(9)),
+        Err(ContractError::IncompatibleUnit)
+    );
+    assert_eq!(
+        build(interval, Some(9)),
+        Err(ContractError::IncompatibleUnit)
+    );
     assert!(build(MeasurementUncertainty::relative_bound(0.2).unwrap(), None).is_ok());
     assert!(build(MeasurementUncertainty::Unknown, None).is_ok());
 }

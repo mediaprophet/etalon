@@ -7,11 +7,17 @@ fn moving_average_uses_partial_warmup_and_continues_across_blocks() {
     let mut output = [0.0; 2];
 
     assert_eq!(filter.warmup_remaining(), 3);
-    assert_eq!(filter.process(&[3.0, 6.0], &mut output, &mut history), Ok(2));
+    assert_eq!(
+        filter.process(&[3.0, 6.0], &mut output, &mut history),
+        Ok(2)
+    );
     assert_eq!(output, [3.0, 4.5]);
     assert_eq!(filter.warmup_remaining(), 1);
 
-    assert_eq!(filter.process(&[9.0, 12.0], &mut output, &mut history), Ok(2));
+    assert_eq!(
+        filter.process(&[9.0, 12.0], &mut output, &mut history),
+        Ok(2)
+    );
     assert_eq!(output, [6.0, 9.0]);
     assert_eq!(filter.warmup_remaining(), 0);
 }
@@ -21,7 +27,9 @@ fn partially_filled_history_evicts_old_values_in_order() {
     let mut filter = MovingAverage::new(4).unwrap();
     let mut history = [0.0; 4];
     let mut first = [0.0; 2];
-    filter.process(&[1.0, 2.0], &mut first, &mut history).unwrap();
+    filter
+        .process(&[1.0, 2.0], &mut first, &mut history)
+        .unwrap();
     let mut next = [0.0; 4];
     filter
         .process(&[3.0, 4.0, 5.0, 6.0], &mut next, &mut history)
@@ -34,7 +42,9 @@ fn explicit_gap_reset_starts_a_fresh_warmup() {
     let mut filter = MovingAverage::new(3).unwrap();
     let mut history = [0.0; 3];
     let mut output = [0.0; 2];
-    filter.process(&[2.0, 4.0], &mut output, &mut history).unwrap();
+    filter
+        .process(&[2.0, 4.0], &mut output, &mut history)
+        .unwrap();
 
     filter.reset_after_gap(&mut history).unwrap();
     assert_eq!(filter.warmup_remaining(), 3);
@@ -76,7 +86,9 @@ fn reset_rejects_wrong_history_length_transactionally() {
     let mut filter = MovingAverage::new(2).unwrap();
     let mut history = [1.0, 3.0];
     let mut output = [0.0; 2];
-    filter.process(&[1.0, 3.0], &mut output, &mut history).unwrap();
+    filter
+        .process(&[1.0, 3.0], &mut output, &mut history)
+        .unwrap();
     let before_warmup = filter.warmup_remaining();
     let mut short_history = [8.0];
 

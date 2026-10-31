@@ -4,7 +4,10 @@
 
 use etalon_sense_core::{
     evidence::EvidenceOrigin,
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind, QuantityUnitIds},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        QuantityUnitIds,
+    },
     policy::{PolicyOutcome, PolicyRequest},
     quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor},
     radio::{RadioIdentifierObservation, RadioObservationTime},
@@ -72,23 +75,32 @@ pub fn adapt_cached_bss(
     {
         return Err(AdaptError::InvalidSummary);
     }
-    let required = rows.len().checked_mul(WIFI_METRIC_CAPACITY)
-        .ok_or(AdaptError::OutputTooSmall { required: usize::MAX })?;
+    let required =
+        rows.len()
+            .checked_mul(WIFI_METRIC_CAPACITY)
+            .ok_or(AdaptError::OutputTooSmall {
+                required: usize::MAX,
+            })?;
     if output.len() < required {
         return Err(AdaptError::OutputTooSmall { required });
     }
-    let policy = mapping.policy.map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
-        HostPolicyDecision::Evaluated { request, outcome }
-    });
-    let calibration = CalibrationRecord::new(CalibrationState::Missing)
-        .map_err(AdaptError::InvalidMapping)?;
+    let policy = mapping
+        .policy
+        .map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
+            HostPolicyDecision::Evaluated { request, outcome }
+        });
+    let calibration =
+        CalibrationRecord::new(CalibrationState::Missing).map_err(AdaptError::InvalidMapping)?;
 
     let mut out_index = 0;
     for row in rows {
         let values = [
             (WifiMetric::RssiDbm, row.rssi_dbm as f64),
             (WifiMetric::LinkQuality, row.link_quality as f64),
-            (WifiMetric::CenterFrequencyKhz, row.center_frequency_khz as f64),
+            (
+                WifiMetric::CenterFrequencyKhz,
+                row.center_frequency_khz as f64,
+            ),
         ];
         for (metric_index, (metric, value)) in values.into_iter().enumerate() {
             let envelope = match ObservationEnvelope::new(

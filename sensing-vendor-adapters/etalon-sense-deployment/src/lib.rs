@@ -7,10 +7,10 @@
 //! not prove which library ORT uses. Initialize before any other ORT use.
 #![forbid(unsafe_code)]
 
-mod paths;
-mod verify;
 pub mod fastrpc;
+mod paths;
 pub mod rtlsdr;
+mod verify;
 pub use verify::validate_deployment;
 
 use std::path::Path;
@@ -18,7 +18,10 @@ use std::path::Path;
 pub const MAX_HASH_SCRATCH_BYTES: usize = 65_536;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum ProviderKind { OpenVinoNpu, QnnHtp }
+pub enum ProviderKind {
+    OpenVinoNpu,
+    QnnHtp,
+}
 
 #[derive(Clone, Copy, Debug)]
 pub struct ArtifactSpec<'a> {
@@ -48,11 +51,20 @@ pub trait DeploymentAuthority {
 
 #[derive(Debug)]
 pub enum DeploymentError {
-    InvalidManifest, InvalidPath, InvalidBudget, NotAuthorized, NotRegular,
-    LengthMismatch, DigestMismatch, UnsupportedPlatform, Io(std::io::Error),
+    InvalidManifest,
+    InvalidPath,
+    InvalidBudget,
+    NotAuthorized,
+    NotRegular,
+    LengthMismatch,
+    DigestMismatch,
+    UnsupportedPlatform,
+    Io(std::io::Error),
 }
 impl From<std::io::Error> for DeploymentError {
-    fn from(error: std::io::Error) -> Self { Self::Io(error) }
+    fn from(error: std::io::Error) -> Self {
+        Self::Io(error)
+    }
 }
 
 /// Exact artifacts matched the declared lengths and hashes during this check.
@@ -64,14 +76,28 @@ pub struct AdmittedDeployment<'manifest, 'path, 'authority> {
 }
 
 impl AdmittedDeployment<'_, '_, '_> {
-    pub fn manifest(&self) -> &DeploymentManifest<'_> { self.manifest }
-    pub fn runtime_path(&self) -> &Path { self.manifest.runtime.path }
-    pub fn provider_path(&self) -> Option<&Path> { self.manifest.provider.map(|a| a.path) }
-    pub fn provider_kind(&self) -> ProviderKind { self.manifest.provider_kind }
-    pub fn total_verified_bytes(&self) -> u64 { self.total_bytes }
+    pub fn manifest(&self) -> &DeploymentManifest<'_> {
+        self.manifest
+    }
+    pub fn runtime_path(&self) -> &Path {
+        self.manifest.runtime.path
+    }
+    pub fn provider_path(&self) -> Option<&Path> {
+        self.manifest.provider.map(|a| a.path)
+    }
+    pub fn provider_kind(&self) -> ProviderKind {
+        self.manifest.provider_kind
+    }
+    pub fn total_verified_bytes(&self) -> u64 {
+        self.total_bytes
+    }
     /// Recheck host authority only. The host's artifact lease must prevent
     /// replacement; this does not rehash files or attest global ORT state.
     pub fn revalidate_authority(&self) -> Result<(), DeploymentError> {
-        if self.authority.admit(self.manifest) { Ok(()) } else { Err(DeploymentError::NotAuthorized) }
+        if self.authority.admit(self.manifest) {
+            Ok(())
+        } else {
+            Err(DeploymentError::NotAuthorized)
+        }
     }
 }

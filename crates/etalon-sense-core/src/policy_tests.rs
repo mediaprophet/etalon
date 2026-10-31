@@ -52,14 +52,30 @@ fn evidence() -> EvidenceCommitment {
 }
 
 fn request() -> PolicyRequest {
-    PolicyRequest::new(Some(id(1)), Some(id(2)), id(3), id(4), id(5), id(6), id(7), id(90), evidence())
+    PolicyRequest::new(
+        Some(id(1)),
+        Some(id(2)),
+        id(3),
+        id(4),
+        id(5),
+        id(6),
+        id(7),
+        id(90),
+        evidence(),
+    )
 }
 
 #[test]
 fn opaque_ids_and_commitments_reject_zero() {
     assert_eq!(PolicyId::new(0), Err(ContractError::InvalidIdentifier));
-    assert_eq!(EvidenceCommitment::new([0; 32]), Err(ContractError::InvalidIdentifier));
-    assert_eq!(DecisionCommitment::new([0; 32]), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        EvidenceCommitment::new([0; 32]),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        DecisionCommitment::new([0; 32]),
+        Err(ContractError::InvalidIdentifier)
+    );
 }
 
 #[test]
@@ -100,7 +116,8 @@ fn missing_epoch_or_revocation_state_fails_closed() {
 #[test]
 fn revoked_request_never_authorizes() {
     let host = TestHost::new(PolicyOutcome::Permit(commitment(9)));
-    host.revocation.set(Some(RevocationSnapshot::new(id(90), 9, true)));
+    host.revocation
+        .set(Some(RevocationSnapshot::new(id(90), 9, true)));
     assert_eq!(
         authorize_once(request(), &host, &host, &host).unwrap_err(),
         PolicyError::Revoked
@@ -110,7 +127,8 @@ fn revoked_request_never_authorizes() {
 #[test]
 fn revocation_snapshot_must_match_declared_authority() {
     let host = TestHost::new(PolicyOutcome::Permit(commitment(9)));
-    host.revocation.set(Some(RevocationSnapshot::new(id(91), 8, false)));
+    host.revocation
+        .set(Some(RevocationSnapshot::new(id(91), 8, false)));
     assert_eq!(
         authorize_once(request(), &host, &host, &host).unwrap_err(),
         PolicyError::StateChanged
@@ -142,11 +160,22 @@ fn dispatch_rechecks_and_runs_once_for_exact_scope() {
 fn decision_is_bound_to_entire_request() {
     let host = TestHost::new(PolicyOutcome::Permit(commitment(9)));
     let authorized = authorize_once(request(), &host, &host, &host).unwrap();
-    let mismatched = PolicyRequest::new(Some(id(1)), Some(id(2)), id(3), id(44), id(5), id(6), id(7), id(90), evidence());
+    let mismatched = PolicyRequest::new(
+        Some(id(1)),
+        Some(id(2)),
+        id(3),
+        id(44),
+        id(5),
+        id(6),
+        id(7),
+        id(90),
+        evidence(),
+    );
     let calls = Cell::new(0);
     assert_eq!(
-        dispatch_once(authorized, &mismatched, &host, &host, &host, |_, _| calls.set(1))
-            .unwrap_err(),
+        dispatch_once(authorized, &mismatched, &host, &host, &host, |_, _| calls
+            .set(1))
+        .unwrap_err(),
         PolicyError::RequestMismatch
     );
     assert_eq!(calls.get(), 0);
@@ -158,16 +187,15 @@ fn dispatch_rejects_changed_policy_or_revocation_epoch() {
     let authorized = authorize_once(request(), &host, &host, &host).unwrap();
     host.policy_epoch.set(Some(5));
     assert_eq!(
-        dispatch_once(authorized, &request(), &host, &host, &host, |_, _| ())
-            .unwrap_err(),
+        dispatch_once(authorized, &request(), &host, &host, &host, |_, _| ()).unwrap_err(),
         PolicyError::StateChanged
     );
 
     let authorized = authorize_once(request(), &host, &host, &host).unwrap();
-    host.revocation.set(Some(RevocationSnapshot::new(id(90), 10, false)));
+    host.revocation
+        .set(Some(RevocationSnapshot::new(id(90), 10, false)));
     assert_eq!(
-        dispatch_once(authorized, &request(), &host, &host, &host, |_, _| ())
-            .unwrap_err(),
+        dispatch_once(authorized, &request(), &host, &host, &host, |_, _| ()).unwrap_err(),
         PolicyError::StateChanged
     );
 }
@@ -186,7 +214,17 @@ fn actor_identifier_does_not_imply_guardian_authority() {
 #[test]
 fn unspecified_subject_and_actor_are_supported_for_observation_contexts() {
     let host = TestHost::new(PolicyOutcome::Permit(commitment(9)));
-    let public_science = PolicyRequest::new(None, None, id(3), id(4), id(5), id(6), id(7), id(90), evidence());
+    let public_science = PolicyRequest::new(
+        None,
+        None,
+        id(3),
+        id(4),
+        id(5),
+        id(6),
+        id(7),
+        id(90),
+        evidence(),
+    );
     let decision = authorize_once(public_science, &host, &host, &host).unwrap();
     let result = dispatch_once(decision, &public_science, &host, &host, &host, |req, _| {
         (req.subject(), req.actor())

@@ -17,8 +17,10 @@ pub(super) fn copy_bitmap(
         _ => return Err(NativeError::UnsupportedPixelFormat),
     };
     if pixel_format != declaration.pixel_format()
-        || width == 0 || height == 0
-        || width > declaration.max_width() || height > declaration.max_height()
+        || width == 0
+        || height == 0
+        || width > declaration.max_width()
+        || height > declaration.max_height()
     {
         return Err(NativeError::InvalidFrame);
     }
@@ -27,17 +29,25 @@ pub(super) fn copy_bitmap(
     // it before asking SoftwareBitmap to copy into a separate bounded buffer.
     let lock = bitmap.LockBuffer(BitmapBufferAccessMode::Read)?;
     let plane_count = lock.GetPlaneCount()?;
-    if plane_count != 1 { let _ = lock.Close(); return Err(NativeError::UnsupportedPixelFormat); }
+    if plane_count != 1 {
+        let _ = lock.Close();
+        return Err(NativeError::UnsupportedPixelFormat);
+    }
     let plane = match lock.GetPlaneDescription(0) {
         Ok(plane) => plane,
-        Err(error) => { let _ = lock.Close(); return Err(error.into()); }
+        Err(error) => {
+            let _ = lock.Close();
+            return Err(error.into());
+        }
     };
     lock.Close()?;
     let plane_width = u32::try_from(plane.Width).map_err(|_| NativeError::InvalidFrame)?;
     let plane_height = u32::try_from(plane.Height).map_err(|_| NativeError::InvalidFrame)?;
     let offset = u32::try_from(plane.StartIndex).map_err(|_| NativeError::InvalidFrame)?;
     let stride = u32::try_from(plane.Stride).map_err(|_| NativeError::InvalidFrame)?;
-    let row_bytes = width.checked_mul(pixel_format.bytes_per_pixel()).ok_or(NativeError::ArithmeticOverflow)?;
+    let row_bytes = width
+        .checked_mul(pixel_format.bytes_per_pixel())
+        .ok_or(NativeError::ArithmeticOverflow)?;
     if plane_width != width || plane_height != height {
         return Err(NativeError::InvalidFrame);
     }
@@ -57,7 +67,9 @@ pub(super) fn copy_bitmap(
         });
     }
     if frame_bytes > declaration.max_frame_bytes() || output.len() < frame_bytes as usize {
-        return Err(NativeError::BufferTooSmall { required: frame_bytes as usize });
+        return Err(NativeError::BufferTooSmall {
+            required: frame_bytes as usize,
+        });
     }
 
     let mut planes = [FramePlane::default(); 4];
@@ -70,8 +82,15 @@ pub(super) fn copy_bitmap(
         FramePixelFormat::OpaqueSamples(_) => return Err(NativeError::UnsupportedPixelFormat),
     };
     let validated = FrameFormat::new_with_pixel_format(
-        format_id, width, height, frame_bytes, pixel_format, planes, 1,
-    ).map_err(|_| NativeError::InvalidFrame)?;
+        format_id,
+        width,
+        height,
+        frame_bytes,
+        pixel_format,
+        planes,
+        1,
+    )
+    .map_err(|_| NativeError::InvalidFrame)?;
     // `max_payload_bytes` bounds dense samples. Padding and nonzero plane
     // offsets have already been rejected because CopyToBuffer's mapping for
     // those layouts is not established here.
@@ -88,9 +107,13 @@ pub(super) fn copy_bitmap(
     let buffer = Buffer::Create(frame_bytes)?;
     buffer.SetLength(frame_bytes)?;
     bitmap.CopyToBuffer(&buffer)?;
-    if buffer.Length()? < frame_bytes { return Err(NativeError::InvalidFrame); }
+    if buffer.Length()? < frame_bytes {
+        return Err(NativeError::InvalidFrame);
+    }
     let reader = DataReader::FromBuffer(&buffer)?;
-    if reader.UnconsumedBufferLength()? < frame_bytes { return Err(NativeError::InvalidFrame); }
+    if reader.UnconsumedBufferLength()? < frame_bytes {
+        return Err(NativeError::InvalidFrame);
+    }
     reader.ReadBytes(&mut output[..frame_bytes as usize])?;
     Ok(validated)
 }
@@ -102,7 +125,10 @@ pub(super) fn validate_copy_allocation(
     match allocation {
         CopyAllocationClass::HotZeroHeap => Err(NativeError::HotZeroHeapDenied),
         CopyAllocationClass::ColdBounded { byte_budget }
-            if byte_budget >= declared_max_frame_bytes => Ok(byte_budget),
+            if byte_budget >= declared_max_frame_bytes =>
+        {
+            Ok(byte_budget)
+        }
         CopyAllocationClass::ColdBounded { byte_budget } => {
             Err(NativeError::ColdAllocationBudgetExceeded {
                 required_bytes: declared_max_frame_bytes,
@@ -119,7 +145,9 @@ fn copy_to_buffer_layout_supported(offset: u32, stride: u32, row_bytes: u32) -> 
 
 #[cfg(test)]
 mod tests {
-    use super::{copy_to_buffer_layout_supported, validate_copy_allocation, CopyAllocationClass, NativeError};
+    use super::{
+        copy_to_buffer_layout_supported, validate_copy_allocation, CopyAllocationClass, NativeError,
+    };
 
     #[test]
     fn copy_buffer_accepts_only_tight_single_plane_layouts() {
@@ -137,7 +165,10 @@ mod tests {
         );
         assert_eq!(
             validate_copy_allocation(CopyAllocationClass::ColdBounded { byte_budget: 4095 }, 4096),
-            Err(NativeError::ColdAllocationBudgetExceeded { required_bytes: 4096, budget_bytes: 4095 }),
+            Err(NativeError::ColdAllocationBudgetExceeded {
+                required_bytes: 4096,
+                budget_bytes: 4095
+            }),
         );
         assert_eq!(
             validate_copy_allocation(CopyAllocationClass::ColdBounded { byte_budget: 4096 }, 4096),

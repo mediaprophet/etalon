@@ -1,8 +1,10 @@
 //! Adapter for an unverified native OS classification.
 use etalon_sense_core::{
     evidence::EvidenceOrigin,
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope,
-        ObservationKind, QuantityUnitIds},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        QuantityUnitIds,
+    },
     quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor},
 };
 
@@ -26,20 +28,35 @@ pub struct MappedOsPresence {
 /// Preserve an OS classification without inventing calibration, a clock
 /// conversion, semantic identity, confidence, evidence or authorization.
 pub fn adapt_os_presence(
-    reading: OsPresenceReading, mapping: OsPresenceMapping,
+    reading: OsPresenceReading,
+    mapping: OsPresenceMapping,
 ) -> Result<MappedOsPresence, AdaptError> {
     if reading.source_id == 0 || reading.source_id != mapping.source.source_id() {
         return Err(AdaptError::SourceMismatch);
     }
-    let calibration = CalibrationRecord::new(CalibrationState::Missing)
-        .map_err(AdaptError::Contract)?;
+    let calibration =
+        CalibrationRecord::new(CalibrationState::Missing).map_err(AdaptError::Contract)?;
     let envelope = ObservationEnvelope::new(
-        ObservationKind::CachedQuery, mapping.source, None, None, None, None,
-        mapping.semantics, MeasurementUncertainty::Unknown, QualityRecord::Unknown,
-        calibration, EvidenceOrigin::Unknown, None, HostPolicyDecision::NotEvaluated,
-    ).map_err(AdaptError::Contract)?;
-    Ok(MappedOsPresence { envelope, presence_code: reading.presence_code,
-        windows_utc_ticks_100ns: reading.windows_utc_ticks_100ns })
+        ObservationKind::CachedQuery,
+        mapping.source,
+        None,
+        None,
+        None,
+        None,
+        mapping.semantics,
+        MeasurementUncertainty::Unknown,
+        QualityRecord::Unknown,
+        calibration,
+        EvidenceOrigin::Unknown,
+        None,
+        HostPolicyDecision::NotEvaluated,
+    )
+    .map_err(AdaptError::Contract)?;
+    Ok(MappedOsPresence {
+        envelope,
+        presence_code: reading.presence_code,
+        windows_utc_ticks_100ns: reading.windows_utc_ticks_100ns,
+    })
 }
 
 #[cfg(test)]
@@ -48,14 +65,19 @@ mod tests {
     use etalon_sense_core::quality::SourceKind;
 
     fn mapping() -> OsPresenceMapping {
-        OsPresenceMapping { source: SourceDescriptor::new(1, SourceKind::Live).unwrap(),
-            semantics: QuantityUnitIds::new(None, None).unwrap() }
+        OsPresenceMapping {
+            source: SourceDescriptor::new(1, SourceKind::Live).unwrap(),
+            semantics: QuantityUnitIds::new(None, None).unwrap(),
+        }
     }
 
     #[test]
     fn unknown_os_code_and_time_remain_raw() {
-        let reading = OsPresenceReading { source_id: 1, presence_code: -42,
-            windows_utc_ticks_100ns: 123 };
+        let reading = OsPresenceReading {
+            source_id: 1,
+            presence_code: -42,
+            windows_utc_ticks_100ns: 123,
+        };
         let mapped = adapt_os_presence(reading, mapping()).unwrap();
         assert_eq!(mapped.presence_code, -42);
         assert_eq!(mapped.windows_utc_ticks_100ns, 123);
@@ -66,8 +88,14 @@ mod tests {
 
     #[test]
     fn rejects_a_different_source() {
-        let reading = OsPresenceReading { source_id: 2, presence_code: 0,
-            windows_utc_ticks_100ns: 0 };
-        assert_eq!(adapt_os_presence(reading, mapping()), Err(AdaptError::SourceMismatch));
+        let reading = OsPresenceReading {
+            source_id: 2,
+            presence_code: 0,
+            windows_utc_ticks_100ns: 0,
+        };
+        assert_eq!(
+            adapt_os_presence(reading, mapping()),
+            Err(AdaptError::SourceMismatch)
+        );
     }
 }

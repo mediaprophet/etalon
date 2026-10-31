@@ -9,8 +9,8 @@ use super::{ReplayAuthorizationClock, ReplayMetadata};
 use crate::{
     adapter::{
         AdapterError, AdapterId, AuthorizedExtendedCapture, AuthorizedExtendedCaptureBuffer,
-        ExtendedAdapterDescriptor, ExtendedCaptureSession,
-        ExtendedCapturedSamples, ExtendedDiscoveredSource, ExtendedSensorAdapter,
+        ExtendedAdapterDescriptor, ExtendedCaptureSession, ExtendedCapturedSamples,
+        ExtendedDiscoveredSource, ExtendedSensorAdapter,
     },
     buffer::SampleLayout,
     extended_capability::ExtendedCapability,
@@ -34,11 +34,18 @@ impl ReplayStreamBudget {
         if max_frames == 0 || max_payload_bytes == 0 {
             return Err(ContractError::InvalidExtent);
         }
-        Ok(Self { max_frames, max_payload_bytes })
+        Ok(Self {
+            max_frames,
+            max_payload_bytes,
+        })
     }
 
-    pub const fn max_frames(self) -> usize { self.max_frames }
-    pub const fn max_payload_bytes(self) -> usize { self.max_payload_bytes }
+    pub const fn max_frames(self) -> usize {
+        self.max_frames
+    }
+    pub const fn max_payload_bytes(self) -> usize {
+        self.max_payload_bytes
+    }
 }
 
 /// One frame's position and caller-declared measurement metadata.
@@ -65,16 +72,38 @@ impl ReplayFrameDescriptor {
         calibration: CalibrationRecord,
         quality: QualityRecord,
     ) -> Self {
-        Self { offset_bytes, layout, timestamp, sequence, sample_rate, calibration, quality }
+        Self {
+            offset_bytes,
+            layout,
+            timestamp,
+            sequence,
+            sample_rate,
+            calibration,
+            quality,
+        }
     }
 
-    pub const fn offset_bytes(&self) -> u64 { self.offset_bytes }
-    pub const fn layout(&self) -> &SampleLayout { &self.layout }
-    pub const fn timestamp(&self) -> ClockStamp { self.timestamp }
-    pub const fn sequence(&self) -> u64 { self.sequence }
-    pub const fn sample_rate(&self) -> Option<SampleRate> { self.sample_rate }
-    pub const fn calibration(&self) -> CalibrationRecord { self.calibration }
-    pub const fn quality(&self) -> QualityRecord { self.quality }
+    pub const fn offset_bytes(&self) -> u64 {
+        self.offset_bytes
+    }
+    pub const fn layout(&self) -> &SampleLayout {
+        &self.layout
+    }
+    pub const fn timestamp(&self) -> ClockStamp {
+        self.timestamp
+    }
+    pub const fn sequence(&self) -> u64 {
+        self.sequence
+    }
+    pub const fn sample_rate(&self) -> Option<SampleRate> {
+        self.sample_rate
+    }
+    pub const fn calibration(&self) -> CalibrationRecord {
+        self.calibration
+    }
+    pub const fn quality(&self) -> QualityRecord {
+        self.quality
+    }
 }
 
 /// Metadata returned alongside one successfully copied replay frame.
@@ -89,12 +118,24 @@ pub struct ReplayFrameInfo {
 }
 
 impl ReplayFrameInfo {
-    pub const fn timestamp(self) -> ClockStamp { self.timestamp }
-    pub const fn sequence(self) -> u64 { self.sequence }
-    pub const fn sequence_event(self) -> SequenceEvent { self.sequence_event }
-    pub const fn sample_rate(self) -> Option<SampleRate> { self.sample_rate }
-    pub const fn calibration(self) -> CalibrationRecord { self.calibration }
-    pub const fn quality(self) -> QualityRecord { self.quality }
+    pub const fn timestamp(self) -> ClockStamp {
+        self.timestamp
+    }
+    pub const fn sequence(self) -> u64 {
+        self.sequence
+    }
+    pub const fn sequence_event(self) -> SequenceEvent {
+        self.sequence_event
+    }
+    pub const fn sample_rate(self) -> Option<SampleRate> {
+        self.sample_rate
+    }
+    pub const fn calibration(self) -> CalibrationRecord {
+        self.calibration
+    }
+    pub const fn quality(self) -> QualityRecord {
+        self.quality
+    }
 }
 
 /// Frame data and its caller-declared timing/quality metadata, returned only
@@ -108,10 +149,18 @@ pub struct ReplayCapturedFrame<'a> {
 }
 
 impl<'a> ReplayCapturedFrame<'a> {
-    pub const fn source(&self) -> ExtendedDiscoveredSource { self.source }
-    pub const fn samples(&self) -> &ExtendedCapturedSamples<'a> { &self.samples }
-    pub const fn info(&self) -> ReplayFrameInfo { self.info }
-    pub const fn replay_metadata(&self) -> ReplayMetadata { self.replay_metadata }
+    pub const fn source(&self) -> ExtendedDiscoveredSource {
+        self.source
+    }
+    pub const fn samples(&self) -> &ExtendedCapturedSamples<'a> {
+        &self.samples
+    }
+    pub const fn info(&self) -> ReplayFrameInfo {
+        self.info
+    }
+    pub const fn replay_metadata(&self) -> ReplayMetadata {
+        self.replay_metadata
+    }
 }
 
 /// Multi-frame, caller-buffered deterministic replay adapter for one extended
@@ -162,7 +211,8 @@ impl<'bytes, 'frames, 'clock> ReplayStreamAdapter<'bytes, 'frames, 'clock> {
                 .map_err(|_| AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
             let span = usize::try_from(frame.layout.required_byte_span()?)
                 .map_err(|_| AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
-            let end = start.checked_add(span)
+            let end = start
+                .checked_add(span)
                 .ok_or(AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
             if end > payload.len() {
                 return Err(AdapterError::Buffer(ContractError::OutOfBounds));
@@ -186,12 +236,24 @@ impl<'bytes, 'frames, 'clock> ReplayStreamAdapter<'bytes, 'frames, 'clock> {
         })
     }
 
-    pub const fn metadata(&self) -> ReplayMetadata { self.metadata }
-    pub const fn source(&self) -> ExtendedDiscoveredSource { self.source }
-    pub const fn stream_id(&self) -> u64 { self.stream_id }
-    pub const fn generation(&self) -> u32 { self.generation }
-    pub const fn next_frame_index(&self) -> usize { self.frame_index }
-    pub const fn is_exhausted(&self) -> bool { self.frame_index >= self.frames.len() }
+    pub const fn metadata(&self) -> ReplayMetadata {
+        self.metadata
+    }
+    pub const fn source(&self) -> ExtendedDiscoveredSource {
+        self.source
+    }
+    pub const fn stream_id(&self) -> u64 {
+        self.stream_id
+    }
+    pub const fn generation(&self) -> u32 {
+        self.generation
+    }
+    pub const fn next_frame_index(&self) -> usize {
+        self.frame_index
+    }
+    pub const fn is_exhausted(&self) -> bool {
+        self.frame_index >= self.frames.len()
+    }
 
     /// Authorized frame-level capture. Each frame consumes one fresh
     /// `AuthorizedExtendedCaptureBuffer`; the output includes recorded time,
@@ -202,8 +264,16 @@ impl<'bytes, 'frames, 'clock> ReplayStreamAdapter<'bytes, 'frames, 'clock> {
     ) -> Result<ReplayCapturedFrame<'out>, AdapterError> {
         self.last_frame_info = None;
         let samples = <Self as ExtendedSensorAdapter>::capture(self, output)?;
-        let info = self.last_frame_info.take().ok_or(AdapterError::BackendFailure)?;
-        Ok(ReplayCapturedFrame { source: self.source, samples, info, replay_metadata: self.metadata })
+        let info = self
+            .last_frame_info
+            .take()
+            .ok_or(AdapterError::BackendFailure)?;
+        Ok(ReplayCapturedFrame {
+            source: self.source,
+            samples,
+            info,
+            replay_metadata: self.metadata,
+        })
     }
 
     fn frame_slice(&self, frame: &ReplayFrameDescriptor) -> Result<&'bytes [u8], AdapterError> {
@@ -212,37 +282,58 @@ impl<'bytes, 'frames, 'clock> ReplayStreamAdapter<'bytes, 'frames, 'clock> {
             .map_err(|_| AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
         let span = usize::try_from(frame.layout.required_byte_span()?)
             .map_err(|_| AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
-        let end = start.checked_add(span)
+        let end = start
+            .checked_add(span)
             .ok_or(AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
-        payload.get(start..end).ok_or(AdapterError::Buffer(ContractError::OutOfBounds))
+        payload
+            .get(start..end)
+            .ok_or(AdapterError::Buffer(ContractError::OutOfBounds))
     }
 }
 
 impl ExtendedSensorAdapter for ReplayStreamAdapter<'_, '_, '_> {
-    fn descriptor(&self) -> ExtendedAdapterDescriptor { self.descriptor }
+    fn descriptor(&self) -> ExtendedAdapterDescriptor {
+        self.descriptor
+    }
 
     fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
         self.clock.trusted_now()
     }
 
-    fn discover_backend(&mut self, out: &mut [ExtendedDiscoveredSource]) -> Result<usize, AdapterError> {
-        if out.is_empty() { return Err(AdapterError::DiscoveryBufferTooSmall); }
+    fn discover_backend(
+        &mut self,
+        out: &mut [ExtendedDiscoveredSource],
+    ) -> Result<usize, AdapterError> {
+        if out.is_empty() {
+            return Err(AdapterError::DiscoveryBufferTooSmall);
+        }
         out[0] = self.source;
         Ok(1)
     }
 
-    fn start_backend(&mut self, request: AuthorizedExtendedCapture) -> Result<ExtendedCaptureSession, AdapterError> {
-        if request.source() != self.source { return Err(AdapterError::AuthorizationDenied); }
+    fn start_backend(
+        &mut self,
+        request: AuthorizedExtendedCapture,
+    ) -> Result<ExtendedCaptureSession, AdapterError> {
+        if request.source() != self.source {
+            return Err(AdapterError::AuthorizationDenied);
+        }
         request.validate_at(self.clock.trusted_now()?)?;
-        if self.active.is_some() || self.is_exhausted() { return Err(AdapterError::Unavailable); }
+        if self.active.is_some() || self.is_exhausted() {
+            return Err(AdapterError::Unavailable);
+        }
         let id = self.next_session_id;
         self.next_session_id = id.checked_add(1).ok_or(AdapterError::InvalidIdentifier)?;
-        let session = ExtendedCaptureSession::new(self.descriptor.id(), self.source, id, self.generation)?;
+        let session =
+            ExtendedCaptureSession::new(self.descriptor.id(), self.source, id, self.generation)?;
         self.active = Some(session);
         Ok(session)
     }
 
-    fn capture_backend<'out>(&mut self, mut output: AuthorizedExtendedCaptureBuffer<'out>) -> Result<ExtendedCapturedSamples<'out>, AdapterError> {
+    fn capture_backend<'out>(
+        &mut self,
+        mut output: AuthorizedExtendedCaptureBuffer<'out>,
+    ) -> Result<ExtendedCapturedSamples<'out>, AdapterError> {
         self.last_frame_info = None;
         if self.active != Some(output.session())
             || output.source() != self.source
@@ -250,7 +341,10 @@ impl ExtendedSensorAdapter for ReplayStreamAdapter<'_, '_, '_> {
         {
             return Err(AdapterError::InvalidSession);
         }
-        let frame = self.frames.get(self.frame_index).ok_or(AdapterError::Unavailable)?;
+        let frame = self
+            .frames
+            .get(self.frame_index)
+            .ok_or(AdapterError::Unavailable)?;
         if output.layout() != frame.layout() {
             return Err(AdapterError::Buffer(ContractError::InvalidExtent));
         }
@@ -260,7 +354,12 @@ impl ExtendedSensorAdapter for ReplayStreamAdapter<'_, '_, '_> {
         if destination.len() != source_bytes.len() {
             return Err(AdapterError::Buffer(ContractError::OutOfBounds));
         }
-        let event = self.order.observe(self.stream_id, self.generation, frame.sequence, frame.timestamp)?;
+        let event = self.order.observe(
+            self.stream_id,
+            self.generation,
+            frame.sequence,
+            frame.timestamp,
+        )?;
         destination.copy_from_slice(source_bytes);
         let info = ReplayFrameInfo {
             timestamp: frame.timestamp,
@@ -276,7 +375,9 @@ impl ExtendedSensorAdapter for ReplayStreamAdapter<'_, '_, '_> {
     }
 
     fn stop_backend(&mut self, session: ExtendedCaptureSession) -> Result<(), AdapterError> {
-        if self.active != Some(session) { return Err(AdapterError::InvalidSession); }
+        if self.active != Some(session) {
+            return Err(AdapterError::InvalidSession);
+        }
         self.active = None;
         Ok(())
     }

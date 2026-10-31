@@ -29,11 +29,18 @@ impl WasapiConfig {
         wait_timeout_ms: u32,
         max_capture_duration_ms: u32,
     ) -> Result<Self, AdapterError> {
-        if modality_id == 0 || modality_id != capability.modality_id()
-            || capability.rank() != 2 || max_frame_bytes == 0
-            || wait_timeout_ms == 0 || wait_timeout_ms > 1_000
-            || max_capture_duration_ms == 0 || max_capture_duration_ms > 60_000
-            || !matches!(capability.encoding(), SampleEncoding::I16 | SampleEncoding::F32)
+        if modality_id == 0
+            || modality_id != capability.modality_id()
+            || capability.rank() != 2
+            || max_frame_bytes == 0
+            || wait_timeout_ms == 0
+            || wait_timeout_ms > 1_000
+            || max_capture_duration_ms == 0
+            || max_capture_duration_ms > 60_000
+            || !matches!(
+                capability.encoding(),
+                SampleEncoding::I16 | SampleEncoding::F32
+            )
         {
             return Err(AdapterError::Unsupported);
         }

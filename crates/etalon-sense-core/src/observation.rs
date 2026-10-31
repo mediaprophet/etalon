@@ -41,7 +41,10 @@ pub struct QuantityUnitIds {
 }
 
 impl QuantityUnitIds {
-    pub const fn new(quantity_id: Option<u64>, unit_id: Option<u64>) -> Result<Self, ContractError> {
+    pub const fn new(
+        quantity_id: Option<u64>,
+        unit_id: Option<u64>,
+    ) -> Result<Self, ContractError> {
         let quantity_id = match quantity_id {
             Some(value) => match NonZeroU64::new(value) {
                 Some(value) => Some(value),
@@ -56,11 +59,18 @@ impl QuantityUnitIds {
             },
             None => None,
         };
-        Ok(Self { quantity_id, unit_id })
+        Ok(Self {
+            quantity_id,
+            unit_id,
+        })
     }
 
-    pub const fn quantity_id(self) -> Option<NonZeroU64> { self.quantity_id }
-    pub const fn unit_id(self) -> Option<NonZeroU64> { self.unit_id }
+    pub const fn quantity_id(self) -> Option<NonZeroU64> {
+        self.quantity_id
+    }
+    pub const fn unit_id(self) -> Option<NonZeroU64> {
+        self.unit_id
+    }
 }
 
 /// Physical measurement uncertainty, kept separate from quality confidence.
@@ -70,9 +80,18 @@ impl QuantityUnitIds {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum MeasurementUncertainty {
     Unknown,
-    AbsoluteBound { magnitude: f64, unit_id: Option<NonZeroU64> },
-    RelativeBound { fraction: f64 },
-    Interval { lower: f64, upper: f64, unit_id: Option<NonZeroU64> },
+    AbsoluteBound {
+        magnitude: f64,
+        unit_id: Option<NonZeroU64>,
+    },
+    RelativeBound {
+        fraction: f64,
+    },
+    Interval {
+        lower: f64,
+        upper: f64,
+        unit_id: Option<NonZeroU64>,
+    },
 }
 
 impl MeasurementUncertainty {
@@ -80,7 +99,10 @@ impl MeasurementUncertainty {
         if !magnitude.is_finite() || magnitude < 0.0 {
             return Err(ContractError::InvalidQuality);
         }
-        Ok(Self::AbsoluteBound { magnitude, unit_id: nonzero(unit_id)? })
+        Ok(Self::AbsoluteBound {
+            magnitude,
+            unit_id: nonzero(unit_id)?,
+        })
     }
 
     pub fn relative_bound(fraction: f64) -> Result<Self, ContractError> {
@@ -94,7 +116,11 @@ impl MeasurementUncertainty {
         if !lower.is_finite() || !upper.is_finite() || lower > upper {
             return Err(ContractError::InvalidQuality);
         }
-        Ok(Self::Interval { lower, upper, unit_id: nonzero(unit_id)? })
+        Ok(Self::Interval {
+            lower,
+            upper,
+            unit_id: nonzero(unit_id)?,
+        })
     }
 }
 
@@ -114,7 +140,10 @@ fn nonzero(value: Option<u64>) -> Result<Option<NonZeroU64>, ContractError> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HostPolicyDecision {
     NotEvaluated,
-    Evaluated { request: PolicyRequest, outcome: PolicyOutcome },
+    Evaluated {
+        request: PolicyRequest,
+        outcome: PolicyOutcome,
+    },
 }
 
 /// What an observation's timestamp describes. This is independent of its
@@ -172,7 +201,9 @@ impl ObservationEnvelope {
     ) -> Result<Self, ContractError> {
         let stream_id = nonzero(stream_id)?;
         let generation = match generation {
-            Some(value) => NonZeroU32::new(value).map(Some).ok_or(ContractError::InvalidIdentifier)?,
+            Some(value) => NonZeroU32::new(value)
+                .map(Some)
+                .ok_or(ContractError::InvalidIdentifier)?,
             None => None,
         };
         if stream_id.is_none() && (generation.is_some() || sequence.is_some()) {
@@ -181,7 +212,9 @@ impl ObservationEnvelope {
         let source_kind_matches = match kind {
             ObservationKind::LiveFrame => source.kind() == crate::quality::SourceKind::Live,
             ObservationKind::RecordedFrame => source.kind() == crate::quality::SourceKind::Recorded,
-            ObservationKind::SyntheticFrame => source.kind() == crate::quality::SourceKind::Synthetic,
+            ObservationKind::SyntheticFrame => {
+                source.kind() == crate::quality::SourceKind::Synthetic
+            }
             ObservationKind::CachedQuery | ObservationKind::HostDerived => true,
         };
         if !source_kind_matches {
@@ -192,35 +225,78 @@ impl ObservationEnvelope {
             return Err(ContractError::InvalidSource);
         }
         Ok(Self {
-            kind, source, stream_id, generation, sequence, timestamp, time_anchor: ObservationTimeAnchor::Unknown, quantity_unit,
-            uncertainty, quality, calibration, evidence, payload_digest, policy,
+            kind,
+            source,
+            stream_id,
+            generation,
+            sequence,
+            timestamp,
+            time_anchor: ObservationTimeAnchor::Unknown,
+            quantity_unit,
+            uncertainty,
+            quality,
+            calibration,
+            evidence,
+            payload_digest,
+            policy,
         })
     }
 
-    pub const fn kind(self) -> ObservationKind { self.kind }
-    pub const fn source(self) -> SourceDescriptor { self.source }
-    pub const fn stream_id(self) -> Option<NonZeroU64> { self.stream_id }
-    pub const fn generation(self) -> Option<NonZeroU32> { self.generation }
-    pub const fn sequence(self) -> Option<u64> { self.sequence }
-    pub const fn timestamp(self) -> Option<ClockStamp> { self.timestamp }
-    pub const fn time_anchor(self) -> ObservationTimeAnchor { self.time_anchor }
+    pub const fn kind(self) -> ObservationKind {
+        self.kind
+    }
+    pub const fn source(self) -> SourceDescriptor {
+        self.source
+    }
+    pub const fn stream_id(self) -> Option<NonZeroU64> {
+        self.stream_id
+    }
+    pub const fn generation(self) -> Option<NonZeroU32> {
+        self.generation
+    }
+    pub const fn sequence(self) -> Option<u64> {
+        self.sequence
+    }
+    pub const fn timestamp(self) -> Option<ClockStamp> {
+        self.timestamp
+    }
+    pub const fn time_anchor(self) -> ObservationTimeAnchor {
+        self.time_anchor
+    }
 
     /// Attach declared timestamp meaning; a missing timestamp has no known
     /// temporal anchor. This does not authenticate the host's declaration.
-    pub fn with_time_anchor(mut self, anchor: ObservationTimeAnchor) -> Result<Self, ContractError> {
+    pub fn with_time_anchor(
+        mut self,
+        anchor: ObservationTimeAnchor,
+    ) -> Result<Self, ContractError> {
         if self.timestamp.is_none() && anchor != ObservationTimeAnchor::Unknown {
             return Err(ContractError::InvalidTime);
         }
         self.time_anchor = anchor;
         Ok(self)
     }
-    pub const fn quantity_unit(self) -> QuantityUnitIds { self.quantity_unit }
-    pub const fn uncertainty(self) -> MeasurementUncertainty { self.uncertainty }
-    pub const fn quality(self) -> QualityRecord { self.quality }
-    pub const fn calibration(self) -> CalibrationRecord { self.calibration }
-    pub const fn evidence(self) -> EvidenceOrigin { self.evidence }
-    pub const fn payload_digest(self) -> Option<ArtifactDigest> { self.payload_digest }
-    pub const fn policy(self) -> HostPolicyDecision { self.policy }
+    pub const fn quantity_unit(self) -> QuantityUnitIds {
+        self.quantity_unit
+    }
+    pub const fn uncertainty(self) -> MeasurementUncertainty {
+        self.uncertainty
+    }
+    pub const fn quality(self) -> QualityRecord {
+        self.quality
+    }
+    pub const fn calibration(self) -> CalibrationRecord {
+        self.calibration
+    }
+    pub const fn evidence(self) -> EvidenceOrigin {
+        self.evidence
+    }
+    pub const fn payload_digest(self) -> Option<ArtifactDigest> {
+        self.payload_digest
+    }
+    pub const fn policy(self) -> HostPolicyDecision {
+        self.policy
+    }
 }
 
 fn validate_uncertainty_unit(
@@ -229,20 +305,33 @@ fn validate_uncertainty_unit(
 ) -> Result<(), ContractError> {
     match uncertainty {
         MeasurementUncertainty::AbsoluteBound { magnitude, .. }
-            if !magnitude.is_finite() || magnitude < 0.0 => return Err(ContractError::InvalidQuality),
+            if !magnitude.is_finite() || magnitude < 0.0 =>
+        {
+            return Err(ContractError::InvalidQuality)
+        }
         MeasurementUncertainty::RelativeBound { fraction }
-            if !fraction.is_finite() || fraction < 0.0 => return Err(ContractError::InvalidQuality),
+            if !fraction.is_finite() || fraction < 0.0 =>
+        {
+            return Err(ContractError::InvalidQuality)
+        }
         MeasurementUncertainty::Interval { lower, upper, .. }
-            if !lower.is_finite() || !upper.is_finite() || lower > upper => return Err(ContractError::InvalidQuality),
+            if !lower.is_finite() || !upper.is_finite() || lower > upper =>
+        {
+            return Err(ContractError::InvalidQuality)
+        }
         _ => {}
     }
     let uncertainty_unit = match uncertainty {
         MeasurementUncertainty::AbsoluteBound { unit_id, .. }
         | MeasurementUncertainty::Interval { unit_id, .. } => unit_id,
-        MeasurementUncertainty::Unknown | MeasurementUncertainty::RelativeBound { .. } => return Ok(()),
+        MeasurementUncertainty::Unknown | MeasurementUncertainty::RelativeBound { .. } => {
+            return Ok(())
+        }
     };
     match (uncertainty_unit, quantity_unit.unit_id()) {
-        (Some(uncertainty_unit), Some(declared_unit)) if uncertainty_unit == declared_unit => Ok(()),
+        (Some(uncertainty_unit), Some(declared_unit)) if uncertainty_unit == declared_unit => {
+            Ok(())
+        }
         _ => Err(ContractError::IncompatibleUnit),
     }
 }
@@ -250,8 +339,12 @@ fn validate_uncertainty_unit(
 fn evidence_source_matches(evidence: EvidenceOrigin, source: SourceDescriptor) -> bool {
     match evidence {
         EvidenceOrigin::Unknown => true,
-        EvidenceOrigin::Asserted { source: claimed, .. }
-        | EvidenceOrigin::SignaturePresented { source: claimed, .. } => claimed == source,
+        EvidenceOrigin::Asserted {
+            source: claimed, ..
+        }
+        | EvidenceOrigin::SignaturePresented {
+            source: claimed, ..
+        } => claimed == source,
         EvidenceOrigin::Verified(verified) => verified.source() == source,
     }
 }

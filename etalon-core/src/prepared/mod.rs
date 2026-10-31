@@ -161,7 +161,10 @@ mod tests {
             ..RunState::default()
         };
         assert_eq!(state.begin(), Ok(u64::MAX));
-        assert_eq!(state.begin(), Err(PreparedComputeError::GenerationExhausted));
+        assert_eq!(
+            state.begin(),
+            Err(PreparedComputeError::GenerationExhausted)
+        );
         assert_eq!(state.begin(), Err(PreparedComputeError::Poisoned));
         assert_eq!(state.generation, u64::MAX);
         assert_eq!(state.completed, 0);

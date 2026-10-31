@@ -15,8 +15,12 @@ pub struct ChannelPower {
 /// recording. Channel numbering is zero-based. This is an electrical/digital
 /// feature; it does not infer acoustic pressure, species or speech content.
 pub fn pcm16_channel_power(wave: Pcm16Wave<'_>, channel: u16) -> Result<ChannelPower, SignalError> {
-    if channel >= wave.channels() { return Err(SignalError::InvalidParameter); }
-    if wave.frames() == 0 { return Err(SignalError::EmptyInput); }
+    if channel >= wave.channels() {
+        return Err(SignalError::InvalidParameter);
+    }
+    if wave.frames() == 0 {
+        return Err(SignalError::EmptyInput);
+    }
     let channels = usize::from(wave.channels());
     let stride = channels * 2; // PCM parser checked u16 block alignment.
     let offset = usize::from(channel) * 2;
@@ -27,8 +31,15 @@ pub fn pcm16_channel_power(wave: Pcm16Wave<'_>, channel: u16) -> Result<ChannelP
         sum += normalized * normalized;
     }
     let mean_square = sum / wave.frames() as f64;
-    if !mean_square.is_finite() { return Err(SignalError::NumericRange); }
-    Ok(ChannelPower { channel, sample_rate_hz: wave.sample_rate_hz(), sample_count: wave.frames(), mean_square })
+    if !mean_square.is_finite() {
+        return Err(SignalError::NumericRange);
+    }
+    Ok(ChannelPower {
+        channel,
+        sample_rate_hz: wave.sample_rate_hz(),
+        sample_count: wave.frames(),
+        mean_square,
+    })
 }
 
 #[cfg(test)]

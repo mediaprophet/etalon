@@ -9,8 +9,12 @@ struct FakeProvider {
 }
 
 impl LiveProcessingProvider for FakeProvider {
-    fn descriptor(&self) -> LiveProviderDescriptor { self.descriptor }
-    fn lifecycle(&self) -> ProviderLifecycle { self.lifecycle }
+    fn descriptor(&self) -> LiveProviderDescriptor {
+        self.descriptor
+    }
+    fn lifecycle(&self) -> ProviderLifecycle {
+        self.lifecycle
+    }
 
     fn dispatch(
         &mut self,
@@ -25,14 +29,26 @@ impl LiveProcessingProvider for FakeProvider {
         assert_eq!(grant.generation(), self.descriptor.generation());
         assert_eq!(grant.operation(), self.descriptor.operation());
         self.calls += 1;
-        for (dst, src) in output.iter_mut().zip(input.iter()) { *dst = *src; }
+        for (dst, src) in output.iter_mut().zip(input.iter()) {
+            *dst = *src;
+        }
         if self.bump_generation {
             self.descriptor = descriptor(ProcessorKind::Cpu, self.descriptor.generation() + 1);
         }
-        let generation = if self.bad_report { self.descriptor.generation() + 1 } else { grant.generation() };
+        let generation = if self.bad_report {
+            self.descriptor.generation() + 1
+        } else {
+            grant.generation()
+        };
         Ok(ProviderReport::new(
-            grant.provider_id(), generation, grant.operation(),
-            if self.bad_report { 0 } else { input.len() as u64 },
+            grant.provider_id(),
+            generation,
+            grant.operation(),
+            if self.bad_report {
+                0
+            } else {
+                input.len() as u64
+            },
             output.len() as u64,
         ))
     }
@@ -40,10 +56,19 @@ impl LiveProcessingProvider for FakeProvider {
 
 fn descriptor(processor: ProcessorKind, generation: u32) -> LiveProviderDescriptor {
     LiveProviderDescriptor::new(
-        11, generation, processor, OperationId::new(7, 2).unwrap(),
-        SampleEncoding::F32, SampleEncoding::F32, 1, [8, 0, 0, 0],
-        4, AllocationClass::HotZeroHeap, Some(100),
-    ).unwrap()
+        11,
+        generation,
+        processor,
+        OperationId::new(7, 2).unwrap(),
+        SampleEncoding::F32,
+        SampleEncoding::F32,
+        1,
+        [8, 0, 0, 0],
+        4,
+        AllocationClass::HotZeroHeap,
+        Some(100),
+    )
+    .unwrap()
 }
 
 fn layout() -> SampleLayout {
@@ -56,8 +81,11 @@ fn request(preference: ProcessorPreference) -> ProcessingRequest {
 
 fn provider(processor: ProcessorKind) -> FakeProvider {
     FakeProvider {
-        descriptor: descriptor(processor, 3), lifecycle: ProviderLifecycle::Ready,
-        calls: 0, bump_generation: false, bad_report: false,
+        descriptor: descriptor(processor, 3),
+        lifecycle: ProviderLifecycle::Ready,
+        calls: 0,
+        bump_generation: false,
+        bad_report: false,
     }
 }
 
@@ -71,8 +99,14 @@ fn live_dispatch_checks_buffers_and_returns_provider_assertion() {
     let receipt = dispatch_live(
         request(ProcessorPreference::AnySupported),
         DispatchConstraints::new(AllocationClass::HotZeroHeap, 4),
-        &mut list, &layout(), &input, &layout(), &mut output, &mut workspace,
-    ).unwrap();
+        &mut list,
+        &layout(),
+        &input,
+        &layout(),
+        &mut output,
+        &mut workspace,
+    )
+    .unwrap();
     drop(list);
     assert_eq!(receipt.provider_id, 11);
     assert_eq!(receipt.generation, 3);
@@ -91,8 +125,14 @@ fn stopped_or_wrong_required_processor_is_never_invoked() {
     let err = dispatch_live(
         request(ProcessorPreference::Require(ProcessorKind::Dsp)),
         DispatchConstraints::new(AllocationClass::HotZeroHeap, 4),
-        &mut list, &layout(), &[0; 8], &layout(), &mut output, &mut [0; 4],
-    ).unwrap_err();
+        &mut list,
+        &layout(),
+        &[0; 8],
+        &layout(),
+        &mut output,
+        &mut [0; 4],
+    )
+    .unwrap_err();
     drop(list);
     assert_eq!(err, ContractError::UnsupportedOperation);
     assert_eq!(cpu.calls, 0);
@@ -108,8 +148,14 @@ fn restarted_generation_invalidates_completion_and_clears_output() {
     let err = dispatch_live(
         request(ProcessorPreference::AnySupported),
         DispatchConstraints::new(AllocationClass::HotZeroHeap, 4),
-        &mut list, &layout(), &[1; 8], &layout(), &mut output, &mut [0; 4],
-    ).unwrap_err();
+        &mut list,
+        &layout(),
+        &[1; 8],
+        &layout(),
+        &mut output,
+        &mut [0; 4],
+    )
+    .unwrap_err();
     drop(list);
     assert_eq!(err, ContractError::InvalidSource);
     assert_eq!(output, [0; 8]);
@@ -124,8 +170,14 @@ fn malformed_provider_report_cannot_publish_output() {
     let err = dispatch_live(
         request(ProcessorPreference::AnySupported),
         DispatchConstraints::new(AllocationClass::HotZeroHeap, 4),
-        &mut list, &layout(), &[1; 8], &layout(), &mut output, &mut [0; 4],
-    ).unwrap_err();
+        &mut list,
+        &layout(),
+        &[1; 8],
+        &layout(),
+        &mut output,
+        &mut [0; 4],
+    )
+    .unwrap_err();
     drop(list);
     assert_eq!(err, ContractError::InvalidSource);
     assert_eq!(output, [0; 8]);
@@ -139,8 +191,14 @@ fn allocation_class_shape_and_latency_are_admission_constraints() {
     let err = dispatch_live(
         request(ProcessorPreference::AnySupported),
         DispatchConstraints::new(AllocationClass::ColdBounded, 4),
-        &mut list, &layout(), &[0; 8], &layout(), &mut output, &mut [0; 4],
-    ).unwrap_err();
+        &mut list,
+        &layout(),
+        &[0; 8],
+        &layout(),
+        &mut output,
+        &mut [0; 4],
+    )
+    .unwrap_err();
     drop(list);
     assert_eq!(err, ContractError::UnsupportedOperation);
     assert_eq!(cpu.calls, 0);
@@ -150,22 +208,50 @@ fn allocation_class_shape_and_latency_are_admission_constraints() {
 fn unbounded_provider_requires_explicit_unbounded_admission() {
     let mut gpu = provider(ProcessorKind::Gpu);
     gpu.descriptor = LiveProviderDescriptor::new(
-        11, 3, ProcessorKind::Gpu, OperationId::new(7, 2).unwrap(),
-        SampleEncoding::F32, SampleEncoding::F32, 1, [8, 0, 0, 0],
-        4, AllocationClass::ColdUnbounded, Some(100),
-    ).unwrap();
+        11,
+        3,
+        ProcessorKind::Gpu,
+        OperationId::new(7, 2).unwrap(),
+        SampleEncoding::F32,
+        SampleEncoding::F32,
+        1,
+        [8, 0, 0, 0],
+        4,
+        AllocationClass::ColdUnbounded,
+        Some(100),
+    )
+    .unwrap();
     let mut output = [0xff; 8];
     for class in [AllocationClass::HotZeroHeap, AllocationClass::ColdBounded] {
         let mut list: [&mut dyn LiveProcessingProvider; 1] = [&mut gpu];
-        assert_eq!(dispatch_live(request(ProcessorPreference::AnySupported),
-            DispatchConstraints::new(class, 4), &mut list, &layout(), &[1; 8],
-            &layout(), &mut output, &mut [0; 4]).unwrap_err(), ContractError::UnsupportedOperation);
+        assert_eq!(
+            dispatch_live(
+                request(ProcessorPreference::AnySupported),
+                DispatchConstraints::new(class, 4),
+                &mut list,
+                &layout(),
+                &[1; 8],
+                &layout(),
+                &mut output,
+                &mut [0; 4]
+            )
+            .unwrap_err(),
+            ContractError::UnsupportedOperation
+        );
     }
     assert_eq!(gpu.calls, 0);
     let mut list: [&mut dyn LiveProcessingProvider; 1] = [&mut gpu];
-    assert!(dispatch_live(request(ProcessorPreference::AnySupported),
-        DispatchConstraints::new(AllocationClass::ColdUnbounded, 4), &mut list, &layout(),
-        &[1; 8], &layout(), &mut output, &mut [0; 4]).is_ok());
+    assert!(dispatch_live(
+        request(ProcessorPreference::AnySupported),
+        DispatchConstraints::new(AllocationClass::ColdUnbounded, 4),
+        &mut list,
+        &layout(),
+        &[1; 8],
+        &layout(),
+        &mut output,
+        &mut [0; 4]
+    )
+    .is_ok());
 }
 
 #[test]
@@ -176,8 +262,14 @@ fn short_buffer_fails_before_provider_call() {
     let err = dispatch_live(
         request(ProcessorPreference::AnySupported),
         DispatchConstraints::new(AllocationClass::HotZeroHeap, 4),
-        &mut list, &layout(), &[0; 8], &layout(), &mut output, &mut [0; 4],
-    ).unwrap_err();
+        &mut list,
+        &layout(),
+        &[0; 8],
+        &layout(),
+        &mut output,
+        &mut [0; 4],
+    )
+    .unwrap_err();
     drop(list);
     assert_eq!(err, ContractError::OutOfBounds);
     assert_eq!(cpu.calls, 0);

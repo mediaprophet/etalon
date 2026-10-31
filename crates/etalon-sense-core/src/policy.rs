@@ -116,18 +116,46 @@ impl PolicyRequest {
         revocation_authority: PolicyId,
         evidence: EvidenceCommitment,
     ) -> Self {
-        Self { subject, actor, source, operation, modality, context, purpose, revocation_authority, evidence }
+        Self {
+            subject,
+            actor,
+            source,
+            operation,
+            modality,
+            context,
+            purpose,
+            revocation_authority,
+            evidence,
+        }
     }
 
-    pub const fn subject(&self) -> Option<PolicyId> { self.subject }
-    pub const fn actor(&self) -> Option<PolicyId> { self.actor }
-    pub const fn source(&self) -> PolicyId { self.source }
-    pub const fn operation(&self) -> PolicyId { self.operation }
-    pub const fn modality(&self) -> PolicyId { self.modality }
-    pub const fn context(&self) -> PolicyId { self.context }
-    pub const fn purpose(&self) -> PolicyId { self.purpose }
-    pub const fn revocation_authority(&self) -> PolicyId { self.revocation_authority }
-    pub const fn evidence(&self) -> &EvidenceCommitment { &self.evidence }
+    pub const fn subject(&self) -> Option<PolicyId> {
+        self.subject
+    }
+    pub const fn actor(&self) -> Option<PolicyId> {
+        self.actor
+    }
+    pub const fn source(&self) -> PolicyId {
+        self.source
+    }
+    pub const fn operation(&self) -> PolicyId {
+        self.operation
+    }
+    pub const fn modality(&self) -> PolicyId {
+        self.modality
+    }
+    pub const fn context(&self) -> PolicyId {
+        self.context
+    }
+    pub const fn purpose(&self) -> PolicyId {
+        self.purpose
+    }
+    pub const fn revocation_authority(&self) -> PolicyId {
+        self.revocation_authority
+    }
+    pub const fn evidence(&self) -> &EvidenceCommitment {
+        &self.evidence
+    }
 }
 
 /// Explicit policy evaluation result. Missing evaluator knowledge must be
@@ -161,12 +189,22 @@ pub struct RevocationSnapshot {
 
 impl RevocationSnapshot {
     pub const fn new(authority: PolicyId, epoch: u64, revoked: bool) -> Self {
-        Self { authority, epoch, revoked }
+        Self {
+            authority,
+            epoch,
+            revoked,
+        }
     }
 
-    pub const fn authority(self) -> PolicyId { self.authority }
-    pub const fn epoch(self) -> u64 { self.epoch }
-    pub const fn is_revoked(self) -> bool { self.revoked }
+    pub const fn authority(self) -> PolicyId {
+        self.authority
+    }
+    pub const fn epoch(self) -> u64 {
+        self.epoch
+    }
+    pub const fn is_revoked(self) -> bool {
+        self.revoked
+    }
 }
 
 /// Host-owned revocation lookup. Unknown state is represented by `None`.
@@ -229,7 +267,12 @@ where
         PolicyOutcome::Deny => return Err(PolicyError::Denied),
         PolicyOutcome::Unknown => return Err(PolicyError::Unknown),
     };
-    Ok(OperationDecision { request, decision, policy_epoch, revocation })
+    Ok(OperationDecision {
+        request,
+        decision,
+        policy_epoch,
+        revocation,
+    })
 }
 
 /// Recheck exact request, policy decision, policy epoch, and revocation state

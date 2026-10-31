@@ -82,24 +82,55 @@ fn admits_exact_payload_and_preserves_unknown_metadata() {
 fn unknown_timestamps_are_preserved_without_weakening_sequence_order() {
     let mut stream = stream();
     let payload = [0xA5; 16];
-    let first = stream.ingest_with_optional_timestamp(
-        &payload, layout(), region(), source(17), capability(), None, None,
-        calibration(), QualityRecord::Unknown, 4,
-    ).unwrap();
+    let first = stream
+        .ingest_with_optional_timestamp(
+            &payload,
+            layout(),
+            region(),
+            source(17),
+            capability(),
+            None,
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            4,
+        )
+        .unwrap();
     assert_eq!(first.measurement().timestamp(), None);
     assert_eq!(first.sequence_event(), SequenceEvent::First);
     assert_eq!(first.sequence(), 4);
     assert_eq!(stream.last_observation(), Some((4, None)));
     assert_eq!(stream.last_sequence(), None);
-    assert_eq!(stream.ingest_with_optional_timestamp(
-        &payload, layout(), region(), source(17), capability(), None, None,
-        calibration(), QualityRecord::Unknown, 4,
-    ), Err(ContractError::InvalidSource));
+    assert_eq!(
+        stream.ingest_with_optional_timestamp(
+            &payload,
+            layout(),
+            region(),
+            source(17),
+            capability(),
+            None,
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            4,
+        ),
+        Err(ContractError::InvalidSource)
+    );
 
-    let next = stream.ingest_with_optional_timestamp(
-        &payload, layout(), region(), source(17), capability(), Some(timestamp(5)), None,
-        calibration(), QualityRecord::Unknown, 5,
-    ).unwrap();
+    let next = stream
+        .ingest_with_optional_timestamp(
+            &payload,
+            layout(),
+            region(),
+            source(17),
+            capability(),
+            Some(timestamp(5)),
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            5,
+        )
+        .unwrap();
     assert_eq!(next.measurement().timestamp(), Some(timestamp(5)));
     assert_eq!(next.sequence(), 5);
     assert_eq!(stream.last_observation(), Some((5, Some(timestamp(5)))));
@@ -108,15 +139,31 @@ fn unknown_timestamps_are_preserved_without_weakening_sequence_order() {
 #[test]
 fn extended_ingest_preserves_unknown_time_and_order_state() {
     let capability = crate::extended_capability::ExtendedCapability::new(
-        701, 702, None, SampleEncoding::ComplexF32, [4, 0, 0, 0], None,
-    ).unwrap();
-    let layout = SampleLayout::new(1, [2, 0, 0, 0], [8, 0, 0, 0], SampleEncoding::ComplexF32).unwrap();
+        701,
+        702,
+        None,
+        SampleEncoding::ComplexF32,
+        [4, 0, 0, 0],
+        None,
+    )
+    .unwrap();
+    let layout =
+        SampleLayout::new(1, [2, 0, 0, 0], [8, 0, 0, 0], SampleEncoding::ComplexF32).unwrap();
     let region = SampleRegion::new(BufferToken::new(91, 1).unwrap(), 0, 16, 16, 4).unwrap();
     let mut stream = ExtendedIngestStream::new(17, 26, 3, capability).unwrap();
-    let frame = stream.ingest_with_optional_timestamp(
-        &[0; 16], layout, region, source(17), None, None, calibration(),
-        QualityRecord::Unknown, 4,
-    ).unwrap();
+    let frame = stream
+        .ingest_with_optional_timestamp(
+            &[0; 16],
+            layout,
+            region,
+            source(17),
+            None,
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            4,
+        )
+        .unwrap();
     assert_eq!(frame.measurement().timestamp(), None);
     assert_eq!(frame.sequence_event(), SequenceEvent::First);
     assert_eq!(frame.sequence(), 4);
@@ -128,7 +175,10 @@ fn sequence_gaps_are_returned_with_the_current_payload() {
     let mut stream = stream();
     let first = [1; 16];
     let after_gap = [2; 16];
-    assert_eq!(ingest(&mut stream, &first, 17, 4).unwrap().sequence_event(), SequenceEvent::First);
+    assert_eq!(
+        ingest(&mut stream, &first, 17, 4).unwrap().sequence_event(),
+        SequenceEvent::First
+    );
 
     let frame = ingest(&mut stream, &after_gap, 17, 6).unwrap();
     assert_eq!(frame.sequence_event(), SequenceEvent::Gap { missing: 1 });
@@ -155,14 +205,20 @@ fn wrong_source_or_payload_extent_does_not_advance_sequence() {
         Err(ContractError::OutOfBounds)
     );
     assert_eq!(stream.last_sequence(), None);
-    assert_eq!(ingest(&mut stream, &payload, 17, 4).unwrap().sequence_event(), SequenceEvent::First);
+    assert_eq!(
+        ingest(&mut stream, &payload, 17, 4)
+            .unwrap()
+            .sequence_event(),
+        SequenceEvent::First
+    );
 }
 
 #[test]
 fn layout_encoding_and_rank_failures_leave_order_unchanged() {
     let mut stream = stream();
     let payload = [0u8; 16];
-    let wrong_encoding = SampleLayout::new(1, [2, 0, 0, 0], [4, 0, 0, 0], SampleEncoding::F32).unwrap();
+    let wrong_encoding =
+        SampleLayout::new(1, [2, 0, 0, 0], [4, 0, 0, 0], SampleEncoding::F32).unwrap();
     assert_eq!(
         stream.ingest(
             &[0; 8],
@@ -178,13 +234,8 @@ fn layout_encoding_and_rank_failures_leave_order_unchanged() {
         ),
         Err(ContractError::IncompatibleEncoding)
     );
-    let wrong_rank = SampleLayout::new(
-        2,
-        [2, 1, 0, 0],
-        [8, 16, 0, 0],
-        SampleEncoding::ComplexF32,
-    )
-    .unwrap();
+    let wrong_rank =
+        SampleLayout::new(2, [2, 1, 0, 0], [8, 16, 0, 0], SampleEncoding::ComplexF32).unwrap();
     assert_eq!(
         stream.ingest(
             &payload,
@@ -201,7 +252,12 @@ fn layout_encoding_and_rank_failures_leave_order_unchanged() {
         Err(ContractError::InvalidExtent)
     );
     assert_eq!(stream.last_sequence(), None);
-    assert_eq!(ingest(&mut stream, &payload, 17, 4).unwrap().sequence_event(), SequenceEvent::First);
+    assert_eq!(
+        ingest(&mut stream, &payload, 17, 4)
+            .unwrap()
+            .sequence_event(),
+        SequenceEvent::First
+    );
 }
 
 #[test]
@@ -289,20 +345,63 @@ fn extended_ingest_rejects_bad_source_bytes_rate_and_order_transactionally() {
     let mut stream = extended_stream();
     let payload = [0x10, 0x11, 0x12, 0x13];
     assert_eq!(
-        stream.ingest(&payload, extended_layout(), extended_region(), source(32), timestamp(10), None, calibration(), QualityRecord::Unknown, 10),
+        stream.ingest(
+            &payload,
+            extended_layout(),
+            extended_region(),
+            source(32),
+            timestamp(10),
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            10
+        ),
         Err(ContractError::InvalidSource)
     );
     assert_eq!(
-        stream.ingest(&payload[..3], extended_layout(), extended_region(), source(31), timestamp(10), None, calibration(), QualityRecord::Unknown, 10),
+        stream.ingest(
+            &payload[..3],
+            extended_layout(),
+            extended_region(),
+            source(31),
+            timestamp(10),
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            10
+        ),
         Err(ContractError::OutOfBounds)
     );
     assert_eq!(
-        stream.ingest(&payload, extended_layout(), extended_region(), source(31), timestamp(10), Some(SampleRate::new(21.0).unwrap()), calibration(), QualityRecord::Unknown, 10),
+        stream.ingest(
+            &payload,
+            extended_layout(),
+            extended_region(),
+            source(31),
+            timestamp(10),
+            Some(SampleRate::new(21.0).unwrap()),
+            calibration(),
+            QualityRecord::Unknown,
+            10
+        ),
         Err(ContractError::InvalidRate)
     );
     assert_eq!(stream.last_sequence(), None);
     assert_eq!(
-        stream.ingest(&payload, extended_layout(), extended_region(), source(31), timestamp(10), None, calibration(), QualityRecord::Unknown, 10).unwrap().sequence_event(),
+        stream
+            .ingest(
+                &payload,
+                extended_layout(),
+                extended_region(),
+                source(31),
+                timestamp(10),
+                None,
+                calibration(),
+                QualityRecord::Unknown,
+                10
+            )
+            .unwrap()
+            .sequence_event(),
         SequenceEvent::First
     );
     assert_eq!(stream.last_sequence(), Some((10, timestamp(10))));

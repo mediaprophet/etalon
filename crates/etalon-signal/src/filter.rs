@@ -13,10 +13,7 @@ impl OnePoleLowPass {
     /// `alpha` is the new-sample weight in `y = alpha*x + (1-alpha)*y_prev`.
     /// Values must be finite and in `[0, 1]`; `initial_state` is never defaulted.
     pub fn new(alpha: f32, initial_state: f32) -> Result<Self, SignalError> {
-        if !alpha.is_finite()
-            || !initial_state.is_finite()
-            || !(0.0..=1.0).contains(&alpha)
-        {
+        if !alpha.is_finite() || !initial_state.is_finite() || !(0.0..=1.0).contains(&alpha) {
             return Err(SignalError::InvalidParameter);
         }
         Ok(Self {

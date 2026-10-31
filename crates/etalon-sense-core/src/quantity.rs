@@ -77,10 +77,9 @@ impl PhysicalQuantity {
                 Unit::Tesla | Unit::Microtesla | Unit::Nanotesla | Unit::AmperePerMeter
             ),
             Self::Power => matches!(unit, Unit::Watt | Unit::Milliwatt | Unit::DecibelMilliwatt),
-            Self::PowerSpectralDensity => matches!(
-                unit,
-                Unit::WattPerHertz | Unit::DecibelMilliwattPerHertz
-            ),
+            Self::PowerSpectralDensity => {
+                matches!(unit, Unit::WattPerHertz | Unit::DecibelMilliwattPerHertz)
+            }
             Self::OpticalRadiance => matches!(unit, Unit::WattPerSquareMeterSteradian),
             Self::OpticalIntensity => {
                 matches!(unit, Unit::WattPerSquareMeter | Unit::WattPerSteradian)

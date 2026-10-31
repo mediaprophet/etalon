@@ -2,7 +2,8 @@ use super::*;
 
 #[test]
 fn extensible_stream_retains_unknown_unit_and_checks_shape() {
-    let cap = ExtendedCapability::new(101, 202, None, SampleEncoding::I16, [8, 0, 0, 0], None).unwrap();
+    let cap =
+        ExtendedCapability::new(101, 202, None, SampleEncoding::I16, [8, 0, 0, 0], None).unwrap();
     let layout = SampleLayout::new(1, [8, 0, 0, 0], [2, 0, 0, 0], SampleEncoding::I16).unwrap();
     assert_eq!(cap.unit_id(), None);
     assert_eq!(cap.modality_id(), 101);
@@ -17,6 +18,12 @@ fn extensible_stream_retains_unknown_unit_and_checks_shape() {
 
 #[test]
 fn rejects_empty_ids_and_noncontiguous_shape() {
-    assert_eq!(ExtendedCapability::new(0, 1, None, SampleEncoding::U8, [1, 0, 0, 0], None), Err(ContractError::InvalidIdentifier));
-    assert_eq!(ExtendedCapability::new(1, 2, None, SampleEncoding::U8, [1, 0, 2, 0], None), Err(ContractError::InvalidExtent));
+    assert_eq!(
+        ExtendedCapability::new(0, 1, None, SampleEncoding::U8, [1, 0, 0, 0], None),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        ExtendedCapability::new(1, 2, None, SampleEncoding::U8, [1, 0, 2, 0], None),
+        Err(ContractError::InvalidExtent)
+    );
 }

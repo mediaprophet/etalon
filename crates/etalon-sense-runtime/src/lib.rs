@@ -9,15 +9,27 @@ use etalon_sense_core::{
     evidence::{ArtifactDigest, EvidenceOrigin, ProcessingEvidence},
     extended_capability::ExtendedCapability,
     ingest::{ExtendedIngestedFrame, IngestedFrame},
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind, QuantityUnitIds},
-    quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor, SourceKind, TrustState},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        QuantityUnitIds,
+    },
+    quality::{
+        CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor, SourceKind,
+        TrustState,
+    },
     quantity::{PhysicalQuantity, SampleEncoding, SampleRate, Unit},
     stream_order::SequenceEvent,
     time::ClockStamp,
     ContractError,
 };
-use etalon_signal::{decode::ByteOrder, execution::{execute_i16_iq_power_into_with_admission, ExecutionError, ExecutionTarget, RegisteredSignalProvider}};
 pub use etalon_signal::execution::{AllocationAdmission, ExecutionAllocationClass};
+use etalon_signal::{
+    decode::ByteOrder,
+    execution::{
+        execute_i16_iq_power_into_with_admission, ExecutionError, ExecutionTarget,
+        RegisteredSignalProvider,
+    },
+};
 
 /// Metadata returned alongside caller-owned power samples. It carries the
 /// input's declarations; it does not authenticate them or attest execution.
@@ -104,9 +116,25 @@ pub enum PipelineError {
 /// This compatibility entry point imposes no allocation admission and does
 /// not imply a zero-heap provider; use the `_with_admission` variant for that.
 #[allow(clippy::too_many_arguments)]
-pub fn power_for_frame(frame: &IngestedFrame<'_>, target: ExecutionTarget, provider: Option<&mut dyn RegisteredSignalProvider>, order: ByteOrder, scale: f32, workspace: &mut [f32], staging: &mut [f64], output: &mut [f64]) -> Result<PowerSummary, PipelineError> {
+pub fn power_for_frame(
+    frame: &IngestedFrame<'_>,
+    target: ExecutionTarget,
+    provider: Option<&mut dyn RegisteredSignalProvider>,
+    order: ByteOrder,
+    scale: f32,
+    workspace: &mut [f32],
+    staging: &mut [f64],
+    output: &mut [f64],
+) -> Result<PowerSummary, PipelineError> {
     power_for_frame_with_admission(
-        frame, target, provider, order, scale, workspace, staging, output,
+        frame,
+        target,
+        provider,
+        order,
+        scale,
+        workspace,
+        staging,
+        output,
         AllocationAdmission::Unrestricted,
     )
 }
@@ -127,17 +155,62 @@ pub fn power_for_frame_with_admission(
     admission: AllocationAdmission,
 ) -> Result<PowerSummary, PipelineError> {
     let measurement = frame.measurement();
-    let count = execute_with_admission(frame.payload(), measurement.layout(), target, provider, order, scale, workspace, staging, output, admission)?;
-    Ok(PowerSummary { source_id: measurement.source().source_id(), stream_id: frame.stream_id(), generation: frame.generation(), sequence: frame.sequence(), source_kind: measurement.source().kind(), source_trust: measurement.source().trust_state(), input_semantics: (*measurement.capability()).into(), timestamp: measurement.timestamp(), sample_rate: measurement.sample_rate(), region: *measurement.region(), layout: measurement.layout().clone(), calibration: measurement.calibration(), quality: measurement.quality(), sequence_event: frame.sequence_event(), target, scale, sample_count: count })
+    let count = execute_with_admission(
+        frame.payload(),
+        measurement.layout(),
+        target,
+        provider,
+        order,
+        scale,
+        workspace,
+        staging,
+        output,
+        admission,
+    )?;
+    Ok(PowerSummary {
+        source_id: measurement.source().source_id(),
+        stream_id: frame.stream_id(),
+        generation: frame.generation(),
+        sequence: frame.sequence(),
+        source_kind: measurement.source().kind(),
+        source_trust: measurement.source().trust_state(),
+        input_semantics: (*measurement.capability()).into(),
+        timestamp: measurement.timestamp(),
+        sample_rate: measurement.sample_rate(),
+        region: *measurement.region(),
+        layout: measurement.layout().clone(),
+        calibration: measurement.calibration(),
+        quality: measurement.quality(),
+        sequence_event: frame.sequence_event(),
+        target,
+        scale,
+        sample_count: count,
+    })
 }
 
 /// The same uncalibrated operation for a host-registered modality and quantity.
 /// The host is responsible for interpreting registry identifiers and output
 /// units; source assertions remain unverified.
 #[allow(clippy::too_many_arguments)]
-pub fn power_for_extended_frame(frame: &ExtendedIngestedFrame<'_>, target: ExecutionTarget, provider: Option<&mut dyn RegisteredSignalProvider>, order: ByteOrder, scale: f32, workspace: &mut [f32], staging: &mut [f64], output: &mut [f64]) -> Result<PowerSummary, PipelineError> {
+pub fn power_for_extended_frame(
+    frame: &ExtendedIngestedFrame<'_>,
+    target: ExecutionTarget,
+    provider: Option<&mut dyn RegisteredSignalProvider>,
+    order: ByteOrder,
+    scale: f32,
+    workspace: &mut [f32],
+    staging: &mut [f64],
+    output: &mut [f64],
+) -> Result<PowerSummary, PipelineError> {
     power_for_extended_frame_with_admission(
-        frame, target, provider, order, scale, workspace, staging, output,
+        frame,
+        target,
+        provider,
+        order,
+        scale,
+        workspace,
+        staging,
+        output,
         AllocationAdmission::Unrestricted,
     )
 }
@@ -156,8 +229,37 @@ pub fn power_for_extended_frame_with_admission(
     admission: AllocationAdmission,
 ) -> Result<PowerSummary, PipelineError> {
     let measurement = frame.measurement();
-    let count = execute_with_admission(frame.payload(), measurement.layout(), target, provider, order, scale, workspace, staging, output, admission)?;
-    Ok(PowerSummary { source_id: measurement.source().source_id(), stream_id: frame.stream_id(), generation: frame.generation(), sequence: frame.sequence(), source_kind: measurement.source().kind(), source_trust: measurement.source().trust_state(), input_semantics: (*measurement.capability()).into(), timestamp: measurement.timestamp(), sample_rate: measurement.sample_rate(), region: *measurement.region(), layout: measurement.layout().clone(), calibration: measurement.calibration(), quality: measurement.quality(), sequence_event: frame.sequence_event(), target, scale, sample_count: count })
+    let count = execute_with_admission(
+        frame.payload(),
+        measurement.layout(),
+        target,
+        provider,
+        order,
+        scale,
+        workspace,
+        staging,
+        output,
+        admission,
+    )?;
+    Ok(PowerSummary {
+        source_id: measurement.source().source_id(),
+        stream_id: frame.stream_id(),
+        generation: frame.generation(),
+        sequence: frame.sequence(),
+        source_kind: measurement.source().kind(),
+        source_trust: measurement.source().trust_state(),
+        input_semantics: (*measurement.capability()).into(),
+        timestamp: measurement.timestamp(),
+        sample_rate: measurement.sample_rate(),
+        region: *measurement.region(),
+        layout: measurement.layout().clone(),
+        calibration: measurement.calibration(),
+        quality: measurement.quality(),
+        sequence_event: frame.sequence_event(),
+        target,
+        scale,
+        sample_count: count,
+    })
 }
 
 /// Host-declared projection from a processed power summary to the existing
@@ -171,8 +273,12 @@ pub struct PowerObservationProjection {
 }
 
 impl PowerObservationProjection {
-    pub const fn observation(self) -> ObservationEnvelope { self.observation }
-    pub const fn processing(self) -> ProcessingEvidence { self.processing }
+    pub const fn observation(self) -> ObservationEnvelope {
+        self.observation
+    }
+    pub const fn processing(self) -> ProcessingEvidence {
+        self.processing
+    }
 }
 
 /// Project one power summary using host-supplied output quantity/unit IDs and
@@ -205,15 +311,35 @@ pub fn project_power_summary_to_observation(
         None,
         HostPolicyDecision::NotEvaluated,
     )?;
-    Ok(PowerObservationProjection { observation, processing })
+    Ok(PowerObservationProjection {
+        observation,
+        processing,
+    })
 }
 
 #[allow(clippy::too_many_arguments)]
-fn execute_with_admission(payload: &[u8], layout: &SampleLayout, target: ExecutionTarget, provider: Option<&mut dyn RegisteredSignalProvider>, order: ByteOrder, scale: f32, workspace: &mut [f32], staging: &mut [f64], output: &mut [f64], admission: AllocationAdmission) -> Result<usize, PipelineError> {
-    if layout.rank() != 1 || *layout.encoding() != SampleEncoding::ComplexI16 || layout.strides_bytes()[0] != 4 {
+fn execute_with_admission(
+    payload: &[u8],
+    layout: &SampleLayout,
+    target: ExecutionTarget,
+    provider: Option<&mut dyn RegisteredSignalProvider>,
+    order: ByteOrder,
+    scale: f32,
+    workspace: &mut [f32],
+    staging: &mut [f64],
+    output: &mut [f64],
+    admission: AllocationAdmission,
+) -> Result<usize, PipelineError> {
+    if layout.rank() != 1
+        || *layout.encoding() != SampleEncoding::ComplexI16
+        || layout.strides_bytes()[0] != 4
+    {
         return Err(PipelineError::UnsupportedLayout);
     }
-    execute_i16_iq_power_into_with_admission(target, provider, payload, order, scale, workspace, staging, output, admission).map_err(PipelineError::Execution)
+    execute_i16_iq_power_into_with_admission(
+        target, provider, payload, order, scale, workspace, staging, output, admission,
+    )
+    .map_err(PipelineError::Execution)
 }
 
 #[cfg(test)]

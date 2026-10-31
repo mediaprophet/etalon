@@ -26,26 +26,40 @@ pub struct ProcessingPlan {
 /// Select the first eligible candidate, preferring the requested processor.
 /// A bounded latency request rejects candidates without an estimate. The
 /// runtime must independently revalidate availability and enforce budgets.
-pub fn select_backend(request: ProcessingRequest, candidates: &[BackendCandidate]) -> Option<ProcessingPlan> {
+pub fn select_backend(
+    request: ProcessingRequest,
+    candidates: &[BackendCandidate],
+) -> Option<ProcessingPlan> {
     let mut fallback = None;
     for (index, candidate) in candidates.iter().enumerate() {
-        if candidate.provider_id == 0 || !candidate.available
+        if candidate.provider_id == 0
+            || !candidate.available
             || candidate.operation != request.operation()
             || !request.preference().permits(candidate.processor)
-            || request.check_workspace(candidate.required_workspace_bytes).is_err()
-        { continue; }
+            || request
+                .check_workspace(candidate.required_workspace_bytes)
+                .is_err()
+        {
+            continue;
+        }
         if let Some(budget) = request.latency_budget_ns() {
             match candidate.estimated_latency_ns {
-                Some(estimate) if estimate <= budget => {},
+                Some(estimate) if estimate <= budget => {}
                 _ => continue,
             }
         }
-        let plan = ProcessingPlan { candidate_index: index, provider_id: candidate.provider_id,
-            processor: candidate.processor, required_workspace_bytes: candidate.required_workspace_bytes,
-            estimated_latency_ns: candidate.estimated_latency_ns };
+        let plan = ProcessingPlan {
+            candidate_index: index,
+            provider_id: candidate.provider_id,
+            processor: candidate.processor,
+            required_workspace_bytes: candidate.required_workspace_bytes,
+            estimated_latency_ns: candidate.estimated_latency_ns,
+        };
         match request.preference() {
             ProcessorPreference::Prefer(preferred) if candidate.processor != preferred => {
-                if fallback.is_none() { fallback = Some(plan); }
+                if fallback.is_none() {
+                    fallback = Some(plan);
+                }
             }
             _ => return Some(plan),
         }

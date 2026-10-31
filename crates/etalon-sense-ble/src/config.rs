@@ -35,10 +35,18 @@ impl BleCollectionScope {
         }
     }
 
-    pub const fn source(self) -> ExtendedDiscoveredSource { self.source }
-    pub const fn purpose_id(self) -> u64 { self.purpose_id }
-    pub const fn authorized_at(self) -> ClockStamp { self.authorized_at }
-    pub const fn expires_at(self) -> ClockStamp { self.expires_at }
+    pub const fn source(self) -> ExtendedDiscoveredSource {
+        self.source
+    }
+    pub const fn purpose_id(self) -> u64 {
+        self.purpose_id
+    }
+    pub const fn authorized_at(self) -> ClockStamp {
+        self.authorized_at
+    }
+    pub const fn expires_at(self) -> ClockStamp {
+        self.expires_at
+    }
 }
 
 /// Host-owned live policy/revocation gate for scanning and every observation.
@@ -67,7 +75,8 @@ pub(super) fn run_collection_gate(
 ) -> bool {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         gate.with_permitted_collection(scope, collect)
-    })).unwrap_or(false)
+    }))
+    .unwrap_or(false)
 }
 
 /// Host-declared stream IDs and bounded capture size for the BLE receiver.
@@ -94,7 +103,9 @@ impl BleConfig {
         max_session_observations: usize,
         max_session_duration_ms: u32,
     ) -> Result<Self, AdapterError> {
-        if source_id == 0 || dbm_unit_id == 0 || max_batch_samples == 0
+        if source_id == 0
+            || dbm_unit_id == 0
+            || max_batch_samples == 0
             || max_batch_samples > MAX_CAPTURE_SAMPLES
             || max_session_observations == 0
             || max_session_observations > MAX_SESSION_OBSERVATIONS
@@ -123,9 +134,19 @@ impl BleConfig {
         })
     }
 
-    pub const fn capability(self) -> ExtendedCapability { self.capability }
-    pub const fn source_id(self) -> u64 { self.source_id }
-    pub const fn max_batch_samples(self) -> usize { self.max_batch_samples }
-    pub const fn max_session_observations(self) -> usize { self.max_session_observations }
-    pub const fn max_session_duration_ms(self) -> u32 { self.max_session_duration_ms }
+    pub const fn capability(self) -> ExtendedCapability {
+        self.capability
+    }
+    pub const fn source_id(self) -> u64 {
+        self.source_id
+    }
+    pub const fn max_batch_samples(self) -> usize {
+        self.max_batch_samples
+    }
+    pub const fn max_session_observations(self) -> usize {
+        self.max_session_observations
+    }
+    pub const fn max_session_duration_ms(self) -> u32 {
+        self.max_session_duration_ms
+    }
 }

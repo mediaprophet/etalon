@@ -8,20 +8,18 @@
 
 use crate::{
     adapter::{
-        AdapterError, AuthorizedCapture, AuthorizedExtendedCapture, CaptureBuffer,
-        CaptureSession, ExtendedCaptureBuffer, ExtendedCaptureSession,
-        ExtendedSensorAdapter, SensorAdapter,
-    },
-    capture_ingest::{
-        capture_and_ingest, capture_extended_and_ingest, CaptureIngestError,
-        IngestMetadata,
+        AdapterError, AuthorizedCapture, AuthorizedExtendedCapture, CaptureBuffer, CaptureSession,
+        ExtendedCaptureBuffer, ExtendedCaptureSession, ExtendedSensorAdapter, SensorAdapter,
     },
     capability::SensorCapability,
+    capture_ingest::{
+        capture_and_ingest, capture_extended_and_ingest, CaptureIngestError, IngestMetadata,
+    },
     extended_capability::ExtendedCapability,
     ingest::{ExtendedIngestStream, ExtendedIngestedFrame, IngestStream, IngestedFrame},
     policy::{
-        authorize_once, dispatch_once, DecisionCommitment, PolicyEpochProvider,
-        PolicyError, PolicyEvaluator, PolicyId, PolicyRequest, RevocationProvider,
+        authorize_once, dispatch_once, DecisionCommitment, PolicyEpochProvider, PolicyError,
+        PolicyEvaluator, PolicyId, PolicyRequest, RevocationProvider,
     },
 };
 
@@ -59,7 +57,9 @@ impl CapturePolicyBinding {
         capture_request: PolicyRequest,
     ) -> Result<Self, PolicyError> {
         if source_id == 0 || purpose_id == 0 {
-            return Err(PolicyError::Contract(crate::ContractError::InvalidIdentifier));
+            return Err(PolicyError::Contract(
+                crate::ContractError::InvalidIdentifier,
+            ));
         }
         if start_request.source() != source_policy_id
             || capture_request.source() != source_policy_id
@@ -68,15 +68,34 @@ impl CapturePolicyBinding {
         {
             return Err(PolicyError::RequestMismatch);
         }
-        Ok(Self { source_id, source_policy_id, capability, purpose_id, start_request, capture_request })
+        Ok(Self {
+            source_id,
+            source_policy_id,
+            capability,
+            purpose_id,
+            start_request,
+            capture_request,
+        })
     }
 
-    pub const fn source_id(self) -> u64 { self.source_id }
-    pub const fn source_policy_id(self) -> PolicyId { self.source_policy_id }
-    pub const fn capability(self) -> CaptureCapability { self.capability }
-    pub const fn purpose_id(self) -> u64 { self.purpose_id }
-    pub const fn start_request(self) -> PolicyRequest { self.start_request }
-    pub const fn capture_request(self) -> PolicyRequest { self.capture_request }
+    pub const fn source_id(self) -> u64 {
+        self.source_id
+    }
+    pub const fn source_policy_id(self) -> PolicyId {
+        self.source_policy_id
+    }
+    pub const fn capability(self) -> CaptureCapability {
+        self.capability
+    }
+    pub const fn purpose_id(self) -> u64 {
+        self.purpose_id
+    }
+    pub const fn start_request(self) -> PolicyRequest {
+        self.start_request
+    }
+    pub const fn capture_request(self) -> PolicyRequest {
+        self.capture_request
+    }
 
     fn validate(
         self,
@@ -125,29 +144,55 @@ pub struct GuardedIngestedFrame<F> {
 
 impl<F> GuardedIngestedFrame<F> {
     fn new(frame: F, request: PolicyRequest, decision: DecisionCommitment) -> Self {
-        Self { frame, request, decision }
+        Self {
+            frame,
+            request,
+            decision,
+        }
     }
 
-    pub const fn frame(&self) -> &F { &self.frame }
-    pub fn into_frame(self) -> F { self.frame }
-    pub const fn policy_request(&self) -> &PolicyRequest { &self.request }
-    pub const fn decision_commitment(&self) -> &DecisionCommitment { &self.decision }
+    pub const fn frame(&self) -> &F {
+        &self.frame
+    }
+    pub fn into_frame(self) -> F {
+        self.frame
+    }
+    pub const fn policy_request(&self) -> &PolicyRequest {
+        &self.request
+    }
+    pub const fn decision_commitment(&self) -> &DecisionCommitment {
+        &self.decision
+    }
 }
 
 impl<S> GuardedCaptureSession<S> {
-    fn new(session: S, binding: CapturePolicyBinding) -> Self { Self { session, binding } }
+    fn new(session: S, binding: CapturePolicyBinding) -> Self {
+        Self { session, binding }
+    }
 }
 
 impl GuardedCaptureSession<CaptureSession> {
-    pub const fn session_id(&self) -> u64 { self.session.session_id() }
-    pub const fn generation(&self) -> u32 { self.session.generation() }
-    pub const fn source_id(&self) -> u64 { self.session.source().source_id() }
+    pub const fn session_id(&self) -> u64 {
+        self.session.session_id()
+    }
+    pub const fn generation(&self) -> u32 {
+        self.session.generation()
+    }
+    pub const fn source_id(&self) -> u64 {
+        self.session.source().source_id()
+    }
 }
 
 impl GuardedCaptureSession<ExtendedCaptureSession> {
-    pub const fn session_id(&self) -> u64 { self.session.session_id() }
-    pub const fn generation(&self) -> u32 { self.session.generation() }
-    pub const fn source_id(&self) -> u64 { self.session.source().source_id() }
+    pub const fn session_id(&self) -> u64 {
+        self.session.session_id()
+    }
+    pub const fn generation(&self) -> u32 {
+        self.session.generation()
+    }
+    pub const fn source_id(&self) -> u64 {
+        self.session.source().source_id()
+    }
 }
 
 fn same_policy_scope(start: &PolicyRequest, capture: &PolicyRequest) -> bool {
@@ -162,7 +207,10 @@ fn same_policy_scope(start: &PolicyRequest, capture: &PolicyRequest) -> bool {
 }
 
 #[derive(Clone, Copy)]
-enum CaptureAction { Start, Capture }
+enum CaptureAction {
+    Start,
+    Capture,
+}
 
 /// Policy, adapter, or ingest failure from a guarded entry point.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -173,13 +221,19 @@ pub enum GuardedCaptureError {
 }
 
 impl From<PolicyError> for GuardedCaptureError {
-    fn from(error: PolicyError) -> Self { Self::Policy(error) }
+    fn from(error: PolicyError) -> Self {
+        Self::Policy(error)
+    }
 }
 impl From<AdapterError> for GuardedCaptureError {
-    fn from(error: AdapterError) -> Self { Self::Adapter(error) }
+    fn from(error: AdapterError) -> Self {
+        Self::Adapter(error)
+    }
 }
 impl From<CaptureIngestError> for GuardedCaptureError {
-    fn from(error: CaptureIngestError) -> Self { Self::Ingest(error) }
+    fn from(error: CaptureIngestError) -> Self {
+        Self::Ingest(error)
+    }
 }
 
 /// Acquire a decision, then recheck the exact request, policy epoch, decision,
@@ -198,9 +252,14 @@ where
     F: FnOnce(&PolicyRequest, &DecisionCommitment) -> T,
 {
     let decision = authorize_once(request, evaluator, epochs, revocations)?;
-    dispatch_once(decision, &request, evaluator, epochs, revocations, |accepted, commitment| {
-        (operation(accepted, commitment), *accepted, *commitment)
-    })
+    dispatch_once(
+        decision,
+        &request,
+        evaluator,
+        epochs,
+        revocations,
+        |accepted, commitment| (operation(accepted, commitment), *accepted, *commitment),
+    )
 }
 
 /// Policy-check and start a built-in adapter session.
@@ -227,10 +286,12 @@ where
         CaptureCapability::BuiltIn(source.capability()),
         authorization.purpose_id(),
     )?;
-    let (started, _, _) = dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
-        adapter.start(authorization)
-    })?;
-    started.map(|session| GuardedCaptureSession::new(session, binding))
+    let (started, _, _) =
+        dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
+            adapter.start(authorization)
+        })?;
+    started
+        .map(|session| GuardedCaptureSession::new(session, binding))
         .map_err(GuardedCaptureError::Adapter)
 }
 
@@ -258,10 +319,12 @@ where
         CaptureCapability::Extended(source.capability()),
         authorization.purpose_id(),
     )?;
-    let (started, _, _) = dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
-        adapter.start(authorization)
-    })?;
-    started.map(|session| GuardedCaptureSession::new(session, binding))
+    let (started, _, _) =
+        dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
+            adapter.start(authorization)
+        })?;
+    started
+        .map(|session| GuardedCaptureSession::new(session, binding))
         .map_err(GuardedCaptureError::Adapter)
 }
 
@@ -271,7 +334,9 @@ pub fn guarded_stop_builtin<A: SensorAdapter>(
     adapter: &mut A,
     session: &GuardedCaptureSession<CaptureSession>,
 ) -> Result<(), GuardedCaptureError> {
-    adapter.stop(session.session).map_err(GuardedCaptureError::Adapter)
+    adapter
+        .stop(session.session)
+        .map_err(GuardedCaptureError::Adapter)
 }
 
 /// Stop a guarded host-registered session. A failed stop leaves the wrapper
@@ -280,7 +345,9 @@ pub fn guarded_stop_extended<A: ExtendedSensorAdapter>(
     adapter: &mut A,
     session: &GuardedCaptureSession<ExtendedCaptureSession>,
 ) -> Result<(), GuardedCaptureError> {
-    adapter.stop(session.session).map_err(GuardedCaptureError::Adapter)
+    adapter
+        .stop(session.session)
+        .map_err(GuardedCaptureError::Adapter)
 }
 
 /// Guard and ingest one built-in capture. Policy is re-evaluated immediately
@@ -313,10 +380,19 @@ where
         CaptureCapability::BuiltIn(source.capability()),
         authorization.purpose_id(),
     )?;
-    let (ingested, accepted_request, decision) = dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
-        capture_and_ingest(adapter, session.session, authorization, buffer, stream, metadata)
-    })?;
-    ingested.map(|frame| GuardedIngestedFrame::new(frame, accepted_request, decision))
+    let (ingested, accepted_request, decision) =
+        dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
+            capture_and_ingest(
+                adapter,
+                session.session,
+                authorization,
+                buffer,
+                stream,
+                metadata,
+            )
+        })?;
+    ingested
+        .map(|frame| GuardedIngestedFrame::new(frame, accepted_request, decision))
         .map_err(GuardedCaptureError::Ingest)
 }
 
@@ -349,10 +425,19 @@ where
         CaptureCapability::Extended(source.capability()),
         authorization.purpose_id(),
     )?;
-    let (ingested, accepted_request, decision) = dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
-        capture_extended_and_ingest(adapter, session.session, authorization, buffer, stream, metadata)
-    })?;
-    ingested.map(|frame| GuardedIngestedFrame::new(frame, accepted_request, decision))
+    let (ingested, accepted_request, decision) =
+        dispatch_guarded(policy_request, evaluator, epochs, revocations, |_, _| {
+            capture_extended_and_ingest(
+                adapter,
+                session.session,
+                authorization,
+                buffer,
+                stream,
+                metadata,
+            )
+        })?;
+    ingested
+        .map(|frame| GuardedIngestedFrame::new(frame, accepted_request, decision))
         .map_err(GuardedCaptureError::Ingest)
 }
 

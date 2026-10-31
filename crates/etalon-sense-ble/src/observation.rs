@@ -8,14 +8,17 @@
 use etalon_sense_core::{
     adapter::{AdapterError, AuthorizedExtendedCaptureBuffer, ExtendedSensorAdapter},
     evidence::EvidenceOrigin,
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind, QuantityUnitIds},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        QuantityUnitIds,
+    },
     policy::{PolicyOutcome, PolicyRequest},
     quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor, SourceKind},
     ContractError,
 };
 
-use etalon_sense_core::authority::TrustedCaptureClock;
 use crate::{BleAdvertisementSample, BleRssiAdapter};
+use etalon_sense_core::authority::TrustedCaptureClock;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct BleObservationMapping {
@@ -34,8 +37,12 @@ pub struct BleDropCountInterval {
 }
 
 impl BleDropCountInterval {
-    pub const fn cumulative_before_drain(self) -> u64 { self.cumulative_before_drain }
-    pub const fn cumulative_after_drain(self) -> u64 { self.cumulative_after_drain }
+    pub const fn cumulative_before_drain(self) -> u64 {
+        self.cumulative_before_drain
+    }
+    pub const fn cumulative_after_drain(self) -> u64 {
+        self.cumulative_after_drain
+    }
 }
 
 /// Batch/session metadata plus each raw address, RSSI, and Windows UTC tick.
@@ -92,11 +99,13 @@ pub fn capture_observation<'bytes, 'records, C: TrustedCaptureClock>(
     let capability = session.source().capability();
     let quantity_unit = QuantityUnitIds::new(Some(capability.quantity_id()), capability.unit_id())
         .map_err(ObservationError::Contract)?;
-    let policy = mapping.policy.map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
-        HostPolicyDecision::Evaluated { request, outcome }
-    });
-    let calibration = CalibrationRecord::new(CalibrationState::Missing)
-        .map_err(ObservationError::Contract)?;
+    let policy = mapping
+        .policy
+        .map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
+            HostPolicyDecision::Evaluated { request, outcome }
+        });
+    let calibration =
+        CalibrationRecord::new(CalibrationState::Missing).map_err(ObservationError::Contract)?;
     let envelope = ObservationEnvelope::new(
         ObservationKind::LiveFrame,
         source,
@@ -111,7 +120,8 @@ pub fn capture_observation<'bytes, 'records, C: TrustedCaptureClock>(
         EvidenceOrigin::Unknown,
         None,
         policy,
-    ).map_err(ObservationError::Contract)?;
+    )
+    .map_err(ObservationError::Contract)?;
     *output = Some(BleObservation {
         envelope,
         metadata: BleBatchMetadata {
@@ -137,7 +147,9 @@ fn validate_batch_binding(
 ) -> Result<(), ObservationError> {
     let count = usize::try_from(expected_layout.extents()[0])
         .map_err(|_| ObservationError::Contract(ContractError::ArithmeticOverflow))?;
-    let expected_bytes = count.checked_mul(2).ok_or(ObservationError::Contract(ContractError::ArithmeticOverflow))?;
+    let expected_bytes = count.checked_mul(2).ok_or(ObservationError::Contract(
+        ContractError::ArithmeticOverflow,
+    ))?;
     if expected_layout.rank() != 1
         || *expected_layout.encoding() != etalon_sense_core::quantity::SampleEncoding::I16
         || expected_layout.strides_bytes()[0] != 2

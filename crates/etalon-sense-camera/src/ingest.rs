@@ -1,6 +1,9 @@
 use etalon_sense_core::time::ClockStamp;
 
-use crate::format::{validate_negotiated_format, CameraModality, FrameFormat, FrameFormatError, FrameDeclaration, RadiometricStatus};
+use crate::format::{
+    validate_negotiated_format, CameraModality, FrameDeclaration, FrameFormat, FrameFormatError,
+    RadiometricStatus,
+};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FrameProviderError {
@@ -15,15 +18,26 @@ pub enum FrameTimestamp {
     Unknown,
     /// Raw source ticks. Clock and unit IDs are host declarations, not UTC or
     /// calibrated time claims.
-    Raw { ticks: i64, clock_domain_id: u64, unit_id: u64 },
+    Raw {
+        ticks: i64,
+        clock_domain_id: u64,
+        unit_id: u64,
+    },
     /// Host/provider mapping into an Etalon clock domain, with its uncertainty.
     Mapped(ClockStamp),
 }
 
 impl FrameTimestamp {
     fn validate(self) -> Result<(), FrameError> {
-        if let Self::Raw { clock_domain_id, unit_id, .. } = self {
-            if clock_domain_id == 0 || unit_id == 0 { return Err(FrameError::InvalidMetadata); }
+        if let Self::Raw {
+            clock_domain_id,
+            unit_id,
+            ..
+        } = self
+        {
+            if clock_domain_id == 0 || unit_id == 0 {
+                return Err(FrameError::InvalidMetadata);
+            }
         }
         Ok(())
     }
@@ -65,7 +79,10 @@ pub trait FrameProvider {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum FramePolicyOperation { Start, Capture }
+pub enum FramePolicyOperation {
+    Start,
+    Capture,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct FramePolicyScope {
@@ -75,13 +92,23 @@ pub struct FramePolicyScope {
 }
 
 impl FramePolicyScope {
-    pub const fn source_id(self) -> u64 { self.source_id }
-    pub const fn purpose_id(self) -> u64 { self.purpose_id }
-    pub const fn modality(self) -> CameraModality { self.modality }
+    pub const fn source_id(self) -> u64 {
+        self.source_id
+    }
+    pub const fn purpose_id(self) -> u64 {
+        self.purpose_id
+    }
+    pub const fn modality(self) -> CameraModality {
+        self.modality
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PolicyDecision { Permit, Deny, Unknown }
+pub enum PolicyDecision {
+    Permit,
+    Deny,
+    Unknown,
+}
 
 /// Optional, pluggable host policy boundary. It must re-evaluate current host
 /// policy and trusted time for each operation, fail closed on unknown, and run
@@ -106,7 +133,10 @@ pub enum FramePolicyMode<'a> {
 
 impl core::fmt::Debug for FramePolicyMode<'_> {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
-        match self { Self::HostManaged => f.write_str("HostManaged"), Self::Gate(_) => f.write_str("Gate(..)") }
+        match self {
+            Self::HostManaged => f.write_str("HostManaged"),
+            Self::Gate(_) => f.write_str("Gate(..)"),
+        }
     }
 }
 
@@ -127,15 +157,25 @@ pub enum FrameError {
 }
 
 impl From<FrameProviderError> for FrameError {
-    fn from(value: FrameProviderError) -> Self { Self::Provider(value) }
+    fn from(value: FrameProviderError) -> Self {
+        Self::Provider(value)
+    }
 }
 
 impl From<FrameFormatError> for FrameError {
-    fn from(value: FrameFormatError) -> Self { Self::InvalidFormat }
+    fn from(value: FrameFormatError) -> Self {
+        Self::InvalidFormat
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum State { Ready, Active, StopFailed, Cancelled, Faulted }
+enum State {
+    Ready,
+    Active,
+    StopFailed,
+    Cancelled,
+    Faulted,
+}
 
 /// Stateful validation/copy boundary for host-fed camera frames. The provider
 /// controls how a camera is opened; this adapter validates negotiated source,
@@ -155,11 +195,15 @@ impl<P: FrameProvider> FrameIngestAdapter<'static, P> {
     /// capture is authorized; use `with_gate` to compose a gate where desired.
     pub fn new_host_managed(provider: P, declaration: FrameDeclaration) -> Self {
         Self {
-            provider, declaration, policy: FramePolicyMode::HostManaged,
-            state: State::Ready, active_purpose: 0, negotiated: None, last_sequence: None,
+            provider,
+            declaration,
+            policy: FramePolicyMode::HostManaged,
+            state: State::Ready,
+            active_purpose: 0,
+            negotiated: None,
+            last_sequence: None,
         }
     }
-
 }
 
 impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
@@ -169,17 +213,30 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
         gate: &'g dyn FramePolicyGate,
     ) -> Self {
         FrameIngestAdapter {
-            provider, declaration, policy: FramePolicyMode::Gate(gate),
-            state: State::Ready, active_purpose: 0, negotiated: None, last_sequence: None,
+            provider,
+            declaration,
+            policy: FramePolicyMode::Gate(gate),
+            state: State::Ready,
+            active_purpose: 0,
+            negotiated: None,
+            last_sequence: None,
         }
     }
 
-    pub const fn declaration(&self) -> FrameDeclaration { self.declaration }
-    pub const fn negotiated(&self) -> Option<NegotiatedFrame> { self.negotiated }
-    pub const fn is_active(&self) -> bool { matches!(self.state, State::Active) }
+    pub const fn declaration(&self) -> FrameDeclaration {
+        self.declaration
+    }
+    pub const fn negotiated(&self) -> Option<NegotiatedFrame> {
+        self.negotiated
+    }
+    pub const fn is_active(&self) -> bool {
+        matches!(self.state, State::Active)
+    }
 
     pub fn start(&mut self, purpose_id: u64) -> Result<NegotiatedFrame, FrameError> {
-        if self.state != State::Ready || purpose_id == 0 { return Err(FrameError::InvalidState); }
+        if self.state != State::Ready || purpose_id == 0 {
+            return Err(FrameError::InvalidState);
+        }
         let scope = self.scope(purpose_id);
         let mut result = None;
         let mut operation_attempted = false;
@@ -187,7 +244,12 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
             operation_attempted = true;
             result = Some(self.provider.start());
         };
-        let decision = run_policy(self.policy, scope, FramePolicyOperation::Start, &mut perform);
+        let decision = run_policy(
+            self.policy,
+            scope,
+            FramePolicyOperation::Start,
+            &mut perform,
+        );
         drop(perform);
         if decision != PolicyDecision::Permit || result.is_none() {
             // A gate can panic or return deny after invoking the callback. If
@@ -214,7 +276,12 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
         };
         let valid = negotiated.source_id == self.declaration.source_id()
             && negotiated.modality == self.declaration.modality()
-            && validate_negotiated_format(self.declaration, negotiated.format, negotiated.radiometric).is_ok();
+            && validate_negotiated_format(
+                self.declaration,
+                negotiated.format,
+                negotiated.radiometric,
+            )
+            .is_ok();
         if !valid {
             if cancel_provider(&mut self.provider).is_err() {
                 self.state = State::StopFailed;
@@ -236,21 +303,33 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
     /// storage; any failure clears the entire supplied slice so partial or stale
     /// image bytes cannot be mistaken for a frame.
     pub fn capture(&mut self, output: &mut [u8]) -> Result<FrameMetadata, FrameError> {
-        if self.state != State::Active { return Err(FrameError::InvalidState); }
+        if self.state != State::Active {
+            return Err(FrameError::InvalidState);
+        }
         let negotiated = self.negotiated.ok_or(FrameError::InvalidState)?;
         let required = usize::try_from(negotiated.format.frame_bytes())
             .map_err(|_| FrameError::InvalidFormat)?;
-        if output.len() < required { return Err(FrameError::BufferTooSmall { required }); }
+        if output.len() < required {
+            return Err(FrameError::BufferTooSmall { required });
+        }
         output.fill(0);
         let scope = self.scope(self.active_purpose);
         let mut result = None;
         let mut perform = || result = Some(self.provider.next_frame(&mut output[..required]));
-        let decision = run_policy(self.policy, scope, FramePolicyOperation::Capture, &mut perform);
+        let decision = run_policy(
+            self.policy,
+            scope,
+            FramePolicyOperation::Capture,
+            &mut perform,
+        );
         drop(perform);
         if decision != PolicyDecision::Permit || result.is_none() {
             output.fill(0);
             let error = policy_error(decision);
-            return match self.cancel() { Ok(()) => Err(error), Err(_) => Err(FrameError::CancelUnconfirmed) };
+            return match self.cancel() {
+                Ok(()) => Err(error),
+                Err(_) => Err(FrameError::CancelUnconfirmed),
+            };
         }
         let packet = match result.expect("checked Some above") {
             Ok(packet) => packet,
@@ -284,7 +363,10 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
     /// retry; it does not claim the provider stopped.
     pub fn cancel(&mut self) -> Result<(), FrameError> {
         match self.state {
-            State::Cancelled | State::Ready => { self.state = State::Cancelled; Ok(()) }
+            State::Cancelled | State::Ready => {
+                self.state = State::Cancelled;
+                Ok(())
+            }
             State::Active | State::StopFailed | State::Faulted => {
                 match cancel_provider(&mut self.provider) {
                     Ok(()) => {
@@ -293,21 +375,33 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
                         self.last_sequence = None;
                         Ok(())
                     }
-                    Err(_) => { self.state = State::StopFailed; Err(FrameError::CancelUnconfirmed) }
+                    Err(_) => {
+                        self.state = State::StopFailed;
+                        Err(FrameError::CancelUnconfirmed)
+                    }
                 }
             }
         }
     }
 
     fn scope(&self, purpose_id: u64) -> FramePolicyScope {
-        FramePolicyScope { source_id: self.declaration.source_id(), purpose_id, modality: self.declaration.modality() }
+        FramePolicyScope {
+            source_id: self.declaration.source_id(),
+            purpose_id,
+            modality: self.declaration.modality(),
+        }
     }
 
     fn validate_metadata(&self, metadata: FrameMetadata) -> Result<(), FrameError> {
         metadata.timestamp.validate()?;
         if let Some(previous) = self.last_sequence {
-            if metadata.sequence <= previous { return Err(FrameError::SequenceRegression); }
-            let missing = metadata.sequence.checked_sub(previous).and_then(|delta| delta.checked_sub(1))
+            if metadata.sequence <= previous {
+                return Err(FrameError::SequenceRegression);
+            }
+            let missing = metadata
+                .sequence
+                .checked_sub(previous)
+                .and_then(|delta| delta.checked_sub(1))
                 .ok_or(FrameError::SequenceRegression)?;
             if matches!(metadata.gap_before, Some(reported) if reported != missing) {
                 return Err(FrameError::GapMismatch);
@@ -319,7 +413,10 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
 
 impl<P: FrameProvider> Drop for FrameIngestAdapter<'_, P> {
     fn drop(&mut self) {
-        if matches!(self.state, State::Active | State::StopFailed | State::Faulted) {
+        if matches!(
+            self.state,
+            State::Active | State::StopFailed | State::Faulted
+        ) {
             let _ = cancel_provider(&mut self.provider);
         }
     }
@@ -341,12 +438,22 @@ fn run_policy(
         }
         FramePolicyMode::Gate(gate) => {
             let mut performed = false;
-            let mut once = || { if !performed { performed = true; perform(); } };
+            let mut once = || {
+                if !performed {
+                    performed = true;
+                    perform();
+                }
+            };
             let decision = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
                 gate.with_decision(scope, operation, &mut once)
-            })).unwrap_or(PolicyDecision::Unknown);
+            }))
+            .unwrap_or(PolicyDecision::Unknown);
             drop(once);
-            if !performed && decision == PolicyDecision::Permit { PolicyDecision::Unknown } else { decision }
+            if !performed && decision == PolicyDecision::Permit {
+                PolicyDecision::Unknown
+            } else {
+                decision
+            }
         }
     }
 }

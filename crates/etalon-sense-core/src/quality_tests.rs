@@ -6,7 +6,11 @@ use crate::ContractError;
 
 #[test]
 fn source_declarations_never_mint_trust() {
-    for kind in [SourceKind::Synthetic, SourceKind::Recorded, SourceKind::Live] {
+    for kind in [
+        SourceKind::Synthetic,
+        SourceKind::Recorded,
+        SourceKind::Live,
+    ] {
         let source = SourceDescriptor::new(1, kind).unwrap();
         assert_eq!(source.kind(), kind);
         assert_eq!(source.trust_state(), TrustState::Unverified);

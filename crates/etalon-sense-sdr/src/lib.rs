@@ -18,28 +18,27 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
-use etalon_sense_core::{
-    buffer::SampleLayout,
-    quantity::SampleEncoding,
-    time::ClockStamp,
-};
+use core::sync::atomic::{AtomicBool, Ordering};
+use etalon_sense_core::{buffer::SampleLayout, quantity::SampleEncoding, time::ClockStamp};
+pub use etalon_signal::execution::{AllocationAdmission, ExecutionAllocationClass};
 use etalon_signal::{
     decode::ByteOrder,
-    execution::{execute_i16_iq_power_into_with_admission, ExecutionError, ExecutionTarget, RegisteredSignalProvider},
+    execution::{
+        execute_i16_iq_power_into_with_admission, ExecutionError, ExecutionTarget,
+        RegisteredSignalProvider,
+    },
 };
-pub use etalon_signal::execution::{AllocationAdmission, ExecutionAllocationClass};
-use core::sync::atomic::{AtomicBool, Ordering};
 
 pub const BYTES_PER_IQ_SAMPLE: usize = 4;
 pub const MAX_IQ_SAMPLES_PER_READ: usize = 1_048_576;
 
-pub mod observation;
 pub mod continuity;
+pub mod observation;
+pub use continuity::{SdrContinuityError, SdrContinuityTracker};
 pub use observation::{
     adapt_sdr_frame, adapt_sdr_power_frame, AdaptError as ObservationAdaptError,
     SdrCaptureMetadata, SdrObservation, SdrObservationMapping, SdrPayload,
 };
-pub use continuity::{SdrContinuityError, SdrContinuityTracker};
 
 /// A positive exact sample rate represented as samples per second.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,8 +55,12 @@ impl SampleRateRatio {
         Ok(Self { samples, seconds })
     }
 
-    pub const fn samples(self) -> u64 { self.samples }
-    pub const fn seconds(self) -> u64 { self.seconds }
+    pub const fn samples(self) -> u64 {
+        self.samples
+    }
+    pub const fn seconds(self) -> u64 {
+        self.seconds
+    }
 }
 
 /// Caller-requested center frequency and complex sample rate.
@@ -81,12 +84,22 @@ impl RfTuning {
         if center_frequency_hz == 0 || matches!(bandwidth_hz, Some(0)) {
             return Err(SdrError::InvalidTuning);
         }
-        Ok(Self { center_frequency_hz, sample_rate, bandwidth_hz })
+        Ok(Self {
+            center_frequency_hz,
+            sample_rate,
+            bandwidth_hz,
+        })
     }
 
-    pub const fn center_frequency_hz(self) -> u64 { self.center_frequency_hz }
-    pub const fn sample_rate(self) -> SampleRateRatio { self.sample_rate }
-    pub const fn bandwidth_hz(self) -> Option<u64> { self.bandwidth_hz }
+    pub const fn center_frequency_hz(self) -> u64 {
+        self.center_frequency_hz
+    }
+    pub const fn sample_rate(self) -> SampleRateRatio {
+        self.sample_rate
+    }
+    pub const fn bandwidth_hz(self) -> Option<u64> {
+        self.bandwidth_hz
+    }
 }
 
 /// Host request for one bounded block. `reader_id` is an opaque host assertion,
@@ -120,15 +133,31 @@ impl SdrReadRequest {
         if sample_count.checked_mul(BYTES_PER_IQ_SAMPLE).is_none() {
             return Err(SdrError::CapacityExceeded);
         }
-        Ok(Self { reader_id, tuning, sample_count, byte_order, max_read_duration_ns })
+        Ok(Self {
+            reader_id,
+            tuning,
+            sample_count,
+            byte_order,
+            max_read_duration_ns,
+        })
     }
 
-    pub const fn reader_id(self) -> u64 { self.reader_id }
-    pub const fn tuning(self) -> RfTuning { self.tuning }
-    pub const fn sample_count(self) -> usize { self.sample_count }
-    pub const fn byte_order(self) -> IqByteOrder { self.byte_order }
+    pub const fn reader_id(self) -> u64 {
+        self.reader_id
+    }
+    pub const fn tuning(self) -> RfTuning {
+        self.tuning
+    }
+    pub const fn sample_count(self) -> usize {
+        self.sample_count
+    }
+    pub const fn byte_order(self) -> IqByteOrder {
+        self.byte_order
+    }
     /// Maximum elapsed read duration supplied by the host, not an absolute timestamp.
-    pub const fn max_read_duration_ns(self) -> u64 { self.max_read_duration_ns }
+    pub const fn max_read_duration_ns(self) -> u64 {
+        self.max_read_duration_ns
+    }
 
     pub const fn required_bytes(self) -> usize {
         // `new` checked this product and sample_count is private.
@@ -206,8 +235,15 @@ impl SdrReadReport {
             return Err(SdrError::InvalidReport);
         }
         Ok(Self {
-            bytes_written, sample_count, timestamp, timestamp_anchor, applied_tuning, overrun,
-            stream_id: None, generation: None, sequence: None,
+            bytes_written,
+            sample_count,
+            timestamp,
+            timestamp_anchor,
+            applied_tuning,
+            overrun,
+            stream_id: None,
+            generation: None,
+            sequence: None,
         })
     }
 
@@ -232,15 +268,33 @@ impl SdrReadReport {
         Ok(self)
     }
 
-    pub const fn bytes_written(self) -> usize { self.bytes_written }
-    pub const fn sample_count(self) -> usize { self.sample_count }
-    pub const fn timestamp(self) -> Option<ClockStamp> { self.timestamp }
-    pub const fn timestamp_anchor(self) -> TimestampAnchor { self.timestamp_anchor }
-    pub const fn applied_tuning(self) -> AppliedTuning { self.applied_tuning }
-    pub const fn overrun(self) -> OverrunReport { self.overrun }
-    pub const fn stream_id(self) -> Option<u64> { self.stream_id }
-    pub const fn generation(self) -> Option<u32> { self.generation }
-    pub const fn sequence(self) -> Option<u64> { self.sequence }
+    pub const fn bytes_written(self) -> usize {
+        self.bytes_written
+    }
+    pub const fn sample_count(self) -> usize {
+        self.sample_count
+    }
+    pub const fn timestamp(self) -> Option<ClockStamp> {
+        self.timestamp
+    }
+    pub const fn timestamp_anchor(self) -> TimestampAnchor {
+        self.timestamp_anchor
+    }
+    pub const fn applied_tuning(self) -> AppliedTuning {
+        self.applied_tuning
+    }
+    pub const fn overrun(self) -> OverrunReport {
+        self.overrun
+    }
+    pub const fn stream_id(self) -> Option<u64> {
+        self.stream_id
+    }
+    pub const fn generation(self) -> Option<u32> {
+        self.generation
+    }
+    pub const fn sequence(self) -> Option<u64> {
+        self.sequence
+    }
 }
 
 /// Host-owned synchronous acquisition operation. Implementations may call an
@@ -287,19 +341,45 @@ pub struct SdrFrame<'a> {
 }
 
 impl<'a> SdrFrame<'a> {
-    pub const fn reader_id(self) -> u64 { self.reader_id }
-    pub const fn requested_tuning(self) -> RfTuning { self.requested_tuning }
-    pub const fn applied_tuning(self) -> AppliedTuning { self.applied_tuning }
-    pub const fn sample_count(self) -> usize { self.sample_count }
-    pub const fn byte_order(self) -> IqByteOrder { self.byte_order }
-    pub const fn timestamp(self) -> Option<ClockStamp> { self.timestamp }
-    pub const fn timestamp_anchor(self) -> TimestampAnchor { self.timestamp_anchor }
-    pub const fn overrun(self) -> OverrunReport { self.overrun }
-    pub const fn trust(self) -> CaptureTrust { self.trust }
-    pub const fn bytes(self) -> &'a [u8] { self.bytes }
-    pub const fn stream_id(self) -> Option<u64> { self.stream_id }
-    pub const fn generation(self) -> Option<u32> { self.generation }
-    pub const fn sequence(self) -> Option<u64> { self.sequence }
+    pub const fn reader_id(self) -> u64 {
+        self.reader_id
+    }
+    pub const fn requested_tuning(self) -> RfTuning {
+        self.requested_tuning
+    }
+    pub const fn applied_tuning(self) -> AppliedTuning {
+        self.applied_tuning
+    }
+    pub const fn sample_count(self) -> usize {
+        self.sample_count
+    }
+    pub const fn byte_order(self) -> IqByteOrder {
+        self.byte_order
+    }
+    pub const fn timestamp(self) -> Option<ClockStamp> {
+        self.timestamp
+    }
+    pub const fn timestamp_anchor(self) -> TimestampAnchor {
+        self.timestamp_anchor
+    }
+    pub const fn overrun(self) -> OverrunReport {
+        self.overrun
+    }
+    pub const fn trust(self) -> CaptureTrust {
+        self.trust
+    }
+    pub const fn bytes(self) -> &'a [u8] {
+        self.bytes
+    }
+    pub const fn stream_id(self) -> Option<u64> {
+        self.stream_id
+    }
+    pub const fn generation(self) -> Option<u32> {
+        self.generation
+    }
+    pub const fn sequence(self) -> Option<u64> {
+        self.sequence
+    }
 
     /// Describe the borrowed payload using Etalon's existing complex-i16
     /// tensor layout contract. This adds no physical interpretation or unit.
@@ -310,7 +390,8 @@ impl<'a> SdrFrame<'a> {
             [count, 0, 0, 0],
             [BYTES_PER_IQ_SAMPLE as u64, 0, 0, 0],
             SampleEncoding::ComplexI16,
-        ).map_err(|_| SdrError::InvalidSampleLayout)
+        )
+        .map_err(|_| SdrError::InvalidSampleLayout)
     }
 }
 
@@ -434,19 +515,45 @@ pub struct SdrPowerFrame<'a> {
 }
 
 impl<'a> SdrPowerFrame<'a> {
-    pub const fn reader_id(self) -> u64 { self.reader_id }
-    pub const fn requested_tuning(self) -> RfTuning { self.requested_tuning }
-    pub const fn applied_tuning(self) -> AppliedTuning { self.applied_tuning }
-    pub const fn sample_count(self) -> usize { self.sample_count }
-    pub const fn byte_order(self) -> IqByteOrder { self.byte_order }
-    pub const fn timestamp(self) -> Option<ClockStamp> { self.timestamp }
-    pub const fn timestamp_anchor(self) -> TimestampAnchor { self.timestamp_anchor }
-    pub const fn overrun(self) -> OverrunReport { self.overrun }
-    pub const fn trust(self) -> CaptureTrust { self.trust }
-    pub const fn power_values(self) -> &'a [f64] { self.power_values }
-    pub const fn stream_id(self) -> Option<u64> { self.stream_id }
-    pub const fn generation(self) -> Option<u32> { self.generation }
-    pub const fn sequence(self) -> Option<u64> { self.sequence }
+    pub const fn reader_id(self) -> u64 {
+        self.reader_id
+    }
+    pub const fn requested_tuning(self) -> RfTuning {
+        self.requested_tuning
+    }
+    pub const fn applied_tuning(self) -> AppliedTuning {
+        self.applied_tuning
+    }
+    pub const fn sample_count(self) -> usize {
+        self.sample_count
+    }
+    pub const fn byte_order(self) -> IqByteOrder {
+        self.byte_order
+    }
+    pub const fn timestamp(self) -> Option<ClockStamp> {
+        self.timestamp
+    }
+    pub const fn timestamp_anchor(self) -> TimestampAnchor {
+        self.timestamp_anchor
+    }
+    pub const fn overrun(self) -> OverrunReport {
+        self.overrun
+    }
+    pub const fn trust(self) -> CaptureTrust {
+        self.trust
+    }
+    pub const fn power_values(self) -> &'a [f64] {
+        self.power_values
+    }
+    pub const fn stream_id(self) -> Option<u64> {
+        self.stream_id
+    }
+    pub const fn generation(self) -> Option<u32> {
+        self.generation
+    }
+    pub const fn sequence(self) -> Option<u64> {
+        self.sequence
+    }
 }
 
 /// Execute the existing Etalon signed-i16 I/Q power pipeline with only
@@ -464,7 +571,13 @@ pub fn compute_iq_power_into<'a>(
     output: &'a mut [f64],
 ) -> Result<SdrPowerFrame<'a>, SdrError> {
     compute_iq_power_into_with_admission(
-        frame, target, provider, scale, workspace, staged_output, output,
+        frame,
+        target,
+        provider,
+        scale,
+        workspace,
+        staged_output,
+        output,
         AllocationAdmission::Unrestricted,
     )
 }
@@ -497,7 +610,8 @@ pub fn compute_iq_power_into_with_admission<'a>(
         staged_output,
         output,
         admission,
-    ).map_err(SdrError::SignalExecution)?;
+    )
+    .map_err(SdrError::SignalExecution)?;
     if count != frame.sample_count {
         return Err(SdrError::SignalExecution(ExecutionError::Capacity));
     }

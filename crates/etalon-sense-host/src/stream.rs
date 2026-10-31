@@ -13,9 +13,9 @@ use std::io::{self, Read};
 
 use etalon_sense_core::{
     adapter::{
-        AdapterError, AdapterId, ExtendedAdapterDescriptor,
-        ExtendedCaptureBuffer, ExtendedCaptureSession, ExtendedCapturedSamples,
-        ExtendedDiscoveredSource, ExtendedSensorAdapter,
+        AdapterError, AdapterId, ExtendedAdapterDescriptor, ExtendedCaptureBuffer,
+        ExtendedCaptureSession, ExtendedCapturedSamples, ExtendedDiscoveredSource,
+        ExtendedSensorAdapter,
     },
     authority::TrustedCaptureClock,
     buffer::SampleLayout,
@@ -72,15 +72,16 @@ where
         reader: R,
         clock: C,
     ) -> Result<Self, AdapterError> {
-        let descriptor = ExtendedAdapterDescriptor::new(
-            adapter_id,
-            source.capability().modality_id(),
-        )?;
+        let descriptor =
+            ExtendedAdapterDescriptor::new(adapter_id, source.capability().modality_id())?;
         source.capability().validate_layout(&layout, None)?;
-        let frame_bytes = usize::try_from(layout.required_byte_span()?)
-            .map_err(|_| AdapterError::Buffer(etalon_sense_core::ContractError::ArithmeticOverflow))?;
+        let frame_bytes = usize::try_from(layout.required_byte_span()?).map_err(|_| {
+            AdapterError::Buffer(etalon_sense_core::ContractError::ArithmeticOverflow)
+        })?;
         if frame_bytes == 0 || frame_bytes > max_frame_bytes {
-            return Err(AdapterError::Buffer(etalon_sense_core::ContractError::OutOfBounds));
+            return Err(AdapterError::Buffer(
+                etalon_sense_core::ContractError::OutOfBounds,
+            ));
         }
         Ok(Self {
             descriptor,
@@ -97,13 +98,21 @@ where
         })
     }
 
-    pub const fn state(&self) -> StreamState { self.state }
-    pub const fn completed_frames(&self) -> u64 { self.completed_frames }
-    pub const fn max_frame_bytes(&self) -> usize { self.max_frame_bytes }
+    pub const fn state(&self) -> StreamState {
+        self.state
+    }
+    pub const fn completed_frames(&self) -> u64 {
+        self.completed_frames
+    }
+    pub const fn max_frame_bytes(&self) -> usize {
+        self.max_frame_bytes
+    }
 
     /// Access the wrapped source for host-side control, if its concrete type
     /// exposes appropriate cancellation or device lifecycle operations.
-    pub fn reader_mut(&mut self) -> &mut R { &mut self.reader }
+    pub fn reader_mut(&mut self) -> &mut R {
+        &mut self.reader
+    }
 
     fn validate_fresh_request(
         &mut self,
@@ -113,7 +122,9 @@ where
         output.validate_at(now)
     }
 
-    fn fail_stream(&mut self) { self.state = StreamState::Faulted; }
+    fn fail_stream(&mut self) {
+        self.state = StreamState::Faulted;
+    }
 }
 
 impl<R, C> ExtendedSensorAdapter for StreamAdapter<R, C>
@@ -121,7 +132,9 @@ where
     R: Read,
     C: TrustedCaptureClock,
 {
-    fn descriptor(&self) -> ExtendedAdapterDescriptor { self.descriptor }
+    fn descriptor(&self) -> ExtendedAdapterDescriptor {
+        self.descriptor
+    }
 
     fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
         self.clock.now()
@@ -131,7 +144,9 @@ where
         &mut self,
         out: &mut [ExtendedDiscoveredSource],
     ) -> Result<usize, AdapterError> {
-        if out.is_empty() { return Err(AdapterError::DiscoveryBufferTooSmall); }
+        if out.is_empty() {
+            return Err(AdapterError::DiscoveryBufferTooSmall);
+        }
         out[0] = self.source;
         Ok(1)
     }
@@ -140,13 +155,20 @@ where
         &mut self,
         request: etalon_sense_core::adapter::AuthorizedExtendedCapture,
     ) -> Result<ExtendedCaptureSession, AdapterError> {
-        if request.source() != self.source { return Err(AdapterError::AuthorizationDenied); }
-        if self.active.is_some() { return Err(AdapterError::InvalidSession); }
-        if self.state != StreamState::Ready { return Err(AdapterError::Unavailable); }
+        if request.source() != self.source {
+            return Err(AdapterError::AuthorizationDenied);
+        }
+        if self.active.is_some() {
+            return Err(AdapterError::InvalidSession);
+        }
+        if self.state != StreamState::Ready {
+            return Err(AdapterError::Unavailable);
+        }
         request.validate_at(self.trusted_now()?)?;
         let id = self.next_session_id;
         self.next_session_id = id.checked_add(1).ok_or(AdapterError::BackendFailure)?;
-        let session = ExtendedCaptureSession::new(self.descriptor.id(), self.source, id, self.generation)?;
+        let session =
+            ExtendedCaptureSession::new(self.descriptor.id(), self.source, id, self.generation)?;
         self.active = Some(session);
         Ok(session)
     }
@@ -162,7 +184,9 @@ where
         if output.source() != self.source || output.layout() != &self.layout {
             return Err(AdapterError::Unsupported);
         }
-        if self.state != StreamState::Ready { return Err(AdapterError::Unavailable); }
+        if self.state != StreamState::Ready {
+            return Err(AdapterError::Unavailable);
+        }
         let frame_bytes = usize::try_from(self.layout.required_byte_span()?)
             .map_err(|_| AdapterError::BackendFailure)?;
         if frame_bytes == 0 || frame_bytes > self.max_frame_bytes {
@@ -186,7 +210,11 @@ where
                 Ok(0) => {
                     self.state = StreamState::Eof;
                     zero_capture_prefix(&mut output, filled);
-                    return Err(if filled == 0 { AdapterError::Unavailable } else { AdapterError::BackendFailure });
+                    return Err(if filled == 0 {
+                        AdapterError::Unavailable
+                    } else {
+                        AdapterError::BackendFailure
+                    });
                 }
                 Ok(count) if count <= frame_bytes - filled => {
                     filled += count;
@@ -228,9 +256,14 @@ where
     }
 
     fn stop_backend(&mut self, session: ExtendedCaptureSession) -> Result<(), AdapterError> {
-        if self.active != Some(session) { return Err(AdapterError::InvalidSession); }
+        if self.active != Some(session) {
+            return Err(AdapterError::InvalidSession);
+        }
         self.active = None;
-        self.generation = self.generation.checked_add(1).ok_or(AdapterError::BackendFailure)?;
+        self.generation = self
+            .generation
+            .checked_add(1)
+            .ok_or(AdapterError::BackendFailure)?;
         Ok(())
     }
 }

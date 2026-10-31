@@ -20,7 +20,9 @@ pub fn apply_window_into(
         return Err(SignalError::LengthMismatch);
     }
     if samples.iter().any(|sample| !sample.is_finite())
-        || coefficients.iter().any(|coefficient| !coefficient.is_finite())
+        || coefficients
+            .iter()
+            .any(|coefficient| !coefficient.is_finite())
     {
         return Err(SignalError::NonFiniteInput);
     }
@@ -32,9 +34,7 @@ pub fn apply_window_into(
             return Err(SignalError::NumericRange);
         }
     }
-    for ((&sample, &coefficient), output) in
-        samples.iter().zip(coefficients).zip(out.iter_mut())
-    {
+    for ((&sample, &coefficient), output) in samples.iter().zip(coefficients).zip(out.iter_mut()) {
         *output = (f64::from(sample) * f64::from(coefficient)) as f32;
     }
     Ok(samples.len())

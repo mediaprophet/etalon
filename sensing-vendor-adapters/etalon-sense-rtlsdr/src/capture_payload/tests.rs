@@ -26,7 +26,10 @@ fn fixture() -> [u8; HEADER_BYTES + 4] {
 fn historical_payload_preserves_requested_and_reported_values_without_rounding() {
     let bytes = fixture();
     let decoded = decode_capture_payload(&bytes, bytes.len() as u64).unwrap();
-    assert_eq!((decoded.target_id, decoded.generation, decoded.device_index), (7, 3, 2));
+    assert_eq!(
+        (decoded.target_id, decoded.generation, decoded.device_index),
+        (7, 3, 2)
+    );
     assert_eq!((decoded.pair_count, decoded.host_read_sequence), (2, 9));
     assert_eq!(decoded.requested.sample_rate_hz(), 2_400_000);
     assert_eq!(decoded.applied.sample_rate_hz, 2_400_001);
@@ -34,8 +37,10 @@ fn historical_payload_preserves_requested_and_reported_values_without_rounding()
     assert!(decoded.requested.digital_agc());
     assert_eq!(decoded.raw_iq, &[0, 255, 127, 128]);
     assert!(decoded.usb_strings.serial.is_empty());
-    assert!(matches!(decode_capture_payload(&bytes, bytes.len() as u64 - 1),
-        Err(PayloadError::BudgetExceeded)));
+    assert!(matches!(
+        decode_capture_payload(&bytes, bytes.len() as u64 - 1),
+        Err(PayloadError::BudgetExceeded)
+    ));
 }
 
 #[test]
@@ -60,8 +65,13 @@ fn usb_descriptors_are_byte_preserved_and_zero_padding_is_canonical() {
     let mut bytes = fixture();
     bytes[108..110].copy_from_slice(&2u16.to_le_bytes());
     bytes[640..642].copy_from_slice(&[0xff, b'1']);
-    assert_eq!(decode_capture_payload(&bytes, bytes.len() as u64).unwrap().usb_strings.serial,
-        &[0xff, b'1']);
+    assert_eq!(
+        decode_capture_payload(&bytes, bytes.len() as u64)
+            .unwrap()
+            .usb_strings
+            .serial,
+        &[0xff, b'1']
+    );
     bytes[642] = b'2';
     assert!(decode_capture_payload(&bytes, bytes.len() as u64).is_err());
     bytes[642] = 0;

@@ -3,8 +3,8 @@
 mod validate;
 pub use validate::validate_fast_rpc_deployment;
 
-use std::{ffi::CStr, path::Path};
 use crate::{ArtifactSpec, DeploymentError};
+use std::{ffi::CStr, path::Path};
 
 pub const MAX_FASTRPC_CLOSURE_ARTIFACTS: usize = 64;
 pub const MAX_FASTRPC_MODULE_URI_BYTES: usize = 1024;
@@ -54,21 +54,48 @@ pub struct AdmittedFastRpcDeployment<'manifest, 'path, 'authority> {
 }
 
 impl AdmittedFastRpcDeployment<'_, '_, '_> {
-    pub fn manifest(&self) -> &FastRpcManifest<'_> { self.manifest }
-    pub fn runtime_path(&self) -> &Path { self.manifest.runtime.path }
-    pub fn module_path(&self) -> &Path { self.manifest.module.path }
-    pub fn module_uri(&self) -> &CStr { self.manifest.module_uri }
-    pub fn target_id(&self) -> u64 { self.manifest.target_id }
-    pub fn provider_generation(&self) -> u32 { self.manifest.provider_generation }
-    pub fn service_max_pairs(&self) -> u32 { self.manifest.service_max_pairs }
-    pub fn domain(&self) -> u32 { self.manifest.domain }
-    pub fn session(&self) -> u32 { self.manifest.session }
-    pub fn service_schema_id(&self) -> u64 { self.manifest.service_schema_id }
-    pub fn service_schema_sha256(&self) -> [u8; 32] { self.manifest.service_schema_sha256 }
-    pub fn total_verified_bytes(&self) -> u64 { self.total_bytes }
+    pub fn manifest(&self) -> &FastRpcManifest<'_> {
+        self.manifest
+    }
+    pub fn runtime_path(&self) -> &Path {
+        self.manifest.runtime.path
+    }
+    pub fn module_path(&self) -> &Path {
+        self.manifest.module.path
+    }
+    pub fn module_uri(&self) -> &CStr {
+        self.manifest.module_uri
+    }
+    pub fn target_id(&self) -> u64 {
+        self.manifest.target_id
+    }
+    pub fn provider_generation(&self) -> u32 {
+        self.manifest.provider_generation
+    }
+    pub fn service_max_pairs(&self) -> u32 {
+        self.manifest.service_max_pairs
+    }
+    pub fn domain(&self) -> u32 {
+        self.manifest.domain
+    }
+    pub fn session(&self) -> u32 {
+        self.manifest.session
+    }
+    pub fn service_schema_id(&self) -> u64 {
+        self.manifest.service_schema_id
+    }
+    pub fn service_schema_sha256(&self) -> [u8; 32] {
+        self.manifest.service_schema_sha256
+    }
+    pub fn total_verified_bytes(&self) -> u64 {
+        self.total_bytes
+    }
     /// The lease must preserve the artifacts; this only rechecks authority.
     pub fn revalidate_authority(&self) -> Result<(), DeploymentError> {
-        if self.authority.admit(self.manifest) { Ok(()) }
-        else { Err(DeploymentError::NotAuthorized) }
+        if self.authority.admit(self.manifest) {
+            Ok(())
+        } else {
+            Err(DeploymentError::NotAuthorized)
+        }
     }
 }

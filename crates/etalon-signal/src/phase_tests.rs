@@ -6,7 +6,10 @@ fn unwraps_both_directions_across_the_principal_boundary() {
     let mut state = PhaseState::uninitialized();
     let mut out = [0.0; 4];
     let input = [pi - 0.1, -pi + 0.1, -pi + 0.2, pi - 0.2];
-    assert_eq!(unwrap_phase_into(&input, &[false; 4], &mut state, &mut out), Ok(4));
+    assert_eq!(
+        unwrap_phase_into(&input, &[false; 4], &mut state, &mut out),
+        Ok(4)
+    );
     assert!(out[1] > out[0]);
     assert!(out[2] > out[1]);
     assert!(out[3] < out[2]);

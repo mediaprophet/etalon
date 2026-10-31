@@ -12,8 +12,16 @@ use crate::{
 
 fn capability(modality: Modality) -> SensorCapability {
     let (quantity, unit, encoding) = match modality {
-        Modality::Microphone => (PhysicalQuantity::AcousticPressure, Unit::Pascal, SampleEncoding::F32),
-        _ => (PhysicalQuantity::RfChannelResponse, Unit::Unitless, SampleEncoding::ComplexI16),
+        Modality::Microphone => (
+            PhysicalQuantity::AcousticPressure,
+            Unit::Pascal,
+            SampleEncoding::F32,
+        ),
+        _ => (
+            PhysicalQuantity::RfChannelResponse,
+            Unit::Unitless,
+            SampleEncoding::ComplexI16,
+        ),
     };
     SensorCapability::new(modality, quantity, unit, encoding, [8, 0, 0, 0], None).unwrap()
 }
@@ -57,7 +65,10 @@ impl SensorAdapter for ContractFixture {
         Ok(1)
     }
 
-    fn start_backend(&mut self, request: AuthorizedCapture) -> Result<CaptureSession, AdapterError> {
+    fn start_backend(
+        &mut self,
+        request: AuthorizedCapture,
+    ) -> Result<CaptureSession, AdapterError> {
         CaptureSession::new(self.descriptor.id(), request.source(), 21, 2)
     }
 
@@ -107,7 +118,8 @@ fn capture_buffer_rejects_bad_shape_encoding_and_capacity_before_writes() {
         CaptureBuffer::new(&mut enough, too_many, cap).err(),
         Some(AdapterError::Buffer(ContractError::InvalidExtent))
     );
-    let wrong_encoding = SampleLayout::new(1, [2, 0, 0, 0], [4, 0, 0, 0], SampleEncoding::I16).unwrap();
+    let wrong_encoding =
+        SampleLayout::new(1, [2, 0, 0, 0], [4, 0, 0, 0], SampleEncoding::I16).unwrap();
     assert_eq!(
         CaptureBuffer::new(&mut enough, wrong_encoding, cap).err(),
         Some(AdapterError::Buffer(ContractError::IncompatibleEncoding))
@@ -159,7 +171,11 @@ fn authorization_binds_source_capability_purpose_and_expiry_clock() {
     );
     let different = DiscoveredSource::new(16, declared.capability()).unwrap();
     assert_eq!(
-        AuthorizedCapture::new(different, permit(declared, stamp(5, 1, 500)), stamp(5, 1, 100)),
+        AuthorizedCapture::new(
+            different,
+            permit(declared, stamp(5, 1, 500)),
+            stamp(5, 1, 100)
+        ),
         Err(AdapterError::AuthorizationDenied)
     );
 }
@@ -249,7 +265,10 @@ fn discovery_rejects_truncation_and_wrong_modality() {
 
     adapter.source = source(Modality::Wifi);
     let mut output = [declared; 1];
-    assert_eq!(adapter.discover(&mut output), Err(AdapterError::Unsupported));
+    assert_eq!(
+        adapter.discover(&mut output),
+        Err(AdapterError::Unsupported)
+    );
 }
 
 #[test]
@@ -267,5 +286,8 @@ fn trusted_adapter_clock_rejects_request_expired_after_authorization() {
         stamp(1, 0, 100),
     )
     .unwrap();
-    assert_eq!(adapter.start(request), Err(AdapterError::AuthorizationExpired));
+    assert_eq!(
+        adapter.start(request),
+        Err(AdapterError::AuthorizationExpired)
+    );
 }

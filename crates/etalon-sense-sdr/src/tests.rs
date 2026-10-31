@@ -1,10 +1,15 @@
 use super::*;
 use etalon_signal::{execution::DeviceId, SignalError};
 
-struct UnknownClassProvider { id: DeviceId, calls: usize }
+struct UnknownClassProvider {
+    id: DeviceId,
+    calls: usize,
+}
 
 impl RegisteredSignalProvider for UnknownClassProvider {
-    fn device_id(&self) -> DeviceId { self.id }
+    fn device_id(&self) -> DeviceId {
+        self.id
+    }
 
     fn i16_iq_power_into(
         &mut self,
@@ -26,7 +31,9 @@ struct TestReader {
 }
 
 impl SdrReader for TestReader {
-    fn reader_id(&self) -> u64 { self.id }
+    fn reader_id(&self) -> u64 {
+        self.id
+    }
 
     fn read_i16_iq(
         &mut self,
@@ -60,20 +67,37 @@ fn report(samples: usize, bytes: usize, overrun: OverrunReport) -> SdrReadReport
         TimestampAnchor::FirstSample,
         AppliedTuning::Reported(request(1).tuning()),
         overrun,
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 #[test]
 fn successful_read_borrows_exact_caller_buffer_and_stays_unverified() {
-    let mut reader = TestReader { id: 1, report: report(2, 8, OverrunReport::NoneReported), calls: 0 };
+    let mut reader = TestReader {
+        id: 1,
+        report: report(2, 8, OverrunReport::NoneReported),
+        calls: 0,
+    };
     let mut output = [0u8; 8];
-    let frame = acquire_into(&mut reader, request(1), &core::sync::atomic::AtomicBool::new(false), &mut output).unwrap();
+    let frame = acquire_into(
+        &mut reader,
+        request(1),
+        &core::sync::atomic::AtomicBool::new(false),
+        &mut output,
+    )
+    .unwrap();
     assert_eq!(frame.bytes(), &[0, 1, 2, 3, 4, 5, 6, 7]);
     assert_eq!(frame.sample_count(), 2);
-    assert_eq!(frame.sample_layout().unwrap().encoding(), &SampleEncoding::ComplexI16);
+    assert_eq!(
+        frame.sample_layout().unwrap().encoding(),
+        &SampleEncoding::ComplexI16
+    );
     assert_eq!(frame.sample_layout().unwrap().extents(), &[2, 0, 0, 0]);
     assert_eq!(frame.requested_tuning().center_frequency_hz(), 915_000_000);
-    assert_eq!(frame.applied_tuning(), AppliedTuning::Reported(request(1).tuning()));
+    assert_eq!(
+        frame.applied_tuning(),
+        AppliedTuning::Reported(request(1).tuning())
+    );
     assert_eq!(frame.overrun(), OverrunReport::NoneReported);
     assert_eq!(frame.trust(), CaptureTrust::HostReportedUnverified);
     assert_eq!(reader.calls, 1);
@@ -81,19 +105,42 @@ fn successful_read_borrows_exact_caller_buffer_and_stays_unverified() {
 
 #[test]
 fn preflight_rejects_mismatched_reader_and_buffer_without_callback() {
-    let mut reader = TestReader { id: 2, report: report(2, 8, OverrunReport::Unknown), calls: 0 };
+    let mut reader = TestReader {
+        id: 2,
+        report: report(2, 8, OverrunReport::Unknown),
+        calls: 0,
+    };
     let mut output = [0u8; 8];
     let cancelled = core::sync::atomic::AtomicBool::new(false);
-    assert_eq!(acquire_into(&mut reader, request(1), &cancelled, &mut output).err(), Some(SdrError::ReaderMismatch));
-    assert_eq!(acquire_into(&mut reader, request(2), &cancelled, &mut output[..4]).err(), Some(SdrError::BufferLength));
+    assert_eq!(
+        acquire_into(&mut reader, request(1), &cancelled, &mut output).err(),
+        Some(SdrError::ReaderMismatch)
+    );
+    assert_eq!(
+        acquire_into(&mut reader, request(2), &cancelled, &mut output[..4]).err(),
+        Some(SdrError::BufferLength)
+    );
     assert_eq!(reader.calls, 0);
 }
 
 #[test]
 fn incomplete_callback_output_is_rejected_and_cannot_be_exposed_as_a_frame() {
-    let mut reader = TestReader { id: 1, report: report(1, 4, OverrunReport::Unknown), calls: 0 };
+    let mut reader = TestReader {
+        id: 1,
+        report: report(1, 4, OverrunReport::Unknown),
+        calls: 0,
+    };
     let mut output = [0u8; 8];
-    assert_eq!(acquire_into(&mut reader, request(1), &core::sync::atomic::AtomicBool::new(false), &mut output).err(), Some(SdrError::IncompleteRead));
+    assert_eq!(
+        acquire_into(
+            &mut reader,
+            request(1),
+            &core::sync::atomic::AtomicBool::new(false),
+            &mut output
+        )
+        .err(),
+        Some(SdrError::IncompleteRead)
+    );
     assert_eq!(reader.calls, 1);
     // On error the caller owns the buffer and must discard its contents.
     assert_eq!(output, [0; 8]);
@@ -101,9 +148,19 @@ fn incomplete_callback_output_is_rejected_and_cannot_be_exposed_as_a_frame() {
 
 #[test]
 fn reported_overrun_is_preserved_without_claiming_authenticity() {
-    let mut reader = TestReader { id: 1, report: report(2, 8, OverrunReport::LostSamples(9)), calls: 0 };
+    let mut reader = TestReader {
+        id: 1,
+        report: report(2, 8, OverrunReport::LostSamples(9)),
+        calls: 0,
+    };
     let mut output = [0u8; 8];
-    let frame = acquire_into(&mut reader, request(1), &core::sync::atomic::AtomicBool::new(false), &mut output).unwrap();
+    let frame = acquire_into(
+        &mut reader,
+        request(1),
+        &core::sync::atomic::AtomicBool::new(false),
+        &mut output,
+    )
+    .unwrap();
     assert_eq!(frame.overrun(), OverrunReport::LostSamples(9));
     assert_eq!(frame.trust(), CaptureTrust::HostReportedUnverified);
 }
@@ -135,7 +192,8 @@ fn absent_timestamp_requires_unknown_anchor() {
         TimestampAnchor::Unknown,
         AppliedTuning::Unknown,
         OverrunReport::Unknown,
-    ).is_ok());
+    )
+    .is_ok());
     assert_eq!(
         SdrReadReport::new(
             8,
@@ -151,7 +209,11 @@ fn absent_timestamp_requires_unknown_anchor() {
 
 #[test]
 fn cancelled_read_is_rejected_before_reader_call_and_clears_buffer() {
-    let mut reader = TestReader { id: 1, report: report(2, 8, OverrunReport::Unknown), calls: 0 };
+    let mut reader = TestReader {
+        id: 1,
+        report: report(2, 8, OverrunReport::Unknown),
+        calls: 0,
+    };
     let cancelled = core::sync::atomic::AtomicBool::new(true);
     let mut output = [0xFFu8; 8];
     assert_eq!(
@@ -175,7 +237,9 @@ fn request_requires_a_nonzero_read_duration_budget() {
 struct FailingReader;
 
 impl SdrReader for FailingReader {
-    fn reader_id(&self) -> u64 { 1 }
+    fn reader_id(&self) -> u64 {
+        1
+    }
 
     fn read_i16_iq(
         &mut self,
@@ -192,7 +256,15 @@ impl SdrReader for FailingReader {
 fn reader_error_clears_partially_written_output() {
     let mut reader = FailingReader;
     let mut output = [0u8; 8];
-    assert_eq!(acquire_into(&mut reader, request(1), &core::sync::atomic::AtomicBool::new(false), &mut output), Err(SdrError::Reader(ReaderError::Io)));
+    assert_eq!(
+        acquire_into(
+            &mut reader,
+            request(1),
+            &core::sync::atomic::AtomicBool::new(false),
+            &mut output
+        ),
+        Err(SdrError::Reader(ReaderError::Io))
+    );
     assert_eq!(output, [0; 8]);
 }
 
@@ -226,7 +298,8 @@ fn iq_power_pipeline_preserves_capture_declarations() {
         &mut workspace,
         &mut staged,
         &mut output,
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(powered.power_values(), &[25.0]);
     assert_eq!(powered.reader_id(), 7);
     assert_eq!(powered.requested_tuning(), tune);
@@ -272,7 +345,9 @@ fn strict_power_admission_rejects_unknown_provider_before_dispatch_and_output_wr
             &mut output,
             AllocationAdmission::RequireHotZeroHeap,
         ),
-        Err(SdrError::SignalExecution(ExecutionError::AllocationClassRejected)),
+        Err(SdrError::SignalExecution(
+            ExecutionError::AllocationClassRejected
+        )),
     );
     assert_eq!(provider.calls, 0);
     assert_eq!(staged, [11.0]);

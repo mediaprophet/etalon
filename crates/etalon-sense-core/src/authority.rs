@@ -54,20 +54,37 @@ impl CaptureAuthorizationRequest {
         context_id: u64,
         purpose_id: u64,
     ) -> Result<Self, AuthorityError> {
-        if context_id == 0 || purpose_id == 0
+        if context_id == 0
+            || purpose_id == 0
             || matches!(subject_id, Some(0))
             || matches!(actor_id, Some(0))
         {
             return Err(AuthorityError::InvalidRequest);
         }
-        Ok(Self { source, subject_id, actor_id, context_id, purpose_id })
+        Ok(Self {
+            source,
+            subject_id,
+            actor_id,
+            context_id,
+            purpose_id,
+        })
     }
 
-    pub const fn source(self) -> CaptureSource { self.source }
-    pub const fn subject_id(self) -> Option<u64> { self.subject_id }
-    pub const fn actor_id(self) -> Option<u64> { self.actor_id }
-    pub const fn context_id(self) -> u64 { self.context_id }
-    pub const fn purpose_id(self) -> u64 { self.purpose_id }
+    pub const fn source(self) -> CaptureSource {
+        self.source
+    }
+    pub const fn subject_id(self) -> Option<u64> {
+        self.subject_id
+    }
+    pub const fn actor_id(self) -> Option<u64> {
+        self.actor_id
+    }
+    pub const fn context_id(self) -> u64 {
+        self.context_id
+    }
+    pub const fn purpose_id(self) -> u64 {
+        self.purpose_id
+    }
 }
 
 /// Result from a host-provided policy evaluator. Permit carries only an
@@ -110,7 +127,9 @@ pub enum AuthorityError {
 }
 
 impl From<AdapterError> for AuthorityError {
-    fn from(error: AdapterError) -> Self { Self::Adapter(error) }
+    fn from(error: AdapterError) -> Self {
+        Self::Adapter(error)
+    }
 }
 
 /// Existing adapter request produced from an explicit host decision.
@@ -132,10 +151,18 @@ pub struct IssuedCaptureAuthorization {
 }
 
 impl IssuedCaptureAuthorization {
-    pub const fn request(&self) -> &CaptureAuthorizationRequest { &self.request }
-    pub const fn authorized_at(&self) -> ClockStamp { self.authorized_at }
-    pub const fn expires_at(&self) -> ClockStamp { self.expires_at }
-    pub fn into_capture_request(self) -> AuthorizedCaptureRequest { self.capture }
+    pub const fn request(&self) -> &CaptureAuthorizationRequest {
+        &self.request
+    }
+    pub const fn authorized_at(&self) -> ClockStamp {
+        self.authorized_at
+    }
+    pub const fn expires_at(&self) -> ClockStamp {
+        self.expires_at
+    }
+    pub fn into_capture_request(self) -> AuthorizedCaptureRequest {
+        self.capture
+    }
 }
 
 /// Stateless issuance entry point. It calls the supplied clock and policy on
@@ -178,17 +205,23 @@ impl CaptureAuthority {
                     source.capability(),
                     expires_at,
                 )?;
-                AuthorizedCaptureRequest::Extended(AuthorizedExtendedCapture::new(source, permit, now)?)
+                AuthorizedCaptureRequest::Extended(AuthorizedExtendedCapture::new(
+                    source, permit, now,
+                )?)
             }
         };
 
-        Ok(IssuedCaptureAuthorization { request, authorized_at: now, expires_at, capture })
+        Ok(IssuedCaptureAuthorization {
+            request,
+            authorized_at: now,
+            expires_at,
+            capture,
+        })
     }
 }
 
 fn validate_window(now: ClockStamp, expires_at: ClockStamp) -> Result<(), AuthorityError> {
-    if now.clock_id() != expires_at.clock_id()
-        || now.restart_epoch() != expires_at.restart_epoch()
+    if now.clock_id() != expires_at.clock_id() || now.restart_epoch() != expires_at.restart_epoch()
     {
         return Err(AuthorityError::ClockDomainMismatch);
     }

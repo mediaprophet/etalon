@@ -128,11 +128,12 @@ impl ClockSynchronization {
         }
 
         let drift_delta = i128::from(ref_span) - i128::from(src_span);
-        let drift_numerator = drift_delta
-            .checked_mul(PPB_SCALE)
-            .ok_or(SynchronizationError::Contract(
-                ContractError::ArithmeticOverflow,
-            ))?;
+        let drift_numerator =
+            drift_delta
+                .checked_mul(PPB_SCALE)
+                .ok_or(SynchronizationError::Contract(
+                    ContractError::ArithmeticOverflow,
+                ))?;
         let drift_abs = if drift_numerator < 0 {
             -drift_numerator
         } else {
@@ -140,24 +141,21 @@ impl ClockSynchronization {
         };
         let drift_denominator = i128::from(src_span);
         let drift_ppb = (drift_abs / drift_denominator)
-            + if drift_abs % drift_denominator != 0 { 1 } else { 0 };
-        let measured_drift_ppb = u64::try_from(drift_ppb).map_err(|_| {
-            SynchronizationError::Contract(ContractError::ArithmeticOverflow)
-        })?;
+            + if drift_abs % drift_denominator != 0 {
+                1
+            } else {
+                0
+            };
+        let measured_drift_ppb = u64::try_from(drift_ppb)
+            .map_err(|_| SynchronizationError::Contract(ContractError::ArithmeticOverflow))?;
         if measured_drift_ppb > max_drift_ppb {
             return Err(SynchronizationError::ExcessiveDrift);
         }
 
-        let first_source_uncertainty = scale_uncertainty(
-            src_a.uncertainty_ns(),
-            ref_span,
-            src_span,
-        )?;
-        let second_source_uncertainty = scale_uncertainty(
-            src_b.uncertainty_ns(),
-            ref_span,
-            src_span,
-        )?;
+        let first_source_uncertainty =
+            scale_uncertainty(src_a.uncertainty_ns(), ref_span, src_span)?;
+        let second_source_uncertainty =
+            scale_uncertainty(src_b.uncertainty_ns(), ref_span, src_span)?;
         let first_uncertainty = first_source_uncertainty
             .checked_add(ref_a.uncertainty_ns())
             .ok_or(SynchronizationError::Contract(
@@ -201,8 +199,7 @@ impl ClockSynchronization {
     /// Map a timestamp in the calibrated source domain to the reference domain.
     /// The entire source uncertainty interval must be valid for this mapping.
     pub fn map(&self, source: ClockStamp) -> Result<ClockStamp, SynchronizationError> {
-        if source.clock_id() != self.source_clock_id
-            || source.restart_epoch() != self.source_epoch
+        if source.clock_id() != self.source_clock_id || source.restart_epoch() != self.source_epoch
         {
             return Err(SynchronizationError::Contract(
                 ContractError::ClockDomainMismatch,
@@ -231,19 +228,17 @@ impl ClockSynchronization {
                 ContractError::ArithmeticOverflow,
             ))?
             / u128::from(source_span);
-        let mapped_ticks = target_anchor
-            .checked_add(u64::try_from(scaled_offset).map_err(|_| {
-                SynchronizationError::Contract(ContractError::ArithmeticOverflow)
-            })?)
-            .ok_or(SynchronizationError::Contract(
-                ContractError::ArithmeticOverflow,
-            ))?;
+        let mapped_ticks =
+            target_anchor
+                .checked_add(u64::try_from(scaled_offset).map_err(|_| {
+                    SynchronizationError::Contract(ContractError::ArithmeticOverflow)
+                })?)
+                .ok_or(SynchronizationError::Contract(
+                    ContractError::ArithmeticOverflow,
+                ))?;
 
-        let input_uncertainty = scale_uncertainty(
-            source.uncertainty_ns(),
-            target_span,
-            source_span,
-        )?;
+        let input_uncertainty =
+            scale_uncertainty(source.uncertainty_ns(), target_span, source_span)?;
         let uncertainty = self
             .anchor_uncertainty_ns
             .checked_add(input_uncertainty)

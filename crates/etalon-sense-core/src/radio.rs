@@ -21,7 +21,9 @@ impl RadioAddress48 {
             return Err(ContractError::InvalidIdentifier);
         }
         let bytes = value.to_be_bytes();
-        Ok(Self([bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7]]))
+        Ok(Self([
+            bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+        ]))
     }
 
     pub const fn octets(self) -> [u8; 6] {

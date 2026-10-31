@@ -19,13 +19,17 @@ pub const MAX_READER_NAME_UNITS: usize = 256;
 pub const MAX_READER_LIST_UNITS: usize = 4096;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PcscOperation { ListReaders, ReadUid }
+pub enum PcscOperation {
+    ListReaders,
+    ReadUid,
+}
 
 /// The caller owns policy and must approve every OS operation.
 pub trait PcscGate {
     /// `reader` is the exact, unterminated UTF-16 target for UID requests and
     /// is absent for enumeration. The host can bind source IDs to readers.
-    fn approve(&mut self, operation: PcscOperation, source_id: u64, reader: Option<&[u16]>) -> bool;
+    fn approve(&mut self, operation: PcscOperation, source_id: u64, reader: Option<&[u16]>)
+        -> bool;
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -48,11 +52,15 @@ pub struct PcscUid {
 }
 
 impl PcscUid {
-    pub fn bytes(&self) -> &[u8] { &self.bytes[..self.len as usize] }
+    pub fn bytes(&self) -> &[u8] {
+        &self.bytes[..self.len as usize]
+    }
 }
 
 fn uid_from_response(response: &[u8]) -> Result<PcscUid, PcscError> {
-    if response.len() < 2 { return Err(PcscError::InvalidResponse); }
+    if response.len() < 2 {
+        return Err(PcscError::InvalidResponse);
+    }
     let data_len = response.len() - 2;
     let sw1 = response[data_len];
     let sw2 = response[data_len + 1];
@@ -64,7 +72,10 @@ fn uid_from_response(response: &[u8]) -> Result<PcscUid, PcscError> {
     }
     let mut bytes = [0; MAX_NFC_UID_BYTES];
     bytes[..data_len].copy_from_slice(&response[..data_len]);
-    Ok(PcscUid { bytes, len: data_len as u8 })
+    Ok(PcscUid {
+        bytes,
+        len: data_len as u8,
+    })
 }
 
 #[cfg(test)]
@@ -72,8 +83,20 @@ mod tests {
     use super::*;
     #[test]
     fn uid_response_preserves_zero_and_status() {
-        assert_eq!(uid_from_response(&[0, 1, 0x90, 0]).unwrap().bytes(), &[0, 1]);
-        assert_eq!(uid_from_response(&[0x6a, 0x81]), Err(PcscError::ReaderStatus { sw1: 0x6a, sw2: 0x81 }));
-        assert_eq!(uid_from_response(&[0x90, 0]), Err(PcscError::InvalidResponse));
+        assert_eq!(
+            uid_from_response(&[0, 1, 0x90, 0]).unwrap().bytes(),
+            &[0, 1]
+        );
+        assert_eq!(
+            uid_from_response(&[0x6a, 0x81]),
+            Err(PcscError::ReaderStatus {
+                sw1: 0x6a,
+                sw2: 0x81
+            })
+        );
+        assert_eq!(
+            uid_from_response(&[0x90, 0]),
+            Err(PcscError::InvalidResponse)
+        );
     }
 }

@@ -8,29 +8,49 @@
 //! block and revocation cannot interrupt an already executing OS call.
 
 mod observation;
-pub use observation::{adapt_reading, AdaptError, Mapping, MappedReading};
+pub use observation::{adapt_reading, AdaptError, MappedReading, Mapping};
 mod presence;
 pub use presence::{adapt_os_presence, MappedOsPresence, OsPresenceMapping};
 pub mod compass;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SensorKind { AmbientLight, Magnetometer, Accelerometer, Gyrometer, Barometer, OsHumanPresence }
+pub enum SensorKind {
+    AmbientLight,
+    Magnetometer,
+    Accelerometer,
+    Gyrometer,
+    Barometer,
+    OsHumanPresence,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SensorOperation { SelectDefault, Read }
+pub enum SensorOperation {
+    SelectDefault,
+    Read,
+}
 
 pub trait SensorPolicy {
     fn permit(&mut self, source_id: u64, sensor: SensorKind, operation: SensorOperation) -> bool;
 
     /// Hosts with value-dependent policy should override this final check.
-    fn permit_reading(&mut self, _sensor: SensorKind, _reading: &Reading) -> bool { true }
+    fn permit_reading(&mut self, _sensor: SensorKind, _reading: &Reading) -> bool {
+        true
+    }
 
     /// The OS classification is unverified. Hosts may reject it before return.
-    fn permit_presence(&mut self, _reading: &OsPresenceReading) -> bool { true }
+    fn permit_presence(&mut self, _reading: &OsPresenceReading) -> bool {
+        true
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum SensorError { InvalidSource, PolicyDenied, PolicyPanicked, Windows(i32), InvalidReading }
+pub enum SensorError {
+    InvalidSource,
+    PolicyDenied,
+    PolicyPanicked,
+    Windows(i32),
+    InvalidReading,
+}
 
 /// Raw native timestamp is Windows DateTime 100-ns ticks, not an Etalon clock.
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -55,7 +75,12 @@ pub enum SensorValue {
     IlluminanceLux(f32),
     /// Native X/Y/Z values and the OS directional-accuracy enum's raw value.
     /// Axis frame and field units must be supplied by the host's OS convention.
-    MagneticField { x: f32, y: f32, z: f32, directional_accuracy: i32 },
+    MagneticField {
+        x: f32,
+        y: f32,
+        z: f32,
+        directional_accuracy: i32,
+    },
     /// Native acceleration components. Unit and axes follow the OS convention.
     Acceleration { x: f64, y: f64, z: f64 },
     /// Native angular velocity components. Unit and axes follow the OS convention.
@@ -67,4 +92,7 @@ pub enum SensorValue {
 #[cfg(windows)]
 mod windows;
 #[cfg(windows)]
-pub use windows::{AmbientLightSensor, MagneticSensor, AccelerationSensor, AngularVelocitySensor, PressureSensor, OsPresenceSensor};
+pub use windows::{
+    AccelerationSensor, AmbientLightSensor, AngularVelocitySensor, MagneticSensor,
+    OsPresenceSensor, PressureSensor,
+};

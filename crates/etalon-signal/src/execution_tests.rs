@@ -75,7 +75,9 @@ impl RegisteredSignalProvider for TestProvider {
 struct DefaultClassProvider(TestProvider);
 
 impl RegisteredSignalProvider for DefaultClassProvider {
-    fn device_id(&self) -> DeviceId { self.0.id }
+    fn device_id(&self) -> DeviceId {
+        self.0.id
+    }
 
     fn i16_iq_power_into(
         &mut self,
@@ -85,7 +87,8 @@ impl RegisteredSignalProvider for DefaultClassProvider {
         workspace: &mut [f32],
         staged_output: &mut [f64],
     ) -> Result<usize, SignalError> {
-        self.0.i16_iq_power_into(bytes, byte_order, scale, workspace, staged_output)
+        self.0
+            .i16_iq_power_into(bytes, byte_order, scale, workspace, staged_output)
     }
 }
 
@@ -417,7 +420,15 @@ fn bounded_buffer_admission_accepts_cold_provider_but_not_unknown() {
 #[test]
 fn power_upper_bound_covers_f32_extrema_rounding_and_rejects_invalid_scale() {
     assert_eq!(i16_iq_power_upper_bound(0.0), Ok(0.0));
-    for scale in [f32::from_bits(1), f32::MIN_POSITIVE, 0.1, 0.5, 1.0, 2.0, f32::MAX] {
+    for scale in [
+        f32::from_bits(1),
+        f32::MIN_POSITIVE,
+        0.1,
+        0.5,
+        1.0,
+        2.0,
+        f32::MAX,
+    ] {
         let upper = i16_iq_power_upper_bound(scale).unwrap();
         assert!(upper.is_finite());
         let max_i = (32768.0f64 * f64::from(scale.abs())) as f32;

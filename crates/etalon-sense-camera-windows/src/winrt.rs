@@ -1,32 +1,35 @@
 mod reader;
-pub use reader::{CleanupProgress, RunningFrameReader, StartFailure, StartFailureReason};
 #[cfg(feature = "unqualified-frame-copy")]
 pub use reader::WindowsCapturedFrame;
+pub use reader::{CleanupProgress, RunningFrameReader, StartFailure, StartFailureReason};
 mod copy;
 #[cfg(feature = "unqualified-frame-copy")]
 use copy::copy_bitmap;
 use copy::validate_copy_allocation;
 
-use etalon_sense_camera::{
-    CameraModality, FrameDeclaration,
-};
+use etalon_sense_camera::{CameraModality, FrameDeclaration};
 #[cfg(feature = "unqualified-frame-copy")]
-use etalon_sense_camera::{FrameFormat, FrameMetadata, FramePixelFormat, FramePlane, FrameTimestamp};
-use windows::{
-    Media::Capture::{MediaCapture, MediaCaptureInitializationSettings},
-    Media::Capture::Frames::{
-        MediaFrameReader, MediaFrameReaderStartStatus, MediaFrameReference, MediaFrameSource,
-    },
+use etalon_sense_camera::{
+    FrameFormat, FrameMetadata, FramePixelFormat, FramePlane, FrameTimestamp,
 };
 #[cfg(feature = "unqualified-frame-copy")]
 use windows::{
     Graphics::Imaging::{BitmapBufferAccessMode, BitmapPixelFormat, SoftwareBitmap},
     Storage::Streams::{Buffer, DataReader},
 };
+use windows::{
+    Media::Capture::Frames::{
+        MediaFrameReader, MediaFrameReaderStartStatus, MediaFrameReference, MediaFrameSource,
+    },
+    Media::Capture::{MediaCapture, MediaCaptureInitializationSettings},
+};
 use windows_future::{AsyncStatus, IAsyncAction, IAsyncOperation};
 
 /// Nonblocking result of polling a WinRT operation.
-pub enum AsyncPoll<T> { Pending, Ready(T) }
+pub enum AsyncPoll<T> {
+    Pending,
+    Ready(T),
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum NativeError {
@@ -37,11 +40,16 @@ pub enum NativeError {
     WrongState,
     InvalidSource,
     PolicyDenied,
-    BufferTooSmall { required: usize },
+    BufferTooSmall {
+        required: usize,
+    },
     UnsupportedPixelFormat,
     UnsupportedLayout,
     HotZeroHeapDenied,
-    ColdAllocationBudgetExceeded { required_bytes: u64, budget_bytes: u64 },
+    ColdAllocationBudgetExceeded {
+        required_bytes: u64,
+        budget_bytes: u64,
+    },
     InvalidFrame,
     ArithmeticOverflow,
     SequenceOverflow,
@@ -51,7 +59,14 @@ pub enum NativeError {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CameraOperation { Initialize, EnumerateSources, SelectSource, CreateReader, Start, AcquireFrame }
+pub enum CameraOperation {
+    Initialize,
+    EnumerateSources,
+    SelectSource,
+    CreateReader,
+    Start,
+    AcquireFrame,
+}
 
 /// Admission class for the WinRT intermediate sample buffer. Strict hot
 /// zero-heap work cannot use this API because `Buffer::Create` and the WinRT
@@ -67,11 +82,18 @@ pub enum CopyAllocationClass {
 /// Host-owned policy hook. Callers may implement public, scientific, or other
 /// ontology contexts; this crate supplies no universal identity/consent model.
 pub trait CameraPolicy {
-    fn permit(&mut self, source_id: u64, modality: CameraModality, operation: CameraOperation) -> bool;
+    fn permit(
+        &mut self,
+        source_id: u64,
+        modality: CameraModality,
+        operation: CameraOperation,
+    ) -> bool;
 }
 
 impl From<windows::core::Error> for NativeError {
-    fn from(error: windows::core::Error) -> Self { Self::Windows(error.code().0) }
+    fn from(error: windows::core::Error) -> Self {
+        Self::Windows(error.code().0)
+    }
 }
 
 /// A pending action, such as MediaCapture initialization or reader stop.
@@ -89,18 +111,28 @@ pub struct PendingAction {
 }
 
 impl PendingAction {
-    pub(crate) const fn is_terminal(&self) -> bool { self.terminal }
+    pub(crate) const fn is_terminal(&self) -> bool {
+        self.terminal
+    }
     fn new(
         operation: IAsyncAction,
         capture: Option<MediaCapture>,
         settings: Option<MediaCaptureInitializationSettings>,
         reader: Option<MediaFrameReader>,
     ) -> Self {
-        Self { operation, _capture: capture, _settings: settings, _reader: reader, terminal: false }
+        Self {
+            operation,
+            _capture: capture,
+            _settings: settings,
+            _reader: reader,
+            terminal: false,
+        }
     }
 
     pub fn poll(&mut self) -> Result<AsyncPoll<()>, NativeError> {
-        if self.terminal { return Err(NativeError::AlreadyCompleted); }
+        if self.terminal {
+            return Err(NativeError::AlreadyCompleted);
+        }
         match self.operation.Status()? {
             AsyncStatus::Started => Ok(AsyncPoll::Pending),
             AsyncStatus::Completed => {
@@ -108,17 +140,25 @@ impl PendingAction {
                 self.operation.GetResults()?;
                 Ok(AsyncPoll::Ready(()))
             }
-            AsyncStatus::Canceled => { self.terminal = true; Err(NativeError::Canceled) }
+            AsyncStatus::Canceled => {
+                self.terminal = true;
+                Err(NativeError::Canceled)
+            }
             AsyncStatus::Error => {
                 self.terminal = true;
                 Err(NativeError::OperationFailed(self.operation.ErrorCode()?.0))
             }
-            _ => { self.terminal = true; Err(NativeError::WrongState) }
+            _ => {
+                self.terminal = true;
+                Err(NativeError::WrongState)
+            }
         }
     }
 
     pub fn cancel(&self) -> Result<(), NativeError> {
-        if self.terminal { return Err(NativeError::AlreadyCompleted); }
+        if self.terminal {
+            return Err(NativeError::AlreadyCompleted);
+        }
         self.operation.Cancel().map_err(Into::into)
     }
 }
@@ -134,35 +174,56 @@ pub struct PendingReader {
 }
 
 impl PendingReader {
-    pub(crate) const fn is_terminal(&self) -> bool { self.terminal }
+    pub(crate) const fn is_terminal(&self) -> bool {
+        self.terminal
+    }
     fn new(
         operation: IAsyncOperation<MediaFrameReader>,
         capture: MediaCapture,
         source: MediaFrameSource,
         declaration: FrameDeclaration,
     ) -> Self {
-        Self { operation, _capture: capture, _source: source, _declaration: declaration, terminal: false }
+        Self {
+            operation,
+            _capture: capture,
+            _source: source,
+            _declaration: declaration,
+            terminal: false,
+        }
     }
 
     pub fn poll(&mut self) -> Result<AsyncPoll<MediaFrameReader>, NativeError> {
-        if self.terminal { return Err(NativeError::AlreadyCompleted); }
+        if self.terminal {
+            return Err(NativeError::AlreadyCompleted);
+        }
         match self.operation.Status()? {
             AsyncStatus::Started => Ok(AsyncPoll::Pending),
             AsyncStatus::Completed => {
                 self.terminal = true;
-                self.operation.GetResults().map(AsyncPoll::Ready).map_err(Into::into)
+                self.operation
+                    .GetResults()
+                    .map(AsyncPoll::Ready)
+                    .map_err(Into::into)
             }
-            AsyncStatus::Canceled => { self.terminal = true; Err(NativeError::Canceled) }
+            AsyncStatus::Canceled => {
+                self.terminal = true;
+                Err(NativeError::Canceled)
+            }
             AsyncStatus::Error => {
                 self.terminal = true;
                 Err(NativeError::OperationFailed(self.operation.ErrorCode()?.0))
             }
-            _ => { self.terminal = true; Err(NativeError::WrongState) }
+            _ => {
+                self.terminal = true;
+                Err(NativeError::WrongState)
+            }
         }
     }
 
     pub fn cancel(&self) -> Result<(), NativeError> {
-        if self.terminal { return Err(NativeError::AlreadyCompleted); }
+        if self.terminal {
+            return Err(NativeError::AlreadyCompleted);
+        }
         self.operation.Cancel().map_err(Into::into)
     }
 }
@@ -182,35 +243,56 @@ pub struct PendingReaderStart {
 }
 
 impl PendingReaderStart {
-    pub(crate) const fn is_terminal(&self) -> bool { self.terminal }
+    pub(crate) const fn is_terminal(&self) -> bool {
+        self.terminal
+    }
     fn new(
         operation: IAsyncOperation<MediaFrameReaderStartStatus>,
         capture: MediaCapture,
         reader: MediaFrameReader,
         declaration: FrameDeclaration,
     ) -> Self {
-        Self { operation, _capture: capture, _reader: reader, _declaration: declaration, terminal: false }
+        Self {
+            operation,
+            _capture: capture,
+            _reader: reader,
+            _declaration: declaration,
+            terminal: false,
+        }
     }
 
     pub fn poll(&mut self) -> Result<AsyncPoll<MediaFrameReaderStartStatus>, NativeError> {
-        if self.terminal { return Err(NativeError::AlreadyCompleted); }
+        if self.terminal {
+            return Err(NativeError::AlreadyCompleted);
+        }
         match self.operation.Status()? {
             AsyncStatus::Started => Ok(AsyncPoll::Pending),
             AsyncStatus::Completed => {
                 self.terminal = true;
-                self.operation.GetResults().map(AsyncPoll::Ready).map_err(Into::into)
+                self.operation
+                    .GetResults()
+                    .map(AsyncPoll::Ready)
+                    .map_err(Into::into)
             }
-            AsyncStatus::Canceled => { self.terminal = true; Err(NativeError::Canceled) }
+            AsyncStatus::Canceled => {
+                self.terminal = true;
+                Err(NativeError::Canceled)
+            }
             AsyncStatus::Error => {
                 self.terminal = true;
                 Err(NativeError::OperationFailed(self.operation.ErrorCode()?.0))
             }
-            _ => { self.terminal = true; Err(NativeError::WrongState) }
+            _ => {
+                self.terminal = true;
+                Err(NativeError::WrongState)
+            }
         }
     }
 
     pub fn cancel(&self) -> Result<(), NativeError> {
-        if self.terminal { return Err(NativeError::AlreadyCompleted); }
+        if self.terminal {
+            return Err(NativeError::AlreadyCompleted);
+        }
         self.operation.Cancel().map_err(Into::into)
     }
 }
@@ -224,7 +306,9 @@ pub fn begin_initialize(
 ) -> Result<PendingAction, NativeError> {
     // `source_id` is the host's binding for the selected source/group; this
     // projection cannot authenticate that external association.
-    if source_id == 0 { return Err(NativeError::InvalidSource); }
+    if source_id == 0 {
+        return Err(NativeError::InvalidSource);
+    }
     if !policy_permits(policy, source_id, modality, CameraOperation::Initialize) {
         return Err(NativeError::PolicyDenied);
     }
@@ -244,8 +328,15 @@ pub fn begin_create_reader(
 ) -> Result<PendingReader, NativeError> {
     // The caller selects this source and asserts its ID/modality binding in the
     // declaration. WinRT's projected object does not authenticate that mapping.
-    if declaration.source_id() == 0 { return Err(NativeError::InvalidSource); }
-    if !policy_permits(policy, declaration.source_id(), declaration.modality(), CameraOperation::CreateReader) {
+    if declaration.source_id() == 0 {
+        return Err(NativeError::InvalidSource);
+    }
+    if !policy_permits(
+        policy,
+        declaration.source_id(),
+        declaration.modality(),
+        CameraOperation::CreateReader,
+    ) {
         return Err(NativeError::PolicyDenied);
     }
     Ok(PendingReader::new(
@@ -262,8 +353,15 @@ pub fn begin_reader_start(
     declaration: FrameDeclaration,
     policy: &mut impl CameraPolicy,
 ) -> Result<PendingReaderStart, NativeError> {
-    if declaration.source_id() == 0 { return Err(NativeError::InvalidSource); }
-    if !policy_permits(policy, declaration.source_id(), declaration.modality(), CameraOperation::Start) {
+    if declaration.source_id() == 0 {
+        return Err(NativeError::InvalidSource);
+    }
+    if !policy_permits(
+        policy,
+        declaration.source_id(),
+        declaration.modality(),
+        CameraOperation::Start,
+    ) {
         return Err(NativeError::PolicyDenied);
     }
     Ok(PendingReaderStart::new(
@@ -294,6 +392,6 @@ fn policy_permits(
 ) -> bool {
     std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
         policy.permit(source_id, modality, operation)
-    })).unwrap_or(false)
+    }))
+    .unwrap_or(false)
 }
-

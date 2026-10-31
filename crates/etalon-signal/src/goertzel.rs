@@ -32,8 +32,7 @@ pub fn power_at_coefficient(samples: &[f32], coefficient: f64) -> Result<f64, Si
         previous = current;
     }
 
-    let power = previous * previous + previous_2 * previous_2
-        - coefficient * previous * previous_2;
+    let power = previous * previous + previous_2 * previous_2 - coefficient * previous * previous_2;
     if !power.is_finite() {
         return Err(SignalError::NumericRange);
     }

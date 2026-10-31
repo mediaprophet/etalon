@@ -32,8 +32,14 @@ fn preferred_processor_allows_an_explicitly_reported_fallback() {
 
 #[test]
 fn operation_identity_requires_both_identifier_and_revision() {
-    assert_eq!(OperationId::new(0, 1), Err(ContractError::InvalidIdentifier));
-    assert_eq!(OperationId::new(1, 0), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        OperationId::new(0, 1),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        OperationId::new(1, 0),
+        Err(ContractError::InvalidIdentifier)
+    );
     let op = OperationId::new(u64::MAX, u32::MAX).unwrap();
     assert_eq!(op.id(), u64::MAX);
     assert_eq!(op.revision(), u32::MAX);

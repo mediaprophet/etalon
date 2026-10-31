@@ -15,8 +15,14 @@ fn summarizes_values_without_allocating_or_normalizing_them() {
 #[test]
 fn rejects_empty_and_nonfinite_input() {
     assert_eq!(summarize(&[]), Err(SignalError::EmptyInput));
-    assert_eq!(summarize(&[0.0, f32::NAN]), Err(SignalError::NonFiniteInput));
-    assert_eq!(summarize(&[f32::INFINITY]), Err(SignalError::NonFiniteInput));
+    assert_eq!(
+        summarize(&[0.0, f32::NAN]),
+        Err(SignalError::NonFiniteInput)
+    );
+    assert_eq!(
+        summarize(&[f32::INFINITY]),
+        Err(SignalError::NonFiniteInput)
+    );
 }
 
 #[test]

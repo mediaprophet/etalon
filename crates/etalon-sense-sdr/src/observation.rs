@@ -3,14 +3,17 @@
 
 use etalon_sense_core::{
     evidence::EvidenceOrigin,
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind, ObservationTimeAnchor, QuantityUnitIds},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        ObservationTimeAnchor, QuantityUnitIds,
+    },
     quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor, SourceKind},
     ContractError,
 };
 
 use crate::{
-    AppliedTuning, CaptureTrust, IqByteOrder, OverrunReport, RfTuning, SdrFrame,
-    SdrPowerFrame, TimestampAnchor,
+    AppliedTuning, CaptureTrust, IqByteOrder, OverrunReport, RfTuning, SdrFrame, SdrPowerFrame,
+    TimestampAnchor,
 };
 
 /// Host-supplied semantic mapping. Source ID comes exactly from the frame's
@@ -67,8 +70,13 @@ pub fn adapt_sdr_frame<'a>(
 ) -> Result<(), AdaptError> {
     *output = None;
     let envelope = make_envelope(
-        frame.reader_id(), frame.stream_id(), frame.generation(), frame.sequence(),
-        frame.timestamp(), frame.timestamp_anchor(), mapping,
+        frame.reader_id(),
+        frame.stream_id(),
+        frame.generation(),
+        frame.sequence(),
+        frame.timestamp(),
+        frame.timestamp_anchor(),
+        mapping,
     )?;
     *output = Some(SdrObservation {
         envelope,
@@ -97,8 +105,13 @@ pub fn adapt_sdr_power_frame<'a>(
 ) -> Result<(), AdaptError> {
     *output = None;
     let envelope = make_envelope(
-        frame.reader_id(), frame.stream_id(), frame.generation(), frame.sequence(),
-        frame.timestamp(), frame.timestamp_anchor(), mapping,
+        frame.reader_id(),
+        frame.stream_id(),
+        frame.generation(),
+        frame.sequence(),
+        frame.timestamp(),
+        frame.timestamp_anchor(),
+        mapping,
     )?;
     *output = Some(SdrObservation {
         envelope,
@@ -128,8 +141,8 @@ fn make_envelope(
 ) -> Result<ObservationEnvelope, AdaptError> {
     let source = SourceDescriptor::new(reader_id, mapping.source_kind)
         .map_err(AdaptError::InvalidMapping)?;
-    let calibration = CalibrationRecord::new(CalibrationState::Missing)
-        .map_err(AdaptError::InvalidMapping)?;
+    let calibration =
+        CalibrationRecord::new(CalibrationState::Missing).map_err(AdaptError::InvalidMapping)?;
     ObservationEnvelope::new(
         mapping.observation_kind,
         source,
@@ -144,12 +157,16 @@ fn make_envelope(
         EvidenceOrigin::Unknown,
         None,
         HostPolicyDecision::NotEvaluated,
-    ).and_then(|envelope| envelope.with_time_anchor(match anchor {
-        TimestampAnchor::Unknown => ObservationTimeAnchor::Unknown,
-        TimestampAnchor::FirstSample => ObservationTimeAnchor::FirstSample,
-        TimestampAnchor::LastSample => ObservationTimeAnchor::LastSample,
-        TimestampAnchor::ReadCompletion => ObservationTimeAnchor::ReadCompletion,
-    })).map_err(AdaptError::InvalidMapping)
+    )
+    .and_then(|envelope| {
+        envelope.with_time_anchor(match anchor {
+            TimestampAnchor::Unknown => ObservationTimeAnchor::Unknown,
+            TimestampAnchor::FirstSample => ObservationTimeAnchor::FirstSample,
+            TimestampAnchor::LastSample => ObservationTimeAnchor::LastSample,
+            TimestampAnchor::ReadCompletion => ObservationTimeAnchor::ReadCompletion,
+        })
+    })
+    .map_err(AdaptError::InvalidMapping)
 }
 
 #[cfg(test)]

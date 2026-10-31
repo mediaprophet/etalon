@@ -194,7 +194,9 @@ impl SampleRegion {
         let scalar_alignment = layout.encoding.alignment_bytes();
         if self.alignment_bytes < scalar_alignment
             || !self.alignment_bytes.is_multiple_of(scalar_alignment)
-            || !self.offset_bytes.is_multiple_of(u64::from(scalar_alignment))
+            || !self
+                .offset_bytes
+                .is_multiple_of(u64::from(scalar_alignment))
         {
             return Err(ContractError::InvalidAlignment);
         }

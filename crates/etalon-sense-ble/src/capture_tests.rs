@@ -1,5 +1,6 @@
 use super::*;
 use crate::config::{MAX_CAPTURE_SAMPLES, MAX_SESSION_OBSERVATIONS};
+use core::cell::Cell;
 use etalon_sense_core::{
     adapter::{AdapterId, ExtendedDiscoveredSource},
     authority::{
@@ -8,13 +9,7 @@ use etalon_sense_core::{
     },
     time::ClockStamp,
 };
-use core::cell::Cell;
-use std::sync::{
-    atomic::AtomicU64,
-    mpsc,
-    Arc,
-    Mutex,
-};
+use std::sync::{atomic::AtomicU64, mpsc, Arc, Mutex};
 use std::thread;
 
 fn sample(index: u64) -> BleAdvertisementSample {
@@ -39,7 +34,9 @@ fn config(source_id: u64, max_batch: usize) -> Result<BleConfig, AdapterError> {
     )
 }
 
-struct TestGate { permit: bool }
+struct TestGate {
+    permit: bool,
+}
 
 impl BleCollectionGate for TestGate {
     fn with_permitted_collection(
@@ -47,7 +44,9 @@ impl BleCollectionGate for TestGate {
         _scope: BleCollectionScope,
         collect: &mut dyn FnMut(),
     ) -> bool {
-        if self.permit { collect(); }
+        if self.permit {
+            collect();
+        }
         self.permit
     }
 }
@@ -74,14 +73,16 @@ fn scope() -> BleCollectionScope {
     struct TestPolicy;
     impl HostCapturePolicy for TestPolicy {
         fn decide(&self, _: &CaptureAuthorizationRequest, _: ClockStamp) -> CapturePolicyDecision {
-            CapturePolicyDecision::Permit { expires_at: ClockStamp::new(1, 2, 100, 0).unwrap() }
+            CapturePolicyDecision::Permit {
+                expires_at: ClockStamp::new(1, 2, 100, 0).unwrap(),
+            }
         }
     }
     let capability = config(42, 8).unwrap().capability();
     let source = ExtendedDiscoveredSource::new(42, capability).unwrap();
-    let request = CaptureAuthorizationRequest::new(
-        CaptureSource::Extended(source), None, None, 8, 9,
-    ).unwrap();
+    let request =
+        CaptureAuthorizationRequest::new(CaptureSource::Extended(source), None, None, 8, 9)
+            .unwrap();
     let issued = CaptureAuthority::issue(request, &TestPolicy, &mut TestClock).unwrap();
     match issued.into_capture_request() {
         AuthorizedCaptureRequest::Extended(request) => BleCollectionScope::from_request(&request),
@@ -156,7 +157,10 @@ fn insufficient_batch_does_not_consume_queued_samples() {
 fn config_requires_nonzero_source_and_bounded_batch() {
     assert_eq!(config(0, 1), Err(AdapterError::InvalidIdentifier));
     assert_eq!(config(42, 0), Err(AdapterError::InvalidIdentifier));
-    assert_eq!(config(42, MAX_CAPTURE_SAMPLES + 1), Err(AdapterError::InvalidIdentifier));
+    assert_eq!(
+        config(42, MAX_CAPTURE_SAMPLES + 1),
+        Err(AdapterError::InvalidIdentifier)
+    );
 
     let valid = config(42, 8).unwrap();
     assert_eq!(valid.source_id(), 42);
@@ -205,10 +209,12 @@ fn failed_start_is_unknown_until_bounded_stop_confirms_state() {
     let signal = StopSignal::new();
     assert_eq!(signal.start_with(|| (false, ())).unwrap(), (false, ()));
     let stop_checked = Cell::new(false);
-    assert!(signal.stop_with(|| {
-        stop_checked.set(true);
-        true
-    }).unwrap());
+    assert!(signal
+        .stop_with(|| {
+            stop_checked.set(true);
+            true
+        })
+        .unwrap());
     assert!(stop_checked.get());
 }
 
@@ -230,14 +236,16 @@ fn stop_worker_cannot_stop_watcher_before_start_transition_finishes() {
     let starting_signal = Arc::clone(&signal);
     let starting_events = Arc::clone(&events);
     let start_thread = thread::spawn(move || {
-        starting_signal.start_with(|| {
-            assert!(!starting_signal.is_started());
-            starting_events.lock().unwrap().push("start-enter");
-            start_entered_tx.send(()).unwrap();
-            finish_start_rx.recv().unwrap();
-            starting_events.lock().unwrap().push("start-return");
-            (true, ())
-        }).unwrap()
+        starting_signal
+            .start_with(|| {
+                assert!(!starting_signal.is_started());
+                starting_events.lock().unwrap().push("start-enter");
+                start_entered_tx.send(()).unwrap();
+                finish_start_rx.recv().unwrap();
+                starting_events.lock().unwrap().push("start-return");
+                (true, ())
+            })
+            .unwrap()
     });
 
     start_entered_rx.recv().unwrap();
@@ -245,16 +253,21 @@ fn stop_worker_cannot_stop_watcher_before_start_transition_finishes() {
     let stopping_signal = Arc::clone(&signal);
     let stopping_events = Arc::clone(&events);
     let stop_thread = thread::spawn(move || {
-        stopping_signal.stop_with(|| {
-            stopping_events.lock().unwrap().push("stop");
-            true
-        }).unwrap()
+        stopping_signal
+            .stop_with(|| {
+                stopping_events.lock().unwrap().push("stop");
+                true
+            })
+            .unwrap()
     });
 
     finish_start_tx.send(()).unwrap();
     assert_eq!(start_thread.join().unwrap(), (true, ()));
     assert!(stop_thread.join().unwrap());
-    assert_eq!(*events.lock().unwrap(), ["start-enter", "start-return", "stop"]);
+    assert_eq!(
+        *events.lock().unwrap(),
+        ["start-enter", "start-return", "stop"]
+    );
 }
 
 #[test]

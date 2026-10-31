@@ -21,7 +21,11 @@ fn row() -> BssObservation {
 }
 
 fn summary(written: usize) -> BssReadSummary {
-    BssReadSummary { written, timestamp: TimestampStatus::Unknown, cache_age_known: false }
+    BssReadSummary {
+        written,
+        timestamp: TimestampStatus::Unknown,
+        cache_age_known: false,
+    }
 }
 
 #[test]
@@ -38,13 +42,19 @@ fn cached_row_yields_three_unmapped_unknown_time_observations() {
         rssi.radio_identifier_observation.identifier,
         RadioIdentifier::Bssid(RadioAddress48::from_octets(row().bssid)),
     );
-    assert_eq!(rssi.radio_identifier_observation.observed_at, RadioObservationTime::Unknown);
+    assert_eq!(
+        rssi.radio_identifier_observation.observed_at,
+        RadioObservationTime::Unknown
+    );
     assert_eq!(rssi.envelope.source().source_id(), 500);
     assert_ne!(
         rssi.radio_identifier_observation.identifier,
         RadioIdentifier::Mac(RadioAddress48::from_octets(row().bssid)),
     );
-    assert_ne!(rssi.envelope.source().source_id(), u64::from_le_bytes([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0, 0]));
+    assert_ne!(
+        rssi.envelope.source().source_id(),
+        u64::from_le_bytes([0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0, 0])
+    );
     assert_eq!(rssi.envelope.timestamp(), None);
     assert_eq!(rssi.envelope.kind(), ObservationKind::CachedQuery);
     assert_eq!(rssi.envelope.quantity_unit().quantity_id(), None);
@@ -63,7 +73,10 @@ fn short_output_is_cleared_and_summary_count_must_match() {
         envelope: ObservationEnvelope::new(
             ObservationKind::CachedQuery,
             mapping().source,
-            None, None, None, None,
+            None,
+            None,
+            None,
+            None,
             QuantityUnitIds::new(None, None).unwrap(),
             MeasurementUncertainty::Unknown,
             QualityRecord::Unknown,
@@ -71,7 +84,8 @@ fn short_output_is_cleared_and_summary_count_must_match() {
             EvidenceOrigin::Unknown,
             None,
             HostPolicyDecision::NotEvaluated,
-        ).unwrap(),
+        )
+        .unwrap(),
         metric: WifiMetric::RssiDbm,
         value: 0.0,
         bssid: [0; 6],

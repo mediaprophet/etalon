@@ -1,22 +1,36 @@
-use crate::{GainMode, ReadReport};
 use super::{total_bytes, PayloadError, HEADER_BYTES, MAGIC, SCHEMA_VERSION};
+use crate::{GainMode, ReadReport};
 
 /// Retain the native receipt and raw bytes in a single custody payload. Size
 /// pairing alone does not authenticate that the receipt describes these bytes.
 /// The caller's authority must establish that binding before signing/storing.
 /// Output must have the exact required size; every error clears all output.
-pub fn encode_capture_payload(report: &ReadReport, raw_iq: &[u8], byte_budget: u64,
-    output: &mut [u8]) -> Result<usize, PayloadError> {
+pub fn encode_capture_payload(
+    report: &ReadReport,
+    raw_iq: &[u8],
+    byte_budget: u64,
+    output: &mut [u8],
+) -> Result<usize, PayloadError> {
     output.fill(0);
     let bytes = total_bytes(report.pair_count())?;
-    if bytes as u64 > byte_budget { return Err(PayloadError::BudgetExceeded); }
+    if bytes as u64 > byte_budget {
+        return Err(PayloadError::BudgetExceeded);
+    }
     if output.len() != bytes || raw_iq.len() != bytes - HEADER_BYTES {
         return Err(PayloadError::InvalidLength);
     }
     let identity = report.usb_identity();
-    let strings = [identity.manufacturer(), identity.product(), identity.serial()];
-    if report.target_id() == 0 || report.generation() == 0
-        || strings.iter().any(|value| value.len() > 255 || value.contains(&0)) {
+    let strings = [
+        identity.manufacturer(),
+        identity.product(),
+        identity.serial(),
+    ];
+    if report.target_id() == 0
+        || report.generation() == 0
+        || strings
+            .iter()
+            .any(|value| value.len() > 255 || value.contains(&0))
+    {
         return Err(PayloadError::InvalidMetadata);
     }
     // All validation precedes writes; the fixed offsets are within HEADER_BYTES.
@@ -48,7 +62,8 @@ pub fn encode_capture_payload(report: &ReadReport, raw_iq: &[u8], byte_budget: u
     put64(output, 96, raw_iq.len() as u64);
     for (index, value) in strings.iter().enumerate() {
         let length_offset = 104 + index * 2;
-        output[length_offset..length_offset + 2].copy_from_slice(&(value.len() as u16).to_le_bytes());
+        output[length_offset..length_offset + 2]
+            .copy_from_slice(&(value.len() as u16).to_le_bytes());
         let offset = 128 + index * 256;
         output[offset..offset + value.len()].copy_from_slice(value);
     }
