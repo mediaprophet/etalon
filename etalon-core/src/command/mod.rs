@@ -1311,7 +1311,7 @@ impl CommandEncoder {
 
     /// Finishes a command encoder, creating a command buffer and returning errors that were
     /// deferred until now.
-    fn finish_inner(
+    pub(crate) fn finish_inner(
         self: &Arc<Self>,
         desc: &wgt::CommandBufferDescriptor<Label>,
     ) -> (Arc<CommandBuffer>, Option<CommandEncoderError>) {

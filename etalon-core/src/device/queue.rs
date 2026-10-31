@@ -1577,7 +1577,7 @@ impl Queue {
         Ok(())
     }
 
-    fn flush_pending_writes(&self) -> Result<Option<SubmissionIndex>, DeviceError> {
+    pub(crate) fn flush_pending_writes(&self) -> Result<Option<SubmissionIndex>, DeviceError> {
         let snatch_guard = self.device.snatchable_lock.read();
         let submission = self.allocate_submission(snatch_guard)?;
         let submit_index = submission.index;

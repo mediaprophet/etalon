@@ -3087,7 +3087,7 @@ impl Device {
         bgl
     }
 
-    fn create_bind_group_layout_inner<BGLE>(
+    pub(crate) fn create_bind_group_layout_inner<BGLE>(
         self: &Arc<Device>,
         desc: &binding_model::BindGroupLayoutDescriptor<BGLE>,
     ) -> Result<Arc<BindGroupLayout>, CreateBindGroupLayoutError>
@@ -4359,7 +4359,7 @@ impl Device {
         layout
     }
 
-    fn create_pipeline_layout_impl(
+    pub(crate) fn create_pipeline_layout_impl(
         self: &Arc<Self>,
         desc: &binding_model::PipelineLayoutDescriptor,
         ignore_exclusive_pipeline_check: bool,
@@ -4585,7 +4585,7 @@ impl Device {
         }
     }
 
-    fn create_compute_pipeline_or_error_inner(
+    pub(crate) fn create_compute_pipeline_or_error_inner(
         self: &Arc<Self>,
         desc: pipeline::ComputePipelineDescriptor,
     ) -> Result<Arc<pipeline::ComputePipeline>, pipeline::CreatePipelineError> {

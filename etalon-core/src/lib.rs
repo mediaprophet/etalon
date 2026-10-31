@@ -80,6 +80,8 @@ pub mod instance;
 pub mod limits;
 mod lock;
 pub mod pipeline;
+#[cfg(all(vulkan, feature = "wgsl"))]
+pub mod prepared;
 mod pipeline_cache;
 mod pool;
 pub mod present;
