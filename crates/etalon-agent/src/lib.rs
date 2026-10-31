@@ -12,6 +12,11 @@ pub mod interop;
 pub mod lease;
 pub mod slab;
 
+/// Optional sensing facade. Individual device and acceleration providers are
+/// selected separately; enabling this module does not discover or open devices.
+#[cfg(feature = "sensing")]
+pub use etalon_sense as sensing;
+
 pub use capability::{AgentError, CapabilityState, SiliconCapability};
 pub use compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
 pub use cuda_lane::{

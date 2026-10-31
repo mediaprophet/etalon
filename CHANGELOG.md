@@ -43,6 +43,16 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ## Unreleased
 
+### Added/New Features
+
+- Add an opt-in RTL-SDR receive adapter with explicit local runtime/dependency
+  admission, device policy gates and caller-owned I/Q buffers. Native read
+  deadlines and hardware qualification remain external requirements.
+
+- Add an isolated sensing vendor workspace with portable DSP routing, a native
+  Hexagon IQ-power service, synchronous FastRPC host transport and bounded local
+  artifact admission. Hardware execution and deployment qualification are deferred.
+
 ## v0.0.1 (in development)
 
 First Etalon version, forked from wgpu 30. The `v0.0.1` tag was created on 2026-10-21 before the version was complete; work on v0.0.1 continues on the `v0.0.1.x` branch.

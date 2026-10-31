@@ -1,0 +1,20 @@
+[package]
+name = "etalon-sense-gpu"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Explicit Etalon GPU execution for bounded sensing operations"
+
+[features]
+default = []
+vulkan = ["etalon/vulkan"]
+dx12 = ["etalon/dx12"]
+metal = ["etalon/metal"]
+gles = ["etalon/gles"]
+
+[dependencies]
+etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl"] }
+etalon-signal = { path = "../etalon-signal" }
+etalon-sense-core = { path = "../etalon-sense-core" }

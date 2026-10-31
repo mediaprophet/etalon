@@ -1,0 +1,12 @@
+[package]
+name = "etalon-sense-sdr"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish = false
+description = "Host-owned bounded SDR sample acquisition bridge for Etalon sensing"
+
+[dependencies]
+etalon-sense-core = { path = "../etalon-sense-core" }
+etalon-signal = { path = "../etalon-signal" }
