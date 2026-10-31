@@ -172,6 +172,7 @@ pub fn execute_i16_iq_power_into(
 /// so no tail is present. The CPU route uses the existing reference pipeline.
 /// A registered-device route requires a caller-supplied provider and never
 /// substitutes CPU computation on lookup or provider failure.
+#[allow(clippy::too_many_arguments)]
 pub fn execute_i16_iq_power_into_with_admission(
     target: ExecutionTarget,
     provider: Option<&mut dyn RegisteredSignalProvider>,
@@ -186,7 +187,7 @@ pub fn execute_i16_iq_power_into_with_admission(
     if bytes.is_empty() {
         return Err(ExecutionError::EmptyInput);
     }
-    if bytes.len() % 4 != 0 {
+    if !bytes.len().is_multiple_of(4) {
         return Err(ExecutionError::Signal(SignalError::LengthMismatch));
     }
     let count = bytes.len() / 4;

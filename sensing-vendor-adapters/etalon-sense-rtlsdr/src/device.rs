@@ -206,7 +206,7 @@ impl<'runtime, 'lease> RtlSdrDevice<'runtime, 'lease> {
             return Err(Error::InvalidState);
         }
         if output.is_empty()
-            || output.len() % 2 != 0
+            || !output.len().is_multiple_of(2)
             || output.len() / 2 > self.runtime.max_pairs
             || output.len() > i32::MAX as usize
         {

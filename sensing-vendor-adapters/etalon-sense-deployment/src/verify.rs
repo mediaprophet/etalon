@@ -16,7 +16,7 @@ pub fn validate_deployment<'m, 'p, 'a>(
     authority: &'a dyn DeploymentAuthority,
 ) -> Result<AdmittedDeployment<'m, 'p, 'a>, DeploymentError> {
     scratch.fill(0);
-    let mut scratch = ClearScratch(scratch);
+    let scratch = ClearScratch(scratch);
     admit_path(manifest.protected_root)?;
     admit_path(manifest.runtime.path)?;
     if manifest.target_id == 0

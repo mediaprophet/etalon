@@ -199,7 +199,6 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             checked = true;
         };
         let permitted = run_collection_gate(self.gate.as_ref(), scope, &mut check_start);
-        drop(check_start);
         if !permitted || !checked {
             return Err(AdapterError::AuthorizationDenied);
         }
@@ -287,7 +286,6 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
                 };
                 let permitted =
                     run_collection_gate(callback_gate.as_ref(), callback_scope, &mut collect);
-                drop(collect);
                 if !permitted {
                     callback_state.halt_from_callback();
                     callback_signal.request_stop();
@@ -334,7 +332,6 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
                 os_started = watcher.Start().is_ok();
             };
             let permitted = run_collection_gate(self.gate.as_ref(), scope, &mut start);
-            drop(start);
             (os_started, (permitted, attempted, os_started))
         });
         let (os_started, (permitted, attempted, start_ok)) = match start_result {
@@ -374,7 +371,7 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
                 stop_signal,
                 apartment,
             );
-            return Err(if worker_stopped && cleaned && !(attempted && !start_ok) {
+            return Err(if worker_stopped && cleaned && (!attempted || start_ok) {
                 AdapterError::AuthorizationDenied
             } else {
                 AdapterError::Unavailable
@@ -496,16 +493,13 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             capture_result = Ok(());
         };
         let permitted = run_collection_gate(gate.as_ref(), scope, &mut collect);
-        drop(collect);
         if !permitted || !collected {
             output.writable_bytes().fill(0);
             shared.halt();
             stop_signal.request_stop();
             return Err(AdapterError::AuthorizationDenied);
         }
-        if let Err(error) = capture_result {
-            return Err(error);
-        }
+        capture_result?;
         self.last_records[..count].copy_from_slice(&batch[..count]);
         self.last_record_count = count;
         self.last_capture_drop_interval = drop_count_interval;

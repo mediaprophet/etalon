@@ -7,6 +7,7 @@ use crate::{
     evidence::EvidenceRecord,
     quality::CalibrationState,
     quantity::SampleEncoding,
+    replay::ReplayKind,
 };
 use std::{cell::Cell, rc::Rc};
 
@@ -131,11 +132,11 @@ fn replay_stream_copies_authorized_frames_and_preserves_gaps_and_clock() {
     let mut found = [adapter.source()];
     assert_eq!(adapter.discover(&mut found), Ok(1));
     let session = adapter
-        .start(authorized(found[0], stamp(5), stamp(100)))
+        .start(authorized(found[0], stamp(3), stamp(100)))
         .unwrap();
 
     let mut first_bytes = [0; 8];
-    let first_output = output(&adapter, session, stamp(5), stamp(100), &mut first_bytes);
+    let first_output = output(&adapter, session, stamp(3), stamp(100), &mut first_bytes);
     let first = adapter.capture_frame(first_output).unwrap();
     assert_eq!(first.samples().bytes(), &data[..8]);
     assert_eq!(first.info().timestamp(), stamp(10));
@@ -144,7 +145,7 @@ fn replay_stream_copies_authorized_frames_and_preserves_gaps_and_clock() {
     assert_eq!(first.replay_metadata().kind(), ReplayKind::Prerecorded);
 
     let mut second_bytes = [0; 8];
-    let second_output = output(&adapter, session, stamp(5), stamp(100), &mut second_bytes);
+    let second_output = output(&adapter, session, stamp(3), stamp(100), &mut second_bytes);
     let second = adapter.capture_frame(second_output).unwrap();
     assert_eq!(second.samples().bytes(), &data[8..]);
     assert_eq!(second.info().timestamp(), stamp(12));
@@ -259,11 +260,11 @@ fn expired_or_mismatched_authorization_does_not_advance_replay() {
     .unwrap();
     let source = adapter.source();
     let session = adapter
-        .start(authorized(source, stamp(5), stamp(100)))
+        .start(authorized(source, stamp(3), stamp(100)))
         .unwrap();
 
     let mut bytes = [0; 8];
-    let valid = output(&adapter, session, stamp(5), stamp(100), &mut bytes);
+    let valid = output(&adapter, session, stamp(3), stamp(100), &mut bytes);
     clock_state.set(stamp(101));
     assert_eq!(
         adapter.capture_frame(valid).unwrap_err(),

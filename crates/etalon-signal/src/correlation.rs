@@ -50,7 +50,7 @@ pub fn correlate_iq(
     if reference.is_empty() || observed.is_empty() {
         return Err(SignalError::EmptyInput);
     }
-    if reference.len() % 2 != 0 || observed.len() % 2 != 0 {
+    if !reference.len().is_multiple_of(2) || !observed.len().is_multiple_of(2) {
         return Err(SignalError::LengthMismatch);
     }
     if reference.iter().any(|sample| !sample.is_finite())

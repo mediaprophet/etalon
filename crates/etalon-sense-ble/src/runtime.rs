@@ -109,6 +109,7 @@ pub(super) fn spawn_stop_worker(
     max_session_duration_ms: u32,
 ) -> Result<JoinHandle<Result<(), AdapterError>>, AdapterError> {
     let (ready_tx, ready_rx) = mpsc::sync_channel(1);
+    let stop_signal = Arc::clone(&signal);
     let worker = thread::Builder::new()
         .name("etalon-ble-stop".into())
         .spawn(move || {
@@ -138,7 +139,6 @@ pub(super) fn spawn_stop_worker(
                     checked = true;
                 };
                 let permitted = run_collection_gate(gate.as_ref(), scope, &mut check_policy);
-                drop(check_policy);
                 if !permitted || !checked {
                     shared.halt();
                     signal.request_stop();
@@ -174,7 +174,7 @@ pub(super) fn spawn_stop_worker(
             Err(error)
         }
         Err(_) => {
-            signal.request_stop();
+            stop_signal.request_stop();
             let _ = worker.join();
             Err(AdapterError::Unavailable)
         }

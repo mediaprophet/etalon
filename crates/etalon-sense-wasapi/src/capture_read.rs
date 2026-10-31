@@ -226,9 +226,9 @@ impl<C: TrustedCaptureClock> WasapiCaptureAdapter<'_, C> {
                         return Err(AdapterError::Unsupported);
                     }
                 };
-            if !byte_count
+            if byte_count
                 .checked_add(tail_bytes)
-                .is_some_and(|bytes| bytes <= isize::MAX as usize)
+                .is_none_or(|bytes| bytes > isize::MAX as usize)
             {
                 let _ = packet.release();
                 self.fail_closed_capture();

@@ -191,7 +191,7 @@ fn unknown_policy_does_not_call_provider_and_deny_clears_on_bad_gate_outcome() {
 
 #[test]
 fn failed_cancel_is_reported_and_retryable() {
-    let mut provider = FakeProvider::new(CameraModality::Visible, RadiometricStatus::NotApplicable);
+    let provider = FakeProvider::new(CameraModality::Visible, RadiometricStatus::NotApplicable);
     provider.cancel_failures.set(1);
     let mut adapter = FrameIngestAdapter::new_host_managed(
         provider,

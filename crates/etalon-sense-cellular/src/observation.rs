@@ -12,7 +12,7 @@ use etalon_sense_core::{
     ContractError,
 };
 
-use crate::{CellularTelemetry, OrdinalBars, RadioGeneration, TelemetryTimestamp};
+use crate::{CellularTelemetry, RadioGeneration, TelemetryTimestamp};
 
 pub const CELLULAR_METRIC_CAPACITY: usize = 5;
 

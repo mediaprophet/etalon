@@ -64,6 +64,7 @@ impl From<ContractError> for ReplayIngestErrorKind {
 /// A pre-capture error has no consumed replay frame. A post-capture error
 /// returns the still-owned frame; ingest validates before updating its tracker.
 #[derive(Debug, PartialEq)]
+#[allow(clippy::large_enum_variant)]
 pub enum ReplayIngestFailure<'a> {
     BeforeCapture(ReplayIngestErrorKind),
     Captured {
@@ -78,6 +79,7 @@ pub enum ReplayIngestFailure<'a> {
 /// stream ID and generation. Their source and capability declarations must also
 /// match. Region identity remains a caller declaration and sample provenance is
 /// always reported as unverified by `SourceDescriptor`.
+#[allow(clippy::result_large_err)]
 pub fn capture_replay_and_ingest<'out>(
     adapter: &mut ReplayStreamAdapter<'_, '_, '_>,
     session: ExtendedCaptureSession,

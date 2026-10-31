@@ -13,22 +13,18 @@ use std::io::{self, Read};
 
 use etalon_sense_core::{
     adapter::{
-        AdapterError, AdapterId, ExtendedAdapterDescriptor, ExtendedCaptureBuffer,
-        ExtendedCaptureSession, ExtendedCapturedSamples, ExtendedDiscoveredSource,
-        ExtendedSensorAdapter,
+        AdapterError, AdapterId, ExtendedAdapterDescriptor, ExtendedCaptureSession,
+        ExtendedCapturedSamples, ExtendedDiscoveredSource, ExtendedSensorAdapter,
     },
     authority::TrustedCaptureClock,
     buffer::SampleLayout,
     time::ClockStamp,
 };
 
-fn zero_capture_prefix(
+fn zero_capture_buffer(
     output: &mut etalon_sense_core::adapter::AuthorizedExtendedCaptureBuffer<'_>,
-    bytes_to_clear: usize,
 ) {
-    let bytes = output.writable_bytes();
-    let count = bytes_to_clear.min(bytes.len());
-    bytes[..count].fill(0);
+    output.writable_bytes().fill(0);
 }
 
 /// Terminal/readiness state for the underlying sequential source.
@@ -197,7 +193,7 @@ where
         while filled < frame_bytes {
             if let Err(error) = self.validate_fresh_request(&output) {
                 if filled > 0 {
-                    zero_capture_prefix(&mut output, filled);
+                    zero_capture_buffer(&mut output);
                     self.fail_stream();
                 }
                 return Err(error);
@@ -209,7 +205,7 @@ where
             match result {
                 Ok(0) => {
                     self.state = StreamState::Eof;
-                    zero_capture_prefix(&mut output, filled);
+                    zero_capture_buffer(&mut output);
                     return Err(if filled == 0 {
                         AdapterError::Unavailable
                     } else {
@@ -222,7 +218,7 @@ where
                     // bytes as a capture if the one-shot request expired while
                     // the host reader was blocked.
                     if let Err(error) = self.validate_fresh_request(&output) {
-                        zero_capture_prefix(&mut output, filled);
+                        zero_capture_buffer(&mut output);
                         self.fail_stream();
                         return Err(error);
                     }
@@ -230,7 +226,7 @@ where
                 Ok(_) => {
                     // A nonconforming reader may have written anywhere in the
                     // supplied frame before returning an impossible count.
-                    zero_capture_prefix(&mut output, frame_bytes);
+                    zero_capture_buffer(&mut output);
                     self.fail_stream();
                     return Err(AdapterError::BackendFailure);
                 }
@@ -239,7 +235,7 @@ where
                     // `Read` gives no byte count alongside an error. A
                     // caller-provided reader may have modified the offered
                     // tail before failing, so clear the whole frame span.
-                    zero_capture_prefix(&mut output, frame_bytes);
+                    zero_capture_buffer(&mut output);
                     self.fail_stream();
                     return Err(AdapterError::BackendFailure);
                 }
@@ -247,7 +243,7 @@ where
         }
 
         let Some(completed_frames) = self.completed_frames.checked_add(1) else {
-            zero_capture_prefix(&mut output, frame_bytes);
+            zero_capture_buffer(&mut output);
             self.fail_stream();
             return Err(AdapterError::BackendFailure);
         };

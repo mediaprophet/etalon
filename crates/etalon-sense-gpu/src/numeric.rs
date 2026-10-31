@@ -28,7 +28,7 @@ pub(super) fn validate_request(
     if bytes.is_empty() {
         return Err(GpuError::EmptyInput);
     }
-    if bytes.len() % BYTES_PER_INPUT_PAIR != 0 {
+    if !bytes.len().is_multiple_of(BYTES_PER_INPUT_PAIR) {
         return Err(GpuError::LengthMismatch);
     }
     let count = bytes.len() / BYTES_PER_INPUT_PAIR;

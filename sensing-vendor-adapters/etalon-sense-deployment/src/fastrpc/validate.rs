@@ -15,7 +15,7 @@ pub fn validate_fast_rpc_deployment<'m, 'p, 'a>(
     authority: &'a dyn FastRpcAuthority,
 ) -> Result<AdmittedFastRpcDeployment<'m, 'p, 'a>, DeploymentError> {
     scratch.fill(0);
-    let mut scratch = ClearScratch(scratch);
+    let scratch = ClearScratch(scratch);
     let total_bytes = validate_manifest(manifest)?;
     if byte_budget == 0 || total_bytes > byte_budget || scratch.0.is_empty() {
         return Err(DeploymentError::InvalidBudget);

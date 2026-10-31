@@ -163,7 +163,7 @@ impl From<FrameProviderError> for FrameError {
 }
 
 impl From<FrameFormatError> for FrameError {
-    fn from(value: FrameFormatError) -> Self {
+    fn from(_value: FrameFormatError) -> Self {
         Self::InvalidFormat
     }
 }
@@ -250,7 +250,6 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
             FramePolicyOperation::Start,
             &mut perform,
         );
-        drop(perform);
         if decision != PolicyDecision::Permit || result.is_none() {
             // A gate can panic or return deny after invoking the callback. If
             // start was attempted, conservatively stop a partially opened source
@@ -322,7 +321,6 @@ impl<'g, P: FrameProvider> FrameIngestAdapter<'g, P> {
             FramePolicyOperation::Capture,
             &mut perform,
         );
-        drop(perform);
         if decision != PolicyDecision::Permit || result.is_none() {
             output.fill(0);
             let error = policy_error(decision);
@@ -448,7 +446,6 @@ fn run_policy(
                 gate.with_decision(scope, operation, &mut once)
             }))
             .unwrap_or(PolicyDecision::Unknown);
-            drop(once);
             if !performed && decision == PolicyDecision::Permit {
                 PolicyDecision::Unknown
             } else {

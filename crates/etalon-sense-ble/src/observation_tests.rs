@@ -48,7 +48,7 @@ fn wrong_count_or_layout_rejects_metadata_pairing() {
         os_timestamp_100ns: 8,
         os_address_type: None,
     }];
-    let payload = -50i16.to_le_bytes();
+    let payload = (-50i16).to_le_bytes();
     let one = SampleLayout::new(1, [1, 0, 0, 0], [2, 0, 0, 0], SampleEncoding::I16).unwrap();
     let two = layout();
     assert_eq!(

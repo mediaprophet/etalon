@@ -10,12 +10,11 @@ use crate::remainder::{PacketMetadata, Remainder};
 use crate::{config::WasapiConfig, format::WasapiFormat, helpers::*};
 use etalon_sense_core::{
     adapter::{
-        AdapterError, AdapterId, AuthorizedExtendedCapture, AuthorizedExtendedCaptureBuffer,
+        AdapterError, AuthorizedExtendedCapture, AuthorizedExtendedCaptureBuffer,
         ExtendedAdapterDescriptor, ExtendedCaptureSession, ExtendedCapturedSamples,
         ExtendedDiscoveredSource, ExtendedSensorAdapter,
     },
     authority::TrustedCaptureClock,
-    extended_capability::ExtendedCapability,
     time::ClockStamp,
     ContractError,
 };

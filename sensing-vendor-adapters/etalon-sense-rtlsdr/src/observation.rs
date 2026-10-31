@@ -132,7 +132,7 @@ pub fn read_observation_into<'raw>(
     let count = output.len() / 2;
     let preparation = (|| {
         if output.is_empty()
-            || output.len() % 2 != 0
+            || !output.len().is_multiple_of(2)
             || count > device.max_pairs()
             || count > MAX_CONVERSION_PAIRS
             || device.generation() == 0

@@ -70,7 +70,7 @@ impl SampleLayout {
             if extent > 1 && stride == 0 {
                 return Err(ContractError::InvalidStride);
             }
-            if extent > 1 && stride % u64::from(scalar_alignment) != 0 {
+            if extent > 1 && !stride.is_multiple_of(u64::from(scalar_alignment)) {
                 return Err(ContractError::InvalidStride);
             }
         }
@@ -153,7 +153,7 @@ impl SampleRegion {
         if alignment_bytes == 0 || !alignment_bytes.is_power_of_two() {
             return Err(ContractError::InvalidAlignment);
         }
-        if offset_bytes % u64::from(alignment_bytes) != 0 {
+        if !offset_bytes.is_multiple_of(u64::from(alignment_bytes)) {
             return Err(ContractError::InvalidAlignment);
         }
         if length_bytes == 0 {

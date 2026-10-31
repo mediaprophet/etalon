@@ -353,6 +353,7 @@ pub fn guarded_stop_extended<A: ExtendedSensorAdapter>(
 /// Guard and ingest one built-in capture. Policy is re-evaluated immediately
 /// before the synchronous capture/ingest call. Providers must still check their
 /// trusted clock at acquisition and arrange cancellation around blocking I/O.
+#[allow(clippy::too_many_arguments)]
 pub fn guarded_capture_and_ingest<'a, A, E, P, R>(
     adapter: &mut A,
     session: &GuardedCaptureSession<CaptureSession>,
@@ -398,6 +399,7 @@ where
 
 /// Guard and ingest one host-registered capture with the exact extended
 /// capability and the caller's full policy request.
+#[allow(clippy::too_many_arguments)]
 pub fn guarded_capture_extended_and_ingest<'a, A, E, P, R>(
     adapter: &mut A,
     session: &GuardedCaptureSession<ExtendedCaptureSession>,

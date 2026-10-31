@@ -71,8 +71,8 @@ impl<'a> Remainder<'a> {
         if block_align == 0
             || output.is_empty()
             || self.is_empty()
-            || (self.end - self.start) % block_align != 0
-            || output.len() % block_align != 0
+            || !(self.end - self.start).is_multiple_of(block_align)
+            || !output.len().is_multiple_of(block_align)
         {
             return Err(AdapterError::BackendFailure);
         }

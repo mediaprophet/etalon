@@ -255,7 +255,7 @@ fn successful_native_read_keeps_exact_receipt_and_raw_storage_payload() {
     assert_eq!(report.sequence(), 0);
     assert_eq!(raw, [0xaa; 4]);
     let mut encoded = [0; capture_payload::HEADER_BYTES + 4];
-    let budget = encoded.len();
+    let budget = u64::try_from(encoded.len()).unwrap();
     let count =
         capture_payload::encode_capture_payload(&report, &raw, budget, &mut encoded).unwrap();
     let historical = capture_payload::decode_capture_payload(&encoded[..count], budget).unwrap();

@@ -209,7 +209,7 @@ impl Resources {
                 .map_err(diagnostic)?
                 .as_any()
                 .downcast_ref::<hal::vulkan::Buffer>()
-                .ok_or_else(|| PreparedComputeError::UnsupportedBackend.into())
+                .ok_or_else(|| PrepareComputeError::from(PreparedComputeError::UnsupportedBackend))
         };
         let device = self
             .device

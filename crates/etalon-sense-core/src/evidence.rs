@@ -124,6 +124,7 @@ pub struct VerifiedOrigin {
 
 impl VerifiedOrigin {
     /// Call only after a verifier has checked the signature and authority policy.
+    #[allow(dead_code)]
     pub(crate) const fn after_cryptographic_verification(
         source: SourceDescriptor,
         authority: AuthorityKeyRef,
@@ -239,8 +240,10 @@ impl EvidenceRecord {
             sequence: None,
             timestamp: None,
             payload_digest: None,
-            calibration: CalibrationRecord::new(CalibrationState::Missing)
-                .expect("Missing calibration is valid"),
+            calibration: match CalibrationRecord::new(CalibrationState::Missing) {
+                Ok(record) => record,
+                Err(_) => panic!("Missing calibration is valid"),
+            },
             processing: None,
         }
     }

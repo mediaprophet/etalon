@@ -231,7 +231,7 @@ impl SdrReadReport {
         if matches!(overrun, OverrunReport::LostSamples(0)) {
             return Err(SdrError::InvalidReport);
         }
-        if timestamp.is_none() && timestamp_anchor != TimestampAnchor::Unknown {
+        if timestamp.is_none() && !matches!(timestamp_anchor, TimestampAnchor::Unknown) {
             return Err(SdrError::InvalidReport);
         }
         Ok(Self {

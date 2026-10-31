@@ -93,6 +93,7 @@ pub struct BleConfig {
 impl BleConfig {
     /// Build a scalar I16 RSSI capability. The host is responsible for
     /// selecting registered modality, RSSI quantity, and dBm unit IDs.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         adapter_id: AdapterId,
         source_id: u64,

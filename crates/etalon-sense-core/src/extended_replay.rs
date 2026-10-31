@@ -2,7 +2,7 @@
 //! restricted by construction to synthetic or prerecorded metadata and cannot
 //! mint an authorization permit.
 
-use super::{ReplayAuthorizationClock, ReplayKind, ReplayMetadata};
+use super::{ReplayAuthorizationClock, ReplayMetadata};
 use crate::{
     adapter::{
         AdapterError, AdapterId, AuthorizedExtendedCapture, AuthorizedExtendedCaptureBuffer,

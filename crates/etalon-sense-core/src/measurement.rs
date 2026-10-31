@@ -44,6 +44,7 @@ impl Measurement {
     /// Validate the batch against its declared capability and buffer region.
     /// An unknown rate remains unknown even when the capability has a limit.
     /// The capability's rank is fixed, while each axis extent is an upper bound.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         capability: SensorCapability,
         layout: SampleLayout,
@@ -66,6 +67,7 @@ impl Measurement {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new_with_optional_timestamp(
         capability: SensorCapability,
         layout: SampleLayout,
@@ -136,6 +138,7 @@ impl ExtendedMeasurement {
     /// Validate arbitrary registered IDs against the declared byte layout and
     /// region. Registry membership, dimensional compatibility, authorization,
     /// and source identity remain the host's responsibility.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         capability: ExtendedCapability,
         layout: SampleLayout,
@@ -158,6 +161,7 @@ impl ExtendedMeasurement {
         )
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn new_with_optional_timestamp(
         capability: ExtendedCapability,
         layout: SampleLayout,

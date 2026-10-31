@@ -17,7 +17,10 @@ pub fn i16_iq_power_into(
     scratch: &mut [f32],
     output: &mut [f64],
 ) -> Result<usize, SignalError> {
-    if bytes.len() % 4 != 0 || scratch.len() != bytes.len() / 2 || output.len() != bytes.len() / 4 {
+    if !bytes.len().is_multiple_of(4)
+        || scratch.len() != bytes.len() / 2
+        || output.len() != bytes.len() / 4
+    {
         return Err(SignalError::LengthMismatch);
     }
     if !scale.is_finite() {

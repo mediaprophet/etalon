@@ -22,8 +22,7 @@ pub mod live;
 mod numeric;
 mod pair;
 use numeric::{
-    checked_bytes, make_params, persistent_buffer_bytes, stage_power_values, validate_power_values,
-    validate_request,
+    checked_bytes, make_params, persistent_buffer_bytes, stage_power_values, validate_request,
 };
 pub use pair::{DeviceQueuePair, DeviceRequestGate, DeviceRequestStage, PairRequestError};
 
@@ -262,11 +261,11 @@ impl<'a> EtalonIqPowerProvider<'a> {
         let input_bytes = checked_bytes(max_pairs, BYTES_PER_INPUT_PAIR)?;
         let output_bytes = checked_bytes(max_pairs, BYTES_PER_OUTPUT_PAIR)?;
         let limits = device.limits();
-        if input_bytes as u64 > u64::from(limits.max_storage_buffer_binding_size)
-            || output_bytes as u64 > u64::from(limits.max_storage_buffer_binding_size)
+        if input_bytes as u64 > limits.max_storage_buffer_binding_size
+            || output_bytes as u64 > limits.max_storage_buffer_binding_size
             || input_bytes as u64 > limits.max_buffer_size
             || output_bytes as u64 > limits.max_buffer_size
-            || PARAM_BYTES > u64::from(limits.max_storage_buffer_binding_size)
+            || PARAM_BYTES > limits.max_storage_buffer_binding_size
             || PARAM_BYTES > limits.max_buffer_size
             || limits.max_bind_groups < 1
             || limits.max_bindings_per_bind_group < 3
@@ -500,9 +499,9 @@ impl<'a> EtalonIqPowerProvider<'a> {
                 return Err(GpuError::MappedRangeFailed);
             }
         };
-        for index in 0..count {
+        for (index, slot) in workspace.iter_mut().enumerate().take(count) {
             let start = index * 4;
-            workspace[index] = f32::from_le_bytes([
+            *slot = f32::from_le_bytes([
                 view[start],
                 view[start + 1],
                 view[start + 2],

@@ -117,6 +117,7 @@ impl FixedQueue {
         }
     }
 
+    #[allow(dead_code)]
     pub(super) fn len(&self) -> usize {
         self.len
     }

@@ -17,7 +17,7 @@ pub fn decode_i16_into(
     order: ByteOrder,
     scale: f32,
 ) -> Result<usize, SignalError> {
-    if input.len() % 2 != 0 || out.len() != input.len() / 2 {
+    if !input.len().is_multiple_of(2) || out.len() != input.len() / 2 {
         return Err(SignalError::LengthMismatch);
     }
     if !scale.is_finite() {
