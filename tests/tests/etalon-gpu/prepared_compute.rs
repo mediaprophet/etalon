@@ -6,13 +6,13 @@ use etalon_test::{
 };
 
 const SHADER: &str = r"
-struct Parameters { active: u32, addend: u32, padding: vec2<u32> }
+struct Parameters { active_count: u32, addend: u32, padding: vec2<u32> }
 @group(0) @binding(0) var<storage, read> input: array<u32>;
 @group(0) @binding(1) var<storage, read_write> output: array<u32>;
 @group(0) @binding(2) var<uniform> parameters: Parameters;
 @compute @workgroup_size(64)
 fn main(@builtin(global_invocation_id) id: vec3<u32>) {
-    if id.x < parameters.active { output[id.x] = input[id.x] + parameters.addend; }
+    if id.x < parameters.active_count { output[id.x] = input[id.x] + parameters.addend; }
 }
 ";
 
