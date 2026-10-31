@@ -74,7 +74,8 @@ fn conversion_layout(
     input_bytes: usize,
     output_bytes: usize,
 ) -> Result<SampleLayout, ConversionError> {
-    if input_bytes == 0 || input_bytes % 2 != 0 || input_bytes / 2 > MAX_CONVERSION_PAIRS {
+    if input_bytes == 0 || !input_bytes.is_multiple_of(2) || input_bytes / 2 > MAX_CONVERSION_PAIRS
+    {
         return Err(ConversionError::InvalidLength);
     }
     if input_bytes.checked_mul(2) != Some(output_bytes) {
@@ -105,7 +106,7 @@ mod tests {
         for (original, encoded) in raw.iter().zip(converted.bytes().chunks_exact(2)) {
             let value = i16::from_le_bytes([encoded[0], encoded[1]]);
             assert_eq!((value + 255) / 2, i16::from(*original));
-            assert_eq!(value % 2 == 0, false);
+            assert!(value % 2 != 0);
         }
         assert_eq!(converted.bytes()[..2], (-255i16).to_le_bytes());
         assert_eq!(converted.bytes()[510..], 255i16.to_le_bytes());

@@ -180,7 +180,6 @@ fn denied_live_gate_does_not_run_collection_closure() {
     let mut collected = false;
     let mut collect = || collected = true;
     assert!(!run_collection_gate(&gate, scope(), &mut collect));
-    drop(collect);
     assert!(!collected);
 }
 
@@ -190,7 +189,6 @@ fn permitted_live_gate_runs_collection_closure() {
     let collected = Cell::new(false);
     let mut collect = || collected.set(true);
     assert!(run_collection_gate(&gate, scope(), &mut collect));
-    drop(collect);
     assert!(collected.get());
 }
 
@@ -200,7 +198,6 @@ fn panicking_host_gate_fails_closed_without_unwinding() {
     let mut collected = false;
     let mut collect = || collected = true;
     assert!(!run_collection_gate(&gate, scope(), &mut collect));
-    drop(collect);
     assert!(!collected);
 }
 

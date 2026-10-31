@@ -5,7 +5,7 @@ use crate::SignalError;
 /// squared input units; the caller determines calibration and physical units.
 /// Input and output are fully validated before output is modified.
 pub fn power_into(interleaved_iq: &[f32], output: &mut [f64]) -> Result<usize, SignalError> {
-    if interleaved_iq.len() % 2 != 0 || output.len() < interleaved_iq.len() / 2 {
+    if !interleaved_iq.len().is_multiple_of(2) || output.len() < interleaved_iq.len() / 2 {
         return Err(SignalError::LengthMismatch);
     }
     if interleaved_iq.iter().any(|sample| !sample.is_finite()) {

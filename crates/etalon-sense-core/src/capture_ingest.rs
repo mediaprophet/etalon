@@ -285,7 +285,7 @@ fn admit_extended<'a>(
     stream: &mut ExtendedIngestStream,
     samples: ExtendedCapturedSamples<'a>,
     expected_layout: SampleLayout,
-    capability: ExtendedCapability,
+    _capability: ExtendedCapability,
     metadata: IngestMetadata,
 ) -> Result<ExtendedIngestedFrame<'a>, CaptureIngestError> {
     if samples.layout() != &expected_layout

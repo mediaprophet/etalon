@@ -117,6 +117,7 @@ pub struct ObservationKey {
 }
 
 impl ObservationKey {
+    #[allow(clippy::too_many_arguments)]
     pub const fn new(
         observation_kind: ObservationKind,
         source_kind: SourceKind,
@@ -484,13 +485,13 @@ fn align_inner(
                 current.max(interval.upper_ns())
             }));
         }
-        *slot = Some(AlignedObservation {
+        *slot = AlignedObservation {
             key,
             observation: Some(observation),
             target_timestamp,
             alignment_anchor: anchor,
             synchronization_id,
-        });
+        };
     }
 
     for slot in &output[..expected.len()] {

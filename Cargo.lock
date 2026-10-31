@@ -964,6 +964,7 @@ dependencies = [
  "bytemuck",
  "etalon",
  "etalon-hal",
+ "etalon-sense",
  "etalon-types",
  "log",
  "tempfile",
@@ -1286,6 +1287,146 @@ dependencies = [
  "log",
  "thiserror 2.0.21",
 ]
+
+[[package]]
+name = "etalon-sense"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-ble",
+ "etalon-sense-camera",
+ "etalon-sense-camera-windows",
+ "etalon-sense-cellular",
+ "etalon-sense-core",
+ "etalon-sense-cpu",
+ "etalon-sense-gpu",
+ "etalon-sense-host",
+ "etalon-sense-nfc",
+ "etalon-sense-pcsc",
+ "etalon-sense-runtime",
+ "etalon-sense-sdr",
+ "etalon-sense-wasapi",
+ "etalon-sense-wifi",
+ "etalon-sense-windows-sensors",
+ "etalon-signal",
+]
+
+[[package]]
+name = "etalon-sense-ble"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "windows",
+]
+
+[[package]]
+name = "etalon-sense-camera"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+]
+
+[[package]]
+name = "etalon-sense-camera-windows"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-camera",
+ "windows",
+ "windows-future",
+]
+
+[[package]]
+name = "etalon-sense-cellular"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "windows",
+]
+
+[[package]]
+name = "etalon-sense-core"
+version = "0.0.1"
+
+[[package]]
+name = "etalon-sense-cpu"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+]
+
+[[package]]
+name = "etalon-sense-gpu"
+version = "0.0.1"
+dependencies = [
+ "etalon",
+ "etalon-sense-core",
+ "etalon-signal",
+]
+
+[[package]]
+name = "etalon-sense-host"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "etalon-signal",
+]
+
+[[package]]
+name = "etalon-sense-nfc"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+]
+
+[[package]]
+name = "etalon-sense-pcsc"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-nfc",
+]
+
+[[package]]
+name = "etalon-sense-runtime"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "etalon-signal",
+]
+
+[[package]]
+name = "etalon-sense-sdr"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "etalon-signal",
+]
+
+[[package]]
+name = "etalon-sense-wasapi"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "windows",
+]
+
+[[package]]
+name = "etalon-sense-wifi"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "windows",
+]
+
+[[package]]
+name = "etalon-sense-windows-sensors"
+version = "0.0.1"
+dependencies = [
+ "etalon-sense-core",
+ "windows",
+]
+
+[[package]]
+name = "etalon-signal"
+version = "0.0.1"
 
 [[package]]
 name = "etalon-sync"

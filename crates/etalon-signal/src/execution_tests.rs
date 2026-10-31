@@ -431,7 +431,7 @@ fn power_upper_bound_covers_f32_extrema_rounding_and_rejects_invalid_scale() {
     ] {
         let upper = i16_iq_power_upper_bound(scale).unwrap();
         assert!(upper.is_finite());
-        let max_i = (32768.0f64 * f64::from(scale.abs())) as f32;
+        let max_i = ((32768.0f64 * f64::from(scale.abs())) as f32).min(f32::MAX);
         let rounded_power = 2.0 * f64::from(max_i) * f64::from(max_i);
         assert!(rounded_power <= upper, "scale={scale:?}");
         let exact_domain_power = 2.0 * (32768.0 * f64::from(scale.abs())).powi(2);

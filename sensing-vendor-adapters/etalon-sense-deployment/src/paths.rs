@@ -55,36 +55,6 @@ pub(crate) fn admit_path(path: &Path) -> Result<(), DeploymentError> {
     Ok(())
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    #[test]
-    fn rejects_relative_and_parent_paths() {
-        assert!(admit_path(Path::new("runtime.dll")).is_err());
-        assert!(admit_path(&std::env::temp_dir().join("../runtime.dll")).is_err());
-    }
-    #[cfg(windows)]
-    #[test]
-    fn rejects_remote_and_reserved_names_without_probe() {
-        for path in [
-            r"\\server\share\runtime.dll",
-            r"\\?\UNC\server\runtime.dll",
-            r"C:\local\NUL.dll",
-            r"C:\local\COM¹.dll",
-            r"C:\local\file:stream",
-        ] {
-            assert!(admit_path(Path::new(path)).is_err());
-        }
-        assert!(admit_path(Path::new(r"C:\local\runtime.dll")).is_ok());
-    }
-    #[cfg(unix)]
-    #[test]
-    fn rejects_common_device_roots() {
-        assert!(admit_path(Path::new("/dev/zero")).is_err());
-        assert!(admit_path(Path::new("/proc/self/mem")).is_err());
-    }
-}
-
 pub(crate) fn open_regular(path: &Path) -> Result<File, DeploymentError> {
     let mut options = OpenOptions::new();
     options.read(true);
@@ -113,4 +83,34 @@ pub(crate) fn open_regular(path: &Path) -> Result<File, DeploymentError> {
         }
     }
     Ok(file)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn rejects_relative_and_parent_paths() {
+        assert!(admit_path(Path::new("runtime.dll")).is_err());
+        assert!(admit_path(&std::env::temp_dir().join("../runtime.dll")).is_err());
+    }
+    #[cfg(windows)]
+    #[test]
+    fn rejects_remote_and_reserved_names_without_probe() {
+        for path in [
+            r"\\server\share\runtime.dll",
+            r"\\?\UNC\server\runtime.dll",
+            r"C:\local\NUL.dll",
+            r"C:\local\COM¹.dll",
+            r"C:\local\file:stream",
+        ] {
+            assert!(admit_path(Path::new(path)).is_err());
+        }
+        assert!(admit_path(Path::new(r"C:\local\runtime.dll")).is_ok());
+    }
+    #[cfg(unix)]
+    #[test]
+    fn rejects_common_device_roots() {
+        assert!(admit_path(Path::new("/dev/zero")).is_err());
+        assert!(admit_path(Path::new("/proc/self/mem")).is_err());
+    }
 }

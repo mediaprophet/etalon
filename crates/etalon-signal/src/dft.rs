@@ -29,7 +29,7 @@ pub fn transform_into(
     if input.is_empty() {
         return Err(SignalError::EmptyInput);
     }
-    if input.len() % 2 != 0 {
+    if !input.len().is_multiple_of(2) {
         return Err(SignalError::LengthMismatch);
     }
     let count = input.len() / 2;

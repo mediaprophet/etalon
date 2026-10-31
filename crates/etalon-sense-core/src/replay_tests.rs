@@ -104,7 +104,8 @@ impl ReplayAuthorizationClock for FixedClock {
 
 fn authorized(source: DiscoveredSource, at: ClockStamp) -> AuthorizedCapture {
     let permit =
-        CapturePermit::after_authorization(17, 23, source.capability(), stamp(100)).unwrap();
+        CapturePermit::after_authorization(source.source_id(), 23, source.capability(), stamp(100))
+            .unwrap();
     AuthorizedCapture::new(source, permit, at).unwrap()
 }
 

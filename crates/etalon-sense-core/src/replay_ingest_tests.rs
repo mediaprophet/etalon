@@ -104,7 +104,7 @@ fn request(source: crate::adapter::ExtendedDiscoveredSource) -> AuthorizedExtend
         stamp(100),
     )
     .unwrap();
-    AuthorizedExtendedCapture::new(source, permit, stamp(5)).unwrap()
+    AuthorizedExtendedCapture::new(source, permit, stamp(3)).unwrap()
 }
 
 fn output<'a>(

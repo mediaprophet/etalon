@@ -11,7 +11,7 @@ fn capability() -> SensorCapability {
         PhysicalQuantity::RfChannelResponse,
         Unit::Unitless,
         SampleEncoding::ComplexF32,
-        [8, 2, 1, 0],
+        [8, 2, 0, 0],
         None,
     )
     .unwrap()

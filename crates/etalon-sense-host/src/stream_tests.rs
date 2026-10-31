@@ -79,10 +79,7 @@ impl Read for ChunkReader<'_> {
         }
         if matches!(self.error_after, Some(limit) if self.offset >= limit) {
             out.fill(0xEE);
-            return Err(io::Error::new(
-                io::ErrorKind::Other,
-                "injected reader failure",
-            ));
+            return Err(io::Error::other("injected reader failure"));
         }
         if self.offset == self.data.len() {
             return Ok(0);

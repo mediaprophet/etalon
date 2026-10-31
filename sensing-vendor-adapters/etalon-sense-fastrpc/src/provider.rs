@@ -144,7 +144,7 @@ impl<'lease> FastRpcIqPowerProvider<'lease> {
         .map_err(|_| FastRpcError::Wire)?;
         let request_bytes = wire::request_bytes(pairs).map_err(|_| FastRpcError::BufferSize)?;
         let response_bytes = wire::response_bytes(pairs).map_err(|_| FastRpcError::BufferSize)?;
-        let mut scratch = Scratch(&mut workspace[..request_bytes + response_bytes]);
+        let scratch = Scratch(&mut workspace[..request_bytes + response_bytes]);
         let (request, response) = scratch.0.split_at_mut(request_bytes);
         wire::encode_request(identity, pairs, input, request).map_err(|_| FastRpcError::Wire)?;
         self.session.invoke_buffers(request, response)?;

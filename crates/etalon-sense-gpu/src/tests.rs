@@ -1,4 +1,5 @@
 use super::*;
+use crate::numeric::validate_power_values;
 
 #[test]
 fn request_preflight_is_bounded_and_requires_exact_buffers() {

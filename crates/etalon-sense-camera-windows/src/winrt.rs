@@ -18,9 +18,7 @@ use windows::{
     Storage::Streams::{Buffer, DataReader},
 };
 use windows::{
-    Media::Capture::Frames::{
-        MediaFrameReader, MediaFrameReaderStartStatus, MediaFrameReference, MediaFrameSource,
-    },
+    Media::Capture::Frames::{MediaFrameReader, MediaFrameReaderStartStatus, MediaFrameSource},
     Media::Capture::{MediaCapture, MediaCaptureInitializationSettings},
 };
 use windows_future::{AsyncStatus, IAsyncAction, IAsyncOperation};

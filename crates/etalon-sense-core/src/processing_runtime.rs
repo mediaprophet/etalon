@@ -227,6 +227,7 @@ pub struct LiveDispatchReceipt {
 /// Dispatches through a currently supplied provider after rechecking live
 /// descriptor, lifecycle, operation, shape, workspace, and latency claims.
 /// On any failure after provider invocation, the entire output slice is zeroed.
+#[allow(clippy::too_many_arguments)]
 pub fn dispatch_live(
     request: ProcessingRequest,
     constraints: DispatchConstraints,

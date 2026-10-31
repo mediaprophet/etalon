@@ -113,8 +113,10 @@ pub fn read_current_interface_mac<G: InterfaceMacPolicyGate>(
     }
 
     gate.approve_interface_mac_read(interface)?;
-    let mut row = MIB_IF_ROW2::default();
-    row.InterfaceLuid = luid;
+    let mut row = MIB_IF_ROW2 {
+        InterfaceLuid: luid,
+        ..Default::default()
+    };
     let status = unsafe { GetIfEntry2(&mut row) };
     if status.0 != 0 {
         return Err(WifiError::InterfaceQueryStatus(status.0));
@@ -300,7 +302,7 @@ unsafe fn copy_validated_list(
         validate_ie_span(total, entries_end, ie_start, ie_size)?;
     }
 
-    for index in 0..count {
+    for (index, slot) in output.iter_mut().enumerate().take(count) {
         let entry_offset = entries_offset + index * entry_size;
         let entry = unsafe {
             raw_bytes
@@ -308,7 +310,7 @@ unsafe fn copy_validated_list(
                 .cast::<WLAN_BSS_ENTRY>()
                 .read_unaligned()
         };
-        output[index] = BssObservation {
+        *slot = BssObservation {
             bssid: entry.dot11Bssid,
             rssi_dbm: entry.lRssi,
             link_quality: entry.uLinkQuality,

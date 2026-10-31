@@ -29,6 +29,7 @@ pub(crate) union RemoteArg {
     pub dma: RemoteDmaHandle,
 }
 
+#[allow(dead_code)]
 pub(crate) type Open = unsafe extern "C" fn(*const c_char, *mut u64) -> c_int;
 pub(crate) type Invoke = unsafe extern "C" fn(u64, u32, *mut RemoteArg) -> c_int;
 pub(crate) type Close = unsafe extern "C" fn(u64) -> c_int;

@@ -22,8 +22,8 @@ fn state_carries_across_chunks_and_can_be_explicitly_initialized() {
     let mut state = PhaseState::at(-pi + 0.1, f64::from(pi) + 0.1).unwrap();
     let mut out = [0.0; 2];
     unwrap_phase_into(&[pi - 0.1, -pi + 0.2], &[false; 2], &mut state, &mut out).unwrap();
-    assert!(out[0] > f64::from(pi));
-    assert!(out[1] > out[0]);
+    assert!((out[0] - (f64::from(pi) - 0.1)).abs() < 1e-6);
+    assert!((out[1] - (f64::from(pi) + 0.2)).abs() < 1e-6);
     assert_eq!(state.previous_unwrapped(), Some(out[1]));
 }
 
@@ -33,7 +33,7 @@ fn explicit_discontinuity_reanchors_the_phase() {
     let mut out = [0.0; 4];
     let input = [0.2, 0.3, -2.5, -2.4];
     unwrap_phase_into(&input, &[false, false, true, false], &mut state, &mut out).unwrap();
-    assert_eq!(out, [0.2, 0.3, -2.5, -2.4]);
+    assert_eq!(out, input.map(f64::from));
 }
 
 #[test]

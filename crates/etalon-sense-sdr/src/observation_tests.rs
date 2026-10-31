@@ -132,7 +132,7 @@ fn iq_frame_preserves_reader_stream_tuning_and_unknowns() {
         observation.metadata.timestamp_anchor,
         TimestampAnchor::FirstSample
     );
-    assert!(matches!(observation.payload, SdrPayload::InterleavedI16Iq(data) if data == &[0; 8]));
+    assert!(matches!(observation.payload, SdrPayload::InterleavedI16Iq(data) if data == [0; 8]));
 }
 
 #[test]
@@ -200,7 +200,7 @@ fn power_frame_keeps_absent_time_and_does_not_infer_a_unit() {
         observation.metadata.trust,
         CaptureTrust::HostReportedUnverified
     );
-    assert!(matches!(observation.payload, SdrPayload::IqPowerF64(data) if data == &[25.0]));
+    assert!(matches!(observation.payload, SdrPayload::IqPowerF64(data) if data == [25.0]));
 }
 
 #[test]

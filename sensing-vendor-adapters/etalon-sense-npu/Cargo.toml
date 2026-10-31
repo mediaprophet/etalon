@@ -9,4 +9,4 @@ description = "Opt-in OpenVINO NPU model execution for sensing"
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 etalon-sense-deployment = { path = "../etalon-sense-deployment" }
-ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-24"] }
+ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-24", "openvino"] }

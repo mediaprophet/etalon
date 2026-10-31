@@ -276,6 +276,7 @@ impl FrameDeclaration {
     /// Declare pixel packing and the maximum whole-frame bytes, including row
     /// padding. Capability extents are `[width,height]` for scalar pixels and
     /// `[width,height,channels]` for interleaved multi-channel pixels.
+    #[allow(clippy::too_many_arguments)]
     pub fn new_with_pixel_format(
         source_id: u64,
         modality: CameraModality,

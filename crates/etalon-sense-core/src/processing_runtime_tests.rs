@@ -107,7 +107,6 @@ fn live_dispatch_checks_buffers_and_returns_provider_assertion() {
         &mut workspace,
     )
     .unwrap();
-    drop(list);
     assert_eq!(receipt.provider_id, 11);
     assert_eq!(receipt.generation, 3);
     assert_eq!(receipt.processor, ProcessorKind::Cpu);
@@ -133,7 +132,6 @@ fn stopped_or_wrong_required_processor_is_never_invoked() {
         &mut [0; 4],
     )
     .unwrap_err();
-    drop(list);
     assert_eq!(err, ContractError::UnsupportedOperation);
     assert_eq!(cpu.calls, 0);
     assert_eq!(output, [0; 8]);
@@ -156,7 +154,6 @@ fn restarted_generation_invalidates_completion_and_clears_output() {
         &mut [0; 4],
     )
     .unwrap_err();
-    drop(list);
     assert_eq!(err, ContractError::InvalidSource);
     assert_eq!(output, [0; 8]);
 }
@@ -178,7 +175,6 @@ fn malformed_provider_report_cannot_publish_output() {
         &mut [0; 4],
     )
     .unwrap_err();
-    drop(list);
     assert_eq!(err, ContractError::InvalidSource);
     assert_eq!(output, [0; 8]);
 }
@@ -199,7 +195,6 @@ fn allocation_class_shape_and_latency_are_admission_constraints() {
         &mut [0; 4],
     )
     .unwrap_err();
-    drop(list);
     assert_eq!(err, ContractError::UnsupportedOperation);
     assert_eq!(cpu.calls, 0);
 }
@@ -270,7 +265,6 @@ fn short_buffer_fails_before_provider_call() {
         &mut [0; 4],
     )
     .unwrap_err();
-    drop(list);
     assert_eq!(err, ContractError::OutOfBounds);
     assert_eq!(cpu.calls, 0);
     assert_eq!(output, [0; 4]);
