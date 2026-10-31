@@ -13,11 +13,32 @@ description = "Silicon steward, capability state machine, and safe resource leas
 default = ["std"]
 std = []
 cuda = []
+sensing = ["dep:etalon-sense"]
+sensing-host = ["sensing", "etalon-sense/host"]
+sensing-wasapi = ["sensing", "etalon-sense/wasapi"]
+sensing-wifi = ["sensing", "etalon-sense/wifi"]
+sensing-ble = ["sensing", "etalon-sense/ble"]
+sensing-cellular = ["sensing", "etalon-sense/cellular"]
+sensing-sdr = ["sensing", "etalon-sense/sdr"]
+sensing-nfc = ["sensing", "etalon-sense/nfc"]
+sensing-pcsc = ["sensing-nfc", "etalon-sense/pcsc"]
+sensing-windows-sensors = ["sensing", "etalon-sense/windows-sensors"]
+sensing-cpu = ["sensing", "etalon-sense/cpu"]
+sensing-camera = ["sensing", "etalon-sense/camera"]
+sensing-camera-windows = ["sensing-camera", "etalon-sense/camera-windows"]
+sensing-camera-windows-unqualified = ["sensing-camera-windows", "etalon-sense/camera-windows-unqualified"]
+sensing-camera-windows-unqualified-copy = ["sensing-camera-windows-unqualified", "etalon-sense/camera-windows-unqualified-copy"]
+sensing-gpu = ["sensing", "etalon-sense/gpu"]
+sensing-gpu-vulkan = ["sensing-gpu", "etalon-sense/gpu-vulkan"]
+sensing-gpu-dx12 = ["sensing-gpu", "etalon-sense/gpu-dx12"]
+sensing-gpu-metal = ["sensing-gpu", "etalon-sense/gpu-metal"]
+sensing-gpu-gles = ["sensing-gpu", "etalon-sense/gpu-gles"]
 
 [dependencies]
 etalon = { workspace = true }
 etalon-types = { workspace = true }
 etalon-hal = { workspace = true, optional = true }
+etalon-sense = { path = "../etalon-sense", optional = true }
 log = { workspace = true }
 bytemuck = { workspace = true }
 thiserror = "2.0.21"

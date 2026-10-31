@@ -1,0 +1,11 @@
+[package]
+name = "etalon-sense-cpu"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Caller-buffered CPU sensing execution provider"
+
+[dependencies]
+etalon-sense-core = { path = "../etalon-sense-core" }

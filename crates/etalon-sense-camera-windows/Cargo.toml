@@ -1,0 +1,31 @@
+[package]
+name = "etalon-sense-camera-windows"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Nonblocking Windows MediaFrameReader components for Etalon camera sensing"
+
+[features]
+default = []
+# Not enabled by default: an async cancellation cannot prove immediate device
+# stop/OS-buffer release, and this crate has not been device-qualified.
+unqualified-winrt-capture = []
+# Additionally enables the narrow, still-unqualified SoftwareBitmap byte copy.
+unqualified-frame-copy = ["unqualified-winrt-capture"]
+
+[dependencies]
+etalon-sense-camera = { path = "../etalon-sense-camera" }
+
+[target.'cfg(windows)'.dependencies]
+windows-future = "0.3.2"
+windows = { workspace = true, features = [
+    "Foundation",
+    "Foundation_Collections",
+    "Graphics_Imaging",
+    "Media_Capture",
+    "Media_Capture_Frames",
+    "Media_MediaProperties",
+    "Storage_Streams",
+] }

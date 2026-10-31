@@ -1,0 +1,11 @@
+[package]
+name = "etalon-sense-pcsc"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Bounded Windows PC/SC reader enumeration and UID requests"
+
+[dependencies]
+etalon-sense-nfc = { path = "../etalon-sense-nfc" }

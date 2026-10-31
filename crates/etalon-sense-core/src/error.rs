@@ -1,0 +1,20 @@
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ContractError {
+    InvalidValue,
+    InvalidIdentifier,
+    IncompatibleUnit,
+    IncompatibleEncoding,
+    InvalidExtent,
+    InvalidStride,
+    InvalidAlignment,
+    ArithmeticOverflow,
+    OutOfBounds,
+    InvalidBand,
+    InvalidRate,
+    InvalidTime,
+    ClockDomainMismatch,
+    UnsupportedOperation,
+    InvalidCalibration,
+    InvalidSource,
+    InvalidQuality,
+}

@@ -1,0 +1,12 @@
+[package]
+name = "etalon-sense-runtime"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Caller-buffered sensing pipeline composition for Etalon"
+
+[dependencies]
+etalon-sense-core = { path = "../etalon-sense-core" }
+etalon-signal = { path = "../etalon-signal" }

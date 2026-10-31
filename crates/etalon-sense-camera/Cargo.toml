@@ -1,0 +1,12 @@
+[package]
+name = "etalon-sense-camera"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Validated host-fed camera and infrared frame ingestion boundary"
+
+[dependencies]
+etalon-sense-core = { path = "../etalon-sense-core" }
+

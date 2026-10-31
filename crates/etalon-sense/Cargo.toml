@@ -1,0 +1,49 @@
+[package]
+name = "etalon-sense"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Composable sensing API facade for Etalon"
+
+[features]
+default = []
+host = ["dep:etalon-sense-host"]
+wasapi = ["dep:etalon-sense-wasapi"]
+wifi = ["dep:etalon-sense-wifi"]
+ble = ["dep:etalon-sense-ble"]
+cellular = ["dep:etalon-sense-cellular"]
+sdr = ["dep:etalon-sense-sdr"]
+nfc = ["dep:etalon-sense-nfc"]
+pcsc = ["nfc", "dep:etalon-sense-pcsc"]
+windows-sensors = ["dep:etalon-sense-windows-sensors"]
+cpu = ["dep:etalon-sense-cpu"]
+camera = ["dep:etalon-sense-camera"]
+camera-windows = ["camera", "dep:etalon-sense-camera-windows"]
+camera-windows-unqualified = ["camera-windows", "etalon-sense-camera-windows/unqualified-winrt-capture"]
+camera-windows-unqualified-copy = ["camera-windows-unqualified", "etalon-sense-camera-windows/unqualified-frame-copy"]
+gpu = ["dep:etalon-sense-gpu"]
+gpu-vulkan = ["gpu", "etalon-sense-gpu/vulkan"]
+gpu-dx12 = ["gpu", "etalon-sense-gpu/dx12"]
+gpu-metal = ["gpu", "etalon-sense-gpu/metal"]
+gpu-gles = ["gpu", "etalon-sense-gpu/gles"]
+
+[dependencies]
+etalon-sense-core = { path = "../etalon-sense-core" }
+etalon-sense-runtime = { path = "../etalon-sense-runtime" }
+etalon-signal = { path = "../etalon-signal" }
+etalon-sense-host = { path = "../etalon-sense-host", optional = true }
+etalon-sense-wasapi = { path = "../etalon-sense-wasapi", optional = true }
+etalon-sense-wifi = { path = "../etalon-sense-wifi", optional = true }
+etalon-sense-ble = { path = "../etalon-sense-ble", optional = true }
+etalon-sense-cellular = { path = "../etalon-sense-cellular", optional = true }
+etalon-sense-sdr = { path = "../etalon-sense-sdr", optional = true }
+etalon-sense-nfc = { path = "../etalon-sense-nfc", optional = true }
+etalon-sense-pcsc = { path = "../etalon-sense-pcsc", optional = true }
+etalon-sense-windows-sensors = { path = "../etalon-sense-windows-sensors", optional = true }
+etalon-sense-cpu = { path = "../etalon-sense-cpu", optional = true }
+etalon-sense-camera = { path = "../etalon-sense-camera", optional = true }
+etalon-sense-camera-windows = { path = "../etalon-sense-camera-windows", optional = true }
+etalon-sense-gpu = { path = "../etalon-sense-gpu", optional = true }
+

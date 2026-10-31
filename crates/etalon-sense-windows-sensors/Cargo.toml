@@ -1,0 +1,14 @@
+[package]
+name = "etalon-sense-windows-sensors"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Windows ambient light and magnetometer sensing"
+
+[dependencies]
+etalon-sense-core = { path = "../etalon-sense-core" }
+
+[target.'cfg(windows)'.dependencies]
+windows = { workspace = true, features = ["Devices_Sensors", "Foundation"] }
