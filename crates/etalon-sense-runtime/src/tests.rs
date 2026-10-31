@@ -10,14 +10,21 @@ use etalon_sense_core::{
 
 use etalon_signal::{
     decode::ByteOrder,
-    execution::{AllocationAdmission, DeviceId, ExecutionError, ExecutionTarget, RegisteredSignalProvider},
+    execution::{
+        AllocationAdmission, DeviceId, ExecutionError, ExecutionTarget, RegisteredSignalProvider,
+    },
     SignalError,
 };
 
-struct UnknownClassProvider { id: DeviceId, calls: usize }
+struct UnknownClassProvider {
+    id: DeviceId,
+    calls: usize,
+}
 
 impl RegisteredSignalProvider for UnknownClassProvider {
-    fn device_id(&self) -> DeviceId { self.id }
+    fn device_id(&self) -> DeviceId {
+        self.id
+    }
 
     fn i16_iq_power_into(
         &mut self,
@@ -57,18 +64,30 @@ fn extended_capability() -> ExtendedCapability {
 }
 
 fn layout(stride: u64) -> SampleLayout {
-    SampleLayout::new(1, [2, 0, 0, 0], [stride, 0, 0, 0], SampleEncoding::ComplexI16).unwrap()
+    SampleLayout::new(
+        1,
+        [2, 0, 0, 0],
+        [stride, 0, 0, 0],
+        SampleEncoding::ComplexI16,
+    )
+    .unwrap()
 }
 
-fn stamp(ticks: u64) -> ClockStamp { ClockStamp::new(11, 2, ticks, 1).unwrap() }
+fn stamp(ticks: u64) -> ClockStamp {
+    ClockStamp::new(11, 2, ticks, 1).unwrap()
+}
 
-fn calibration() -> CalibrationRecord { CalibrationRecord::new(CalibrationState::Missing).unwrap() }
+fn calibration() -> CalibrationRecord {
+    CalibrationRecord::new(CalibrationState::Missing).unwrap()
+}
 
 fn region(id: u64, span: u64) -> SampleRegion {
     SampleRegion::new(BufferToken::new(id, 1).unwrap(), 0, span, span, 2).unwrap()
 }
 
-fn source(id: u64) -> SourceDescriptor { SourceDescriptor::new(id, SourceKind::Live).unwrap() }
+fn source(id: u64) -> SourceDescriptor {
+    SourceDescriptor::new(id, SourceKind::Live).unwrap()
+}
 
 fn built_in_frame(payload: &[u8], stride: u64) -> IngestedFrame<'_> {
     let capability = builtin_capability();
@@ -96,18 +115,20 @@ fn untimed_builtin_frame(payload: &[u8]) -> IngestedFrame<'_> {
     let layout = layout(4);
     let span = layout.required_byte_span().unwrap();
     let mut stream = IngestStream::new(71, 72, 3).unwrap();
-    stream.ingest_with_optional_timestamp(
-        payload,
-        layout,
-        region(73, span),
-        source(71),
-        capability,
-        None,
-        None,
-        calibration(),
-        QualityRecord::Unknown,
-        4,
-    ).unwrap()
+    stream
+        .ingest_with_optional_timestamp(
+            payload,
+            layout,
+            region(73, span),
+            source(71),
+            capability,
+            None,
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            4,
+        )
+        .unwrap()
 }
 
 fn extended_frame(payload: &[u8]) -> ExtendedIngestedFrame<'_> {
@@ -164,12 +185,15 @@ fn builtin_cpu_route_computes_known_power_and_preserves_unverified_metadata() {
     assert_eq!(summary.layout, layout(4));
     assert_eq!(summary.source_kind, SourceKind::Live);
     assert_eq!(summary.source_trust, TrustState::Unverified);
-    assert_eq!(summary.input_semantics, InputSemantics::BuiltIn {
-        modality: Modality::Wifi,
-        quantity: PhysicalQuantity::RfChannelResponse,
-        unit: Unit::Unitless,
-        encoding: SampleEncoding::ComplexI16,
-    });
+    assert_eq!(
+        summary.input_semantics,
+        InputSemantics::BuiltIn {
+            modality: Modality::Wifi,
+            quantity: PhysicalQuantity::RfChannelResponse,
+            unit: Unit::Unitless,
+            encoding: SampleEncoding::ComplexI16,
+        }
+    );
     assert_eq!(summary.quality, QualityRecord::Unknown);
     assert_eq!(summary.calibration.state(), CalibrationState::Missing);
     assert_eq!(summary.timestamp, Some(stamp(1_000)));
@@ -194,7 +218,8 @@ fn runtime_summary_preserves_an_unknown_timestamp() {
         &mut workspace,
         &mut staging,
         &mut output,
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(summary.timestamp, None);
     assert_eq!(summary.sequence, 4);
 }
@@ -243,7 +268,9 @@ fn strict_runtime_admission_rejects_unknown_provider_before_dispatch_and_output_
             &mut output,
             AllocationAdmission::RequireHotZeroHeap,
         ),
-        Err(PipelineError::Execution(ExecutionError::AllocationClassRejected)),
+        Err(PipelineError::Execution(
+            ExecutionError::AllocationClassRejected
+        )),
     );
     assert_eq!(provider.calls, 0);
     assert_eq!(staging, [11.0; 2]);
@@ -254,7 +281,10 @@ fn strict_runtime_admission_rejects_unknown_provider_before_dispatch_and_output_
 fn registered_extended_cpu_route_retains_unknown_unit_and_source_trust() {
     let frame = extended_frame(&IQ_BYTES);
     assert_eq!(frame.measurement().capability().unit_id(), None);
-    assert_eq!(frame.measurement().source().trust_state(), TrustState::Unverified);
+    assert_eq!(
+        frame.measurement().source().trust_state(),
+        TrustState::Unverified
+    );
     let mut workspace = [0.0f32; 4];
     let mut staging = [0.0f64; 2];
     let mut output = [0.0f64; 2];
@@ -280,12 +310,15 @@ fn registered_extended_cpu_route_retains_unknown_unit_and_source_trust() {
     assert_eq!(summary.layout, layout(4));
     assert_eq!(summary.source_kind, SourceKind::Live);
     assert_eq!(summary.source_trust, TrustState::Unverified);
-    assert_eq!(summary.input_semantics, InputSemantics::Registered {
-        modality_id: 801,
-        quantity_id: 802,
-        unit_id: None,
-        encoding: SampleEncoding::ComplexI16,
-    });
+    assert_eq!(
+        summary.input_semantics,
+        InputSemantics::Registered {
+            modality_id: 801,
+            quantity_id: 802,
+            unit_id: None,
+            encoding: SampleEncoding::ComplexI16,
+        }
+    );
     assert_eq!(summary.quality, QualityRecord::Unknown);
     assert_eq!(summary.calibration.state(), CalibrationState::Missing);
     assert_eq!(summary.sequence_event, SequenceEvent::First);
@@ -306,15 +339,16 @@ fn power_projection_preserves_sequence_and_keeps_host_declarations_unverified() 
         &mut workspace,
         &mut staging,
         &mut output,
-    ).unwrap();
+    )
+    .unwrap();
     let quantity_unit = QuantityUnitIds::new(Some(900), Some(901)).unwrap();
     let digest = ArtifactDigest::new(
         etalon_sense_core::evidence::DigestAlgorithm::Sha256,
         [0xA5; 32],
     );
-    let projection = project_power_summary_to_observation(
-        &summary, quantity_unit, 902, Some(903), Some(digest),
-    ).unwrap();
+    let projection =
+        project_power_summary_to_observation(&summary, quantity_unit, 902, Some(903), Some(digest))
+            .unwrap();
     let observation = projection.observation();
     assert_eq!(observation.kind(), ObservationKind::HostDerived);
     assert_eq!(observation.source().source_id(), 71);
@@ -373,4 +407,3 @@ fn unknown_scale_and_workspace_errors_do_not_publish_output() {
     );
     assert_eq!(output, [91.0; 2]);
 }
-

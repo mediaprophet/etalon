@@ -7,7 +7,7 @@ use etalon_sense_core::{
         ExtendedSensorAdapter,
     },
     authority::{
-        AuthorizedCaptureRequest, CaptureAuthorizationRequest, CaptureAuthority,
+        AuthorizedCaptureRequest, CaptureAuthority, CaptureAuthorizationRequest,
         CapturePolicyDecision, CaptureSource, HostCapturePolicy, TrustedCaptureClock,
     },
     buffer::SampleLayout,
@@ -23,21 +23,33 @@ use crate::stream::{StreamAdapter, StreamState};
 struct TestClock(Rc<Cell<u64>>);
 
 impl TestClock {
-    fn new(ticks: u64) -> Self { Self(Rc::new(Cell::new(ticks))) }
+    fn new(ticks: u64) -> Self {
+        Self(Rc::new(Cell::new(ticks)))
+    }
     fn stamp(&self) -> ClockStamp {
         ClockStamp::new(1, 1, self.0.get(), 0).unwrap()
     }
 }
 
 impl TrustedCaptureClock for TestClock {
-    fn now(&mut self) -> Result<ClockStamp, AdapterError> { Ok(self.stamp()) }
+    fn now(&mut self) -> Result<ClockStamp, AdapterError> {
+        Ok(self.stamp())
+    }
 }
 
-struct PermitPolicy { expiry: ClockStamp }
+struct PermitPolicy {
+    expiry: ClockStamp,
+}
 
 impl HostCapturePolicy for PermitPolicy {
-    fn decide(&self, _request: &CaptureAuthorizationRequest, _now: ClockStamp) -> CapturePolicyDecision {
-        CapturePolicyDecision::Permit { expires_at: self.expiry }
+    fn decide(
+        &self,
+        _request: &CaptureAuthorizationRequest,
+        _now: ClockStamp,
+    ) -> CapturePolicyDecision {
+        CapturePolicyDecision::Permit {
+            expires_at: self.expiry,
+        }
     }
 }
 
@@ -67,10 +79,18 @@ impl Read for ChunkReader<'_> {
         }
         if matches!(self.error_after, Some(limit) if self.offset >= limit) {
             out.fill(0xEE);
-            return Err(io::Error::new(io::ErrorKind::Other, "injected reader failure"));
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                "injected reader failure",
+            ));
         }
-        if self.offset == self.data.len() { return Ok(0); }
-        let count = out.len().min(self.max_chunk).min(self.data.len() - self.offset);
+        if self.offset == self.data.len() {
+            return Ok(0);
+        }
+        let count = out
+            .len()
+            .min(self.max_chunk)
+            .min(self.data.len() - self.offset);
         out[..count].copy_from_slice(&self.data[self.offset..self.offset + count]);
         self.offset += count;
         Ok(count)
@@ -81,18 +101,47 @@ fn fixture<'a>(
     data: &'a [u8],
     chunk: usize,
     clock: TestClock,
-) -> (StreamAdapter<ChunkReader<'a>, TestClock>, ExtendedDiscoveredSource, SampleLayout) {
-    let cap = ExtendedCapability::new(77, 51, None, SampleEncoding::U8, [4, 0, 0, 0], None).unwrap();
+) -> (
+    StreamAdapter<ChunkReader<'a>, TestClock>,
+    ExtendedDiscoveredSource,
+    SampleLayout,
+) {
+    let cap =
+        ExtendedCapability::new(77, 51, None, SampleEncoding::U8, [4, 0, 0, 0], None).unwrap();
     let source = ExtendedDiscoveredSource::new(9, cap).unwrap();
     let layout = SampleLayout::new(1, [4, 0, 0, 0], [1, 0, 0, 0], SampleEncoding::U8).unwrap();
-    let reader = ChunkReader { data, offset: 0, max_chunk: chunk, interrupt_once: false, change_clock: None, error_after: None, oversized_once: false };
-    let adapter = StreamAdapter::new(AdapterId::new(3).unwrap(), source, layout.clone(), 4, reader, clock).unwrap();
+    let reader = ChunkReader {
+        data,
+        offset: 0,
+        max_chunk: chunk,
+        interrupt_once: false,
+        change_clock: None,
+        error_after: None,
+        oversized_once: false,
+    };
+    let adapter = StreamAdapter::new(
+        AdapterId::new(3).unwrap(),
+        source,
+        layout.clone(),
+        4,
+        reader,
+        clock,
+    )
+    .unwrap();
     (adapter, source, layout)
 }
 
-fn issue(source: ExtendedDiscoveredSource, now: &TestClock, expiry: u64) -> etalon_sense_core::adapter::AuthorizedExtendedCapture {
-    let request = CaptureAuthorizationRequest::new(CaptureSource::Extended(source), None, None, 17, 22).unwrap();
-    let policy = PermitPolicy { expiry: ClockStamp::new(1, 1, expiry, 0).unwrap() };
+fn issue(
+    source: ExtendedDiscoveredSource,
+    now: &TestClock,
+    expiry: u64,
+) -> etalon_sense_core::adapter::AuthorizedExtendedCapture {
+    let request =
+        CaptureAuthorizationRequest::new(CaptureSource::Extended(source), None, None, 17, 22)
+            .unwrap();
+    let policy = PermitPolicy {
+        expiry: ClockStamp::new(1, 1, expiry, 0).unwrap(),
+    };
     let issued = CaptureAuthority::issue(request, &policy, &mut now.clone()).unwrap();
     match issued.into_capture_request() {
         AuthorizedCaptureRequest::Extended(capture) => capture,
@@ -100,12 +149,19 @@ fn issue(source: ExtendedDiscoveredSource, now: &TestClock, expiry: u64) -> etal
     }
 }
 
-fn start<R: Read>(adapter: &mut StreamAdapter<R, TestClock>, source: ExtendedDiscoveredSource) -> ExtendedCaptureSession {
-    adapter.start(issue(source, &adapter_clock(adapter), 1_000)).unwrap()
+fn start<R: Read>(
+    adapter: &mut StreamAdapter<R, TestClock>,
+    source: ExtendedDiscoveredSource,
+) -> ExtendedCaptureSession {
+    adapter
+        .start(issue(source, &adapter_clock(adapter), 1_000))
+        .unwrap()
 }
 
 // Obtain the same deterministic test clock stamp without exposing adapter internals.
-fn adapter_clock<R: Read>(_adapter: &StreamAdapter<R, TestClock>) -> TestClock { TestClock::new(100) }
+fn adapter_clock<R: Read>(_adapter: &StreamAdapter<R, TestClock>) -> TestClock {
+    TestClock::new(100)
+}
 
 fn authorized_buffer<'a>(
     source: ExtendedDiscoveredSource,
@@ -115,7 +171,13 @@ fn authorized_buffer<'a>(
 ) -> AuthorizedExtendedCaptureBuffer<'a> {
     let adapter = ExtendedAdapterDescriptor::new(AdapterId::new(3).unwrap(), 77).unwrap();
     let raw = ExtendedCaptureBuffer::new(bytes, layout, source.capability()).unwrap();
-    AuthorizedExtendedCaptureBuffer::new(adapter, session, issue(source, &TestClock::new(100), 1_000), raw).unwrap()
+    AuthorizedExtendedCaptureBuffer::new(
+        adapter,
+        session,
+        issue(source, &TestClock::new(100), 1_000),
+        raw,
+    )
+    .unwrap()
 }
 
 #[test]
@@ -124,7 +186,9 @@ fn assembles_partial_reads_into_one_exact_frame() {
     let (mut adapter, source, layout) = fixture(&[1, 2, 3, 4], 2, clock);
     let session = start(&mut adapter, source);
     let mut out = [0; 4];
-    let capture = adapter.capture(authorized_buffer(source, layout, session, &mut out)).unwrap();
+    let capture = adapter
+        .capture(authorized_buffer(source, layout, session, &mut out))
+        .unwrap();
     assert_eq!(capture.bytes(), &[1, 2, 3, 4]);
     assert_eq!(adapter.completed_frames(), 1);
 }
@@ -136,7 +200,9 @@ fn retries_interrupted_read_calls() {
     adapter.reader_mut().interrupt_once = true;
     let session = start(&mut adapter, source);
     let mut out = [0; 4];
-    let capture = adapter.capture(authorized_buffer(source, layout, session, &mut out)).unwrap();
+    let capture = adapter
+        .capture(authorized_buffer(source, layout, session, &mut out))
+        .unwrap();
     assert_eq!(capture.bytes(), &[4, 3, 2, 1]);
 }
 
@@ -222,12 +288,20 @@ fn completion_counter_overflow_clears_the_completed_frame() {
 
 #[test]
 fn constructor_rejects_layout_exceeding_explicit_frame_budget() {
-    let cap = ExtendedCapability::new(77, 51, None, SampleEncoding::U8, [4, 0, 0, 0], None).unwrap();
+    let cap =
+        ExtendedCapability::new(77, 51, None, SampleEncoding::U8, [4, 0, 0, 0], None).unwrap();
     let source = ExtendedDiscoveredSource::new(9, cap).unwrap();
     let layout = SampleLayout::new(1, [4, 0, 0, 0], [1, 0, 0, 0], SampleEncoding::U8).unwrap();
     let result = StreamAdapter::new(
-        AdapterId::new(3).unwrap(), source, layout, 3,
-        io::empty(), TestClock::new(100),
+        AdapterId::new(3).unwrap(),
+        source,
+        layout,
+        3,
+        io::empty(),
+        TestClock::new(100),
     );
-    assert!(matches!(result, Err(AdapterError::Buffer(ContractError::OutOfBounds))));
+    assert!(matches!(
+        result,
+        Err(AdapterError::Buffer(ContractError::OutOfBounds))
+    ));
 }

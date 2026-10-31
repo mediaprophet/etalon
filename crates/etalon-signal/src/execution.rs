@@ -54,19 +54,13 @@ pub enum AllocationAdmission {
     AllowColdBoundedBuffers,
 }
 
-fn allocation_admitted(
-    class: ExecutionAllocationClass,
-    admission: AllocationAdmission,
-) -> bool {
+fn allocation_admitted(class: ExecutionAllocationClass, admission: AllocationAdmission) -> bool {
     match admission {
         AllocationAdmission::Unrestricted => true,
-        AllocationAdmission::RequireHotZeroHeap => {
-            class == ExecutionAllocationClass::HotZeroHeap
-        }
+        AllocationAdmission::RequireHotZeroHeap => class == ExecutionAllocationClass::HotZeroHeap,
         AllocationAdmission::AllowColdBoundedBuffers => matches!(
             class,
-            ExecutionAllocationClass::HotZeroHeap
-                | ExecutionAllocationClass::ColdBoundedBuffers
+            ExecutionAllocationClass::HotZeroHeap | ExecutionAllocationClass::ColdBoundedBuffers
         ),
     }
 }
@@ -196,16 +190,15 @@ pub fn execute_i16_iq_power_into_with_admission(
         return Err(ExecutionError::Signal(SignalError::LengthMismatch));
     }
     let count = bytes.len() / 4;
-    if workspace.len() != bytes.len() / 2
-        || staged_output.len() != count
-        || output.len() != count
-    {
+    if workspace.len() != bytes.len() / 2 || staged_output.len() != count || output.len() != count {
         return Err(ExecutionError::Capacity);
     }
     let allocation_class = match target {
         ExecutionTarget::Cpu => ExecutionAllocationClass::HotZeroHeap,
         ExecutionTarget::RegisteredDevice(expected_id) => {
-            let provider = provider.as_deref().ok_or(ExecutionError::DeviceUnavailable)?;
+            let provider = provider
+                .as_deref()
+                .ok_or(ExecutionError::DeviceUnavailable)?;
             if provider.device_id() != expected_id {
                 return Err(ExecutionError::DeviceIdMismatch);
             }

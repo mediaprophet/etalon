@@ -20,20 +20,37 @@ impl<'a> Pcm16Wave<'a> {
         }
         let riff_size = u32::from_le_bytes([bytes[4], bytes[5], bytes[6], bytes[7]]) as usize;
         let end = riff_size.checked_add(8).ok_or(SignalError::NumericRange)?;
-        if end != bytes.len() || end < 12 { return Err(SignalError::LengthMismatch); }
+        if end != bytes.len() || end < 12 {
+            return Err(SignalError::LengthMismatch);
+        }
         let mut cursor = 12usize;
         let mut format: Option<(u16, u32, u16)> = None;
         let mut data: Option<&[u8]> = None;
         while cursor < end {
             let header_end = cursor.checked_add(8).ok_or(SignalError::NumericRange)?;
-            if header_end > end { return Err(SignalError::LengthMismatch); }
-            let size = u32::from_le_bytes([bytes[cursor + 4], bytes[cursor + 5], bytes[cursor + 6], bytes[cursor + 7]]) as usize;
-            let chunk_end = header_end.checked_add(size).ok_or(SignalError::NumericRange)?;
-            let next = chunk_end.checked_add(size & 1).ok_or(SignalError::NumericRange)?;
-            if next > end { return Err(SignalError::LengthMismatch); }
+            if header_end > end {
+                return Err(SignalError::LengthMismatch);
+            }
+            let size = u32::from_le_bytes([
+                bytes[cursor + 4],
+                bytes[cursor + 5],
+                bytes[cursor + 6],
+                bytes[cursor + 7],
+            ]) as usize;
+            let chunk_end = header_end
+                .checked_add(size)
+                .ok_or(SignalError::NumericRange)?;
+            let next = chunk_end
+                .checked_add(size & 1)
+                .ok_or(SignalError::NumericRange)?;
+            if next > end {
+                return Err(SignalError::LengthMismatch);
+            }
             match &bytes[cursor..cursor + 4] {
                 b"fmt " => {
-                    if format.is_some() || size < 16 { return Err(SignalError::InvalidParameter); }
+                    if format.is_some() || size < 16 {
+                        return Err(SignalError::InvalidParameter);
+                    }
                     let fmt = &bytes[header_end..chunk_end];
                     let codec = u16::from_le_bytes([fmt[0], fmt[1]]);
                     let channels = u16::from_le_bytes([fmt[2], fmt[3]]);
@@ -50,32 +67,54 @@ impl<'a> Pcm16Wave<'a> {
                         18 => u16::from_le_bytes([fmt[16], fmt[17]]) == 0,
                         _ => false,
                     };
-                    if codec != 1 || channels == 0 || rate == 0 || bits != 16
+                    if codec != 1
+                        || channels == 0
+                        || rate == 0
+                        || bits != 16
                         || !extension_is_valid
                         || channels.checked_mul(2) != Some(align)
-                        || rate.checked_mul(u32::from(align)) != Some(byte_rate) {
+                        || rate.checked_mul(u32::from(align)) != Some(byte_rate)
+                    {
                         return Err(SignalError::InvalidParameter);
                     }
                     format = Some((channels, rate, align));
                 }
                 b"data" => {
-                    if data.is_some() { return Err(SignalError::InvalidParameter); }
+                    if data.is_some() {
+                        return Err(SignalError::InvalidParameter);
+                    }
                     data = Some(&bytes[header_end..chunk_end]);
                 }
                 _ => {}
             }
             cursor = next;
         }
-        let (channels, sample_rate_hz, block_align) = format.ok_or(SignalError::InvalidParameter)?;
+        let (channels, sample_rate_hz, block_align) =
+            format.ok_or(SignalError::InvalidParameter)?;
         let samples = data.ok_or(SignalError::InvalidParameter)?;
-        if samples.len() % usize::from(block_align) != 0 { return Err(SignalError::LengthMismatch); }
-        Ok(Self { samples, channels, sample_rate_hz, frames: samples.len() / usize::from(block_align) })
+        if samples.len() % usize::from(block_align) != 0 {
+            return Err(SignalError::LengthMismatch);
+        }
+        Ok(Self {
+            samples,
+            channels,
+            sample_rate_hz,
+            frames: samples.len() / usize::from(block_align),
+        })
     }
 
-    pub const fn samples(self) -> &'a [u8] { self.samples }
-    pub const fn channels(self) -> u16 { self.channels }
-    pub const fn sample_rate_hz(self) -> u32 { self.sample_rate_hz }
-    pub const fn frames(self) -> usize { self.frames }
+    pub const fn samples(self) -> &'a [u8] {
+        self.samples
+    }
+    pub const fn channels(self) -> u16 {
+        self.channels
+    }
+    pub const fn sample_rate_hz(self) -> u32 {
+        self.sample_rate_hz
+    }
+    pub const fn frames(self) -> usize {
+        self.frames
+    }
 }
 
 #[cfg(test)]

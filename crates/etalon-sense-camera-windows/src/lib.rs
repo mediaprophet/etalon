@@ -37,16 +37,18 @@ mod discovery;
 mod observation;
 
 #[cfg(all(windows, feature = "unqualified-winrt-capture"))]
-pub use discovery::{CameraSourceAuthority, CameraSourceCandidate, MAX_CAMERA_SOURCES, MAX_CAMERA_SOURCE_ID_UNITS};
+pub use discovery::{
+    CameraSourceAuthority, CameraSourceCandidate, MAX_CAMERA_SOURCES, MAX_CAMERA_SOURCE_ID_UNITS,
+};
 
 #[cfg(all(windows, feature = "unqualified-winrt-capture"))]
 pub use lifecycle::{CameraPipeline, PipelineProgress};
 
 #[cfg(all(windows, feature = "unqualified-winrt-capture"))]
 pub use winrt::{
-    begin_create_reader, begin_initialize, begin_reader_start, begin_reader_stop,
-    AsyncPoll, CameraOperation, CameraPolicy, CopyAllocationClass, NativeError, PendingAction, PendingReader,
-    PendingReaderStart, RunningFrameReader, CleanupProgress, StartFailure,
+    begin_create_reader, begin_initialize, begin_reader_start, begin_reader_stop, AsyncPoll,
+    CameraOperation, CameraPolicy, CleanupProgress, CopyAllocationClass, NativeError,
+    PendingAction, PendingReader, PendingReaderStart, RunningFrameReader, StartFailure,
     StartFailureReason,
 };
 

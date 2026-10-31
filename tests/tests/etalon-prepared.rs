@@ -69,7 +69,9 @@ fn prepared_compute_allocator_qualification() {
         flags: etalon::InstanceFlags::empty(),
         ..etalon::InstanceDescriptor::new_without_display_handle()
     });
-    let adapter = pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions::default())).unwrap();
+    let adapter =
+        pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions::default()))
+            .unwrap();
     let desc = etalon::PreparedComputeDescriptor {
         shader: r"
             @group(0) @binding(0) var<storage, read> input: array<u32>;
@@ -88,12 +90,15 @@ fn prepared_compute_allocator_qualification() {
     let mut lane = adapter.prepare_compute(&desc).unwrap();
     let mut output = [0; 64];
     let parameters = [0; 16];
-    lane.execute(&[0; 64], &parameters, &mut output, Duration::from_secs(10)).unwrap();
+    lane.execute(&[0; 64], &parameters, &mut output, Duration::from_secs(10))
+        .unwrap();
     let mut result = Ok(0);
     let measurement = Measurement::begin();
     for _ in 0..128 {
         result = lane.execute(&[0; 64], &parameters, &mut output, Duration::from_secs(10));
-        if result.is_err() { break; }
+        if result.is_err() {
+            break;
+        }
     }
     drop(measurement);
     assert_eq!(result, Ok(129));
@@ -105,7 +110,10 @@ fn prepared_compute_allocator_qualification() {
     let parameters_error = lane.execute(&[], &parameters[..12], &mut output, Duration::ZERO);
     drop(measurement);
     assert_eq!(capacity, Err(etalon::PreparedComputeError::Capacity));
-    assert_eq!(parameters_error, Err(etalon::PreparedComputeError::InvalidDescriptor));
+    assert_eq!(
+        parameters_error,
+        Err(etalon::PreparedComputeError::InvalidDescriptor)
+    );
     assert_eq!(ALLOCATIONS.load(Ordering::SeqCst), 0);
     assert_eq!(DEALLOCATIONS.load(Ordering::SeqCst), 0);
 }

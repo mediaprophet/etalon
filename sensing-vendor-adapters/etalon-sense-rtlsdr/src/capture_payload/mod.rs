@@ -1,9 +1,9 @@
 //! Opt-in canonical receipt plus raw I/Q storage, without authentication.
 
-mod encode;
 mod decode;
-pub use encode::encode_capture_payload;
+mod encode;
 pub use decode::decode_capture_payload;
+pub use encode::encode_capture_payload;
 
 use crate::Config;
 
@@ -12,7 +12,12 @@ pub const SCHEMA_VERSION: u16 = 1;
 pub const MAGIC: &[u8; 8] = b"ETRTLSD1";
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum PayloadError { InvalidLength, BudgetExceeded, InvalidMetadata, NonCanonical }
+pub enum PayloadError {
+    InvalidLength,
+    BudgetExceeded,
+    InvalidMetadata,
+    NonCanonical,
+}
 
 /// Native getter declarations, not independently measured tuning or gain.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -45,8 +50,12 @@ pub struct UntrustedCapturePayload<'a> {
 }
 
 fn total_bytes(pairs: usize) -> Result<usize, PayloadError> {
-    if pairs == 0 || pairs > crate::MAX_PAIRS { return Err(PayloadError::InvalidLength); }
-    pairs.checked_mul(2).and_then(|raw| raw.checked_add(HEADER_BYTES))
+    if pairs == 0 || pairs > crate::MAX_PAIRS {
+        return Err(PayloadError::InvalidLength);
+    }
+    pairs
+        .checked_mul(2)
+        .and_then(|raw| raw.checked_add(HEADER_BYTES))
         .ok_or(PayloadError::InvalidLength)
 }
 

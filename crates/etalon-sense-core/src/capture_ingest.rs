@@ -47,7 +47,15 @@ impl IngestMetadata {
         quality: QualityRecord,
         sequence: u64,
     ) -> Self {
-        Self::new_with_optional_timestamp(region, source, Some(timestamp), sample_rate, calibration, quality, sequence)
+        Self::new_with_optional_timestamp(
+            region,
+            source,
+            Some(timestamp),
+            sample_rate,
+            calibration,
+            quality,
+            sequence,
+        )
     }
 
     pub const fn new_with_optional_timestamp(
@@ -59,7 +67,15 @@ impl IngestMetadata {
         quality: QualityRecord,
         sequence: u64,
     ) -> Self {
-        Self { region, source, timestamp, sample_rate, calibration, quality, sequence }
+        Self {
+            region,
+            source,
+            timestamp,
+            sample_rate,
+            calibration,
+            quality,
+            sequence,
+        }
     }
 }
 
@@ -115,9 +131,8 @@ pub fn capture_extended_and_ingest<'a, A: ExtendedSensorAdapter>(
     let capability = source.capability();
     preflight_extended(stream, layout.clone(), capability, metadata)?;
 
-    let output = AuthorizedExtendedCaptureBuffer::new(
-        adapter.descriptor(), session, request, buffer,
-    )?;
+    let output =
+        AuthorizedExtendedCaptureBuffer::new(adapter.descriptor(), session, request, buffer)?;
     let samples = adapter.capture(output)?;
     admit_extended(stream, samples, layout, capability, metadata)
 }
@@ -155,7 +170,12 @@ fn preflight_builtin(
         metadata.calibration,
         metadata.quality,
     )?;
-    preflight_sequence(stream.last_observation(), stream.last_known_timestamp(), metadata.sequence, metadata.timestamp)
+    preflight_sequence(
+        stream.last_observation(),
+        stream.last_known_timestamp(),
+        metadata.sequence,
+        metadata.timestamp,
+    )
 }
 
 fn preflight_extended(
@@ -175,8 +195,17 @@ fn preflight_extended(
         metadata.calibration,
         metadata.quality,
     )?;
-    validate_payload_ceiling(&layout, capability.encoding(), capability.max_payload_bytes())?;
-    preflight_sequence(stream.last_observation(), stream.last_known_timestamp(), metadata.sequence, metadata.timestamp)
+    validate_payload_ceiling(
+        &layout,
+        capability.encoding(),
+        capability.max_payload_bytes(),
+    )?;
+    preflight_sequence(
+        stream.last_observation(),
+        stream.last_known_timestamp(),
+        metadata.sequence,
+        metadata.timestamp,
+    )
 }
 
 fn validate_payload_ceiling(
@@ -291,11 +320,15 @@ pub enum CaptureIngestError {
 }
 
 impl From<AdapterError> for CaptureIngestError {
-    fn from(error: AdapterError) -> Self { Self::Adapter(error) }
+    fn from(error: AdapterError) -> Self {
+        Self::Adapter(error)
+    }
 }
 
 impl From<ContractError> for CaptureIngestError {
-    fn from(error: ContractError) -> Self { Self::Contract(error) }
+    fn from(error: ContractError) -> Self {
+        Self::Contract(error)
+    }
 }
 
 #[cfg(test)]

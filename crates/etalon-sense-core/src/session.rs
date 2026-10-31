@@ -68,7 +68,12 @@ impl ExternalAuthorization {
         not_before: ClockStamp,
         expires_at: ClockStamp,
     ) -> Result<Self, SessionError> {
-        if grant_id == 0 || authority_id == 0 || subject_id == 0 || environment_id == 0 || purpose_id == 0 {
+        if grant_id == 0
+            || authority_id == 0
+            || subject_id == 0
+            || environment_id == 0
+            || purpose_id == 0
+        {
             return Err(SessionError::Contract(ContractError::InvalidIdentifier));
         }
         if not_before.clock_id() != expires_at.clock_id()

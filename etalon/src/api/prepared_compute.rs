@@ -38,7 +38,9 @@ impl Adapter {
     ) -> Result<PreparedCompute, PrepareComputeError> {
         #[cfg(all(vulkan, feature = "wgsl"))]
         {
-            let adapter = self.inner.as_core_opt()
+            let adapter = self
+                .inner
+                .as_core_opt()
                 .ok_or(PreparedComputeError::UnsupportedBackend)?;
             let inner = wgc::prepared::PreparedCompute::new(&adapter.etalon_adapter, desc)?;
             Ok(PreparedCompute { inner })
@@ -91,17 +93,25 @@ impl PreparedCompute {
     /// Whether execution is permanently disabled after failure, exhaustion, or retirement.
     pub fn is_poisoned(&self) -> bool {
         #[cfg(all(vulkan, feature = "wgsl"))]
-        { self.inner.is_poisoned() }
+        {
+            self.inner.is_poisoned()
+        }
         #[cfg(not(all(vulkan, feature = "wgsl")))]
-        { match self._unavailable {} }
+        {
+            match self._unavailable {}
+        }
     }
 
     /// Number of successfully completed and retired runs.
     pub fn completed_runs(&self) -> u64 {
         #[cfg(all(vulkan, feature = "wgsl"))]
-        { self.inner.completed_runs() }
+        {
+            self.inner.completed_runs()
+        }
         #[cfg(not(all(vulkan, feature = "wgsl")))]
-        { match self._unavailable {} }
+        {
+            match self._unavailable {}
+        }
     }
 
     /// Permanently stop accepting work and establish that resources can be destroyed.
@@ -113,9 +123,13 @@ impl PreparedCompute {
     /// completion. Success does not erase buffer contents or re-enable execution.
     pub fn retire(&mut self) -> Result<(), PreparedComputeError> {
         #[cfg(all(vulkan, feature = "wgsl"))]
-        { self.inner.retire() }
+        {
+            self.inner.retire()
+        }
         #[cfg(not(all(vulkan, feature = "wgsl")))]
-        { match self._unavailable {} }
+        {
+            match self._unavailable {}
+        }
     }
 }
 

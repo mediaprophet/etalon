@@ -4,14 +4,14 @@
 #![deny(unsafe_op_in_unsafe_fn)]
 
 mod abi;
+pub mod adapter;
+pub mod capture_payload;
 mod config;
+pub mod conversion;
 mod device;
 mod identity;
-mod runtime;
-pub mod adapter;
-pub mod conversion;
 pub mod observation;
-pub mod capture_payload;
+mod runtime;
 
 #[cfg(test)]
 mod tests;
@@ -24,7 +24,15 @@ pub use runtime::RtlSdrRuntime;
 pub const MAX_PAIRS: usize = 1_048_576;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Stage { Open, PostOpen, Configure, PostConfigure, Read, ReadReady, PostRead }
+pub enum Stage {
+    Open,
+    PostOpen,
+    Configure,
+    PostConfigure,
+    Read,
+    ReadReady,
+    PostRead,
+}
 
 pub struct GateContext<'a> {
     pub stage: Stage,
@@ -45,11 +53,32 @@ pub trait RtlSdrGate {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Error {
-    UnsupportedPlatform, Admission, LibraryLoad, MissingSymbol, Synchronization,
-    NotAuthorized, InvalidConfig, InvalidState, InvalidBuffer, InvalidIdentity,
-    InvalidNativeHandle, InvalidNativeReport, ConfigurationChanged, SequenceExhausted,
-    Native { operation: &'static str, code: i32 },
-    PartialRead { actual_bytes: i32, expected_bytes: usize },
+    UnsupportedPlatform,
+    Admission,
+    LibraryLoad,
+    MissingSymbol,
+    Synchronization,
+    NotAuthorized,
+    InvalidConfig,
+    InvalidState,
+    InvalidBuffer,
+    InvalidIdentity,
+    InvalidNativeHandle,
+    InvalidNativeReport,
+    ConfigurationChanged,
+    SequenceExhausted,
+    Native {
+        operation: &'static str,
+        code: i32,
+    },
+    PartialRead {
+        actual_bytes: i32,
+        expected_bytes: usize,
+    },
     CloseOutcomeUnknown,
-    CleanupFailed { primary_operation: &'static str, primary_code: Option<i32>, cleanup_code: i32 },
+    CleanupFailed {
+        primary_operation: &'static str,
+        primary_code: Option<i32>,
+        cleanup_code: i32,
+    },
 }

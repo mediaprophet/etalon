@@ -73,19 +73,29 @@ pub struct FramePlane {
 
 impl FramePlane {
     pub const fn new(offset_bytes: u32, row_stride_bytes: u32, row_bytes: u32, rows: u32) -> Self {
-        Self { offset_bytes, row_stride_bytes, row_bytes, rows }
+        Self {
+            offset_bytes,
+            row_stride_bytes,
+            row_bytes,
+            rows,
+        }
     }
 
     fn end_byte(self) -> Result<u32, FrameFormatError> {
         if self.row_bytes == 0 || self.rows == 0 || self.row_stride_bytes < self.row_bytes {
             return Err(FrameFormatError::InvalidPlane);
         }
-        let prior_rows = self.rows.checked_sub(1).ok_or(FrameFormatError::InvalidPlane)?;
+        let prior_rows = self
+            .rows
+            .checked_sub(1)
+            .ok_or(FrameFormatError::InvalidPlane)?;
         let body = prior_rows
             .checked_mul(self.row_stride_bytes)
             .and_then(|bytes| bytes.checked_add(self.row_bytes))
             .ok_or(FrameFormatError::ArithmeticOverflow)?;
-        self.offset_bytes.checked_add(body).ok_or(FrameFormatError::ArithmeticOverflow)
+        self.offset_bytes
+            .checked_add(body)
+            .ok_or(FrameFormatError::ArithmeticOverflow)
     }
 }
 
@@ -148,11 +158,16 @@ impl FrameFormat {
         plane_count: u8,
     ) -> Result<Self, FrameFormatError> {
         let count = usize::from(plane_count);
-        if format_id == 0 { return Err(FrameFormatError::InvalidIdentifier); }
+        if format_id == 0 {
+            return Err(FrameFormatError::InvalidIdentifier);
+        }
         if width == 0 || height == 0 || frame_bytes == 0 || count == 0 || count > MAX_FRAME_PLANES {
             return Err(FrameFormatError::InvalidExtent);
         }
-        if planes[count..].iter().any(|plane| *plane != FramePlane::default()) {
+        if planes[count..]
+            .iter()
+            .any(|plane| *plane != FramePlane::default())
+        {
             return Err(FrameFormatError::InvalidPlane);
         }
 
@@ -168,9 +183,13 @@ impl FrameFormat {
         let mut ends = [0u32; MAX_FRAME_PLANES];
         for index in 0..count {
             let plane = planes[index];
-            if plane.rows > height { return Err(FrameFormatError::InvalidPlane); }
+            if plane.rows > height {
+                return Err(FrameFormatError::InvalidPlane);
+            }
             let end = plane.end_byte()?;
-            if end > frame_bytes { return Err(FrameFormatError::InvalidExtent); }
+            if end > frame_bytes {
+                return Err(FrameFormatError::InvalidExtent);
+            }
             for previous in 0..index {
                 let previous_plane = planes[previous];
                 if plane.offset_bytes < ends[previous] && previous_plane.offset_bytes < end {
@@ -192,14 +211,30 @@ impl FrameFormat {
         })
     }
 
-    pub const fn format_id(self) -> u64 { self.format_id }
-    pub const fn width(self) -> u32 { self.width }
-    pub const fn height(self) -> u32 { self.height }
-    pub const fn frame_bytes(self) -> u32 { self.frame_bytes }
-    pub const fn encoding(self) -> SampleEncoding { self.encoding }
-    pub const fn pixel_format(self) -> FramePixelFormat { self.pixel_format }
-    pub const fn planes(self) -> [FramePlane; MAX_FRAME_PLANES] { self.planes }
-    pub const fn plane_count(self) -> u8 { self.plane_count }
+    pub const fn format_id(self) -> u64 {
+        self.format_id
+    }
+    pub const fn width(self) -> u32 {
+        self.width
+    }
+    pub const fn height(self) -> u32 {
+        self.height
+    }
+    pub const fn frame_bytes(self) -> u32 {
+        self.frame_bytes
+    }
+    pub const fn encoding(self) -> SampleEncoding {
+        self.encoding
+    }
+    pub const fn pixel_format(self) -> FramePixelFormat {
+        self.pixel_format
+    }
+    pub const fn planes(self) -> [FramePlane; MAX_FRAME_PLANES] {
+        self.planes
+    }
+    pub const fn plane_count(self) -> u8 {
+        self.plane_count
+    }
 }
 
 /// Host declaration bounding a source and its camera frame capability.
@@ -288,14 +323,30 @@ impl FrameDeclaration {
         })
     }
 
-    pub const fn source_id(self) -> u64 { self.source_id }
-    pub const fn modality(self) -> CameraModality { self.modality }
-    pub const fn capability(self) -> ExtendedCapability { self.capability }
-    pub const fn pixel_format(self) -> FramePixelFormat { self.pixel_format }
-    pub const fn max_width(self) -> u32 { self.max_width }
-    pub const fn max_height(self) -> u32 { self.max_height }
-    pub const fn max_frame_bytes(self) -> u32 { self.max_frame_bytes }
-    pub const fn radiometric(self) -> RadiometricStatus { self.radiometric }
+    pub const fn source_id(self) -> u64 {
+        self.source_id
+    }
+    pub const fn modality(self) -> CameraModality {
+        self.modality
+    }
+    pub const fn capability(self) -> ExtendedCapability {
+        self.capability
+    }
+    pub const fn pixel_format(self) -> FramePixelFormat {
+        self.pixel_format
+    }
+    pub const fn max_width(self) -> u32 {
+        self.max_width
+    }
+    pub const fn max_height(self) -> u32 {
+        self.max_height
+    }
+    pub const fn max_frame_bytes(self) -> u32 {
+        self.max_frame_bytes
+    }
+    pub const fn radiometric(self) -> RadiometricStatus {
+        self.radiometric
+    }
 }
 
 pub(super) fn validate_negotiated_format(
@@ -313,7 +364,9 @@ pub(super) fn validate_negotiated_format(
     {
         return Err(FrameFormatError::InvalidExtent);
     }
-    if format.pixel_format.minimum_dense_bytes(format.width, format.height)?
+    if format
+        .pixel_format
+        .minimum_dense_bytes(format.width, format.height)?
         > declaration.capability.max_payload_bytes()
         || format.frame_bytes > declaration.max_frame_bytes
     {

@@ -52,10 +52,7 @@ pub struct DiscoveredSource {
 }
 
 impl DiscoveredSource {
-    pub const fn new(
-        source_id: u64,
-        capability: SensorCapability,
-    ) -> Result<Self, AdapterError> {
+    pub const fn new(source_id: u64, capability: SensorCapability) -> Result<Self, AdapterError> {
         if source_id == 0 {
             return Err(AdapterError::InvalidIdentifier);
         }
@@ -113,11 +110,7 @@ impl CapturePermit {
         self.expires_at
     }
 
-    fn validate_for(
-        &self,
-        source: DiscoveredSource,
-        now: ClockStamp,
-    ) -> Result<(), AdapterError> {
+    fn validate_for(&self, source: DiscoveredSource, now: ClockStamp) -> Result<(), AdapterError> {
         if self.source_id != source.source_id || self.capability != source.capability {
             return Err(AdapterError::AuthorizationDenied);
         }
@@ -327,7 +320,6 @@ impl<'a> CaptureBuffer<'a> {
     pub fn writable_bytes(&mut self) -> &mut [u8] {
         &mut self.bytes[..self.span_bytes]
     }
-
 }
 
 impl<'a> CaptureBuffer<'a> {
@@ -448,7 +440,8 @@ pub trait SensorAdapter {
         Ok(count)
     }
 
-    fn start_backend(&mut self, request: AuthorizedCapture) -> Result<CaptureSession, AdapterError>;
+    fn start_backend(&mut self, request: AuthorizedCapture)
+        -> Result<CaptureSession, AdapterError>;
 
     fn capture_backend<'a>(
         &mut self,

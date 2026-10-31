@@ -4,10 +4,10 @@ use super::{
 };
 use crate::{
     adapter::{
-        AdapterError, AdapterId, AuthorizedCapture, AuthorizedCaptureBuffer, CaptureBuffer,
-        CapturePermit, DiscoveredSource, SensorAdapter, AuthorizedExtendedCapture,
-        AuthorizedExtendedCaptureBuffer, ExtendedCaptureBuffer, ExtendedCapturePermit,
-        ExtendedDiscoveredSource, ExtendedSensorAdapter,
+        AdapterError, AdapterId, AuthorizedCapture, AuthorizedCaptureBuffer,
+        AuthorizedExtendedCapture, AuthorizedExtendedCaptureBuffer, CaptureBuffer, CapturePermit,
+        DiscoveredSource, ExtendedCaptureBuffer, ExtendedCapturePermit, ExtendedDiscoveredSource,
+        ExtendedSensorAdapter, SensorAdapter,
     },
     buffer::SampleLayout,
     capability::{Modality, SensorCapability},
@@ -18,7 +18,9 @@ use crate::{
     ContractError,
 };
 
-fn stamp(ticks: u64) -> ClockStamp { ClockStamp::new(9, 1, ticks, 0).unwrap() }
+fn stamp(ticks: u64) -> ClockStamp {
+    ClockStamp::new(9, 1, ticks, 0).unwrap()
+}
 
 fn capability() -> SensorCapability {
     SensorCapability::new(
@@ -63,14 +65,13 @@ fn extended_source() -> ExtendedDiscoveredSource {
     ExtendedDiscoveredSource::new(27, extended_capability()).unwrap()
 }
 
-fn extended_authorized(source: ExtendedDiscoveredSource, at: ClockStamp) -> AuthorizedExtendedCapture {
-    let permit = ExtendedCapturePermit::after_authorization(
-        27,
-        23,
-        source.capability(),
-        stamp(100),
-    )
-    .unwrap();
+fn extended_authorized(
+    source: ExtendedDiscoveredSource,
+    at: ClockStamp,
+) -> AuthorizedExtendedCapture {
+    let permit =
+        ExtendedCapturePermit::after_authorization(27, 23, source.capability(), stamp(100))
+            .unwrap();
     AuthorizedExtendedCapture::new(source, permit, at).unwrap()
 }
 
@@ -84,7 +85,11 @@ fn block<'a>(bytes: &'a [u8]) -> ReplayBlock<'a> {
         capability(),
         layout(),
         bytes,
-        ReplayMetadata::new(ReplayKind::Prerecorded, EvidenceRecord::unknown(), Some(stamp(3))),
+        ReplayMetadata::new(
+            ReplayKind::Prerecorded,
+            EvidenceRecord::unknown(),
+            Some(stamp(3)),
+        ),
     )
     .unwrap()
 }
@@ -92,11 +97,14 @@ fn block<'a>(bytes: &'a [u8]) -> ReplayBlock<'a> {
 struct FixedClock(ClockStamp);
 
 impl ReplayAuthorizationClock for FixedClock {
-    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> { Ok(self.0) }
+    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
+        Ok(self.0)
+    }
 }
 
 fn authorized(source: DiscoveredSource, at: ClockStamp) -> AuthorizedCapture {
-    let permit = CapturePermit::after_authorization(17, 23, source.capability(), stamp(100)).unwrap();
+    let permit =
+        CapturePermit::after_authorization(17, 23, source.capability(), stamp(100)).unwrap();
     AuthorizedCapture::new(source, permit, at).unwrap()
 }
 
@@ -123,7 +131,10 @@ fn adapter_discovers_only_its_caller_supplied_source() {
     let mut clock = FixedClock(stamp(10));
     let mut adapter = ReplayAdapter::new(AdapterId::new(4).unwrap(), block(&samples), &mut clock);
     let mut none = [];
-    assert_eq!(adapter.discover(&mut none), Err(AdapterError::DiscoveryBufferTooSmall));
+    assert_eq!(
+        adapter.discover(&mut none),
+        Err(AdapterError::DiscoveryBufferTooSmall)
+    );
     let mut found = [DiscoveredSource::new(99, capability()).unwrap()];
     assert_eq!(adapter.discover(&mut found), Ok(1));
     assert_eq!(found[0].source_id(), 17);
@@ -136,7 +147,9 @@ fn capture_copies_once_to_validated_caller_buffer_and_needs_authorization() {
     let samples = [11, 12, 13, 14, 15, 16, 17, 18];
     let mut clock = FixedClock(stamp(10));
     let mut adapter = ReplayAdapter::new(AdapterId::new(4).unwrap(), block(&samples), &mut clock);
-    let source = adapter.discover(&mut [DiscoveredSource::new(17, capability()).unwrap()]).unwrap();
+    let source = adapter
+        .discover(&mut [DiscoveredSource::new(17, capability()).unwrap()])
+        .unwrap();
     assert_eq!(source, 1);
     let source = DiscoveredSource::new(17, capability()).unwrap();
     let session = adapter.start(authorized(source, stamp(10))).unwrap();
@@ -144,7 +157,10 @@ fn capture_copies_once_to_validated_caller_buffer_and_needs_authorization() {
     let mut destination = [0u8; 8];
     let buffer = CaptureBuffer::new(&mut destination, layout(), capability()).unwrap();
     let output = AuthorizedCaptureBuffer::new(
-        adapter.descriptor(), session, authorized(source, stamp(10)), buffer,
+        adapter.descriptor(),
+        session,
+        authorized(source, stamp(10)),
+        buffer,
     )
     .unwrap();
     let captured = adapter.capture(output).unwrap();
@@ -153,12 +169,19 @@ fn capture_copies_once_to_validated_caller_buffer_and_needs_authorization() {
     assert!(adapter.is_consumed());
 
     let mut second_destination = [0u8; 8];
-    let second_buffer = CaptureBuffer::new(&mut second_destination, layout(), capability()).unwrap();
+    let second_buffer =
+        CaptureBuffer::new(&mut second_destination, layout(), capability()).unwrap();
     let second_output = AuthorizedCaptureBuffer::new(
-        adapter.descriptor(), session, authorized(source, stamp(10)), second_buffer,
+        adapter.descriptor(),
+        session,
+        authorized(source, stamp(10)),
+        second_buffer,
     )
     .unwrap();
-    assert_eq!(adapter.capture(second_output), Err(AdapterError::Unavailable));
+    assert_eq!(
+        adapter.capture(second_output),
+        Err(AdapterError::Unavailable)
+    );
 }
 
 #[test]
@@ -167,7 +190,10 @@ fn adapter_cannot_discover_or_authorize_another_source() {
     let mut clock = FixedClock(stamp(10));
     let mut adapter = ReplayAdapter::new(AdapterId::new(4).unwrap(), block(&samples), &mut clock);
     let other = DiscoveredSource::new(18, capability()).unwrap();
-    assert_eq!(adapter.start(authorized(other, stamp(10))), Err(AdapterError::AuthorizationDenied));
+    assert_eq!(
+        adapter.start(authorized(other, stamp(10))),
+        Err(AdapterError::AuthorizationDenied)
+    );
 }
 
 #[test]
@@ -205,10 +231,14 @@ fn extended_replay_is_bound_to_exact_source_capability_and_buffer() {
     assert_eq!(adapter.discover(&mut discovered), Ok(1));
     let source = discovered[0];
     let descriptor = adapter.descriptor();
-    let session = adapter.start(extended_authorized(source, stamp(10))).unwrap();
+    let session = adapter
+        .start(extended_authorized(source, stamp(10)))
+        .unwrap();
 
     let mut destination = [0u8; 8];
-    let buffer = ExtendedCaptureBuffer::new(&mut destination, extended_layout(), source.capability()).unwrap();
+    let buffer =
+        ExtendedCaptureBuffer::new(&mut destination, extended_layout(), source.capability())
+            .unwrap();
     let output = AuthorizedExtendedCaptureBuffer::new(
         descriptor,
         session,
@@ -241,7 +271,8 @@ fn extended_authorization_cannot_be_reused_for_changed_unit_or_source() {
         None,
     )
     .unwrap();
-    let changed_source = ExtendedDiscoveredSource::new(source.source_id(), wrong_capability).unwrap();
+    let changed_source =
+        ExtendedDiscoveredSource::new(source.source_id(), wrong_capability).unwrap();
     assert_eq!(
         AuthorizedExtendedCapture::new(changed_source, permit, stamp(10)),
         Err(AdapterError::AuthorizationDenied)

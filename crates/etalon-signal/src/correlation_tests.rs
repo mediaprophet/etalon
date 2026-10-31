@@ -2,13 +2,7 @@ use super::*;
 
 #[test]
 fn conjugates_reference_before_multiplication() {
-    let result = correlate_iq(
-        &[1.0, 0.0],
-        &[0.0, 1.0],
-        0,
-        CorrelationScaling::RawSum,
-    )
-    .unwrap();
+    let result = correlate_iq(&[1.0, 0.0], &[0.0, 1.0], 0, CorrelationScaling::RawSum).unwrap();
     assert_eq!(result.real(), 0.0);
     assert_eq!(result.imag(), 1.0);
     assert_eq!(result.overlap_samples(), 1);
@@ -18,23 +12,11 @@ fn conjugates_reference_before_multiplication() {
 fn positive_lag_advances_observed_and_negative_lag_advances_reference() {
     let reference = [1.0, 0.0, 2.0, 0.0, 3.0, 0.0];
     let observed = [10.0, 0.0, 20.0, 0.0, 30.0, 0.0];
-    let positive = correlate_iq(
-        &reference,
-        &observed,
-        1,
-        CorrelationScaling::RawSum,
-    )
-    .unwrap();
+    let positive = correlate_iq(&reference, &observed, 1, CorrelationScaling::RawSum).unwrap();
     assert_eq!(positive.real(), 1.0 * 20.0 + 2.0 * 30.0);
     assert_eq!(positive.overlap_samples(), 2);
 
-    let negative = correlate_iq(
-        &reference,
-        &observed,
-        -1,
-        CorrelationScaling::RawSum,
-    )
-    .unwrap();
+    let negative = correlate_iq(&reference, &observed, -1, CorrelationScaling::RawSum).unwrap();
     assert_eq!(negative.real(), 2.0 * 10.0 + 3.0 * 20.0);
     assert_eq!(negative.overlap_samples(), 2);
 }
@@ -43,20 +25,8 @@ fn positive_lag_advances_observed_and_negative_lag_advances_reference() {
 fn scaling_is_explicit_raw_sum_or_overlap_mean() {
     let reference = [1.0, 0.0, 1.0, 0.0];
     let observed = [2.0, 0.0, 4.0, 0.0];
-    let raw = correlate_iq(
-        &reference,
-        &observed,
-        0,
-        CorrelationScaling::RawSum,
-    )
-    .unwrap();
-    let mean = correlate_iq(
-        &reference,
-        &observed,
-        0,
-        CorrelationScaling::MeanByOverlap,
-    )
-    .unwrap();
+    let raw = correlate_iq(&reference, &observed, 0, CorrelationScaling::RawSum).unwrap();
+    let mean = correlate_iq(&reference, &observed, 0, CorrelationScaling::MeanByOverlap).unwrap();
     assert_eq!(raw.real(), 6.0);
     assert_eq!(mean.real(), 3.0);
     assert_eq!(raw.imag(), mean.imag());

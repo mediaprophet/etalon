@@ -6,23 +6,23 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
-pub mod filter;
 pub mod audio;
 pub mod correlation;
-pub mod detection;
 pub mod decode;
+pub mod detection;
 pub mod dft;
 pub mod execution;
 pub mod fft;
+pub mod filter;
+pub mod goertzel;
 pub mod iq;
 pub mod phase;
 pub mod pipeline;
-pub mod goertzel;
 pub mod stats;
 pub mod temporal;
-pub mod window;
 pub mod vision;
 pub mod wave;
+pub mod window;
 
 /// Failures are explicit; no routine invents a nominal signal or estimate.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

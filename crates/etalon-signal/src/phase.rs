@@ -109,10 +109,7 @@ pub fn unwrap_phase_into(
     // Compute output in a second pass to preserve transactional state/output
     // semantics even if a future numeric change makes the preflight fail.
     next_state = *state;
-    for (index, (&phase, &discontinuity)) in wrapped_radians
-        .iter()
-        .zip(discontinuities)
-        .enumerate()
+    for (index, (&phase, &discontinuity)) in wrapped_radians.iter().zip(discontinuities).enumerate()
     {
         let wrapped = f64::from(phase);
         let unwrapped = if !next_state.initialized || discontinuity {

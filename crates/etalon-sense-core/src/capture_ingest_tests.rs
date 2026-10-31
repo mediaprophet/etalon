@@ -1,8 +1,8 @@
 use super::*;
 use crate::{
     adapter::{
-        AdapterDescriptor, AdapterId, AuthorizedCapture, AuthorizedExtendedCapture,
-        CapturePermit, DiscoveredSource, ExtendedAdapterDescriptor, ExtendedCapturePermit,
+        AdapterDescriptor, AdapterId, AuthorizedCapture, AuthorizedExtendedCapture, CapturePermit,
+        DiscoveredSource, ExtendedAdapterDescriptor, ExtendedCapturePermit,
         ExtendedDiscoveredSource,
     },
     buffer::BufferToken,
@@ -44,9 +44,13 @@ fn extended_layout() -> SampleLayout {
     SampleLayout::new(1, [2, 0, 0, 0], [2, 0, 0, 0], SampleEncoding::I16).unwrap()
 }
 
-fn stamp(ticks: u64) -> ClockStamp { ClockStamp::new(5, 2, ticks, 0).unwrap() }
+fn stamp(ticks: u64) -> ClockStamp {
+    ClockStamp::new(5, 2, ticks, 0).unwrap()
+}
 
-fn calibration() -> CalibrationRecord { CalibrationRecord::new(CalibrationState::Missing).unwrap() }
+fn calibration() -> CalibrationRecord {
+    CalibrationRecord::new(CalibrationState::Missing).unwrap()
+}
 
 fn metadata(source_id: u64, region: SampleRegion, sequence: u64) -> IngestMetadata {
     IngestMetadata::new(
@@ -89,13 +93,18 @@ impl SensorAdapter for BuiltinAdapter {
         AdapterDescriptor::new(AdapterId::new(1).unwrap(), Modality::Wifi)
     }
 
-    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> { Ok(stamp(20)) }
+    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
+        Ok(stamp(20))
+    }
 
     fn discover_backend(&mut self, _out: &mut [DiscoveredSource]) -> Result<usize, AdapterError> {
         Ok(0)
     }
 
-    fn start_backend(&mut self, _request: AuthorizedCapture) -> Result<CaptureSession, AdapterError> {
+    fn start_backend(
+        &mut self,
+        _request: AuthorizedCapture,
+    ) -> Result<CaptureSession, AdapterError> {
         Err(AdapterError::Unavailable)
     }
 
@@ -108,7 +117,9 @@ impl SensorAdapter for BuiltinAdapter {
         Ok(output.complete())
     }
 
-    fn stop_backend(&mut self, _session: CaptureSession) -> Result<(), AdapterError> { Ok(()) }
+    fn stop_backend(&mut self, _session: CaptureSession) -> Result<(), AdapterError> {
+        Ok(())
+    }
 }
 
 struct RegisteredAdapter {
@@ -120,7 +131,9 @@ impl ExtendedSensorAdapter for RegisteredAdapter {
         ExtendedAdapterDescriptor::new(AdapterId::new(2).unwrap(), 801).unwrap()
     }
 
-    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> { Ok(stamp(20)) }
+    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
+        Ok(stamp(20))
+    }
 
     fn discover_backend(
         &mut self,
@@ -145,7 +158,9 @@ impl ExtendedSensorAdapter for RegisteredAdapter {
         Ok(output.complete())
     }
 
-    fn stop_backend(&mut self, _session: ExtendedCaptureSession) -> Result<(), AdapterError> { Ok(()) }
+    fn stop_backend(&mut self, _session: ExtendedCaptureSession) -> Result<(), AdapterError> {
+        Ok(())
+    }
 }
 
 fn builtin_request() -> (DiscoveredSource, AuthorizedCapture) {
@@ -159,7 +174,8 @@ fn builtin_request() -> (DiscoveredSource, AuthorizedCapture) {
 fn extended_request() -> (ExtendedDiscoveredSource, AuthorizedExtendedCapture) {
     let capability = extended_capability();
     let source = ExtendedDiscoveredSource::new(31, capability).unwrap();
-    let permit = ExtendedCapturePermit::after_authorization(31, 99, capability, stamp(100)).unwrap();
+    let permit =
+        ExtendedCapturePermit::after_authorization(31, 99, capability, stamp(100)).unwrap();
     let request = AuthorizedExtendedCapture::new(source, permit, stamp(10)).unwrap();
     (source, request)
 }
@@ -184,7 +200,10 @@ fn builtin_authorized_capture_flows_into_ingest_without_trust_upgrade() {
     .unwrap();
 
     assert_eq!(frame.payload(), &[0xA5; 16]);
-    assert_eq!(frame.measurement().source().trust_state(), TrustState::Unverified);
+    assert_eq!(
+        frame.measurement().source().trust_state(),
+        TrustState::Unverified
+    );
     assert_eq!(frame.measurement().sample_rate(), None);
     assert_eq!(frame.measurement().quality(), QualityRecord::Unknown);
     assert_eq!(adapter.calls, 1);
@@ -206,7 +225,8 @@ fn authorized_capture_can_preserve_an_unknown_timestamp() {
         buffer,
         &mut stream,
         untimed_metadata(17, builtin_region(), 1),
-    ).unwrap();
+    )
+    .unwrap();
 
     assert_eq!(frame.measurement().timestamp(), None);
     assert_eq!(stream.last_observation(), Some((1, None)));
@@ -232,7 +252,9 @@ fn capture_preflight_enforces_sequence_without_a_timestamp() {
             5,
             Some(ClockStamp::new(6, 2, 2_001, 0).unwrap()),
         ),
-        Err(CaptureIngestError::Contract(ContractError::ClockDomainMismatch)),
+        Err(CaptureIngestError::Contract(
+            ContractError::ClockDomainMismatch
+        )),
     );
 }
 
@@ -241,7 +263,8 @@ fn registered_capture_flows_into_extended_ingest_and_keeps_unknown_unit() {
     let (source, request) = extended_request();
     let session = ExtendedCaptureSession::new(AdapterId::new(2).unwrap(), source, 70, 5).unwrap();
     let mut bytes = [0u8; 4];
-    let buffer = ExtendedCaptureBuffer::new(&mut bytes, extended_layout(), extended_capability()).unwrap();
+    let buffer =
+        ExtendedCaptureBuffer::new(&mut bytes, extended_layout(), extended_capability()).unwrap();
     let mut adapter = RegisteredAdapter { calls: 0 };
     let mut stream = ExtendedIngestStream::new(31, 61, 5, extended_capability()).unwrap();
 
@@ -257,7 +280,10 @@ fn registered_capture_flows_into_extended_ingest_and_keeps_unknown_unit() {
 
     assert_eq!(frame.payload(), &[0x5A; 4]);
     assert_eq!(frame.measurement().capability().unit_id(), None);
-    assert_eq!(frame.measurement().source().trust_state(), TrustState::Unverified);
+    assert_eq!(
+        frame.measurement().source().trust_state(),
+        TrustState::Unverified
+    );
     assert_eq!(adapter.calls, 1);
     assert_eq!(stream.last_sequence(), Some((4, stamp(1_004))));
 }
@@ -271,17 +297,19 @@ fn invalid_source_or_sequence_is_rejected_before_adapter_capture() {
     let mut adapter = BuiltinAdapter { calls: 0 };
     let mut stream = IngestStream::new(17, 25, 3).unwrap();
     let first = [0u8; 16];
-    stream.ingest(
-        &first,
-        builtin_layout(),
-        builtin_region(),
-        SourceDescriptor::new(17, SourceKind::Live).unwrap(),
-        stamp(1_001),
-        None,
-        calibration(),
-        QualityRecord::Unknown,
-        1,
-    ).unwrap();
+    stream
+        .ingest(
+            &first,
+            builtin_layout(),
+            builtin_region(),
+            SourceDescriptor::new(17, SourceKind::Live).unwrap(),
+            stamp(1_001),
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            1,
+        )
+        .unwrap();
 
     assert_eq!(
         capture_and_ingest(
@@ -328,17 +356,19 @@ fn duplicate_sequence_is_rejected_before_backend_capture() {
     let buffer = CaptureBuffer::new(&mut bytes, builtin_layout(), builtin_capability()).unwrap();
     let mut adapter = BuiltinAdapter { calls: 0 };
     let mut stream = IngestStream::new(17, 25, 3).unwrap();
-    stream.ingest(
-        &[0u8; 16],
-        builtin_layout(),
-        builtin_region(),
-        SourceDescriptor::new(17, SourceKind::Live).unwrap(),
-        stamp(1_001),
-        None,
-        calibration(),
-        QualityRecord::Unknown,
-        1,
-    ).unwrap();
+    stream
+        .ingest(
+            &[0u8; 16],
+            builtin_layout(),
+            builtin_region(),
+            SourceDescriptor::new(17, SourceKind::Live).unwrap(),
+            stamp(1_001),
+            None,
+            calibration(),
+            QualityRecord::Unknown,
+            1,
+        )
+        .unwrap();
     assert_eq!(
         capture_and_ingest(
             &mut adapter,
@@ -353,4 +383,3 @@ fn duplicate_sequence_is_rejected_before_backend_capture() {
     assert_eq!(adapter.calls, 0);
     assert_eq!(stream.last_sequence(), Some((1, stamp(1_001))));
 }
-

@@ -51,9 +51,10 @@ impl PreparedComputeDescriptor<'_> {
             || self.input_size > limits.max_storage_buffer_binding_size
             || self.output_size > limits.max_storage_buffer_binding_size
             || self.parameter_size > limits.max_uniform_buffer_binding_size
-            || self.workgroups.iter().any(|&count| {
-                count == 0 || count > limits.max_compute_workgroups_per_dimension
-            })
+            || self
+                .workgroups
+                .iter()
+                .any(|&count| count == 0 || count > limits.max_compute_workgroups_per_dimension)
         {
             return Err(PreparedComputeError::InvalidDescriptor);
         }
@@ -127,7 +128,10 @@ pub struct PrepareComputeError {
 
 impl From<PreparedComputeError> for PrepareComputeError {
     fn from(reason: PreparedComputeError) -> Self {
-        Self { reason, message: String::new() }
+        Self {
+            reason,
+            message: String::new(),
+        }
     }
 }
 
@@ -161,7 +165,10 @@ mod tests {
         assert_eq!(desc.buffer_bytes(), Ok(288));
         assert_eq!(desc.validate(&crate::Limits::default()), Ok(()));
         desc.buffer_budget -= 1;
-        assert_eq!(desc.validate(&crate::Limits::default()), Err(PreparedComputeError::Capacity));
+        assert_eq!(
+            desc.validate(&crate::Limits::default()),
+            Err(PreparedComputeError::Capacity)
+        );
     }
 
     #[test]
@@ -169,12 +176,21 @@ mod tests {
         for size in [0, 1, 3, u64::MAX] {
             let mut desc = descriptor();
             desc.input_size = size;
-            assert_eq!(desc.validate(&crate::Limits::default()), Err(PreparedComputeError::InvalidDescriptor));
+            assert_eq!(
+                desc.validate(&crate::Limits::default()),
+                Err(PreparedComputeError::InvalidDescriptor)
+            );
         }
         let mut desc = descriptor();
         desc.workgroups[0] = 0;
-        assert_eq!(desc.validate(&crate::Limits::default()), Err(PreparedComputeError::InvalidDescriptor));
+        assert_eq!(
+            desc.validate(&crate::Limits::default()),
+            Err(PreparedComputeError::InvalidDescriptor)
+        );
         desc.input_size = u64::MAX;
-        assert_eq!(desc.buffer_bytes(), Err(PreparedComputeError::InvalidDescriptor));
+        assert_eq!(
+            desc.buffer_bytes(),
+            Err(PreparedComputeError::InvalidDescriptor)
+        );
     }
 }

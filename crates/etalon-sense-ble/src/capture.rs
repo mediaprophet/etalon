@@ -1,8 +1,5 @@
+use std::sync::{atomic::Ordering, Arc};
 use std::{marker::PhantomData, rc::Rc};
-use std::sync::{
-    atomic::Ordering,
-    Arc,
-};
 
 use etalon_sense_core::{
     adapter::{
@@ -65,10 +62,8 @@ impl<C: TrustedCaptureClock> BleRssiAdapter<C> {
         clock: C,
         gate: Arc<dyn BleCollectionGate>,
     ) -> Result<Self, AdapterError> {
-        let descriptor = ExtendedAdapterDescriptor::new(
-            config.adapter_id,
-            config.capability.modality_id(),
-        )?;
+        let descriptor =
+            ExtendedAdapterDescriptor::new(config.adapter_id, config.capability.modality_id())?;
         let source = ExtendedDiscoveredSource::new(config.source_id, config.capability)?;
         Ok(Self {
             descriptor,
@@ -98,7 +93,9 @@ impl<C: TrustedCaptureClock> BleRssiAdapter<C> {
 
     /// Number of callback records dropped since the current watcher started.
     pub fn dropped_advertisements(&self) -> u64 {
-        self.shared.as_ref().map_or(0, |state| state.dropped.load(Ordering::Relaxed))
+        self.shared
+            .as_ref()
+            .map_or(0, |state| state.dropped.load(Ordering::Relaxed))
     }
 
     /// Cumulative dropped-counter snapshots immediately before and after the
@@ -116,8 +113,12 @@ impl<C: TrustedCaptureClock> BleRssiAdapter<C> {
     }
 
     fn halt_collection(&mut self) {
-        if let Some(shared) = &self.shared { shared.halt(); }
-        if let Some(runtime) = &self.runtime { runtime.stop_signal.request_stop(); }
+        if let Some(shared) = &self.shared {
+            shared.halt();
+        }
+        if let Some(runtime) = &self.runtime {
+            runtime.stop_signal.request_stop();
+        }
         self.clear_last_capture();
     }
 
@@ -136,9 +137,17 @@ impl<C: TrustedCaptureClock> BleRssiAdapter<C> {
         apartment: WinRtApartment,
     ) -> bool {
         let mut runtime = BleRuntime::new(
-            watcher, received_token, handler, Arc::clone(&shared), stop_signal, None, apartment,
+            watcher,
+            received_token,
+            handler,
+            Arc::clone(&shared),
+            stop_signal,
+            None,
+            apartment,
         );
-        if runtime.shutdown().is_ok() { return true; }
+        if runtime.shutdown().is_ok() {
+            return true;
+        }
         self.shared = Some(shared);
         self.runtime = Some(runtime);
         self.faulted = true;
@@ -147,16 +156,24 @@ impl<C: TrustedCaptureClock> BleRssiAdapter<C> {
 }
 
 impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
-    fn descriptor(&self) -> ExtendedAdapterDescriptor { self.descriptor }
+    fn descriptor(&self) -> ExtendedAdapterDescriptor {
+        self.descriptor
+    }
 
-    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> { self.clock.now() }
+    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
+        self.clock.now()
+    }
 
     fn discover_backend(
         &mut self,
         out: &mut [ExtendedDiscoveredSource],
     ) -> Result<usize, AdapterError> {
-        if out.is_empty() { return Err(AdapterError::DiscoveryBufferTooSmall); }
-        if self.active.is_some() { return Err(AdapterError::InvalidSession); }
+        if out.is_empty() {
+            return Err(AdapterError::DiscoveryBufferTooSmall);
+        }
+        if self.active.is_some() {
+            return Err(AdapterError::InvalidSession);
+        }
         out[0] = self.source;
         self.discovered = true;
         Ok(1)
@@ -169,28 +186,40 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
         if !self.discovered || request.source() != self.source {
             return Err(AdapterError::AuthorizationDenied);
         }
-        if self.runtime.is_some() || self.active.is_some() { return Err(AdapterError::InvalidSession); }
-        if self.faulted { return Err(AdapterError::Unavailable); }
+        if self.runtime.is_some() || self.active.is_some() {
+            return Err(AdapterError::InvalidSession);
+        }
+        if self.faulted {
+            return Err(AdapterError::Unavailable);
+        }
         request.validate_at(self.trusted_now()?)?;
         let scope = BleCollectionScope::from_request(&request);
         let mut checked = false;
-        let mut check_start = || { checked = true; };
+        let mut check_start = || {
+            checked = true;
+        };
         let permitted = run_collection_gate(self.gate.as_ref(), scope, &mut check_start);
         drop(check_start);
         if !permitted || !checked {
             return Err(AdapterError::AuthorizationDenied);
         }
         let session_id = self.next_session_id;
-        let next_session_id = session_id.checked_add(1).ok_or(AdapterError::BackendFailure)?;
+        let next_session_id = session_id
+            .checked_add(1)
+            .ok_or(AdapterError::BackendFailure)?;
         let session = ExtendedCaptureSession::new(
-            self.descriptor.id(), self.source, session_id, self.generation,
+            self.descriptor.id(),
+            self.source,
+            session_id,
+            self.generation,
         )?;
 
         let apartment = WinRtApartment::initialize()?;
         let watcher = Arc::new(
             BluetoothLEAdvertisementWatcher::new().map_err(|_| AdapterError::Unavailable)?,
         );
-        watcher.SetScanningMode(BluetoothLEScanningMode::Passive)
+        watcher
+            .SetScanningMode(BluetoothLEScanningMode::Passive)
             .map_err(|_| AdapterError::Unavailable)?;
 
         let shared = Arc::new(CallbackState::new(self.config.max_session_observations()));
@@ -222,7 +251,8 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
                 }
                 let mut collected = false;
                 let mut collect = || {
-                    if collected || !callback_signal.is_started() || !callback_state.is_collecting() {
+                    if collected || !callback_signal.is_started() || !callback_state.is_collecting()
+                    {
                         return;
                     }
                     collected = true;
@@ -255,7 +285,8 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
                         callback_signal.request_stop();
                     }
                 };
-                let permitted = run_collection_gate(callback_gate.as_ref(), callback_scope, &mut collect);
+                let permitted =
+                    run_collection_gate(callback_gate.as_ref(), callback_scope, &mut collect);
                 drop(collect);
                 if !permitted {
                     callback_state.halt_from_callback();
@@ -275,7 +306,9 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             }
             Ok(())
         });
-        let received_token = watcher.Received(&handler).map_err(|_| AdapterError::BackendFailure)?;
+        let received_token = watcher
+            .Received(&handler)
+            .map_err(|_| AdapterError::BackendFailure)?;
         let stop_worker = match spawn_stop_worker(
             Arc::clone(&watcher),
             Arc::clone(&stop_signal),
@@ -294,7 +327,9 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             let mut attempted = false;
             let mut os_started = false;
             let mut start = || {
-                if stop_signal.requested() { return; }
+                if stop_signal.requested() {
+                    return;
+                }
                 attempted = true;
                 os_started = watcher.Start().is_ok();
             };
@@ -306,9 +341,17 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             Ok(result) => result,
             Err(_) => {
                 stop_signal.request_stop();
-                let worker_stopped = stop_worker.join().unwrap_or(Err(AdapterError::BackendFailure)).is_ok();
+                let worker_stopped = stop_worker
+                    .join()
+                    .unwrap_or(Err(AdapterError::BackendFailure))
+                    .is_ok();
                 let cleaned = self.cleanup_failed_start(
-                    watcher, received_token, handler, shared, stop_signal, apartment,
+                    watcher,
+                    received_token,
+                    handler,
+                    shared,
+                    stop_signal,
+                    apartment,
                 );
                 return Err(if worker_stopped && cleaned {
                     AdapterError::AuthorizationDenied
@@ -319,9 +362,17 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
         };
         if !permitted || !attempted || !start_ok || !os_started || stop_signal.requested() {
             stop_signal.request_stop();
-            let worker_stopped = stop_worker.join().unwrap_or(Err(AdapterError::BackendFailure)).is_ok();
+            let worker_stopped = stop_worker
+                .join()
+                .unwrap_or(Err(AdapterError::BackendFailure))
+                .is_ok();
             let cleaned = self.cleanup_failed_start(
-                watcher, received_token, handler, shared, stop_signal, apartment,
+                watcher,
+                received_token,
+                handler,
+                shared,
+                stop_signal,
+                apartment,
             );
             return Err(if worker_stopped && cleaned && !(attempted && !start_ok) {
                 AdapterError::AuthorizationDenied
@@ -333,7 +384,13 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
         self.next_session_id = next_session_id;
         self.shared = Some(Arc::clone(&shared));
         self.runtime = Some(BleRuntime::new(
-            watcher, received_token, handler, shared, stop_signal, Some(stop_worker), apartment,
+            watcher,
+            received_token,
+            handler,
+            shared,
+            stop_signal,
+            Some(stop_worker),
+            apartment,
         ));
         self.active = Some(session);
         self.active_scope = Some(scope);
@@ -349,8 +406,14 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
         if self.active != Some(session) || !session.matches(self.descriptor, output.source()) {
             return Err(AdapterError::InvalidSession);
         }
-        if self.faulted { return Err(AdapterError::Unavailable); }
-        if self.shared.as_ref().is_some_and(|state| state.halted.load(Ordering::Acquire)) {
+        if self.faulted {
+            return Err(AdapterError::Unavailable);
+        }
+        if self
+            .shared
+            .as_ref()
+            .is_some_and(|state| state.halted.load(Ordering::Acquire))
+        {
             self.clear_last_capture();
             return Err(AdapterError::Unavailable);
         }
@@ -372,10 +435,15 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             return Err(error);
         }
 
-        let watcher_status = self.runtime.as_ref()
+        let watcher_status = self
+            .runtime
+            .as_ref()
             .ok_or(AdapterError::Unavailable)?
-            .watcher.Status();
-        let collection_closed = self.shared.as_ref()
+            .watcher
+            .Status();
+        let collection_closed = self
+            .shared
+            .as_ref()
             .is_some_and(|state| state.collection_closed.load(Ordering::Acquire));
         if !matches!(watcher_status, Ok(status) if status == BluetoothLEAdvertisementWatcherStatus::Started)
             && !collection_closed
@@ -401,7 +469,9 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
         let mut capture_result = Err(AdapterError::Unavailable);
         let mut drop_count_interval = None;
         let mut collect = || {
-            if collected { return; }
+            if collected {
+                return;
+            }
             collected = true;
             let mut queue = match shared.queue.try_lock() {
                 Ok(queue) => queue,
@@ -411,11 +481,16 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
                 }
             };
             let dropped_before = shared.dropped.load(Ordering::Relaxed);
-            if !queue.pop_exact(&mut batch[..count]) { return; }
+            if !queue.pop_exact(&mut batch[..count]) {
+                return;
+            }
             let dropped_after = shared.dropped.load(Ordering::Relaxed);
             drop_count_interval = Some((dropped_before, dropped_after));
             drop(queue);
-            for (sample, chunk) in batch[..count].iter().zip(output.writable_bytes().chunks_exact_mut(2)) {
+            for (sample, chunk) in batch[..count]
+                .iter()
+                .zip(output.writable_bytes().chunks_exact_mut(2))
+            {
                 chunk.copy_from_slice(&sample.rssi_dbm.to_le_bytes());
             }
             capture_result = Ok(());
@@ -428,7 +503,9 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
             stop_signal.request_stop();
             return Err(AdapterError::AuthorizationDenied);
         }
-        if let Err(error) = capture_result { return Err(error); }
+        if let Err(error) = capture_result {
+            return Err(error);
+        }
         self.last_records[..count].copy_from_slice(&batch[..count]);
         self.last_record_count = count;
         self.last_capture_drop_interval = drop_count_interval;
@@ -436,10 +513,11 @@ impl<C: TrustedCaptureClock> ExtendedSensorAdapter for BleRssiAdapter<C> {
     }
 
     fn stop_backend(&mut self, session: ExtendedCaptureSession) -> Result<(), AdapterError> {
-        if self.active != Some(session) { return Err(AdapterError::InvalidSession); }
+        if self.active != Some(session) {
+            return Err(AdapterError::InvalidSession);
+        }
         self.halt_collection();
-        let stop_result = self.runtime.as_mut()
-            .map_or(Ok(()), BleRuntime::shutdown);
+        let stop_result = self.runtime.as_mut().map_or(Ok(()), BleRuntime::shutdown);
         if stop_result.is_err() {
             // Keep the same session and runtime so the caller can retry Stop.
             self.faulted = true;

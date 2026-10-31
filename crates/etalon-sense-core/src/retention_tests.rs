@@ -85,14 +85,14 @@ fn unknown_expiry_and_unknown_revocation_fail_closed_without_writing() {
     );
     assert_eq!(out, [sentinel]);
 
-    let unknown_revocation = [candidate(1, 4, Some(stamp(200, 0)), RevocationState::Unknown)];
+    let unknown_revocation = [candidate(
+        1,
+        4,
+        Some(stamp(200, 0)),
+        RevocationState::Unknown,
+    )];
     assert_eq!(
-        plan_retention(
-            policy(1, 4),
-            stamp(100, 0),
-            &unknown_revocation,
-            &mut out
-        ),
+        plan_retention(policy(1, 4), stamp(100, 0), &unknown_revocation, &mut out),
         Err(ContractError::InvalidSource)
     );
     assert_eq!(out, [sentinel]);
@@ -100,7 +100,12 @@ fn unknown_expiry_and_unknown_revocation_fail_closed_without_writing() {
 
 #[test]
 fn mismatched_clock_domains_and_ambiguous_expiry_fail_closed() {
-    let candidates = [candidate(1, 1, Some(ClockStamp::new(6, 3, 200, 0).unwrap()), RevocationState::Clear)];
+    let candidates = [candidate(
+        1,
+        1,
+        Some(ClockStamp::new(6, 3, 200, 0).unwrap()),
+        RevocationState::Clear,
+    )];
     let mut out = [entry(8, RetentionAction::Retain, 0, 0); 1];
     assert_eq!(
         plan_retention(policy(1, 1), stamp(100, 0), &candidates, &mut out),
@@ -119,7 +124,12 @@ fn mismatched_clock_domains_and_ambiguous_expiry_fail_closed() {
         plan_retention(
             policy(1, 1),
             stamp(100, 10),
-            &[candidate(1, 1, Some(stamp(105, 10)), RevocationState::Clear)],
+            &[candidate(
+                1,
+                1,
+                Some(stamp(105, 10)),
+                RevocationState::Clear
+            )],
             &mut out
         ),
         Err(ContractError::InvalidTime)
@@ -143,8 +153,14 @@ fn exact_expiry_is_expired_and_pre_expiry_uncertainty_stays_live() {
 
 #[test]
 fn invalid_ids_duplicates_capacity_and_arithmetic_overflow_fail_closed() {
-    assert_eq!(ResourceId::new([0; 16]), Err(ContractError::InvalidIdentifier));
-    assert_eq!(ClockDomain::new(0, 1), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        ResourceId::new([0; 16]),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        ClockDomain::new(0, 1),
+        Err(ContractError::InvalidIdentifier)
+    );
 
     let duplicate = [
         candidate(1, 1, Some(stamp(200, 0)), RevocationState::Clear),

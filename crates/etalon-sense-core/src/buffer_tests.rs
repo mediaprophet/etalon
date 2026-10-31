@@ -16,8 +16,14 @@ fn layout(
 
 #[test]
 fn tokens_reject_reserved_zero_and_keep_generations_distinct() {
-    assert_eq!(BufferToken::new(0, 1), Err(ContractError::InvalidIdentifier));
-    assert_eq!(BufferToken::new(1, 0), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        BufferToken::new(0, 1),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        BufferToken::new(1, 0),
+        Err(ContractError::InvalidIdentifier)
+    );
     assert_ne!(token(1), token(2));
     assert_eq!(token(2).allocation_id(), 7);
     assert_eq!(token(2).generation(), 2);
@@ -76,13 +82,7 @@ fn padded_and_transposed_layouts_have_checked_spans() {
 
 #[test]
 fn layout_reports_u32_extents_and_u64_stride_overflow() {
-    let large = layout(
-        1,
-        [u32::MAX, 0, 0, 0],
-        [1, 0, 0, 0],
-        SampleEncoding::U8,
-    )
-    .unwrap();
+    let large = layout(1, [u32::MAX, 0, 0, 0], [1, 0, 0, 0], SampleEncoding::U8).unwrap();
     assert_eq!(large.required_byte_span(), Ok(u64::from(u32::MAX)));
 
     assert_eq!(

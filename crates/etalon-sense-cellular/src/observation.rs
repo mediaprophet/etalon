@@ -3,7 +3,10 @@
 
 use etalon_sense_core::{
     evidence::EvidenceOrigin,
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind, QuantityUnitIds},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        QuantityUnitIds,
+    },
     policy::{PolicyOutcome, PolicyRequest},
     quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor},
     ContractError,
@@ -72,7 +75,9 @@ pub fn adapt_cellular(
         telemetry.rsrq_db().map(|v| (CellularMetric::RsrqDb, v)),
         telemetry.sinr_db().map(|v| (CellularMetric::SinrDb, v)),
         telemetry.rssi_dbm().map(|v| (CellularMetric::RssiDbm, v)),
-        telemetry.bars().map(|bars| (CellularMetric::SignalBars, bars.level as f64)),
+        telemetry
+            .bars()
+            .map(|bars| (CellularMetric::SignalBars, bars.level as f64)),
     ];
     let required = values.iter().filter(|value| value.is_some()).count();
     if output.len() < required {
@@ -85,11 +90,13 @@ pub fn adapt_cellular(
         TelemetryTimestamp::Unknown => None,
         TelemetryTimestamp::Clock(stamp) => Some(stamp),
     };
-    let policy = mapping.policy.map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
-        HostPolicyDecision::Evaluated { request, outcome }
-    });
-    let calibration = CalibrationRecord::new(CalibrationState::Missing)
-        .map_err(AdaptError::InvalidMapping)?;
+    let policy = mapping
+        .policy
+        .map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
+            HostPolicyDecision::Evaluated { request, outcome }
+        });
+    let calibration =
+        CalibrationRecord::new(CalibrationState::Missing).map_err(AdaptError::InvalidMapping)?;
 
     let mut out_index = 0;
     for (mapping_index, value) in values.into_iter().enumerate() {
@@ -108,7 +115,8 @@ pub fn adapt_cellular(
                 EvidenceOrigin::Unknown,
                 None,
                 policy,
-            ).map_err(|error| {
+            )
+            .map_err(|error| {
                 output.fill(None);
                 AdaptError::InvalidMapping(error)
             })?;

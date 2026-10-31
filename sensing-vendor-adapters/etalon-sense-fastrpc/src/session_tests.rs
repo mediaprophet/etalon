@@ -1,5 +1,5 @@
-use std::cell::Cell;
 use super::*;
+use std::cell::Cell;
 
 std::thread_local! {
     static CALLS: Cell<u32> = const { Cell::new(0) };
@@ -10,12 +10,18 @@ std::thread_local! {
 }
 
 struct Lease(Cell<bool>);
-impl DeploymentLease for Lease { fn current(&self) -> bool { self.0.get() } }
+impl DeploymentLease for Lease {
+    fn current(&self) -> bool {
+        self.0.get()
+    }
+}
 
 unsafe extern "C" fn invoke(_handle: u64, _scalars: u32, args: *mut RemoteArg) -> i32 {
     CALLS.with(|calls| calls.set(calls.get() + 1));
     if MUTATE_ARGS.with(Cell::get) {
-        unsafe { (*args.add(1)).buf.len = 0; }
+        unsafe {
+            (*args.add(1)).buf.len = 0;
+        }
     }
     INVOKE_STATUS.with(Cell::get)
 }
@@ -31,11 +37,21 @@ fn session(lease: &Lease) -> FastRpcSession<'_> {
     INVOKE_STATUS.with(|v| v.set(0));
     CLOSE_STATUS.with(|v| v.set(0));
     MUTATE_ARGS.with(|v| v.set(false));
-    FastRpcSession { lease,
+    FastRpcSession {
+        lease,
         #[cfg(any(target_os = "linux", target_os = "android"))]
         library: None,
-        invoke, close, handle: Some(0), state: SessionState::Open,
-        target_id: 1, generation: 1, domain: 3, session: 0, max_pairs: 1, _thread_affinity: PhantomData }
+        invoke,
+        close,
+        handle: Some(0),
+        state: SessionState::Open,
+        target_id: 1,
+        generation: 1,
+        domain: 3,
+        session: 0,
+        max_pairs: 1,
+        _thread_affinity: PhantomData,
+    }
 }
 
 fn request() -> [u8; 68] {
@@ -72,7 +88,10 @@ fn revoked_admission_blocks_invoke_but_allows_cleanup() {
     let mut owner = session(&lease);
     lease.0.set(false);
     let mut output = [0xaa; 72];
-    assert_eq!(owner.invoke_buffers(&request(), &mut output), Err(FastRpcError::DeploymentAdmission));
+    assert_eq!(
+        owner.invoke_buffers(&request(), &mut output),
+        Err(FastRpcError::DeploymentAdmission)
+    );
     assert_eq!(output, [0; 72]);
     assert_eq!(CALLS.with(Cell::get), 0);
     assert_eq!(owner.close(), Ok(()));
@@ -84,10 +103,16 @@ fn native_failure_clears_output_and_faults_session() {
     let mut owner = session(&lease);
     INVOKE_STATUS.with(|v| v.set(-7));
     let mut output = [0xaa; 72];
-    assert_eq!(owner.invoke_buffers(&request(), &mut output), Err(FastRpcError::Invoke(-7)));
+    assert_eq!(
+        owner.invoke_buffers(&request(), &mut output),
+        Err(FastRpcError::Invoke(-7))
+    );
     assert_eq!(output, [0; 72]);
     assert_eq!(owner.state(), SessionState::Faulted);
-    assert_eq!(owner.invoke_buffers(&request(), &mut output), Err(FastRpcError::InvalidState));
+    assert_eq!(
+        owner.invoke_buffers(&request(), &mut output),
+        Err(FastRpcError::InvalidState)
+    );
     assert_eq!(CALLS.with(Cell::get), 1);
 }
 
@@ -97,7 +122,10 @@ fn changed_native_argument_lengths_are_rejected() {
     let mut owner = session(&lease);
     MUTATE_ARGS.with(|v| v.set(true));
     let mut output = [0xaa; 72];
-    assert_eq!(owner.invoke_buffers(&request(), &mut output), Err(FastRpcError::ArgumentMutation));
+    assert_eq!(
+        owner.invoke_buffers(&request(), &mut output),
+        Err(FastRpcError::ArgumentMutation)
+    );
     assert_eq!(output, [0; 72]);
 }
 
@@ -109,14 +137,20 @@ fn session_generation_mismatch_never_reaches_native_runtime() {
     let identity = etalon_sense_dsp_wire::RequestIdentity::new(1, 2, 1).unwrap();
     etalon_sense_dsp_wire::encode_request(identity, 1, &[0; 4], &mut encoded).unwrap();
     let mut output = [0xaa; 72];
-    assert_eq!(owner.invoke_buffers(&encoded, &mut output), Err(FastRpcError::Wire));
+    assert_eq!(
+        owner.invoke_buffers(&encoded, &mut output),
+        Err(FastRpcError::Wire)
+    );
     assert_eq!(output, [0; 72]);
     assert_eq!(CALLS.with(Cell::get), 0);
 }
 
 #[test]
 fn independent_sessions_never_enter_native_close_concurrently() {
-    use std::sync::{atomic::{AtomicUsize, Ordering}, Arc, Barrier};
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        Arc, Barrier,
+    };
 
     static ACTIVE: AtomicUsize = AtomicUsize::new(0);
     static MAX_ACTIVE: AtomicUsize = AtomicUsize::new(0);
@@ -126,7 +160,9 @@ fn independent_sessions_never_enter_native_close_concurrently() {
         let active = ACTIVE.fetch_add(1, Ordering::SeqCst) + 1;
         MAX_ACTIVE.fetch_max(active, Ordering::SeqCst);
         // Keep the simulated native lifetime open across scheduling points.
-        for _ in 0..32 { std::thread::yield_now(); }
+        for _ in 0..32 {
+            std::thread::yield_now();
+        }
         ACTIVE.fetch_sub(1, Ordering::SeqCst);
         COMPLETED.fetch_add(1, Ordering::SeqCst);
         0

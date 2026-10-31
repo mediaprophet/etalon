@@ -102,13 +102,27 @@ impl LiveProviderDescriptor {
         })
     }
 
-    pub const fn provider_id(self) -> u64 { self.provider_id }
-    pub const fn generation(self) -> u32 { self.generation }
-    pub const fn processor(self) -> ProcessorKind { self.processor }
-    pub const fn operation(self) -> OperationId { self.operation }
-    pub const fn workspace_bytes(self) -> u64 { self.workspace_bytes }
-    pub const fn allocation_class(self) -> AllocationClass { self.allocation_class }
-    pub const fn latency_bound_ns(self) -> Option<u64> { self.latency_bound_ns }
+    pub const fn provider_id(self) -> u64 {
+        self.provider_id
+    }
+    pub const fn generation(self) -> u32 {
+        self.generation
+    }
+    pub const fn processor(self) -> ProcessorKind {
+        self.processor
+    }
+    pub const fn operation(self) -> OperationId {
+        self.operation
+    }
+    pub const fn workspace_bytes(self) -> u64 {
+        self.workspace_bytes
+    }
+    pub const fn allocation_class(self) -> AllocationClass {
+        self.allocation_class
+    }
+    pub const fn latency_bound_ns(self) -> Option<u64> {
+        self.latency_bound_ns
+    }
 }
 
 /// Runtime constraints beyond the operation and processor preference.
@@ -120,7 +134,10 @@ pub struct DispatchConstraints {
 
 impl DispatchConstraints {
     pub const fn new(allocation_class: AllocationClass, max_workspace_bytes: u64) -> Self {
-        Self { allocation_class, max_workspace_bytes }
+        Self {
+            allocation_class,
+            max_workspace_bytes,
+        }
     }
 }
 
@@ -132,9 +149,15 @@ pub struct ProviderDispatchGrant {
 }
 
 impl ProviderDispatchGrant {
-    pub const fn provider_id(&self) -> u64 { self.provider_id }
-    pub const fn generation(&self) -> u32 { self.generation }
-    pub const fn operation(&self) -> OperationId { self.operation }
+    pub const fn provider_id(&self) -> u64 {
+        self.provider_id
+    }
+    pub const fn generation(&self) -> u32 {
+        self.generation
+    }
+    pub const fn operation(&self) -> OperationId {
+        self.operation
+    }
 }
 
 /// Provider-declared completion data, checked against the admitted call.
@@ -155,7 +178,13 @@ impl ProviderReport {
         bytes_read: u64,
         bytes_written: u64,
     ) -> Self {
-        Self { provider_id, generation, operation, bytes_read, bytes_written }
+        Self {
+            provider_id,
+            generation,
+            operation,
+            bytes_read,
+            bytes_written,
+        }
     }
 }
 
@@ -210,7 +239,9 @@ pub fn dispatch_live(
 ) -> Result<LiveDispatchReceipt, ContractError> {
     let input_span = input_layout.required_byte_span()?;
     let output_span = output_layout.required_byte_span()?;
-    if (input.len() as u128) < (input_span as u128) || (output.len() as u128) < (output_span as u128) {
+    if (input.len() as u128) < (input_span as u128)
+        || (output.len() as u128) < (output_span as u128)
+    {
         output.fill(0);
         return Err(ContractError::OutOfBounds);
     }
@@ -221,10 +252,26 @@ pub fn dispatch_live(
     };
     let mut selected = None;
     if let Some(kind) = preferred {
-        selected = find_provider(Some(kind), request, constraints, providers, input_layout, output_layout, workspace.len());
+        selected = find_provider(
+            Some(kind),
+            request,
+            constraints,
+            providers,
+            input_layout,
+            output_layout,
+            workspace.len(),
+        );
     }
     if selected.is_none() && !matches!(request.preference(), ProcessorPreference::Require(_)) {
-        selected = find_provider(None, request, constraints, providers, input_layout, output_layout, workspace.len());
+        selected = find_provider(
+            None,
+            request,
+            constraints,
+            providers,
+            input_layout,
+            output_layout,
+            workspace.len(),
+        );
     }
     let Some(index) = selected else {
         output.fill(0);
@@ -233,10 +280,17 @@ pub fn dispatch_live(
 
     let provider = &mut providers[index];
     let descriptor = provider.descriptor();
-    if provider.lifecycle() != ProviderLifecycle::Ready || !eligible(
-        descriptor, request, constraints, input_layout, output_layout,
-        workspace.len(), Some(descriptor.processor),
-    ) {
+    if provider.lifecycle() != ProviderLifecycle::Ready
+        || !eligible(
+            descriptor,
+            request,
+            constraints,
+            input_layout,
+            output_layout,
+            workspace.len(),
+            Some(descriptor.processor),
+        )
+    {
         output.fill(0);
         return Err(ContractError::InvalidSource);
     }
@@ -246,11 +300,18 @@ pub fn dispatch_live(
         operation: descriptor.operation,
     };
     let report = match provider.dispatch(
-        grant, input_layout, &input[..input_span as usize], output_layout,
-        &mut output[..output_span as usize], workspace,
+        grant,
+        input_layout,
+        &input[..input_span as usize],
+        output_layout,
+        &mut output[..output_span as usize],
+        workspace,
     ) {
         Ok(report) => report,
-        Err(error) => { output.fill(0); return Err(error); }
+        Err(error) => {
+            output.fill(0);
+            return Err(error);
+        }
     };
     let current = provider.descriptor();
     if provider.lifecycle() != ProviderLifecycle::Ready
@@ -276,40 +337,68 @@ pub fn dispatch_live(
 }
 
 fn find_provider(
-    processor: Option<ProcessorKind>, request: ProcessingRequest,
-    constraints: DispatchConstraints, providers: &[&mut dyn LiveProcessingProvider],
-    input: &SampleLayout, output: &SampleLayout, workspace_len: usize,
+    processor: Option<ProcessorKind>,
+    request: ProcessingRequest,
+    constraints: DispatchConstraints,
+    providers: &[&mut dyn LiveProcessingProvider],
+    input: &SampleLayout,
+    output: &SampleLayout,
+    workspace_len: usize,
 ) -> Option<usize> {
     providers.iter().position(|provider| {
         let descriptor = provider.descriptor();
         provider.lifecycle() == ProviderLifecycle::Ready
-            && eligible(descriptor, request, constraints, input, output, workspace_len, processor)
+            && eligible(
+                descriptor,
+                request,
+                constraints,
+                input,
+                output,
+                workspace_len,
+                processor,
+            )
     })
 }
 
 fn eligible(
-    d: LiveProviderDescriptor, request: ProcessingRequest,
-    constraints: DispatchConstraints, input: &SampleLayout, output: &SampleLayout,
-    workspace_len: usize, processor: Option<ProcessorKind>,
+    d: LiveProviderDescriptor,
+    request: ProcessingRequest,
+    constraints: DispatchConstraints,
+    input: &SampleLayout,
+    output: &SampleLayout,
+    workspace_len: usize,
+    processor: Option<ProcessorKind>,
 ) -> bool {
-    if d.provider_id == 0 || d.generation == 0 || d.operation != request.operation()
+    if d.provider_id == 0
+        || d.generation == 0
+        || d.operation != request.operation()
         || processor.is_some_and(|kind| d.processor != kind)
         || !request.preference().permits(d.processor)
         || d.allocation_class != constraints.allocation_class
         || d.workspace_bytes > constraints.max_workspace_bytes
         || d.workspace_bytes > request.max_workspace_bytes()
         || d.workspace_bytes > workspace_len as u64
-    { return false; }
+    {
+        return false;
+    }
     if let Some(budget) = request.latency_budget_ns() {
-        if !matches!(d.latency_bound_ns, Some(bound) if bound <= budget) { return false; }
+        if !matches!(d.latency_bound_ns, Some(bound) if bound <= budget) {
+            return false;
+        }
     }
     layout_supported(input, d.input_encoding, d.max_rank, d.max_extents)
         && layout_supported(output, d.output_encoding, d.max_rank, d.max_extents)
 }
 
-fn layout_supported(layout: &SampleLayout, encoding: SampleEncoding, max_rank: u8,
-    max_extents: [u32; 4]) -> bool {
-    if *layout.encoding() != encoding || layout.rank() > max_rank { return false; }
+fn layout_supported(
+    layout: &SampleLayout,
+    encoding: SampleEncoding,
+    max_rank: u8,
+    max_extents: [u32; 4],
+) -> bool {
+    if *layout.encoding() != encoding || layout.rank() > max_rank {
+        return false;
+    }
     (0..usize::from(layout.rank())).all(|axis| layout.extents()[axis] <= max_extents[axis])
 }
 

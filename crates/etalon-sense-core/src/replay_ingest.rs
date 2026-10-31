@@ -26,9 +26,15 @@ pub struct ReplayIngestedFrame<'a> {
 }
 
 impl<'a> ReplayIngestedFrame<'a> {
-    pub const fn ingested(&self) -> &ExtendedIngestedFrame<'a> { &self.ingested }
-    pub const fn replay_info(&self) -> ReplayFrameInfo { self.replay_info }
-    pub const fn replay_metadata(&self) -> ReplayMetadata { self.replay_metadata }
+    pub const fn ingested(&self) -> &ExtendedIngestedFrame<'a> {
+        &self.ingested
+    }
+    pub const fn replay_info(&self) -> ReplayFrameInfo {
+        self.replay_info
+    }
+    pub const fn replay_metadata(&self) -> ReplayMetadata {
+        self.replay_metadata
+    }
 }
 
 /// Failure classification. Post-capture failures retain the frame so a caller
@@ -44,11 +50,15 @@ pub enum ReplayIngestErrorKind {
 }
 
 impl From<AdapterError> for ReplayIngestErrorKind {
-    fn from(error: AdapterError) -> Self { Self::Adapter(error) }
+    fn from(error: AdapterError) -> Self {
+        Self::Adapter(error)
+    }
 }
 
 impl From<ContractError> for ReplayIngestErrorKind {
-    fn from(error: ContractError) -> Self { Self::Contract(error) }
+    fn from(error: ContractError) -> Self {
+        Self::Contract(error)
+    }
 }
 
 /// A pre-capture error has no consumed replay frame. A post-capture error
@@ -79,26 +89,36 @@ pub fn capture_replay_and_ingest<'out>(
     let source = adapter.source();
     let capability = source.capability();
     if stream.source_id() != source.source_id() {
-        return Err(ReplayIngestFailure::BeforeCapture(ReplayIngestErrorKind::SourceMismatch));
+        return Err(ReplayIngestFailure::BeforeCapture(
+            ReplayIngestErrorKind::SourceMismatch,
+        ));
     }
     if stream.stream_id() != adapter.stream_id()
         || stream.generation() != adapter.generation()
         || stream.capability() != capability
     {
-        return Err(ReplayIngestFailure::BeforeCapture(ReplayIngestErrorKind::StreamMismatch));
+        return Err(ReplayIngestFailure::BeforeCapture(
+            ReplayIngestErrorKind::StreamMismatch,
+        ));
     }
     if buffer.capability() != capability {
-        return Err(ReplayIngestFailure::BeforeCapture(ReplayIngestErrorKind::BackendFrameMismatch));
+        return Err(ReplayIngestFailure::BeforeCapture(
+            ReplayIngestErrorKind::BackendFrameMismatch,
+        ));
     }
     let layout = buffer.layout().clone();
-    if let Err(error) = capability.validate_layout(&layout, None)
+    if let Err(error) = capability
+        .validate_layout(&layout, None)
         .and_then(|()| region.validate_layout(&layout))
     {
         return Err(ReplayIngestFailure::BeforeCapture(error.into()));
     }
 
     let output = match AuthorizedExtendedCaptureBuffer::new(
-        adapter.descriptor(), session, request, buffer,
+        adapter.descriptor(),
+        session,
+        request,
+        buffer,
     ) {
         Ok(output) => output,
         Err(error) => return Err(ReplayIngestFailure::BeforeCapture(error.into())),
@@ -118,7 +138,8 @@ pub fn capture_replay_and_ingest<'out>(
         Ok(source) => source,
         Err(error) => return Err(captured(error.into(), frame)),
     };
-    let expected_bytes = match layout.required_byte_span()
+    let expected_bytes = match layout
+        .required_byte_span()
         .and_then(|span| usize::try_from(span).map_err(|_| ContractError::ArithmeticOverflow))
     {
         Ok(bytes) => bytes,
@@ -155,12 +176,19 @@ pub fn capture_replay_and_ingest<'out>(
         info.quality(),
         info.sequence(),
     ) {
-        Ok(ingested) => Ok(ReplayIngestedFrame { ingested, replay_info: info, replay_metadata }),
+        Ok(ingested) => Ok(ReplayIngestedFrame {
+            ingested,
+            replay_info: info,
+            replay_metadata,
+        }),
         Err(error) => Err(captured(error.into(), frame)),
     }
 }
 
-fn captured<'a>(error: ReplayIngestErrorKind, frame: ReplayCapturedFrame<'a>) -> ReplayIngestFailure<'a> {
+fn captured<'a>(
+    error: ReplayIngestErrorKind,
+    frame: ReplayCapturedFrame<'a>,
+) -> ReplayIngestFailure<'a> {
     ReplayIngestFailure::Captured { error, frame }
 }
 
@@ -173,8 +201,12 @@ fn expected_event(
     let Some((previous_sequence, _)) = last else {
         return Ok(SequenceEvent::First);
     };
-    let delta = sequence.checked_sub(previous_sequence).ok_or(ContractError::InvalidSource)?;
-    if delta == 0 { return Err(ContractError::InvalidSource); }
+    let delta = sequence
+        .checked_sub(previous_sequence)
+        .ok_or(ContractError::InvalidSource)?;
+    if delta == 0 {
+        return Err(ContractError::InvalidSource);
+    }
     if let Some(previous_timestamp) = last_known_timestamp {
         if timestamp.clock_id() != previous_timestamp.clock_id()
             || timestamp.restart_epoch() != previous_timestamp.restart_epoch()
@@ -185,7 +217,11 @@ fn expected_event(
             return Err(ContractError::InvalidTime);
         }
     }
-    Ok(if delta == 1 { SequenceEvent::Contiguous } else { SequenceEvent::Gap { missing: delta - 1 } })
+    Ok(if delta == 1 {
+        SequenceEvent::Contiguous
+    } else {
+        SequenceEvent::Gap { missing: delta - 1 }
+    })
 }
 
 #[cfg(test)]

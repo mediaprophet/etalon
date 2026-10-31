@@ -39,20 +39,18 @@ mod capture;
 pub mod observation;
 
 #[cfg(windows)]
-pub use capture::{
-    BleRssiAdapter,
-};
+pub use capture::BleRssiAdapter;
 
 #[cfg(windows)]
 pub use observation::{
-    capture_observation, BleBatchMetadata, BleDropCountInterval, BleObservation, BleObservationMapping,
-    ObservationError as BleObservationError,
+    capture_observation, BleBatchMetadata, BleDropCountInterval, BleObservation,
+    BleObservationMapping, ObservationError as BleObservationError,
 };
 
 #[cfg(windows)]
 pub use config::{
-    BleCollectionGate, BleCollectionScope, BleConfig,
-    MAX_CAPTURE_SAMPLES, MAX_SESSION_DURATION_MS, MAX_SESSION_OBSERVATIONS,
+    BleCollectionGate, BleCollectionScope, BleConfig, MAX_CAPTURE_SAMPLES, MAX_SESSION_DURATION_MS,
+    MAX_SESSION_OBSERVATIONS,
 };
 
 #[cfg(windows)]

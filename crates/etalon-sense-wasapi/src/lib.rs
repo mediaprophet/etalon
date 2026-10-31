@@ -44,8 +44,8 @@ pub use format::WasapiFormat;
 
 #[cfg(windows)]
 pub use observation::{
-    capture_observation, ObservationError as WasapiObservationError,
-    WasapiBatchMetadata, WasapiObservation, WasapiObservationMapping,
+    capture_observation, ObservationError as WasapiObservationError, WasapiBatchMetadata,
+    WasapiObservation, WasapiObservationMapping,
 };
 
 #[cfg(not(windows))]

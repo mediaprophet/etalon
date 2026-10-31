@@ -18,25 +18,24 @@
 
 mod allocation;
 pub use allocation::GpuAllocationClass;
-mod numeric;
 pub mod live;
+mod numeric;
 mod pair;
-pub use pair::{DeviceQueuePair, DeviceRequestGate, DeviceRequestStage, PairRequestError};
 use numeric::{
-    checked_bytes, make_params, persistent_buffer_bytes, stage_power_values,
-    validate_power_values, validate_request,
+    checked_bytes, make_params, persistent_buffer_bytes, stage_power_values, validate_power_values,
+    validate_request,
 };
+pub use pair::{DeviceQueuePair, DeviceRequestGate, DeviceRequestStage, PairRequestError};
 
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use etalon::{BindGroup, Buffer, ComputePipeline, Device, Queue};
 use etalon_signal::{
     decode::ByteOrder,
     execution::{
-        i16_iq_power_upper_bound, DeviceId, ExecutionAllocationClass,
-        RegisteredSignalProvider,
+        i16_iq_power_upper_bound, DeviceId, ExecutionAllocationClass, RegisteredSignalProvider,
     },
     SignalError,
 };
@@ -179,7 +178,9 @@ impl MapCompletion {
     fn lock(&self) -> std::sync::MutexGuard<'_, MapCompletionState> {
         // A poisoned lock still contains bounded state; recover it without
         // panicking in the completion callback.
-        self.state.lock().unwrap_or_else(std::sync::PoisonError::into_inner)
+        self.state
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 }
 
@@ -246,11 +247,15 @@ impl<'a> EtalonIqPowerProvider<'a> {
             return Err(GpuError::InvalidCapacity);
         }
         let persistent_buffer_bytes = persistent_buffer_bytes(max_pairs)?;
-        allocation::admit(allocation_class, gpu_buffer_budget_bytes, persistent_buffer_bytes)
-            .map_err(|error| match error {
-                allocation::AdmissionError::HotPathUnsupported => GpuError::HotZeroHeapUnsupported,
-                allocation::AdmissionError::BudgetExceeded => GpuError::BufferBudgetExceeded,
-            })?;
+        allocation::admit(
+            allocation_class,
+            gpu_buffer_budget_bytes,
+            persistent_buffer_bytes,
+        )
+        .map_err(|error| match error {
+            allocation::AdmissionError::HotPathUnsupported => GpuError::HotZeroHeapUnsupported,
+            allocation::AdmissionError::BudgetExceeded => GpuError::BufferBudgetExceeded,
+        })?;
         if poll_timeout.is_zero() || poll_timeout > MAX_POLL_TIMEOUT {
             return Err(GpuError::InvalidTimeout);
         }
@@ -300,21 +305,31 @@ impl<'a> EtalonIqPowerProvider<'a> {
             usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("etalon-sense-iq-layout"),
-            entries: &[
-                storage_entry(0, true, 4),
-                storage_entry(1, false, 4),
-                storage_entry(2, true, PARAM_BYTES),
-            ],
-        });
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("etalon-sense-iq-layout"),
+                entries: &[
+                    storage_entry(0, true, 4),
+                    storage_entry(1, false, 4),
+                    storage_entry(2, true, PARAM_BYTES),
+                ],
+            });
         let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("etalon-sense-iq-bindings"),
             layout: &bind_group_layout,
             entries: &[
-                etalon::BindGroupEntry { binding: 0, resource: input.as_entire_binding() },
-                etalon::BindGroupEntry { binding: 1, resource: power_values.as_entire_binding() },
-                etalon::BindGroupEntry { binding: 2, resource: params.as_entire_binding() },
+                etalon::BindGroupEntry {
+                    binding: 0,
+                    resource: input.as_entire_binding(),
+                },
+                etalon::BindGroupEntry {
+                    binding: 1,
+                    resource: power_values.as_entire_binding(),
+                },
+                etalon::BindGroupEntry {
+                    binding: 2,
+                    resource: params.as_entire_binding(),
+                },
             ],
         });
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
@@ -353,22 +368,31 @@ impl<'a> EtalonIqPowerProvider<'a> {
         })
     }
 
-    pub const fn max_pairs(&self) -> usize { self.max_pairs }
+    pub const fn max_pairs(&self) -> usize {
+        self.max_pairs
+    }
 
-    pub const fn allocation_class(&self) -> GpuAllocationClass { self.allocation_class }
+    pub const fn allocation_class(&self) -> GpuAllocationClass {
+        self.allocation_class
+    }
 
     /// Capacity of persistent GPU buffers admitted at construction. This is
     /// not an estimate of total device or driver memory use.
-    pub const fn persistent_buffer_bytes(&self) -> u64 { self.persistent_buffer_bytes }
+    pub const fn persistent_buffer_bytes(&self) -> u64 {
+        self.persistent_buffer_bytes
+    }
 
     /// A detailed backend failure from the last failed `RegisteredSignalProvider`
     /// call. The shared signal trait has no backend-error variant, so its adapter
     /// maps these failures to `SignalError::InvalidParameter`; callers needing
     /// faithful errors should call `compute_into` directly.
-    pub const fn last_backend_error(&self) -> Option<GpuError> { self.last_backend_error }
+    pub const fn last_backend_error(&self) -> Option<GpuError> {
+        self.last_backend_error
+    }
 
     pub(crate) fn is_device_lost(&self) -> bool {
-        self.loss_state.is_some_and(|state| state.load(Ordering::Acquire))
+        self.loss_state
+            .is_some_and(|state| state.load(Ordering::Acquire))
     }
 
     /// Execute synchronously, preserving detailed Etalon failures.
@@ -381,9 +405,20 @@ impl<'a> EtalonIqPowerProvider<'a> {
         staged_output: &mut [f64],
     ) -> Result<usize, GpuError> {
         self.last_backend_error = None;
-        if self.poisoned { return Err(GpuError::ProviderPoisoned); }
-        if self.is_device_lost() { self.poisoned = true; return Err(GpuError::DeviceLost); }
-        let count = validate_request(bytes, scale, workspace.len(), staged_output.len(), self.max_pairs)?;
+        if self.poisoned {
+            return Err(GpuError::ProviderPoisoned);
+        }
+        if self.is_device_lost() {
+            self.poisoned = true;
+            return Err(GpuError::DeviceLost);
+        }
+        let count = validate_request(
+            bytes,
+            scale,
+            workspace.len(),
+            staged_output.len(),
+            self.max_pairs,
+        )?;
         let upper_bound = i16_iq_power_upper_bound(scale).map_err(|error| match error {
             SignalError::InvalidParameter => GpuError::InvalidScale,
             _ => GpuError::NumericRange,
@@ -393,9 +428,11 @@ impl<'a> EtalonIqPowerProvider<'a> {
         let params = make_params(scale, byte_order, count);
         self.queue.write_buffer(&self.params, 0, &params);
 
-        let mut encoder = self.device.create_command_encoder(&etalon::CommandEncoderDescriptor {
-            label: Some("etalon-sense-iq-encoder"),
-        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&etalon::CommandEncoderDescriptor {
+                label: Some("etalon-sense-iq-encoder"),
+            });
         {
             let mut pass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
                 label: Some("etalon-sense-iq-pass"),
@@ -419,9 +456,11 @@ impl<'a> EtalonIqPowerProvider<'a> {
         };
 
         let completion = Arc::clone(&self.completion);
-        self.readback.slice(0..output_bytes).map_async(etalon::MapMode::Read, move |result| {
-            completion.complete(generation, result.is_ok());
-        });
+        self.readback
+            .slice(0..output_bytes)
+            .map_async(etalon::MapMode::Read, move |result| {
+                completion.complete(generation, result.is_ok());
+            });
         let poll = etalon::PollType::Wait {
             submission_index: Some(submission),
             timeout: Some(self.poll_timeout),
@@ -464,7 +503,10 @@ impl<'a> EtalonIqPowerProvider<'a> {
         for index in 0..count {
             let start = index * 4;
             workspace[index] = f32::from_le_bytes([
-                view[start], view[start + 1], view[start + 2], view[start + 3],
+                view[start],
+                view[start + 1],
+                view[start + 2],
+                view[start + 3],
             ]);
         }
         drop(view);
@@ -480,7 +522,9 @@ impl<'a> EtalonIqPowerProvider<'a> {
 }
 
 impl RegisteredSignalProvider for EtalonIqPowerProvider<'_> {
-    fn device_id(&self) -> DeviceId { self.device_id }
+    fn device_id(&self) -> DeviceId {
+        self.device_id
+    }
 
     /// Persistent provider-owned GPU buffers were admitted against the
     /// constructor's explicit byte budget. This does not claim zero heap:
@@ -503,7 +547,9 @@ impl RegisteredSignalProvider for EtalonIqPowerProvider<'_> {
                 self.last_backend_error = Some(error);
                 Err(match error {
                     GpuError::InvalidScale => SignalError::InvalidParameter,
-                    GpuError::CapacityExceeded | GpuError::InvalidCapacity | GpuError::LengthMismatch => SignalError::LengthMismatch,
+                    GpuError::CapacityExceeded
+                    | GpuError::InvalidCapacity
+                    | GpuError::LengthMismatch => SignalError::LengthMismatch,
                     GpuError::EmptyInput => SignalError::EmptyInput,
                     GpuError::InvalidInput => SignalError::InvalidParameter,
                     GpuError::NumericRange => SignalError::NumericRange,

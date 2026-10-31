@@ -16,7 +16,10 @@ use etalon_sense_core::{
 };
 
 use crate::{
-    format::{validate_negotiated_format, CameraModality, FrameDeclaration, FrameFormat, FramePlane, RadiometricStatus},
+    format::{
+        validate_negotiated_format, CameraModality, FrameDeclaration, FrameFormat, FramePlane,
+        RadiometricStatus,
+    },
     FrameMetadata, FrameTimestamp, NegotiatedFrame,
 };
 
@@ -58,15 +61,30 @@ impl ObservationQuantityMapping {
             return Err(ObservationError::UnitMismatch);
         }
         if let (Some(quantity), Some(unit)) = (physical_quantity, unit) {
-            if !quantity.accepts_unit(unit) { return Err(ObservationError::UnitMismatch); }
+            if !quantity.accepts_unit(unit) {
+                return Err(ObservationError::UnitMismatch);
+            }
         }
-        Ok(Self { quantity_id, unit_id, physical_quantity, unit })
+        Ok(Self {
+            quantity_id,
+            unit_id,
+            physical_quantity,
+            unit,
+        })
     }
 
-    pub const fn quantity_id(self) -> u64 { self.quantity_id }
-    pub const fn unit_id(self) -> Option<u64> { self.unit_id }
-    pub const fn physical_quantity(self) -> Option<PhysicalQuantity> { self.physical_quantity }
-    pub const fn unit(self) -> Option<Unit> { self.unit }
+    pub const fn quantity_id(self) -> u64 {
+        self.quantity_id
+    }
+    pub const fn unit_id(self) -> Option<u64> {
+        self.unit_id
+    }
+    pub const fn physical_quantity(self) -> Option<PhysicalQuantity> {
+        self.physical_quantity
+    }
+    pub const fn unit(self) -> Option<Unit> {
+        self.unit
+    }
 }
 
 /// Native timestamp as supplied by the host/provider, without unit conversion.
@@ -79,13 +97,25 @@ pub struct NativeTimestamp {
 
 impl NativeTimestamp {
     pub fn new(ticks: i64, clock_domain_id: u64, unit_id: u64) -> Result<Self, ObservationError> {
-        if clock_domain_id == 0 || unit_id == 0 { return Err(ObservationError::InvalidIdentifier); }
-        Ok(Self { ticks, clock_domain_id, unit_id })
+        if clock_domain_id == 0 || unit_id == 0 {
+            return Err(ObservationError::InvalidIdentifier);
+        }
+        Ok(Self {
+            ticks,
+            clock_domain_id,
+            unit_id,
+        })
     }
 
-    pub const fn ticks(self) -> i64 { self.ticks }
-    pub const fn clock_domain_id(self) -> u64 { self.clock_domain_id }
-    pub const fn unit_id(self) -> u64 { self.unit_id }
+    pub const fn ticks(self) -> i64 {
+        self.ticks
+    }
+    pub const fn clock_domain_id(self) -> u64 {
+        self.clock_domain_id
+    }
+    pub const fn unit_id(self) -> u64 {
+        self.unit_id
+    }
 }
 
 /// Optional caller declaration about an external policy evaluation. It is
@@ -99,7 +129,11 @@ pub struct HostPolicyClaim {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum HostPolicyOutcome { Permit, Deny, Unknown }
+pub enum HostPolicyOutcome {
+    Permit,
+    Deny,
+    Unknown,
+}
 
 impl HostPolicyClaim {
     pub fn new(
@@ -111,13 +145,26 @@ impl HostPolicyClaim {
         if policy_id == 0 || decision_id == 0 || context_id == 0 {
             return Err(ObservationError::InvalidPolicyClaim);
         }
-        Ok(Self { policy_id, decision_id, context_id, outcome })
+        Ok(Self {
+            policy_id,
+            decision_id,
+            context_id,
+            outcome,
+        })
     }
 
-    pub const fn policy_id(self) -> u64 { self.policy_id }
-    pub const fn decision_id(self) -> u64 { self.decision_id }
-    pub const fn context_id(self) -> u64 { self.context_id }
-    pub const fn outcome(self) -> HostPolicyOutcome { self.outcome }
+    pub const fn policy_id(self) -> u64 {
+        self.policy_id
+    }
+    pub const fn decision_id(self) -> u64 {
+        self.decision_id
+    }
+    pub const fn context_id(self) -> u64 {
+        self.context_id
+    }
+    pub const fn outcome(self) -> HostPolicyOutcome {
+        self.outcome
+    }
 }
 
 /// Metadata-only association for one frame. `stream_id` and `generation` are
@@ -160,21 +207,30 @@ impl ObservationEnvelope {
         mapped_clock: Option<ClockStamp>,
         policy_claim: Option<HostPolicyClaim>,
     ) -> Result<Self, ObservationError> {
-        if stream_id == 0 || generation == 0 { return Err(ObservationError::InvalidIdentifier); }
-        if negotiated.source_id != declaration.source_id() { return Err(ObservationError::SourceMismatch); }
-        if negotiated.modality != declaration.modality() { return Err(ObservationError::ModalityMismatch); }
+        if stream_id == 0 || generation == 0 {
+            return Err(ObservationError::InvalidIdentifier);
+        }
+        if negotiated.source_id != declaration.source_id() {
+            return Err(ObservationError::SourceMismatch);
+        }
+        if negotiated.modality != declaration.modality() {
+            return Err(ObservationError::ModalityMismatch);
+        }
         let capability = declaration.capability();
-        if quantity.quantity_id != capability.quantity_id() { return Err(ObservationError::QuantityMismatch); }
-        if quantity.unit_id != capability.unit_id() { return Err(ObservationError::UnitMismatch); }
+        if quantity.quantity_id != capability.quantity_id() {
+            return Err(ObservationError::QuantityMismatch);
+        }
+        if quantity.unit_id != capability.unit_id() {
+            return Err(ObservationError::UnitMismatch);
+        }
         validate_negotiated_format(declaration, negotiated.format, negotiated.radiometric)
             .map_err(|_| ObservationError::FormatMismatch)?;
         if metadata.format_id == 0 || metadata.format_id != negotiated.format.format_id() {
             return Err(ObservationError::FormatMismatch);
         }
 
-        let (raw_timestamp, mapped_clock) = validate_timestamp_pair(
-            metadata.timestamp, raw_timestamp, mapped_clock,
-        )?;
+        let (raw_timestamp, mapped_clock) =
+            validate_timestamp_pair(metadata.timestamp, raw_timestamp, mapped_clock)?;
 
         let format: FrameFormat = negotiated.format;
         Ok(Self {
@@ -199,24 +255,60 @@ impl ObservationEnvelope {
         })
     }
 
-    pub const fn source_id(self) -> u64 { self.source_id }
-    pub const fn stream_id(self) -> u64 { self.stream_id }
-    pub const fn generation(self) -> u64 { self.generation }
-    pub const fn modality(self) -> CameraModality { self.modality }
-    pub const fn quantity(self) -> ObservationQuantityMapping { self.quantity }
-    pub const fn pixel_format(self) -> crate::FramePixelFormat { self.pixel_format }
-    pub const fn format_id(self) -> u64 { self.format_id }
-    pub const fn width(self) -> u32 { self.width }
-    pub const fn height(self) -> u32 { self.height }
-    pub const fn frame_bytes(self) -> u32 { self.frame_bytes }
-    pub const fn planes(self) -> [FramePlane; crate::MAX_FRAME_PLANES] { self.planes }
-    pub const fn plane_count(self) -> u8 { self.plane_count }
-    pub const fn radiometric(self) -> RadiometricStatus { self.radiometric }
-    pub const fn sequence(self) -> u64 { self.sequence }
-    pub const fn gap_before(self) -> Option<u64> { self.gap_before }
-    pub const fn raw_timestamp(self) -> Option<NativeTimestamp> { self.raw_timestamp }
-    pub const fn mapped_clock(self) -> Option<ClockStamp> { self.mapped_clock }
-    pub const fn policy_claim(self) -> Option<HostPolicyClaim> { self.policy_claim }
+    pub const fn source_id(self) -> u64 {
+        self.source_id
+    }
+    pub const fn stream_id(self) -> u64 {
+        self.stream_id
+    }
+    pub const fn generation(self) -> u64 {
+        self.generation
+    }
+    pub const fn modality(self) -> CameraModality {
+        self.modality
+    }
+    pub const fn quantity(self) -> ObservationQuantityMapping {
+        self.quantity
+    }
+    pub const fn pixel_format(self) -> crate::FramePixelFormat {
+        self.pixel_format
+    }
+    pub const fn format_id(self) -> u64 {
+        self.format_id
+    }
+    pub const fn width(self) -> u32 {
+        self.width
+    }
+    pub const fn height(self) -> u32 {
+        self.height
+    }
+    pub const fn frame_bytes(self) -> u32 {
+        self.frame_bytes
+    }
+    pub const fn planes(self) -> [FramePlane; crate::MAX_FRAME_PLANES] {
+        self.planes
+    }
+    pub const fn plane_count(self) -> u8 {
+        self.plane_count
+    }
+    pub const fn radiometric(self) -> RadiometricStatus {
+        self.radiometric
+    }
+    pub const fn sequence(self) -> u64 {
+        self.sequence
+    }
+    pub const fn gap_before(self) -> Option<u64> {
+        self.gap_before
+    }
+    pub const fn raw_timestamp(self) -> Option<NativeTimestamp> {
+        self.raw_timestamp
+    }
+    pub const fn mapped_clock(self) -> Option<ClockStamp> {
+        self.mapped_clock
+    }
+    pub const fn policy_claim(self) -> Option<HostPolicyClaim> {
+        self.policy_claim
+    }
 
     /// Convert to the shared Etalon observation contract. Source kind and time
     /// anchor are explicit host inputs; other quality, calibration, evidence,
@@ -228,13 +320,13 @@ impl ObservationEnvelope {
         source_kind: SourceKind,
         time_anchor: ObservationTimeAnchor,
     ) -> Result<CoreObservationEnvelope, ObservationError> {
-        let generation = u32::try_from(self.generation)
-            .map_err(|_| ObservationError::GenerationOutOfRange)?;
+        let generation =
+            u32::try_from(self.generation).map_err(|_| ObservationError::GenerationOutOfRange)?;
         let source = SourceDescriptor::new(self.source_id, source_kind)
             .map_err(|_| ObservationError::InvalidIdentifier)?;
-        let quantity_unit = QuantityUnitIds::new(
-            Some(self.quantity.quantity_id), self.quantity.unit_id,
-        ).map_err(|_| ObservationError::UnitMismatch)?;
+        let quantity_unit =
+            QuantityUnitIds::new(Some(self.quantity.quantity_id), self.quantity.unit_id)
+                .map_err(|_| ObservationError::UnitMismatch)?;
         let calibration = CalibrationRecord::new(CalibrationState::Missing)
             .map_err(|_| ObservationError::InvalidPolicyClaim)?;
         let kind = match source_kind {
@@ -269,7 +361,11 @@ fn validate_timestamp_pair(
 ) -> Result<(Option<NativeTimestamp>, Option<ClockStamp>), ObservationError> {
     match timestamp {
         FrameTimestamp::Unknown => Ok((raw, mapped)),
-        FrameTimestamp::Raw { ticks, clock_domain_id, unit_id } => {
+        FrameTimestamp::Raw {
+            ticks,
+            clock_domain_id,
+            unit_id,
+        } => {
             let declared = NativeTimestamp::new(ticks, clock_domain_id, unit_id)?;
             if matches!(raw, Some(other) if other != declared) {
                 return Err(ObservationError::InvalidTimestamp);

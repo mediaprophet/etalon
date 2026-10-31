@@ -162,7 +162,12 @@ impl RetentionPlanEntry {
     /// Construct an inert caller-owned output slot. Its contents are not a
     /// retention decision until returned by a successful plan operation.
     pub const fn output_slot(id: ResourceId) -> Self {
-        Self { id, action: RetentionAction::Retain, expiry_ticks_ns: 0, size_bytes: 0 }
+        Self {
+            id,
+            action: RetentionAction::Retain,
+            expiry_ticks_ns: 0,
+            size_bytes: 0,
+        }
     }
 
     pub const fn id(self) -> ResourceId {

@@ -14,15 +14,26 @@ pub(super) fn stable_source_id(endpoint: &[u8]) -> u64 {
         hash ^= u64::from(*byte);
         hash = hash.wrapping_mul(0x100_0000_01b3);
     }
-    if hash == 0 { 1 } else { hash }
+    if hash == 0 {
+        1
+    } else {
+        hash
+    }
 }
 
-pub(super) fn validate_capability(capability: ExtendedCapability, format: WasapiFormat) -> Result<(), AdapterError> {
-    if capability.encoding() != format.encoding() || capability.max_extents()[1] < u32::from(format.channels()) {
+pub(super) fn validate_capability(
+    capability: ExtendedCapability,
+    format: WasapiFormat,
+) -> Result<(), AdapterError> {
+    if capability.encoding() != format.encoding()
+        || capability.max_extents()[1] < u32::from(format.channels())
+    {
         return Err(AdapterError::Unsupported);
     }
     if let Some(max_rate) = capability.max_sample_rate() {
-        if f64::from(format.sample_rate_hz()) > max_rate.hz() { return Err(AdapterError::Unsupported); }
+        if f64::from(format.sample_rate_hz()) > max_rate.hz() {
+            return Err(AdapterError::Unsupported);
+        }
     }
     Ok(())
 }
@@ -32,7 +43,8 @@ pub(super) fn validate_layout(
     format: WasapiFormat,
     max_frame_bytes: usize,
 ) -> Result<(), AdapterError> {
-    if layout.rank() != 2 || *layout.encoding() != format.encoding()
+    if layout.rank() != 2
+        || *layout.encoding() != format.encoding()
         || layout.extents()[1] != u32::from(format.channels())
         || layout.strides_bytes()[0] != u64::from(format.block_align())
         || layout.strides_bytes()[1] != u64::from(format.bits_per_sample() / 8)
@@ -41,7 +53,9 @@ pub(super) fn validate_layout(
     }
     let span = usize::try_from(layout.required_byte_span()?)
         .map_err(|_| AdapterError::Buffer(ContractError::ArithmeticOverflow))?;
-    if span == 0 || span > max_frame_bytes { return Err(AdapterError::Buffer(ContractError::OutOfBounds)); }
+    if span == 0 || span > max_frame_bytes {
+        return Err(AdapterError::Buffer(ContractError::OutOfBounds));
+    }
     Ok(())
 }
 
@@ -51,9 +65,11 @@ pub(super) fn clear_prefix(
     block_align: u16,
 ) {
     let bytes = output.writable_bytes();
-    let count = usize::try_from(frames).ok()
+    let count = usize::try_from(frames)
+        .ok()
         .and_then(|frame_count| frame_count.checked_mul(usize::from(block_align)))
-        .unwrap_or(bytes.len()).min(bytes.len());
+        .unwrap_or(bytes.len())
+        .min(bytes.len());
     bytes[..count].fill(0);
 }
 
@@ -83,13 +99,16 @@ pub(super) fn capture_wait_timeout_ms(
     let duration_ns = u64::from(max_duration_ms)
         .checked_mul(1_000_000)
         .ok_or(AdapterError::BackendFailure)?;
-    let deadline_ns = started.interval().lower_ns()
+    let deadline_ns = started
+        .interval()
+        .lower_ns()
         .checked_add(duration_ns)
         .ok_or(AdapterError::BackendFailure)?;
-    let remaining_ns = deadline_ns.checked_sub(now.interval().upper_ns())
+    let remaining_ns = deadline_ns
+        .checked_sub(now.interval().upper_ns())
         .ok_or(AdapterError::BackendFailure)?;
-    let remaining_ms = u32::try_from(remaining_ns / 1_000_000)
-        .map_err(|_| AdapterError::BackendFailure)?;
+    let remaining_ms =
+        u32::try_from(remaining_ns / 1_000_000).map_err(|_| AdapterError::BackendFailure)?;
     if remaining_ms == 0 {
         return Err(AdapterError::BackendFailure);
     }

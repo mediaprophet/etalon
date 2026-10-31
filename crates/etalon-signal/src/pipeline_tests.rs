@@ -4,7 +4,16 @@ use super::*;
 fn i16_iq_pipeline_respects_order_and_scaling() {
     let mut scratch = [0.0; 2];
     let mut power = [0.0; 1];
-    assert_eq!(i16_iq_power_into(&[3, 0, 4, 0], ByteOrder::LittleEndian, 1.0, &mut scratch, &mut power), Ok(1));
+    assert_eq!(
+        i16_iq_power_into(
+            &[3, 0, 4, 0],
+            ByteOrder::LittleEndian,
+            1.0,
+            &mut scratch,
+            &mut power
+        ),
+        Ok(1)
+    );
     assert_eq!(power, [25.0]);
 }
 
@@ -12,7 +21,16 @@ fn i16_iq_pipeline_respects_order_and_scaling() {
 fn invalid_shape_leaves_both_buffers_untouched() {
     let mut scratch = [7.0; 2];
     let mut power = [8.0; 1];
-    assert_eq!(i16_iq_power_into(&[3, 0], ByteOrder::LittleEndian, 1.0, &mut scratch, &mut power), Err(SignalError::LengthMismatch));
+    assert_eq!(
+        i16_iq_power_into(
+            &[3, 0],
+            ByteOrder::LittleEndian,
+            1.0,
+            &mut scratch,
+            &mut power
+        ),
+        Err(SignalError::LengthMismatch)
+    );
     assert_eq!(scratch, [7.0; 2]);
     assert_eq!(power, [8.0; 1]);
 }

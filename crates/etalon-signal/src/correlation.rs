@@ -72,8 +72,8 @@ pub fn correlate_iq(
             reference_count.min(observed_count - observed_start),
         )
     } else {
-        let reference_start = usize::try_from(lag.unsigned_abs())
-            .map_err(|_| SignalError::InvalidParameter)?;
+        let reference_start =
+            usize::try_from(lag.unsigned_abs()).map_err(|_| SignalError::InvalidParameter)?;
         if reference_start >= reference_count {
             return Err(SignalError::InvalidParameter);
         }

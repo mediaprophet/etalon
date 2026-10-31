@@ -47,12 +47,16 @@ impl CallbackState {
         match self.callback_gate.lock() {
             Ok(_callbacks) => {
                 self.halted.store(true, Ordering::Release);
-                if let Ok(mut queue) = self.queue.lock() { queue.clear(); }
+                if let Ok(mut queue) = self.queue.lock() {
+                    queue.clear();
+                }
             }
             Err(_) => {
                 // A poisoned callback gate cannot authorize further reads.
                 self.halted.store(true, Ordering::Release);
-                if let Ok(mut queue) = self.queue.try_lock() { queue.clear(); }
+                if let Ok(mut queue) = self.queue.try_lock() {
+                    queue.clear();
+                }
             }
         }
     }
@@ -60,11 +64,16 @@ impl CallbackState {
     /// Callback-only variant: caller already owns `callback_gate`.
     pub(super) fn halt_from_callback(&self) {
         self.halted.store(true, Ordering::Release);
-        if let Ok(mut queue) = self.queue.try_lock() { queue.clear(); }
+        if let Ok(mut queue) = self.queue.try_lock() {
+            queue.clear();
+        }
     }
 
     pub(super) fn clear_queue(&self) -> Result<(), ()> {
-        self.queue.lock().map(|mut queue| queue.clear()).map_err(|_| ())
+        self.queue
+            .lock()
+            .map(|mut queue| queue.clear())
+            .map_err(|_| ())
     }
 
     /// Wait for any in-flight event callback before discarding its queue data.
@@ -78,8 +87,7 @@ impl CallbackState {
     }
 
     pub(super) fn is_collecting(&self) -> bool {
-        !self.halted.load(Ordering::Acquire)
-            && !self.collection_closed.load(Ordering::Acquire)
+        !self.halted.load(Ordering::Acquire) && !self.collection_closed.load(Ordering::Acquire)
     }
 
     /// Return true when this accepted record reaches the session limit.
@@ -109,10 +117,14 @@ impl FixedQueue {
         }
     }
 
-    pub(super) fn len(&self) -> usize { self.len }
+    pub(super) fn len(&self) -> usize {
+        self.len
+    }
 
     pub(super) fn push(&mut self, sample: BleAdvertisementSample) -> bool {
-        if self.len == QUEUE_CAPACITY { return false; }
+        if self.len == QUEUE_CAPACITY {
+            return false;
+        }
         let tail = (self.head + self.len) % QUEUE_CAPACITY;
         self.entries[tail] = sample;
         self.len += 1;
@@ -120,7 +132,9 @@ impl FixedQueue {
     }
 
     pub(super) fn pop_exact(&mut self, output: &mut [BleAdvertisementSample]) -> bool {
-        if output.is_empty() || output.len() > self.len { return false; }
+        if output.is_empty() || output.len() > self.len {
+            return false;
+        }
         let count = output.len();
         for slot in output.iter_mut() {
             *slot = self.entries[self.head];
@@ -161,7 +175,9 @@ impl StopSignal {
         }
     }
 
-    pub(super) fn requested(&self) -> bool { self.requested.load(Ordering::Acquire) }
+    pub(super) fn requested(&self) -> bool {
+        self.requested.load(Ordering::Acquire)
+    }
 
     pub(super) fn is_started(&self) -> bool {
         self.started.load(Ordering::Acquire) && !self.requested()
@@ -172,15 +188,23 @@ impl StopSignal {
     /// a gate may deny after invoking Start, in which case the worker still
     /// must stop the now-active watcher.
     pub(super) fn start_with<T, F>(&self, start: F) -> Result<(bool, T), ()>
-    where F: FnOnce() -> (bool, T) {
+    where
+        F: FnOnce() -> (bool, T),
+    {
         let mut state = self.lifecycle.lock().map_err(|_| ())?;
-        if self.requested() || *state != WatcherLifecycle::Ready { return Err(()); }
+        if self.requested() || *state != WatcherLifecycle::Ready {
+            return Err(());
+        }
         *state = WatcherLifecycle::Starting;
         let (started, result) = start();
         self.started.store(started, Ordering::Release);
         // A failed Start does not prove the OS watcher stayed stopped. Mark it
         // uncertain so the stop worker performs bounded Stop/status verification.
-        *state = if started { WatcherLifecycle::Started } else { WatcherLifecycle::Failed };
+        *state = if started {
+            WatcherLifecycle::Started
+        } else {
+            WatcherLifecycle::Failed
+        };
         self.wake.notify_all();
         Ok((started, result))
     }
@@ -188,7 +212,9 @@ impl StopSignal {
     /// Stop only after Start has either completed or definitively failed.
     /// The stop closure runs under the lifecycle lock so no Start can race it.
     pub(super) fn stop_with<F>(&self, stop: F) -> Result<bool, ()>
-    where F: FnOnce() -> bool {
+    where
+        F: FnOnce() -> bool,
+    {
         let mut state = self.lifecycle.lock().map_err(|_| ())?;
         while *state == WatcherLifecycle::Starting {
             state = self.wake.wait(state).map_err(|_| ())?;
@@ -199,7 +225,11 @@ impl StopSignal {
                 *state = WatcherLifecycle::Stopping;
                 self.started.store(false, Ordering::Release);
                 let stopped = stop();
-                *state = if stopped { WatcherLifecycle::Stopped } else { WatcherLifecycle::Failed };
+                *state = if stopped {
+                    WatcherLifecycle::Stopped
+                } else {
+                    WatcherLifecycle::Failed
+                };
                 self.wake.notify_all();
                 Ok(stopped)
             }
@@ -209,7 +239,9 @@ impl StopSignal {
 
     pub(super) fn wait_slice(&self) -> Result<(), ()> {
         let guard = self.lifecycle.lock().map_err(|_| ())?;
-        if self.requested() { return Ok(()); }
+        if self.requested() {
+            return Ok(());
+        }
         self.wake
             .wait_timeout(guard, std::time::Duration::from_millis(50))
             .map(|_| ())

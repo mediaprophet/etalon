@@ -13,7 +13,9 @@ use crate::{
 };
 use core::cell::Cell;
 
-fn id(value: u64) -> PolicyId { PolicyId::new(value).unwrap() }
+fn id(value: u64) -> PolicyId {
+    PolicyId::new(value).unwrap()
+}
 
 fn capability() -> SensorCapability {
     SensorCapability::new(
@@ -23,16 +25,26 @@ fn capability() -> SensorCapability {
         SampleEncoding::ComplexI16,
         [2, 0, 0, 0],
         None,
-    ).unwrap()
+    )
+    .unwrap()
 }
 
-fn stamp(ticks: u64) -> ClockStamp { ClockStamp::new(7, 2, ticks, 0).unwrap() }
+fn stamp(ticks: u64) -> ClockStamp {
+    ClockStamp::new(7, 2, ticks, 0).unwrap()
+}
 
 fn policy_request(operation: u64, purpose: u64) -> PolicyRequest {
     let mut evidence = [0u8; 32];
     evidence[0] = 1;
     PolicyRequest::new(
-        None, None, id(301), id(operation), id(99), id(101), id(400 + purpose), id(90),
+        None,
+        None,
+        id(301),
+        id(operation),
+        id(99),
+        id(101),
+        id(400 + purpose),
+        id(90),
         EvidenceCommitment::new(evidence).unwrap(),
     )
 }
@@ -45,7 +57,8 @@ fn binding() -> CapturePolicyBinding {
         4,
         policy_request(10, 4),
         policy_request(11, 4),
-    ).unwrap()
+    )
+    .unwrap()
 }
 
 fn authorization() -> AuthorizedCapture {
@@ -60,18 +73,28 @@ fn commitment() -> DecisionCommitment {
     DecisionCommitment::new(bytes).unwrap()
 }
 
-struct PolicyHost { epoch: Cell<u64>, advance_epoch: bool, deny: bool }
+struct PolicyHost {
+    epoch: Cell<u64>,
+    advance_epoch: bool,
+    deny: bool,
+}
 
 impl PolicyEvaluator for PolicyHost {
     fn evaluate(&self, _request: &PolicyRequest) -> PolicyOutcome {
-        if self.deny { PolicyOutcome::Deny } else { PolicyOutcome::Permit(commitment()) }
+        if self.deny {
+            PolicyOutcome::Deny
+        } else {
+            PolicyOutcome::Permit(commitment())
+        }
     }
 }
 
 impl PolicyEpochProvider for PolicyHost {
     fn current_policy_epoch(&self, _request: &PolicyRequest) -> Option<u64> {
         let current = self.epoch.get();
-        if self.advance_epoch { self.epoch.set(current + 1); }
+        if self.advance_epoch {
+            self.epoch.set(current + 1);
+        }
         Some(current)
     }
 }
@@ -82,22 +105,34 @@ impl RevocationProvider for PolicyHost {
     }
 }
 
-struct Adapter { starts: usize, captures: usize, stop_calls: usize, stop_failures_remaining: usize }
+struct Adapter {
+    starts: usize,
+    captures: usize,
+    stop_calls: usize,
+    stop_failures_remaining: usize,
+}
 
 impl SensorAdapter for Adapter {
     fn descriptor(&self) -> AdapterDescriptor {
         AdapterDescriptor::new(AdapterId::new(3).unwrap(), Modality::Wifi)
     }
 
-    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> { Ok(stamp(6)) }
+    fn trusted_now(&mut self) -> Result<ClockStamp, AdapterError> {
+        Ok(stamp(6))
+    }
 
     fn discover_backend(&mut self, out: &mut [DiscoveredSource]) -> Result<usize, AdapterError> {
-        if out.is_empty() { return Err(AdapterError::DiscoveryBufferTooSmall); }
+        if out.is_empty() {
+            return Err(AdapterError::DiscoveryBufferTooSmall);
+        }
         out[0] = DiscoveredSource::new(15, capability()).unwrap();
         Ok(1)
     }
 
-    fn start_backend(&mut self, request: AuthorizedCapture) -> Result<CaptureSession, AdapterError> {
+    fn start_backend(
+        &mut self,
+        request: AuthorizedCapture,
+    ) -> Result<CaptureSession, AdapterError> {
         self.starts += 1;
         CaptureSession::new(self.descriptor().id(), request.source(), 4, 2)
     }
@@ -123,8 +158,17 @@ impl SensorAdapter for Adapter {
 
 #[test]
 fn guarded_start_rechecks_policy_state_immediately_before_adapter_start() {
-    let mut adapter = Adapter { starts: 0, captures: 0, stop_calls: 0, stop_failures_remaining: 0 };
-    let host = PolicyHost { epoch: Cell::new(4), advance_epoch: false, deny: false };
+    let mut adapter = Adapter {
+        starts: 0,
+        captures: 0,
+        stop_calls: 0,
+        stop_failures_remaining: 0,
+    };
+    let host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: false,
+        deny: false,
+    };
     let session = guarded_start_builtin(
         &mut adapter,
         authorization(),
@@ -133,7 +177,8 @@ fn guarded_start_rechecks_policy_state_immediately_before_adapter_start() {
         &host,
         &host,
         &host,
-    ).unwrap();
+    )
+    .unwrap();
     assert_eq!(session.source_id(), 15);
     assert_eq!(session.generation(), 2);
     assert_eq!(adapter.starts, 1);
@@ -141,8 +186,17 @@ fn guarded_start_rechecks_policy_state_immediately_before_adapter_start() {
 
 #[test]
 fn policy_epoch_change_blocks_start_before_backend_is_called() {
-    let mut adapter = Adapter { starts: 0, captures: 0, stop_calls: 0, stop_failures_remaining: 0 };
-    let host = PolicyHost { epoch: Cell::new(4), advance_epoch: true, deny: false };
+    let mut adapter = Adapter {
+        starts: 0,
+        captures: 0,
+        stop_calls: 0,
+        stop_failures_remaining: 0,
+    };
+    let host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: true,
+        deny: false,
+    };
     let result = guarded_start_builtin(
         &mut adapter,
         authorization(),
@@ -152,14 +206,26 @@ fn policy_epoch_change_blocks_start_before_backend_is_called() {
         &host,
         &host,
     );
-    assert_eq!(result, Err(GuardedCaptureError::Policy(PolicyError::StateChanged)));
+    assert_eq!(
+        result,
+        Err(GuardedCaptureError::Policy(PolicyError::StateChanged))
+    );
     assert_eq!(adapter.starts, 0);
 }
 
 #[test]
 fn request_scope_mismatch_fails_before_policy_or_adapter_calls() {
-    let mut adapter = Adapter { starts: 0, captures: 0, stop_calls: 0, stop_failures_remaining: 0 };
-    let host = PolicyHost { epoch: Cell::new(4), advance_epoch: false, deny: false };
+    let mut adapter = Adapter {
+        starts: 0,
+        captures: 0,
+        stop_calls: 0,
+        stop_failures_remaining: 0,
+    };
+    let host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: false,
+        deny: false,
+    };
     let result = guarded_start_builtin(
         &mut adapter,
         authorization(),
@@ -169,7 +235,10 @@ fn request_scope_mismatch_fails_before_policy_or_adapter_calls() {
         &host,
         &host,
     );
-    assert_eq!(result, Err(GuardedCaptureError::Policy(PolicyError::RequestMismatch)));
+    assert_eq!(
+        result,
+        Err(GuardedCaptureError::Policy(PolicyError::RequestMismatch))
+    );
     assert_eq!(adapter.starts, 0);
 }
 
@@ -191,11 +260,27 @@ fn capture_metadata(sequence: u64) -> IngestMetadata {
 
 #[test]
 fn guarded_capture_returns_frame_with_exact_policy_commitment() {
-    let mut adapter = Adapter { starts: 0, captures: 0, stop_calls: 0, stop_failures_remaining: 0 };
-    let host = PolicyHost { epoch: Cell::new(4), advance_epoch: false, deny: false };
+    let mut adapter = Adapter {
+        starts: 0,
+        captures: 0,
+        stop_calls: 0,
+        stop_failures_remaining: 0,
+    };
+    let host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: false,
+        deny: false,
+    };
     let session = guarded_start_builtin(
-        &mut adapter, authorization(), binding(), policy_request(10, 4), &host, &host, &host,
-    ).unwrap();
+        &mut adapter,
+        authorization(),
+        binding(),
+        policy_request(10, 4),
+        &host,
+        &host,
+        &host,
+    )
+    .unwrap();
     let mut bytes = [0u8; 8];
     let buffer = CaptureBuffer::new(&mut bytes, capture_layout(), capability()).unwrap();
     let mut stream = IngestStream::new(15, 25, session.generation()).unwrap();
@@ -210,24 +295,47 @@ fn guarded_capture_returns_frame_with_exact_policy_commitment() {
         &host,
         &host,
         &host,
-    ).unwrap();
+    )
+    .unwrap();
 
     assert_eq!(guarded.frame().payload(), &[0; 8]);
     assert_eq!(guarded.policy_request(), &policy_request(11, 4));
     assert_eq!(guarded.decision_commitment(), &commitment());
-    assert_eq!(guarded.frame().measurement().source().trust_state(), crate::quality::TrustState::Unverified);
+    assert_eq!(
+        guarded.frame().measurement().source().trust_state(),
+        crate::quality::TrustState::Unverified
+    );
     assert_eq!(adapter.captures, 1);
 }
 
 #[test]
 fn denied_guarded_capture_does_not_call_backend() {
-    let mut adapter = Adapter { starts: 0, captures: 0, stop_calls: 0, stop_failures_remaining: 0 };
-    let permit_host = PolicyHost { epoch: Cell::new(4), advance_epoch: false, deny: false };
+    let mut adapter = Adapter {
+        starts: 0,
+        captures: 0,
+        stop_calls: 0,
+        stop_failures_remaining: 0,
+    };
+    let permit_host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: false,
+        deny: false,
+    };
     let session = guarded_start_builtin(
-        &mut adapter, authorization(), binding(), policy_request(10, 4),
-        &permit_host, &permit_host, &permit_host,
-    ).unwrap();
-    let denied_host = PolicyHost { epoch: Cell::new(4), advance_epoch: false, deny: true };
+        &mut adapter,
+        authorization(),
+        binding(),
+        policy_request(10, 4),
+        &permit_host,
+        &permit_host,
+        &permit_host,
+    )
+    .unwrap();
+    let denied_host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: false,
+        deny: true,
+    };
     let mut bytes = [0u8; 8];
     let buffer = CaptureBuffer::new(&mut bytes, capture_layout(), capability()).unwrap();
     let mut stream = IngestStream::new(15, 25, session.generation()).unwrap();
@@ -244,7 +352,10 @@ fn denied_guarded_capture_does_not_call_backend() {
         &denied_host,
     );
 
-    assert_eq!(result, Err(GuardedCaptureError::Policy(PolicyError::Denied)));
+    assert_eq!(
+        result,
+        Err(GuardedCaptureError::Policy(PolicyError::Denied))
+    );
     assert_eq!(adapter.captures, 0);
 }
 
@@ -256,7 +367,11 @@ fn guarded_stop_retains_session_wrapper_for_retry_after_backend_failure() {
         stop_calls: 0,
         stop_failures_remaining: 1,
     };
-    let host = PolicyHost { epoch: Cell::new(4), advance_epoch: false, deny: false };
+    let host = PolicyHost {
+        epoch: Cell::new(4),
+        advance_epoch: false,
+        deny: false,
+    };
     let session = guarded_start_builtin(
         &mut adapter,
         authorization(),
@@ -265,9 +380,13 @@ fn guarded_stop_retains_session_wrapper_for_retry_after_backend_failure() {
         &host,
         &host,
         &host,
-    ).unwrap();
+    )
+    .unwrap();
 
-    assert_eq!(guarded_stop_builtin(&mut adapter, &session), Err(GuardedCaptureError::Adapter(AdapterError::BackendFailure)));
+    assert_eq!(
+        guarded_stop_builtin(&mut adapter, &session),
+        Err(GuardedCaptureError::Adapter(AdapterError::BackendFailure))
+    );
     assert_eq!(session.source_id(), 15);
     assert_eq!(guarded_stop_builtin(&mut adapter, &session), Ok(()));
     assert_eq!(adapter.stop_calls, 2);

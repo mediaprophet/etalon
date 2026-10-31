@@ -3,7 +3,10 @@ use super::{
     ProcessingEvidence,
 };
 use crate::{
-    quality::{CalibrationArtifactId, CalibrationRecord, CalibrationState, SourceDescriptor, SourceKind, TrustState},
+    quality::{
+        CalibrationArtifactId, CalibrationRecord, CalibrationState, SourceDescriptor, SourceKind,
+        TrustState,
+    },
     time::ClockStamp,
     ContractError,
 };
@@ -41,7 +44,10 @@ fn caller_assertion_is_not_source_verification() {
     assert_eq!(declared_source.source_id(), 9);
     assert_eq!(declared_source.trust_state(), TrustState::Unverified);
     assert_eq!(assertion_id, 15);
-    assert_eq!(EvidenceOrigin::asserted(source(), 0), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        EvidenceOrigin::asserted(source(), 0),
+        Err(ContractError::InvalidIdentifier)
+    );
 }
 
 #[test]
@@ -62,8 +68,14 @@ fn presented_signature_is_not_a_verified_origin() {
     assert_eq!(declared_authority.key_id(), 5);
     assert_eq!(signed_digest, digest(1));
     assert_eq!(signature_digest, digest(2));
-    assert_eq!(AuthorityKeyRef::new(0, 5), Err(ContractError::InvalidIdentifier));
-    assert_eq!(AuthorityKeyRef::new(4, 0), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        AuthorityKeyRef::new(0, 5),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        AuthorityKeyRef::new(4, 0),
+        Err(ContractError::InvalidIdentifier)
+    );
 }
 
 #[test]
@@ -99,8 +111,14 @@ fn absent_processing_facts_stay_absent_and_zero_ids_are_rejected() {
     let processing = ProcessingEvidence::new(22, None, None).unwrap();
     assert_eq!(processing.configuration_digest(), None);
     assert_eq!(processing.provider_id(), None);
-    assert_eq!(ProcessingEvidence::new(0, None, None), Err(ContractError::InvalidIdentifier));
-    assert_eq!(ProcessingEvidence::new(22, None, Some(0)), Err(ContractError::InvalidIdentifier));
+    assert_eq!(
+        ProcessingEvidence::new(0, None, None),
+        Err(ContractError::InvalidIdentifier)
+    );
+    assert_eq!(
+        ProcessingEvidence::new(22, None, Some(0)),
+        Err(ContractError::InvalidIdentifier)
+    );
 
     assert_eq!(
         EvidenceRecord::new(

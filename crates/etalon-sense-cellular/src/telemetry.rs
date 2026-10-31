@@ -52,16 +52,36 @@ pub enum TelemetryTimestamp {
 pub struct CellularTelemetry(HostCellularTelemetry);
 
 impl CellularTelemetry {
-    pub const fn source_id(self) -> u64 { self.0.source_id }
-    pub const fn generation(self) -> RadioGeneration { self.0.generation }
-    pub const fn rsrp_dbm(self) -> Option<f64> { self.0.rsrp_dbm }
-    pub const fn rsrq_db(self) -> Option<f64> { self.0.rsrq_db }
-    pub const fn sinr_db(self) -> Option<f64> { self.0.sinr_db }
-    pub const fn rssi_dbm(self) -> Option<f64> { self.0.rssi_dbm }
-    pub const fn bars(self) -> Option<OrdinalBars> { self.0.bars }
-    pub const fn sequence(self) -> u64 { self.0.sequence }
-    pub const fn gap_before(self) -> Option<u64> { self.0.gap_before }
-    pub const fn timestamp(self) -> TelemetryTimestamp { self.0.timestamp }
+    pub const fn source_id(self) -> u64 {
+        self.0.source_id
+    }
+    pub const fn generation(self) -> RadioGeneration {
+        self.0.generation
+    }
+    pub const fn rsrp_dbm(self) -> Option<f64> {
+        self.0.rsrp_dbm
+    }
+    pub const fn rsrq_db(self) -> Option<f64> {
+        self.0.rsrq_db
+    }
+    pub const fn sinr_db(self) -> Option<f64> {
+        self.0.sinr_db
+    }
+    pub const fn rssi_dbm(self) -> Option<f64> {
+        self.0.rssi_dbm
+    }
+    pub const fn bars(self) -> Option<OrdinalBars> {
+        self.0.bars
+    }
+    pub const fn sequence(self) -> u64 {
+        self.0.sequence
+    }
+    pub const fn gap_before(self) -> Option<u64> {
+        self.0.gap_before
+    }
+    pub const fn timestamp(self) -> TelemetryTimestamp {
+        self.0.timestamp
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -84,7 +104,9 @@ pub fn validate_batch(
 ) -> Result<usize, TelemetryError> {
     output.fill(None);
     if output.len() < input.len() {
-        return Err(TelemetryError::OutputTooSmall { required: input.len() });
+        return Err(TelemetryError::OutputTooSmall {
+            required: input.len(),
+        });
     }
     for record in input {
         if let Err(error) = validate_record(*record) {
@@ -99,7 +121,9 @@ pub fn validate_batch(
 }
 
 fn validate_record(record: HostCellularTelemetry) -> Result<(), TelemetryError> {
-    if record.source_id == 0 { return Err(TelemetryError::InvalidSource); }
+    if record.source_id == 0 {
+        return Err(TelemetryError::InvalidSource);
+    }
     if record.rsrp_dbm.is_none()
         && record.rsrq_db.is_none()
         && record.sinr_db.is_none()
@@ -108,10 +132,18 @@ fn validate_record(record: HostCellularTelemetry) -> Result<(), TelemetryError> 
     {
         return Err(TelemetryError::NoMeasurement);
     }
-    for value in [record.rsrp_dbm, record.rsrq_db, record.sinr_db, record.rssi_dbm]
-        .into_iter().flatten()
+    for value in [
+        record.rsrp_dbm,
+        record.rsrq_db,
+        record.sinr_db,
+        record.rssi_dbm,
+    ]
+    .into_iter()
+    .flatten()
     {
-        if !value.is_finite() { return Err(TelemetryError::NonFiniteValue); }
+        if !value.is_finite() {
+            return Err(TelemetryError::NonFiniteValue);
+        }
     }
     if let Some(bars) = record.bars {
         if bars.levels == 0 || bars.level > bars.levels {

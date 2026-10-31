@@ -34,7 +34,9 @@ pub(crate) type Invoke = unsafe extern "C" fn(u64, u32, *mut RemoteArg) -> c_int
 pub(crate) type Close = unsafe extern "C" fn(u64) -> c_int;
 
 pub(crate) const fn buffer_scalars(method: u8, attributes: u8) -> Option<u32> {
-    if method > 31 || attributes > 7 { return None; }
+    if method > 31 || attributes > 7 {
+        return None;
+    }
     Some(((attributes as u32) << 29) | ((method as u32) << 24) | (1 << 16) | (1 << 8))
 }
 
@@ -48,15 +50,22 @@ mod tests {
         assert_eq!(buffer_scalars(31, 7), Some(0xff01_0100));
         assert_eq!(buffer_scalars(32, 0), None);
         assert_eq!(buffer_scalars(0, 8), None);
-        assert_eq!(buffer_scalars(etalon_sense_dsp_wire::METHOD_INDEX, 0),
-            Some(etalon_sense_dsp_wire::METHOD_SCALARS));
+        assert_eq!(
+            buffer_scalars(etalon_sense_dsp_wire::METHOD_INDEX, 0),
+            Some(etalon_sense_dsp_wire::METHOD_SCALARS)
+        );
     }
 
     #[test]
     fn native_argument_layout_contains_pointer_size_and_handle() {
-        assert_eq!(core::mem::size_of::<RemoteBuf>(), 2 * core::mem::size_of::<usize>());
-        assert_eq!(core::mem::size_of::<RemoteArg>(),
-            core::mem::size_of::<RemoteBuf>().max(core::mem::size_of::<u64>()));
+        assert_eq!(
+            core::mem::size_of::<RemoteBuf>(),
+            2 * core::mem::size_of::<usize>()
+        );
+        assert_eq!(
+            core::mem::size_of::<RemoteArg>(),
+            core::mem::size_of::<RemoteBuf>().max(core::mem::size_of::<u64>())
+        );
         assert!(core::mem::align_of::<RemoteArg>() >= core::mem::align_of::<u64>());
     }
 }

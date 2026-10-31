@@ -1,5 +1,7 @@
 use super::*;
-use crate::{validate_batch, HostCellularTelemetry, OrdinalBars, RadioGeneration, TelemetryTimestamp};
+use crate::{
+    validate_batch, HostCellularTelemetry, OrdinalBars, RadioGeneration, TelemetryTimestamp,
+};
 use etalon_sense_core::quality::SourceKind;
 
 fn validated() -> CellularTelemetry {
@@ -10,7 +12,10 @@ fn validated() -> CellularTelemetry {
         rsrq_db: None,
         sinr_db: Some(7.0),
         rssi_dbm: None,
-        bars: Some(OrdinalBars { level: 3, levels: 5 }),
+        bars: Some(OrdinalBars {
+            level: 3,
+            levels: 5,
+        }),
         sequence: 12,
         gap_before: Some(2),
         timestamp: TelemetryTimestamp::Unknown,
@@ -76,7 +81,8 @@ fn adapt_placeholder() -> CellularObservation {
         EvidenceOrigin::Unknown,
         None,
         HostPolicyDecision::NotEvaluated,
-    ).unwrap();
+    )
+    .unwrap();
     CellularObservation {
         envelope,
         metric: CellularMetric::RssiDbm,

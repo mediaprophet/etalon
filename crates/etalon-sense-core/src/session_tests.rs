@@ -42,13 +42,8 @@ fn grant(modality: Modality, start: u64, expiry: u64) -> ExternalAuthorization {
 }
 
 fn frame() -> (SampleRegion, SampleLayout) {
-    let layout = SampleLayout::new(
-        2,
-        [4, 2, 0, 0],
-        [16, 64, 0, 0],
-        SampleEncoding::ComplexF32,
-    )
-    .unwrap();
+    let layout =
+        SampleLayout::new(2, [4, 2, 0, 0], [16, 64, 0, 0], SampleEncoding::ComplexF32).unwrap();
     let region = SampleRegion::new(BufferToken::new(99, 1).unwrap(), 0, 128, 128, 4).unwrap();
     (region, layout)
 }
@@ -70,8 +65,12 @@ fn capture_requires_explicit_matching_external_grant() {
 #[test]
 fn authorization_grant_must_match_subject_environment_and_purpose() {
     let mut s = session(4);
-    let wrong_scope = ExternalAuthorization::new(11, 12, 2, 3, 99, Modality::Wifi, stamp(0), stamp(100)).unwrap();
-    assert_eq!(s.start(stamp(10), wrong_scope), Err(SessionError::GrantScopeMismatch));
+    let wrong_scope =
+        ExternalAuthorization::new(11, 12, 2, 3, 99, Modality::Wifi, stamp(0), stamp(100)).unwrap();
+    assert_eq!(
+        s.start(stamp(10), wrong_scope),
+        Err(SessionError::GrantScopeMismatch)
+    );
     assert_eq!(s.phase(), SessionPhase::Ready);
 }
 
@@ -146,7 +145,9 @@ fn uncertain_grant_boundaries_fail_closed() {
 #[test]
 fn clock_domain_or_epoch_change_stops_an_active_session() {
     let mut wrong_clock = session(1);
-    wrong_clock.start(stamp(10), grant(Modality::Wifi, 0, 100)).unwrap();
+    wrong_clock
+        .start(stamp(10), grant(Modality::Wifi, 0, 100))
+        .unwrap();
     assert_eq!(
         wrong_clock.capture_permitted(stamp_in(8, 2, 11)),
         Err(SessionError::Contract(ContractError::ClockDomainMismatch))
@@ -154,7 +155,9 @@ fn clock_domain_or_epoch_change_stops_an_active_session() {
     assert_eq!(wrong_clock.phase(), SessionPhase::Stopped);
 
     let mut wrong_epoch = session(1);
-    wrong_epoch.start(stamp(10), grant(Modality::Wifi, 0, 100)).unwrap();
+    wrong_epoch
+        .start(stamp(10), grant(Modality::Wifi, 0, 100))
+        .unwrap();
     assert_eq!(
         wrong_epoch.capture_permitted(stamp_in(7, 3, 11)),
         Err(SessionError::Contract(ContractError::ClockDomainMismatch))
@@ -200,26 +203,16 @@ fn frame_is_counted_only_after_capability_and_buffer_checks() {
     s.admit_frame(stamp(11), &region, &layout).unwrap();
     assert_eq!(s.frames_admitted(), 1);
 
-    let wrong_encoding = SampleLayout::new(
-        1,
-        [4, 0, 0, 0],
-        [4, 0, 0, 0],
-        SampleEncoding::F32,
-    )
-    .unwrap();
+    let wrong_encoding =
+        SampleLayout::new(1, [4, 0, 0, 0], [4, 0, 0, 0], SampleEncoding::F32).unwrap();
     assert_eq!(
         s.admit_frame(stamp(12), &region, &wrong_encoding),
         Err(SessionError::Contract(ContractError::IncompatibleEncoding))
     );
     assert_eq!(s.frames_admitted(), 1);
 
-    let over_extent = SampleLayout::new(
-        2,
-        [9, 2, 0, 0],
-        [16, 144, 0, 0],
-        SampleEncoding::ComplexF32,
-    )
-    .unwrap();
+    let over_extent =
+        SampleLayout::new(2, [9, 2, 0, 0], [16, 144, 0, 0], SampleEncoding::ComplexF32).unwrap();
     assert_eq!(
         s.admit_frame(stamp(13), &region, &over_extent),
         Err(SessionError::Contract(ContractError::OutOfBounds))
@@ -252,7 +245,10 @@ fn stop_allows_restart_but_revocation_is_terminal() {
     s.revoke();
     assert_eq!(s.phase(), SessionPhase::Revoked);
     assert!(!s.capture_permitted(stamp(13)).unwrap());
-    assert_eq!(s.start(stamp(14), grant(Modality::Wifi, 0, 100)), Err(SessionError::Revoked));
+    assert_eq!(
+        s.start(stamp(14), grant(Modality::Wifi, 0, 100)),
+        Err(SessionError::Revoked)
+    );
     s.stop();
     assert_eq!(s.phase(), SessionPhase::Revoked);
 }

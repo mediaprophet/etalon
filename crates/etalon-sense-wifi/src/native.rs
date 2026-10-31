@@ -1,24 +1,25 @@
-use core::{mem::{offset_of, size_of}, ptr};
+use core::{
+    mem::{offset_of, size_of},
+    ptr,
+};
 
 use windows::{
     core::GUID,
     Win32::{
         Foundation::HANDLE,
-        NetworkManagement::IpHelper::{
-            ConvertInterfaceGuidToLuid, GetIfEntry2, MIB_IF_ROW2,
-        },
+        NetworkManagement::IpHelper::{ConvertInterfaceGuidToLuid, GetIfEntry2, MIB_IF_ROW2},
         NetworkManagement::Ndis::NET_LUID_LH,
         NetworkManagement::WiFi::{
-            WlanCloseHandle, WlanFreeMemory, WlanGetNetworkBssList, WlanOpenHandle,
-            DOT11_BSS_TYPE, WLAN_API_VERSION_2_0, WLAN_BSS_ENTRY, WLAN_BSS_LIST,
+            WlanCloseHandle, WlanFreeMemory, WlanGetNetworkBssList, WlanOpenHandle, DOT11_BSS_TYPE,
+            WLAN_API_VERSION_2_0, WLAN_BSS_ENTRY, WLAN_BSS_LIST,
         },
     },
 };
 
+use crate::TimestampStatus;
 use etalon_sense_core::radio::{
     RadioAddress48, RadioIdentifier, RadioIdentifierObservation, RadioObservationTime,
 };
-use crate::TimestampStatus;
 
 /// Maximum accepted BSS rows copied into caller-owned storage per call.
 pub const MAX_BSS_OBSERVATIONS: usize = 256;
@@ -153,7 +154,9 @@ impl Drop for WlanClient {
         if !self.0.is_invalid() {
             // Cleanup is required even after a policy change; this only closes
             // the local WLAN client handle and does not initiate a capture.
-            unsafe { let _ = WlanCloseHandle(self.0, None); }
+            unsafe {
+                let _ = WlanCloseHandle(self.0, None);
+            }
         }
     }
 }
@@ -164,7 +167,9 @@ impl Drop for WlanAllocation {
     fn drop(&mut self) {
         if !self.0.is_null() {
             // WLAN API allocations must be released with WlanFreeMemory.
-            unsafe { WlanFreeMemory(self.0.cast()); }
+            unsafe {
+                WlanFreeMemory(self.0.cast());
+            }
         }
     }
 }
@@ -184,11 +189,18 @@ pub fn read_cached_bss<G: PolicyGate>(
     let mut negotiated_version = 0u32;
     let mut raw_handle = HANDLE(ptr::null_mut());
     let status = unsafe {
-        WlanOpenHandle(WLAN_API_VERSION_2_0, None, &mut negotiated_version, &mut raw_handle)
+        WlanOpenHandle(
+            WLAN_API_VERSION_2_0,
+            None,
+            &mut negotiated_version,
+            &mut raw_handle,
+        )
     };
     if status != 0 {
         if !raw_handle.is_invalid() {
-            unsafe { let _ = WlanCloseHandle(raw_handle, None); }
+            unsafe {
+                let _ = WlanCloseHandle(raw_handle, None);
+            }
         }
         return Err(WifiError::WlanStatus(status));
     }
@@ -215,7 +227,9 @@ pub fn read_cached_bss<G: PolicyGate>(
     };
     if status != 0 {
         if !raw_list.is_null() {
-            unsafe { WlanFreeMemory(raw_list.cast()); }
+            unsafe {
+                WlanFreeMemory(raw_list.cast());
+            }
         }
         return Err(WifiError::WlanStatus(status));
     }
@@ -266,9 +280,18 @@ unsafe fn copy_validated_list(
 
     for index in 0..count {
         let entry_offset = entries_offset
-            .checked_add(index.checked_mul(entry_size).ok_or(WifiError::InvalidList)?)
+            .checked_add(
+                index
+                    .checked_mul(entry_size)
+                    .ok_or(WifiError::InvalidList)?,
+            )
             .ok_or(WifiError::InvalidList)?;
-        let entry = unsafe { raw_bytes.add(entry_offset).cast::<WLAN_BSS_ENTRY>().read_unaligned() };
+        let entry = unsafe {
+            raw_bytes
+                .add(entry_offset)
+                .cast::<WLAN_BSS_ENTRY>()
+                .read_unaligned()
+        };
         // The Windows SDK defines ulIeOffset relative to the beginning of
         // this WLAN_BSS_ENTRY, not relative to WLAN_BSS_LIST/allocation.
         let ie_relative = usize::try_from(entry.ulIeOffset).map_err(|_| WifiError::InvalidList)?;
@@ -279,7 +302,12 @@ unsafe fn copy_validated_list(
 
     for index in 0..count {
         let entry_offset = entries_offset + index * entry_size;
-        let entry = unsafe { raw_bytes.add(entry_offset).cast::<WLAN_BSS_ENTRY>().read_unaligned() };
+        let entry = unsafe {
+            raw_bytes
+                .add(entry_offset)
+                .cast::<WLAN_BSS_ENTRY>()
+                .read_unaligned()
+        };
         output[index] = BssObservation {
             bssid: entry.dot11Bssid,
             rssi_dbm: entry.lRssi,
@@ -308,10 +336,16 @@ fn validate_table(
         return Err(WifiError::TooManyResults);
     }
     if output_capacity < item_count {
-        return Err(WifiError::OutputTooSmall { required: item_count });
+        return Err(WifiError::OutputTooSmall {
+            required: item_count,
+        });
     }
     items_offset
-        .checked_add(item_count.checked_mul(item_size).ok_or(WifiError::InvalidList)?)
+        .checked_add(
+            item_count
+                .checked_mul(item_size)
+                .ok_or(WifiError::InvalidList)?,
+        )
         .ok_or(WifiError::InvalidList)
 }
 
@@ -324,7 +358,9 @@ fn validate_ie_span(
     if ie_size == 0 {
         return Ok(());
     }
-    let end = ie_offset.checked_add(ie_size).ok_or(WifiError::InvalidList)?;
+    let end = ie_offset
+        .checked_add(ie_size)
+        .ok_or(WifiError::InvalidList)?;
     if ie_offset < items_end || end > total_bytes {
         return Err(WifiError::InvalidList);
     }
@@ -332,7 +368,9 @@ fn validate_ie_span(
 }
 
 fn entry_relative_ie_start(entry_offset: usize, ie_offset: usize) -> Result<usize, WifiError> {
-    entry_offset.checked_add(ie_offset).ok_or(WifiError::InvalidList)
+    entry_offset
+        .checked_add(ie_offset)
+        .ok_or(WifiError::InvalidList)
 }
 
 #[cfg(test)]

@@ -16,14 +16,13 @@ pub mod observation;
 #[cfg(windows)]
 pub use native::{
     read_cached_bss, read_current_interface_mac, BssObservation, BssReadSummary,
-    InterfaceMacPolicyGate, PolicyGate, WifiError,
-    MAX_BSS_OBSERVATIONS,
+    InterfaceMacPolicyGate, PolicyGate, WifiError, MAX_BSS_OBSERVATIONS,
 };
 
 #[cfg(windows)]
 pub use observation::{
-    adapt_cached_bss, AdaptError as ObservationAdaptError, WifiMetric,
-    WifiObservation, WifiObservationMapping, WIFI_METRIC_CAPACITY,
+    adapt_cached_bss, AdaptError as ObservationAdaptError, WifiMetric, WifiObservation,
+    WifiObservationMapping, WIFI_METRIC_CAPACITY,
 };
 
 /// Returned observations have no verified source-clock timestamp or cache age.
@@ -33,4 +32,3 @@ pub use observation::{
 pub enum TimestampStatus {
     Unknown,
 }
-

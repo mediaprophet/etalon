@@ -1,10 +1,17 @@
 use super::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum StartFailureReason { StartStatus(i32), InvalidDeclaration, StartOperationFailed }
+pub enum StartFailureReason {
+    StartStatus(i32),
+    InvalidDeclaration,
+    StartOperationFailed,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CleanupProgress { Pending, Complete }
+pub enum CleanupProgress {
+    Pending,
+    Complete,
+}
 
 /// Failed start that retains COM resources until explicit cleanup succeeds.
 /// Call `retry_cleanup` until it returns `Complete` before dropping this value.
@@ -37,7 +44,9 @@ impl StartFailure {
         }
     }
 
-    pub const fn reason(&self) -> StartFailureReason { self.reason }
+    pub const fn reason(&self) -> StartFailureReason {
+        self.reason
+    }
 
     pub fn retry_cleanup(&mut self) -> Result<CleanupProgress, NativeError> {
         if self.stop_required {
@@ -46,11 +55,20 @@ impl StartFailure {
                 let reader = self.reader.as_ref().ok_or(NativeError::WrongState)?;
                 self.stop_operation = Some(begin_reader_stop(capture, reader)?);
             }
-            match self.stop_operation.as_mut().ok_or(NativeError::WrongState)?.poll() {
+            match self
+                .stop_operation
+                .as_mut()
+                .ok_or(NativeError::WrongState)?
+                .poll()
+            {
                 Ok(AsyncPoll::Pending) => return Ok(CleanupProgress::Pending),
                 Ok(AsyncPoll::Ready(())) => {}
                 Err(error) => {
-                    if self.stop_operation.as_ref().is_some_and(PendingAction::is_terminal) {
+                    if self
+                        .stop_operation
+                        .as_ref()
+                        .is_some_and(PendingAction::is_terminal)
+                    {
                         self.stop_operation = None;
                     }
                     return Err(error);
@@ -60,12 +78,18 @@ impl StartFailure {
             self.stop_required = false;
         }
         if !self.reader_closed {
-            self.reader.as_ref().ok_or(NativeError::WrongState)?.Close()?;
+            self.reader
+                .as_ref()
+                .ok_or(NativeError::WrongState)?
+                .Close()?;
             self.reader_closed = true;
             self.reader = None;
         }
         if !self.capture_closed {
-            self.capture.as_ref().ok_or(NativeError::WrongState)?.Close()?;
+            self.capture
+                .as_ref()
+                .ok_or(NativeError::WrongState)?
+                .Close()?;
             self.capture_closed = true;
             self.capture = None;
         }
@@ -85,7 +109,12 @@ pub struct WindowsCapturedFrame {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum ReaderState { Active, Stopping, StopFailed, Stopped }
+enum ReaderState {
+    Active,
+    Stopping,
+    StopFailed,
+    Stopped,
+}
 
 /// An explicitly running reader that performs a policy check and bounded
 /// `SoftwareBitmap` copy for each caller poll. WinRT may continuously acquire
@@ -157,8 +186,12 @@ impl RunningFrameReader {
         Ok(running)
     }
 
-    pub const fn is_active(&self) -> bool { matches!(self.state, ReaderState::Active) }
-    pub const fn is_stopping(&self) -> bool { matches!(self.state, ReaderState::Stopping | ReaderState::StopFailed) }
+    pub const fn is_active(&self) -> bool {
+        matches!(self.state, ReaderState::Active)
+    }
+    pub const fn is_stopping(&self) -> bool {
+        matches!(self.state, ReaderState::Stopping | ReaderState::StopFailed)
+    }
 
     /// Acquire/copy one latest frame. Caller output must hold the declaration's
     /// full byte ceiling before the OS frame is acquired; actual dimensions and
@@ -174,26 +207,42 @@ impl RunningFrameReader {
         output: &mut [u8],
     ) -> Result<WindowsCapturedFrame, NativeError> {
         output.fill(0);
-        if self.state != ReaderState::Active { return Err(NativeError::WrongState); }
-        let byte_budget = validate_copy_allocation(
-            allocation, u64::from(self.declaration.max_frame_bytes()),
-        )?;
-        if !policy_permits(policy, self.declaration.source_id(), self.declaration.modality(), CameraOperation::AcquireFrame) {
+        if self.state != ReaderState::Active {
+            return Err(NativeError::WrongState);
+        }
+        let byte_budget =
+            validate_copy_allocation(allocation, u64::from(self.declaration.max_frame_bytes()))?;
+        if !policy_permits(
+            policy,
+            self.declaration.source_id(),
+            self.declaration.modality(),
+            CameraOperation::AcquireFrame,
+        ) {
             self.request_stop()?;
             return Err(NativeError::PolicyDenied);
         }
         let required_capacity = self.declaration.max_frame_bytes() as usize;
         if output.len() < required_capacity {
-            return Err(NativeError::BufferTooSmall { required: required_capacity });
+            return Err(NativeError::BufferTooSmall {
+                required: required_capacity,
+            });
         }
         let next_sequence = match self.next_sequence.checked_add(1) {
             Some(sequence) => sequence,
-            None => { let _ = self.request_stop(); return Err(NativeError::SequenceOverflow); }
+            None => {
+                let _ = self.request_stop();
+                return Err(NativeError::SequenceOverflow);
+            }
         };
-        let mut guarded = FrameOutputGuard { bytes: output, keep: false };
+        let mut guarded = FrameOutputGuard {
+            bytes: output,
+            keep: false,
+        };
         let copied = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
             let reference = self.reader.TryAcquireLatestFrame()?;
-            let native_time = reference.SystemRelativeTime().ok()
+            let native_time = reference
+                .SystemRelativeTime()
+                .ok()
                 .and_then(|value| value.Value().ok())
                 .map(|value| value.Duration);
             let video = reference.VideoMediaFrame()?;
@@ -210,7 +259,12 @@ impl RunningFrameReader {
         };
         match copied {
             Ok((format, native_time)) => {
-                if !policy_permits(policy, self.declaration.source_id(), self.declaration.modality(), CameraOperation::AcquireFrame) {
+                if !policy_permits(
+                    policy,
+                    self.declaration.source_id(),
+                    self.declaration.modality(),
+                    CameraOperation::AcquireFrame,
+                ) {
                     let _ = self.request_stop();
                     return Err(NativeError::PolicyDenied);
                 }
@@ -245,7 +299,10 @@ impl RunningFrameReader {
                         self.state = ReaderState::Stopping;
                         Ok(())
                     }
-                    Err(error) => { self.state = ReaderState::StopFailed; Err(error) }
+                    Err(error) => {
+                        self.state = ReaderState::StopFailed;
+                        Err(error)
+                    }
                 }
             }
             ReaderState::Stopping => Ok(()),
@@ -256,10 +313,18 @@ impl RunningFrameReader {
     /// Poll stop without blocking. Once the stop action completes, explicitly
     /// close the reader and capture. Close failures remain retryable.
     pub fn poll_stop(&mut self) -> Result<AsyncPoll<()>, NativeError> {
-        if self.state == ReaderState::Active { return Err(NativeError::WrongState); }
-        if self.state == ReaderState::StopFailed { return Err(NativeError::StopUnconfirmed); }
+        if self.state == ReaderState::Active {
+            return Err(NativeError::WrongState);
+        }
+        if self.state == ReaderState::StopFailed {
+            return Err(NativeError::StopUnconfirmed);
+        }
         if self.state == ReaderState::Stopping {
-            let poll = self.stop_operation.as_mut().ok_or(NativeError::WrongState)?.poll();
+            let poll = self
+                .stop_operation
+                .as_mut()
+                .ok_or(NativeError::WrongState)?
+                .poll();
             match poll {
                 Ok(AsyncPoll::Pending) => return Ok(AsyncPoll::Pending),
                 Ok(AsyncPoll::Ready(())) => {
@@ -267,7 +332,11 @@ impl RunningFrameReader {
                     self.state = ReaderState::Stopped;
                 }
                 Err(error) => {
-                    if self.stop_operation.as_ref().is_some_and(PendingAction::is_terminal) {
+                    if self
+                        .stop_operation
+                        .as_ref()
+                        .is_some_and(PendingAction::is_terminal)
+                    {
                         self.stop_operation = None;
                         self.state = ReaderState::StopFailed;
                     }
@@ -280,7 +349,9 @@ impl RunningFrameReader {
     }
 
     fn close_after_stop(&mut self) -> Result<(), NativeError> {
-        if self.state != ReaderState::Stopped { return Err(NativeError::WrongState); }
+        if self.state != ReaderState::Stopped {
+            return Err(NativeError::WrongState);
+        }
         if !self.reader_closed {
             self.reader.Close()?;
             self.reader_closed = true;
@@ -294,10 +365,16 @@ impl RunningFrameReader {
 }
 
 #[cfg(feature = "unqualified-frame-copy")]
-struct FrameOutputGuard<'a> { bytes: &'a mut [u8], keep: bool }
+struct FrameOutputGuard<'a> {
+    bytes: &'a mut [u8],
+    keep: bool,
+}
 
 #[cfg(feature = "unqualified-frame-copy")]
 impl Drop for FrameOutputGuard<'_> {
-    fn drop(&mut self) { if !self.keep { self.bytes.fill(0); } }
+    fn drop(&mut self) {
+        if !self.keep {
+            self.bytes.fill(0);
+        }
+    }
 }
-

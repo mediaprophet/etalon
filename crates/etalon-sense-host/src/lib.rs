@@ -4,8 +4,12 @@
 
 pub mod stream;
 
-use std::{fs::File, io::{self, Read}, path::Path};
 use etalon_signal::{wave::Pcm16Wave, SignalError};
+use std::{
+    fs::File,
+    io::{self, Read},
+    path::Path,
+};
 
 #[derive(Debug)]
 pub enum InputError {
@@ -44,7 +48,12 @@ pub fn read_bounded(reader: &mut impl Read, buffer: &mut [u8]) -> Result<usize, 
         match reader.read(&mut buffer[used..]) {
             Ok(0) => return Ok(used),
             Ok(count) if count <= buffer.len() - used => used += count,
-            Ok(_) => return Err(InputError::Io(io::Error::new(io::ErrorKind::InvalidData, "reader returned an invalid byte count"))),
+            Ok(_) => {
+                return Err(InputError::Io(io::Error::new(
+                    io::ErrorKind::InvalidData,
+                    "reader returned an invalid byte count",
+                )))
+            }
             Err(error) if error.kind() == io::ErrorKind::Interrupted => continue,
             Err(error) => return Err(InputError::Io(error)),
         }

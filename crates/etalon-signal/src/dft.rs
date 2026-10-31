@@ -20,20 +20,40 @@ pub enum DftScale {
 /// All inputs and results are checked before modifying output. Coefficient
 /// components must lie in [-1, 1], but unit magnitude is not established.
 /// `out` must contain exactly two values per input complex sample.
-pub fn transform_into(input: &[f32], coefficients: &[f32], out: &mut [f64], scale: DftScale) -> Result<usize, SignalError> {
-    if input.is_empty() { return Err(SignalError::EmptyInput); }
-    if input.len() % 2 != 0 { return Err(SignalError::LengthMismatch); }
+pub fn transform_into(
+    input: &[f32],
+    coefficients: &[f32],
+    out: &mut [f64],
+    scale: DftScale,
+) -> Result<usize, SignalError> {
+    if input.is_empty() {
+        return Err(SignalError::EmptyInput);
+    }
+    if input.len() % 2 != 0 {
+        return Err(SignalError::LengthMismatch);
+    }
     let count = input.len() / 2;
-    if count > MAX_DFT_SAMPLES { return Err(SignalError::InvalidParameter); }
-    let expected = count.checked_mul(count).and_then(|v| v.checked_mul(2)).ok_or(SignalError::NumericRange)?;
-    if coefficients.len() != expected || out.len() != input.len() { return Err(SignalError::LengthMismatch); }
+    if count > MAX_DFT_SAMPLES {
+        return Err(SignalError::InvalidParameter);
+    }
+    let expected = count
+        .checked_mul(count)
+        .and_then(|v| v.checked_mul(2))
+        .ok_or(SignalError::NumericRange)?;
+    if coefficients.len() != expected || out.len() != input.len() {
+        return Err(SignalError::LengthMismatch);
+    }
     if input.iter().any(|v| !v.is_finite()) || coefficients.iter().any(|v| !v.is_finite()) {
         return Err(SignalError::NonFiniteInput);
     }
-    if coefficients.iter().any(|v| *v < -1.0 || *v > 1.0) { return Err(SignalError::InvalidParameter); }
+    if coefficients.iter().any(|v| *v < -1.0 || *v > 1.0) {
+        return Err(SignalError::InvalidParameter);
+    }
     for bin in 0..count {
         let (real, imag) = calculate_bin(input, coefficients, bin, count, scale);
-        if !real.is_finite() || !imag.is_finite() { return Err(SignalError::NumericRange); }
+        if !real.is_finite() || !imag.is_finite() {
+            return Err(SignalError::NumericRange);
+        }
     }
     for bin in 0..count {
         let (real, imag) = calculate_bin(input, coefficients, bin, count, scale);
@@ -43,7 +63,13 @@ pub fn transform_into(input: &[f32], coefficients: &[f32], out: &mut [f64], scal
     Ok(count)
 }
 
-fn calculate_bin(input: &[f32], coefficients: &[f32], bin: usize, count: usize, scale: DftScale) -> (f64, f64) {
+fn calculate_bin(
+    input: &[f32],
+    coefficients: &[f32],
+    bin: usize,
+    count: usize,
+    scale: DftScale,
+) -> (f64, f64) {
     let mut real = 0.0;
     let mut imag = 0.0;
     for index in 0..count {
@@ -54,7 +80,11 @@ fn calculate_bin(input: &[f32], coefficients: &[f32], bin: usize, count: usize, 
         real += a * c - b * d;
         imag += a * d + b * c;
     }
-    if scale == DftScale::DivideBySampleCount { (real / count as f64, imag / count as f64) } else { (real, imag) }
+    if scale == DftScale::DivideBySampleCount {
+        (real / count as f64, imag / count as f64)
+    } else {
+        (real, imag)
+    }
 }
 
 #[cfg(test)]

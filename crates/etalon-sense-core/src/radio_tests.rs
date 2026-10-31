@@ -11,7 +11,10 @@ fn asymmetric_octets_round_trip_in_explicit_network_order() {
 #[test]
 fn high_bits_are_rejected_without_aliasing_a_valid_address() {
     for value in [1_u64 << 48, 1_u64 << 63, u64::MAX, 0x0001_0123_4567_89ab] {
-        assert_eq!(RadioAddress48::try_from_u64(value), Err(ContractError::InvalidIdentifier));
+        assert_eq!(
+            RadioAddress48::try_from_u64(value),
+            Err(ContractError::InvalidIdentifier)
+        );
     }
 }
 
@@ -30,9 +33,18 @@ fn identical_bytes_do_not_conflate_identifier_namespaces() {
     let labels = [
         RadioIdentifier::Mac(address),
         RadioIdentifier::Bssid(address),
-        RadioIdentifier::Bluetooth { address, kind: BluetoothAddressKind::Unknown },
-        RadioIdentifier::Bluetooth { address, kind: BluetoothAddressKind::Public },
-        RadioIdentifier::Bluetooth { address, kind: BluetoothAddressKind::Random },
+        RadioIdentifier::Bluetooth {
+            address,
+            kind: BluetoothAddressKind::Unknown,
+        },
+        RadioIdentifier::Bluetooth {
+            address,
+            kind: BluetoothAddressKind::Public,
+        },
+        RadioIdentifier::Bluetooth {
+            address,
+            kind: BluetoothAddressKind::Random,
+        },
     ];
     for (index, label) in labels.iter().enumerate() {
         assert_eq!(label.address(), address);
@@ -49,9 +61,13 @@ fn unknown_bluetooth_kind_stays_unknown_regardless_of_address_bits() {
             address: RadioAddress48::from_octets([first, 1, 2, 3, 4, 5]),
             kind: BluetoothAddressKind::Unknown,
         };
-        assert!(matches!(identifier, RadioIdentifier::Bluetooth {
-            kind: BluetoothAddressKind::Unknown, ..
-        }));
+        assert!(matches!(
+            identifier,
+            RadioIdentifier::Bluetooth {
+                kind: BluetoothAddressKind::Unknown,
+                ..
+            }
+        ));
     }
 }
 
@@ -68,7 +84,10 @@ fn observations_keep_unknown_and_raw_signed_time_distinct() {
             observed_at: RadioObservationTime::WindowsUtc100ns(ticks),
         };
         assert_ne!(unknown, reported);
-        assert_eq!(reported.observed_at, RadioObservationTime::WindowsUtc100ns(ticks));
+        assert_eq!(
+            reported.observed_at,
+            RadioObservationTime::WindowsUtc100ns(ticks)
+        );
     }
 }
 
@@ -81,8 +100,12 @@ fn clock_context_and_restart_epoch_remain_attached() {
         observed_at: RadioObservationTime::Clock(stamp),
     };
     assert_eq!(observation.observed_at, RadioObservationTime::Clock(stamp));
-    assert_ne!(observation.observed_at, RadioObservationTime::Clock(
-        ClockStamp::new(7, 10, 100, 4).unwrap()
-    ));
-    assert_ne!(observation.observed_at, RadioObservationTime::WindowsUtc100ns(100));
+    assert_ne!(
+        observation.observed_at,
+        RadioObservationTime::Clock(ClockStamp::new(7, 10, 100, 4).unwrap())
+    );
+    assert_ne!(
+        observation.observed_at,
+        RadioObservationTime::WindowsUtc100ns(100)
+    );
 }

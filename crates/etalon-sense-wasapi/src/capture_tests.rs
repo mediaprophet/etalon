@@ -2,7 +2,10 @@ use super::*;
 
 #[test]
 fn source_hash_is_stable_and_nonzero() {
-    assert_eq!(stable_source_id(b"endpoint-id"), stable_source_id(b"endpoint-id"));
+    assert_eq!(
+        stable_source_id(b"endpoint-id"),
+        stable_source_id(b"endpoint-id")
+    );
     assert_ne!(stable_source_id(b"endpoint-id"), 0);
 }
 
@@ -23,10 +26,18 @@ fn total_capture_deadline_bounds_each_wait_using_host_clock() {
 
     assert_eq!(capture_wait_timeout_ms(start, immediate, 50, 1_000), Ok(50));
     assert_eq!(capture_wait_timeout_ms(start, halfway, 50, 1_000), Ok(25));
-    assert_eq!(capture_wait_timeout_ms(start, deadline, 50, 1_000), Err(AdapterError::BackendFailure));
+    assert_eq!(
+        capture_wait_timeout_ms(start, deadline, 50, 1_000),
+        Err(AdapterError::BackendFailure)
+    );
     assert_eq!(capture_wait_timeout_ms(start, immediate, 50, 10), Ok(10));
     assert_eq!(
-        capture_wait_timeout_ms(start, ClockStamp::new(8, 2, 1_000_000_000, 0).unwrap(), 50, 10),
+        capture_wait_timeout_ms(
+            start,
+            ClockStamp::new(8, 2, 1_000_000_000, 0).unwrap(),
+            50,
+            10
+        ),
         Err(AdapterError::ClockDomainMismatch),
     );
 }
@@ -35,7 +46,10 @@ fn total_capture_deadline_bounds_each_wait_using_host_clock() {
 fn clock_uncertainty_can_expire_capture_budget_early_but_never_extend_it() {
     let start = ClockStamp::new(7, 2, 1_000_000_000, 5_000_000).unwrap();
     let now = ClockStamp::new(7, 2, 1_040_000_000, 6_000_000).unwrap();
-    assert_eq!(capture_wait_timeout_ms(start, now, 50, 1_000), Err(AdapterError::BackendFailure));
+    assert_eq!(
+        capture_wait_timeout_ms(start, now, 50, 1_000),
+        Err(AdapterError::BackendFailure)
+    );
 }
 
 #[test]
@@ -47,7 +61,10 @@ fn repeated_wait_timeouts_detect_a_stalled_or_regressed_host_clock() {
 
     assert_eq!(timeout_clock_advanced(before, same), Ok(false));
     assert_eq!(timeout_clock_advanced(before, advanced), Ok(true));
-    assert_eq!(timeout_clock_advanced(before, regressed), Err(AdapterError::BackendFailure));
+    assert_eq!(
+        timeout_clock_advanced(before, regressed),
+        Err(AdapterError::BackendFailure)
+    );
 }
 
 #[test]

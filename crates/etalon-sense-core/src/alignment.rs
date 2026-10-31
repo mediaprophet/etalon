@@ -27,12 +27,21 @@ pub struct ClockDomain {
 
 impl ClockDomain {
     pub const fn new(clock_id: u64, restart_epoch: u32) -> Result<Self, ContractError> {
-        if clock_id == 0 { return Err(ContractError::InvalidIdentifier); }
-        Ok(Self { clock_id, restart_epoch })
+        if clock_id == 0 {
+            return Err(ContractError::InvalidIdentifier);
+        }
+        Ok(Self {
+            clock_id,
+            restart_epoch,
+        })
     }
 
-    pub const fn clock_id(self) -> u64 { self.clock_id }
-    pub const fn restart_epoch(self) -> u32 { self.restart_epoch }
+    pub const fn clock_id(self) -> u64 {
+        self.clock_id
+    }
+    pub const fn restart_epoch(self) -> u32 {
+        self.restart_epoch
+    }
 
     pub const fn matches(self, stamp: ClockStamp) -> bool {
         self.clock_id == stamp.clock_id() && self.restart_epoch == stamp.restart_epoch()
@@ -68,13 +77,26 @@ impl AlignmentConfig {
         missing: MissingObservationPolicy,
         unknown_time: UnknownTimestampPolicy,
     ) -> Self {
-        Self { target, max_skew_ns, missing, unknown_time }
+        Self {
+            target,
+            max_skew_ns,
+            missing,
+            unknown_time,
+        }
     }
 
-    pub const fn target(self) -> ClockDomain { self.target }
-    pub const fn max_skew_ns(self) -> u64 { self.max_skew_ns }
-    pub const fn missing_policy(self) -> MissingObservationPolicy { self.missing }
-    pub const fn unknown_timestamp_policy(self) -> UnknownTimestampPolicy { self.unknown_time }
+    pub const fn target(self) -> ClockDomain {
+        self.target
+    }
+    pub const fn max_skew_ns(self) -> u64 {
+        self.max_skew_ns
+    }
+    pub const fn missing_policy(self) -> MissingObservationPolicy {
+        self.missing
+    }
+    pub const fn unknown_timestamp_policy(self) -> UnknownTimestampPolicy {
+        self.unknown_time
+    }
 }
 
 /// Stable matching key for one expected observation. Route and source kind are
@@ -105,8 +127,11 @@ impl ObservationKey {
         quantity_id: Option<u64>,
         unit_id: Option<u64>,
     ) -> Result<Self, ContractError> {
-        if source_id == 0 || matches!(stream_id, Some(0)) || matches!(generation, Some(0))
-            || matches!(quantity_id, Some(0)) || matches!(unit_id, Some(0))
+        if source_id == 0
+            || matches!(stream_id, Some(0))
+            || matches!(generation, Some(0))
+            || matches!(quantity_id, Some(0))
+            || matches!(unit_id, Some(0))
         {
             return Err(ContractError::InvalidIdentifier);
         }
@@ -114,8 +139,14 @@ impl ObservationKey {
             return Err(ContractError::InvalidSource);
         }
         Ok(Self {
-            observation_kind, source_kind, source_id, stream_id, generation,
-            sequence, quantity_id, unit_id,
+            observation_kind,
+            source_kind,
+            source_id,
+            stream_id,
+            generation,
+            sequence,
+            quantity_id,
+            unit_id,
         })
     }
 
@@ -125,16 +156,32 @@ impl ObservationKey {
             observation_kind: observation.kind(),
             source_kind: observation.source().kind(),
             source_id: observation.source().source_id(),
-            stream_id: match observation.stream_id() { Some(value) => Some(value.get()), None => None },
-            generation: match observation.generation() { Some(value) => Some(value.get()), None => None },
+            stream_id: match observation.stream_id() {
+                Some(value) => Some(value.get()),
+                None => None,
+            },
+            generation: match observation.generation() {
+                Some(value) => Some(value.get()),
+                None => None,
+            },
             sequence: observation.sequence(),
-            quantity_id: match quantity.quantity_id() { Some(value) => Some(value.get()), None => None },
-            unit_id: match quantity.unit_id() { Some(value) => Some(value.get()), None => None },
+            quantity_id: match quantity.quantity_id() {
+                Some(value) => Some(value.get()),
+                None => None,
+            },
+            unit_id: match quantity.unit_id() {
+                Some(value) => Some(value.get()),
+                None => None,
+            },
         }
     }
 
-    pub const fn observation_kind(self) -> ObservationKind { self.observation_kind }
-    pub const fn source_kind(self) -> SourceKind { self.source_kind }
+    pub const fn observation_kind(self) -> ObservationKind {
+        self.observation_kind
+    }
+    pub const fn source_kind(self) -> SourceKind {
+        self.source_kind
+    }
 }
 
 /// Opaque host anchor reference. It has no event semantics by itself and is
@@ -150,7 +197,9 @@ impl TimestampAnchorId {
         }
     }
 
-    pub const fn get(self) -> u64 { self.0.get() }
+    pub const fn get(self) -> u64 {
+        self.0.get()
+    }
 }
 
 /// Envelope plus optional host anchor reference. The reference never overrides
@@ -166,11 +215,18 @@ impl TimedObservation {
         observation: ObservationEnvelope,
         host_anchor_id: Option<TimestampAnchorId>,
     ) -> Self {
-        Self { observation, host_anchor_id }
+        Self {
+            observation,
+            host_anchor_id,
+        }
     }
 
-    pub const fn observation(self) -> ObservationEnvelope { self.observation }
-    pub const fn host_anchor_id(self) -> Option<TimestampAnchorId> { self.host_anchor_id }
+    pub const fn observation(self) -> ObservationEnvelope {
+        self.observation
+    }
+    pub const fn host_anchor_id(self) -> Option<TimestampAnchorId> {
+        self.host_anchor_id
+    }
 }
 
 /// Canonical anchor used for equality after either typed envelope comparison
@@ -178,7 +234,10 @@ impl TimedObservation {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AlignmentAnchor {
     Envelope(ObservationTimeAnchor),
-    AuthorityMapped { authority_id: u64, anchor_id: TimestampAnchorId },
+    AuthorityMapped {
+        authority_id: u64,
+        anchor_id: TimestampAnchorId,
+    },
 }
 
 /// Explicit host authority for equivalence between an envelope's typed anchor
@@ -208,11 +267,21 @@ pub struct AlignedObservation {
 }
 
 impl AlignedObservation {
-    pub const fn key(self) -> ObservationKey { self.key }
-    pub const fn observation(self) -> Option<ObservationEnvelope> { self.observation }
-    pub const fn target_timestamp(self) -> Option<ClockStamp> { self.target_timestamp }
-    pub const fn alignment_anchor(self) -> Option<AlignmentAnchor> { self.alignment_anchor }
-    pub const fn synchronization_id(self) -> Option<u64> { self.synchronization_id }
+    pub const fn key(self) -> ObservationKey {
+        self.key
+    }
+    pub const fn observation(self) -> Option<ObservationEnvelope> {
+        self.observation
+    }
+    pub const fn target_timestamp(self) -> Option<ClockStamp> {
+        self.target_timestamp
+    }
+    pub const fn alignment_anchor(self) -> Option<AlignmentAnchor> {
+        self.alignment_anchor
+    }
+    pub const fn synchronization_id(self) -> Option<u64> {
+        self.synchronization_id
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -257,7 +326,14 @@ pub fn align_observations(
     config: AlignmentConfig,
     output: &mut [Option<AlignedObservation>],
 ) -> Result<AlignmentReport, AlignmentError> {
-    align_with_authority(observations, expected, synchronizations, config, None, output)
+    align_with_authority(
+        observations,
+        expected,
+        synchronizations,
+        config,
+        None,
+        output,
+    )
 }
 
 /// Align using an explicit host authority for custom or cross-kind timestamp
@@ -271,7 +347,14 @@ pub fn align_observations_with_anchor_authority(
     authority: &dyn TimestampAnchorAuthority,
     output: &mut [Option<AlignedObservation>],
 ) -> Result<AlignmentReport, AlignmentError> {
-    align_with_authority(observations, expected, synchronizations, config, Some(authority), output)
+    align_with_authority(
+        observations,
+        expected,
+        synchronizations,
+        config,
+        Some(authority),
+        output,
+    )
 }
 
 fn align_with_authority(
@@ -283,8 +366,17 @@ fn align_with_authority(
     output: &mut [Option<AlignedObservation>],
 ) -> Result<AlignmentReport, AlignmentError> {
     output.fill(None);
-    let result = align_inner(observations, expected, synchronizations, config, authority, output);
-    if result.is_err() { output.fill(None); }
+    let result = align_inner(
+        observations,
+        expected,
+        synchronizations,
+        config,
+        authority,
+        output,
+    );
+    if result.is_err() {
+        output.fill(None);
+    }
     result
 }
 
@@ -297,19 +389,30 @@ fn align_inner(
     output: &mut [Option<AlignedObservation>],
 ) -> Result<AlignmentReport, AlignmentError> {
     if output.len() < expected.len() {
-        return Err(AlignmentError::OutputTooSmall { required: expected.len() });
+        return Err(AlignmentError::OutputTooSmall {
+            required: expected.len(),
+        });
     }
     if expected.len() > MAX_ALIGNMENT_MEMBERS || observations.len() > MAX_ALIGNMENT_MEMBERS {
-        return Err(AlignmentError::TooManyMembers { maximum: MAX_ALIGNMENT_MEMBERS });
+        return Err(AlignmentError::TooManyMembers {
+            maximum: MAX_ALIGNMENT_MEMBERS,
+        });
     }
     if synchronizations.len() > MAX_ALIGNMENT_SYNCHRONIZATIONS {
-        return Err(AlignmentError::TooManySynchronizations { maximum: MAX_ALIGNMENT_SYNCHRONIZATIONS });
+        return Err(AlignmentError::TooManySynchronizations {
+            maximum: MAX_ALIGNMENT_SYNCHRONIZATIONS,
+        });
     }
     for (index, key) in expected.iter().enumerate() {
-        if expected[..index].contains(key) { return Err(AlignmentError::DuplicateExpectedKey); }
+        if expected[..index].contains(key) {
+            return Err(AlignmentError::DuplicateExpectedKey);
+        }
         output[index] = Some(AlignedObservation {
-            key: *key, observation: None, target_timestamp: None,
-            alignment_anchor: None, synchronization_id: None,
+            key: *key,
+            observation: None,
+            target_timestamp: None,
+            alignment_anchor: None,
+            synchronization_id: None,
         });
     }
 
@@ -320,17 +423,29 @@ fn align_inner(
     for timed in observations {
         let observation = timed.observation;
         let key = ObservationKey::from_observation(observation);
-        let slot_index = expected.iter().position(|expected_key| *expected_key == key)
+        let slot_index = expected
+            .iter()
+            .position(|expected_key| *expected_key == key)
             .ok_or(AlignmentError::UnexpectedObservation)?;
-        let slot = output[slot_index].as_mut().expect("expected slots initialized");
-        if slot.observation.is_some() { return Err(AlignmentError::DuplicateObservation); }
+        let slot = output[slot_index]
+            .as_mut()
+            .expect("expected slots initialized");
+        if slot.observation.is_some() {
+            return Err(AlignmentError::DuplicateObservation);
+        }
 
         let anchor = match authority {
             Some(authority) => {
                 let authority_id = authority.authority_id();
-                if authority_id == 0 { return Err(AlignmentError::InvalidTimestampAnchorAuthority); }
-                authority.resolve(observation.time_anchor(), timed.host_anchor_id)
-                    .map(|anchor_id| AlignmentAnchor::AuthorityMapped { authority_id, anchor_id })
+                if authority_id == 0 {
+                    return Err(AlignmentError::InvalidTimestampAnchorAuthority);
+                }
+                authority
+                    .resolve(observation.time_anchor(), timed.host_anchor_id)
+                    .map(|anchor_id| AlignmentAnchor::AuthorityMapped {
+                        authority_id,
+                        anchor_id,
+                    })
             }
             None => match observation.time_anchor() {
                 ObservationTimeAnchor::Unknown | ObservationTimeAnchor::NativeEvent => None,
@@ -362,12 +477,19 @@ fn align_inner(
         if let Some(stamp) = target_timestamp {
             aligned_count += 1;
             let interval = stamp.interval();
-            min_lower = Some(min_lower.map_or(interval.lower_ns(), |current: u64| current.min(interval.lower_ns())));
-            max_upper = Some(max_upper.map_or(interval.upper_ns(), |current: u64| current.max(interval.upper_ns())));
+            min_lower = Some(min_lower.map_or(interval.lower_ns(), |current: u64| {
+                current.min(interval.lower_ns())
+            }));
+            max_upper = Some(max_upper.map_or(interval.upper_ns(), |current: u64| {
+                current.max(interval.upper_ns())
+            }));
         }
         *slot = Some(AlignedObservation {
-            key, observation: Some(observation), target_timestamp,
-            alignment_anchor: anchor, synchronization_id,
+            key,
+            observation: Some(observation),
+            target_timestamp,
+            alignment_anchor: anchor,
+            synchronization_id,
         });
     }
 
@@ -380,12 +502,19 @@ fn align_inner(
     }
 
     let conservative_skew_ns = match (min_lower, max_upper) {
-        (Some(lower), Some(upper)) => Some(upper.checked_sub(lower).ok_or(AlignmentError::ArithmeticOverflow)?),
+        (Some(lower), Some(upper)) => Some(
+            upper
+                .checked_sub(lower)
+                .ok_or(AlignmentError::ArithmeticOverflow)?,
+        ),
         _ => None,
     };
     if let Some(measured_ns) = conservative_skew_ns {
         if measured_ns > config.max_skew_ns {
-            return Err(AlignmentError::SkewExceeded { measured_ns, maximum_ns: config.max_skew_ns });
+            return Err(AlignmentError::SkewExceeded {
+                measured_ns,
+                maximum_ns: config.max_skew_ns,
+            });
         }
     }
     let present = observations.len();
@@ -411,13 +540,18 @@ fn map_timestamp(
         {
             continue;
         }
-        if selected.is_some() { return Err(AlignmentError::AmbiguousClockSynchronization); }
+        if selected.is_some() {
+            return Err(AlignmentError::AmbiguousClockSynchronization);
+        }
         selected = Some(synchronization);
     }
     let synchronization = selected.ok_or(AlignmentError::MissingClockSynchronization)?;
-    let mapped = synchronization.map(stamp)
+    let mapped = synchronization
+        .map(stamp)
         .map_err(AlignmentError::ClockSynchronization)?;
-    if !target.matches(mapped) { return Err(AlignmentError::MissingClockSynchronization); }
+    if !target.matches(mapped) {
+        return Err(AlignmentError::MissingClockSynchronization);
+    }
     Ok((mapped, synchronization.synchronization_id()))
 }
 

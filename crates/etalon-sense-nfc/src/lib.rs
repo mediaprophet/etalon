@@ -11,9 +11,8 @@
 mod observation;
 
 pub use observation::{
-    capture_next, HostNfcMetadata, NfcError, NfcOperation, NfcPolicyGate,
-    NfcProximity, NfcProvider, NfcProviderError, NfcProtocol, NfcTagKind,
-    NfcObservation, MAX_NFC_UID_BYTES,
+    capture_next, HostNfcMetadata, NfcError, NfcObservation, NfcOperation, NfcPolicyGate,
+    NfcProtocol, NfcProvider, NfcProviderError, NfcProximity, NfcTagKind, MAX_NFC_UID_BYTES,
 };
 
 #[cfg(test)]

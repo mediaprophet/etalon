@@ -7,7 +7,10 @@
 use etalon_sense_core::{
     adapter::{AdapterError, AuthorizedExtendedCaptureBuffer},
     evidence::EvidenceOrigin,
-    observation::{HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind, QuantityUnitIds},
+    observation::{
+        HostPolicyDecision, MeasurementUncertainty, ObservationEnvelope, ObservationKind,
+        QuantityUnitIds,
+    },
     policy::{PolicyOutcome, PolicyRequest},
     quality::{CalibrationRecord, CalibrationState, QualityRecord, SourceDescriptor, SourceKind},
     ContractError,
@@ -67,7 +70,9 @@ pub fn capture_observation<'a, C: TrustedCaptureClock>(
             return Err(error);
         }
     };
-    let (samples, metadata) = adapter.capture_with_metadata(buffer).map_err(ObservationError::Capture)?;
+    let (samples, metadata) = adapter
+        .capture_with_metadata(buffer)
+        .map_err(ObservationError::Capture)?;
     *output = Some(WasapiObservation {
         envelope,
         metadata: WasapiBatchMetadata {
@@ -86,13 +91,17 @@ pub(crate) fn validate_produced_batch(
     metadata: CaptureMetadata,
     negotiated: WasapiFormat,
 ) -> Result<(), ObservationError> {
-    let span = layout.required_byte_span().map_err(ObservationError::Contract)?;
+    let span = layout
+        .required_byte_span()
+        .map_err(ObservationError::Contract)?;
     let bytes = usize::try_from(span)
         .map_err(|_| ObservationError::Contract(ContractError::ArithmeticOverflow))?;
     let packed_bytes = usize::try_from(metadata.frames)
         .ok()
         .and_then(|frames| frames.checked_mul(usize::from(metadata.format.block_align())))
-        .ok_or(ObservationError::Contract(ContractError::ArithmeticOverflow))?;
+        .ok_or(ObservationError::Contract(
+            ContractError::ArithmeticOverflow,
+        ))?;
     let expected_frames = layout.extents()[0];
     if layout.rank() != 2
         || sample_bytes != bytes
@@ -117,11 +126,13 @@ fn make_envelope(
     let capability = session.source().capability();
     let quantity_unit = QuantityUnitIds::new(Some(capability.quantity_id()), capability.unit_id())
         .map_err(ObservationError::Contract)?;
-    let policy = mapping.policy.map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
-        HostPolicyDecision::Evaluated { request, outcome }
-    });
-    let calibration = CalibrationRecord::new(CalibrationState::Missing)
-        .map_err(ObservationError::Contract)?;
+    let policy = mapping
+        .policy
+        .map_or(HostPolicyDecision::NotEvaluated, |(request, outcome)| {
+            HostPolicyDecision::Evaluated { request, outcome }
+        });
+    let calibration =
+        CalibrationRecord::new(CalibrationState::Missing).map_err(ObservationError::Contract)?;
     ObservationEnvelope::new(
         ObservationKind::LiveFrame,
         source,
@@ -136,7 +147,8 @@ fn make_envelope(
         EvidenceOrigin::Unknown,
         None,
         policy,
-    ).map_err(ObservationError::Contract)
+    )
+    .map_err(ObservationError::Contract)
 }
 
 #[cfg(test)]

@@ -15,17 +15,11 @@ pub struct AcousticBand {
 
 impl AcousticBand {
     pub fn new(lower_hz: f64, upper_hz: f64) -> Result<Self, ContractError> {
-        if !lower_hz.is_finite()
-            || !upper_hz.is_finite()
-            || lower_hz < 0.0
-            || lower_hz >= upper_hz
+        if !lower_hz.is_finite() || !upper_hz.is_finite() || lower_hz < 0.0 || lower_hz >= upper_hz
         {
             return Err(ContractError::InvalidBand);
         }
-        Ok(Self {
-            lower_hz,
-            upper_hz,
-        })
+        Ok(Self { lower_hz, upper_hz })
     }
 
     pub const fn lower_hz(self) -> f64 {
@@ -77,7 +71,9 @@ impl SpectralCoverage {
                 | Modality::ThermalCamera
         );
 
-        if (carrier.is_some() || baseband.is_some() || modulation.is_some()) && !electromagnetic_modality {
+        if (carrier.is_some() || baseband.is_some() || modulation.is_some())
+            && !electromagnetic_modality
+        {
             return Err(ContractError::InvalidBand);
         }
         if wavelength.is_some() && !electromagnetic_modality {

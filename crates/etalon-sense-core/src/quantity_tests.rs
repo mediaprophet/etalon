@@ -60,5 +60,8 @@ fn sample_rate_must_be_finite_and_positive() {
     assert_eq!(SampleRate::new(48_000.0).unwrap().hz(), 48_000.0);
     assert_eq!(SampleRate::new(0.0), Err(ContractError::InvalidRate));
     assert_eq!(SampleRate::new(-1.0), Err(ContractError::InvalidRate));
-    assert_eq!(SampleRate::new(f64::INFINITY), Err(ContractError::InvalidRate));
+    assert_eq!(
+        SampleRate::new(f64::INFINITY),
+        Err(ContractError::InvalidRate)
+    );
 }

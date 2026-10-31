@@ -3,11 +3,26 @@ use super::*;
 #[test]
 fn request_preflight_is_bounded_and_requires_exact_buffers() {
     assert_eq!(validate_request(&[0; 8], 0.5, 4, 2, 2), Ok(2));
-    assert_eq!(validate_request(&[], 0.5, 0, 0, 2), Err(GpuError::EmptyInput));
-    assert_eq!(validate_request(&[0; 6], 0.5, 3, 1, 2), Err(GpuError::LengthMismatch));
-    assert_eq!(validate_request(&[0; 12], 0.5, 6, 3, 2), Err(GpuError::CapacityExceeded));
-    assert_eq!(validate_request(&[0; 8], f32::NAN, 4, 2, 2), Err(GpuError::InvalidScale));
-    assert_eq!(validate_request(&[0; 8], 0.5, 3, 2, 2), Err(GpuError::LengthMismatch));
+    assert_eq!(
+        validate_request(&[], 0.5, 0, 0, 2),
+        Err(GpuError::EmptyInput)
+    );
+    assert_eq!(
+        validate_request(&[0; 6], 0.5, 3, 1, 2),
+        Err(GpuError::LengthMismatch)
+    );
+    assert_eq!(
+        validate_request(&[0; 12], 0.5, 6, 3, 2),
+        Err(GpuError::CapacityExceeded)
+    );
+    assert_eq!(
+        validate_request(&[0; 8], f32::NAN, 4, 2, 2),
+        Err(GpuError::InvalidScale)
+    );
+    assert_eq!(
+        validate_request(&[0; 8], 0.5, 3, 2, 2),
+        Err(GpuError::LengthMismatch)
+    );
 }
 
 #[test]
@@ -23,7 +38,10 @@ fn parameter_block_encodes_scale_order_count_and_zero_padding() {
 fn capacities_use_checked_multiplication_and_shader_guards_tail_invocations() {
     assert_eq!(checked_bytes(4, BYTES_PER_INPUT_PAIR), Ok(16));
     assert_eq!(persistent_buffer_bytes(100), Ok(1_216));
-    assert_eq!(checked_bytes(usize::MAX, 2), Err(GpuError::CapacityExceeded));
+    assert_eq!(
+        checked_bytes(usize::MAX, 2),
+        Err(GpuError::CapacityExceeded)
+    );
     let shader = include_str!("iq_power.wgsl");
     assert!(shader.contains("if (index >= params.count)"));
     assert!(shader.contains("params.big_endian != 0u"));
@@ -38,9 +56,18 @@ fn gpu_results_reject_nan_negative_and_values_above_shared_i16_bound() {
         Err(GpuError::NumericRange)
     );
     let bound = i16_iq_power_upper_bound(0.5).unwrap();
-    assert_eq!(validate_power_values(&[f32::NAN], bound), Err(GpuError::NumericRange));
-    assert_eq!(validate_power_values(&[-1.0], bound), Err(GpuError::NumericRange));
-    assert_eq!(validate_power_values(&[f32::MAX], bound), Err(GpuError::NumericRange));
+    assert_eq!(
+        validate_power_values(&[f32::NAN], bound),
+        Err(GpuError::NumericRange)
+    );
+    assert_eq!(
+        validate_power_values(&[-1.0], bound),
+        Err(GpuError::NumericRange)
+    );
+    assert_eq!(
+        validate_power_values(&[f32::MAX], bound),
+        Err(GpuError::NumericRange)
+    );
 
     let mut staged = [123.0f64; 2];
     assert_eq!(

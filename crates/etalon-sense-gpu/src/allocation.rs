@@ -47,6 +47,9 @@ mod tests {
             admit(GpuAllocationClass::ColdBoundedBuffers, 99, 100),
             Err(AdmissionError::BudgetExceeded),
         );
-        assert_eq!(admit(GpuAllocationClass::ColdBoundedBuffers, 100, 100), Ok(()));
+        assert_eq!(
+            admit(GpuAllocationClass::ColdBoundedBuffers, 100, 100),
+            Ok(())
+        );
     }
 }

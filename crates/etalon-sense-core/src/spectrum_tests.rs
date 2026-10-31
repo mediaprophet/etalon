@@ -52,29 +52,16 @@ fn electromagnetic_axes_are_distinct_and_preserved() {
 #[test]
 fn acoustic_spectrum_has_its_own_axis_and_cannot_be_an_emf_band() {
     let acoustic = AcousticBand::new(20.0, 20_000.0).unwrap();
-    let coverage = SpectralCoverage::new(
-        Modality::Microphone,
-        None,
-        None,
-        None,
-        None,
-        Some(acoustic),
-    )
-    .unwrap();
+    let coverage =
+        SpectralCoverage::new(Modality::Microphone, None, None, None, None, Some(acoustic))
+            .unwrap();
     assert_eq!(coverage.acoustic(), Some(acoustic));
     assert_eq!(coverage.carrier(), None);
     assert_eq!(coverage.baseband(), None);
     assert_eq!(coverage.modulation(), None);
 
     assert_eq!(
-        SpectralCoverage::new(
-            Modality::Wifi,
-            None,
-            None,
-            None,
-            None,
-            Some(acoustic),
-        ),
+        SpectralCoverage::new(Modality::Wifi, None, None, None, None, Some(acoustic),),
         Err(ContractError::InvalidBand)
     );
     assert_eq!(
@@ -104,14 +91,7 @@ fn axes_must_match_their_declared_dimensions() {
         Err(ContractError::InvalidBand)
     );
     assert_eq!(
-        SpectralCoverage::new(
-            Modality::VisibleCamera,
-            None,
-            None,
-            None,
-            None,
-            None,
-        ),
+        SpectralCoverage::new(Modality::VisibleCamera, None, None, None, None, None,),
         Ok(unknown(Modality::VisibleCamera))
     );
     assert_eq!(
@@ -129,7 +109,10 @@ fn axes_must_match_their_declared_dimensions() {
 
 #[test]
 fn invalid_acoustic_bounds_are_rejected() {
-    assert_eq!(AcousticBand::new(-1.0, 1.0), Err(ContractError::InvalidBand));
+    assert_eq!(
+        AcousticBand::new(-1.0, 1.0),
+        Err(ContractError::InvalidBand)
+    );
     assert_eq!(AcousticBand::new(2.0, 2.0), Err(ContractError::InvalidBand));
     assert!(AcousticBand::new(0.0, 1.0).is_ok());
 }

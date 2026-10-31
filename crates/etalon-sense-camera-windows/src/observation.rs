@@ -26,7 +26,8 @@ pub fn associate_windows_frame(
     }
     let raw_time = match frame.system_relative_time_100ns {
         Some(ticks) => {
-            let (clock_domain_id, unit_id) = native_time_ids.ok_or(ObservationError::InvalidTimestamp)?;
+            let (clock_domain_id, unit_id) =
+                native_time_ids.ok_or(ObservationError::InvalidTimestamp)?;
             Some(NativeTimestamp::new(ticks, clock_domain_id, unit_id)?)
         }
         None => None,
@@ -37,6 +38,15 @@ pub fn associate_windows_frame(
         format: frame.format,
         radiometric: declaration.radiometric(),
     };
-    ObservationEnvelope::new(declaration, negotiated, frame.metadata, stream_id, generation,
-        quantity, raw_time, None, policy_claim)
+    ObservationEnvelope::new(
+        declaration,
+        negotiated,
+        frame.metadata,
+        stream_id,
+        generation,
+        quantity,
+        raw_time,
+        None,
+        policy_claim,
+    )
 }

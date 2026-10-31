@@ -3,10 +3,13 @@
 //! Validation covers the declared shape and region, not device identity,
 //! authorization, payload contents, or the truth of calibration claims.
 use crate::{
-    buffer::{SampleLayout, SampleRegion}, capability::SensorCapability,
+    buffer::{SampleLayout, SampleRegion},
+    capability::SensorCapability,
     extended_capability::ExtendedCapability,
     quality::{CalibrationRecord, QualityRecord, SourceDescriptor},
-    quantity::SampleRate, time::ClockStamp, ContractError,
+    quantity::SampleRate,
+    time::ClockStamp,
+    ContractError,
 };
 
 #[derive(Clone, Debug, PartialEq)]
@@ -52,7 +55,14 @@ impl Measurement {
         quality: QualityRecord,
     ) -> Result<Self, ContractError> {
         Self::new_with_optional_timestamp(
-            capability, layout, region, source, Some(timestamp), sample_rate, calibration, quality,
+            capability,
+            layout,
+            region,
+            source,
+            Some(timestamp),
+            sample_rate,
+            calibration,
+            quality,
         )
     }
 
@@ -84,17 +94,42 @@ impl Measurement {
             }
         }
         region.validate_layout(&layout)?;
-        Ok(Self { capability, layout, region, source, timestamp, sample_rate, calibration, quality })
+        Ok(Self {
+            capability,
+            layout,
+            region,
+            source,
+            timestamp,
+            sample_rate,
+            calibration,
+            quality,
+        })
     }
 
-    pub const fn capability(&self) -> &SensorCapability { &self.capability }
-    pub const fn layout(&self) -> &SampleLayout { &self.layout }
-    pub const fn region(&self) -> &SampleRegion { &self.region }
-    pub const fn source(&self) -> SourceDescriptor { self.source }
-    pub const fn timestamp(&self) -> Option<ClockStamp> { self.timestamp }
-    pub const fn sample_rate(&self) -> Option<SampleRate> { self.sample_rate }
-    pub const fn calibration(&self) -> CalibrationRecord { self.calibration }
-    pub const fn quality(&self) -> QualityRecord { self.quality }
+    pub const fn capability(&self) -> &SensorCapability {
+        &self.capability
+    }
+    pub const fn layout(&self) -> &SampleLayout {
+        &self.layout
+    }
+    pub const fn region(&self) -> &SampleRegion {
+        &self.region
+    }
+    pub const fn source(&self) -> SourceDescriptor {
+        self.source
+    }
+    pub const fn timestamp(&self) -> Option<ClockStamp> {
+        self.timestamp
+    }
+    pub const fn sample_rate(&self) -> Option<SampleRate> {
+        self.sample_rate
+    }
+    pub const fn calibration(&self) -> CalibrationRecord {
+        self.calibration
+    }
+    pub const fn quality(&self) -> QualityRecord {
+        self.quality
+    }
 }
 
 impl ExtendedMeasurement {
@@ -112,7 +147,14 @@ impl ExtendedMeasurement {
         quality: QualityRecord,
     ) -> Result<Self, ContractError> {
         Self::new_with_optional_timestamp(
-            capability, layout, region, source, Some(timestamp), sample_rate, calibration, quality,
+            capability,
+            layout,
+            region,
+            source,
+            Some(timestamp),
+            sample_rate,
+            calibration,
+            quality,
         )
     }
 
@@ -128,17 +170,42 @@ impl ExtendedMeasurement {
     ) -> Result<Self, ContractError> {
         capability.validate_layout(&layout, sample_rate)?;
         region.validate_layout(&layout)?;
-        Ok(Self { capability, layout, region, source, timestamp, sample_rate, calibration, quality })
+        Ok(Self {
+            capability,
+            layout,
+            region,
+            source,
+            timestamp,
+            sample_rate,
+            calibration,
+            quality,
+        })
     }
 
-    pub const fn capability(&self) -> &ExtendedCapability { &self.capability }
-    pub const fn layout(&self) -> &SampleLayout { &self.layout }
-    pub const fn region(&self) -> &SampleRegion { &self.region }
-    pub const fn source(&self) -> SourceDescriptor { self.source }
-    pub const fn timestamp(&self) -> Option<ClockStamp> { self.timestamp }
-    pub const fn sample_rate(&self) -> Option<SampleRate> { self.sample_rate }
-    pub const fn calibration(&self) -> CalibrationRecord { self.calibration }
-    pub const fn quality(&self) -> QualityRecord { self.quality }
+    pub const fn capability(&self) -> &ExtendedCapability {
+        &self.capability
+    }
+    pub const fn layout(&self) -> &SampleLayout {
+        &self.layout
+    }
+    pub const fn region(&self) -> &SampleRegion {
+        &self.region
+    }
+    pub const fn source(&self) -> SourceDescriptor {
+        self.source
+    }
+    pub const fn timestamp(&self) -> Option<ClockStamp> {
+        self.timestamp
+    }
+    pub const fn sample_rate(&self) -> Option<SampleRate> {
+        self.sample_rate
+    }
+    pub const fn calibration(&self) -> CalibrationRecord {
+        self.calibration
+    }
+    pub const fn quality(&self) -> QualityRecord {
+        self.quality
+    }
 }
 
 #[cfg(test)]
