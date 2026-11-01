@@ -87,7 +87,10 @@ jobs:
             --browser-assets "${{ runner.temp }}/etalon-browser-assets" \
             --output "${{ runner.temp }}/etalon-pages" --revision "$GITHUB_SHA"
 
-      - name: Execute assembled browser tests in headless Chrome
+      - name: Install locked browser test controller
+        run: npm ci --prefix tests/wasm/runner --ignore-scripts --no-audit --no-fund
+
+      - name: Execute assembled Rust/WASM tests with actual WebGPU
         run: python3 docs/site/smoke_browser.py --site "${{ runner.temp }}/etalon-pages"
 
       - name: Upload GitHub Pages artifact

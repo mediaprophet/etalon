@@ -37,4 +37,4 @@ exhaust = ["etalon/exhaust"]
 parking_lot = []
 
 [dependencies]
-etalon = { version = "0.0.1", path = "../../etalon", default-features = false }
+etalon = { version = "0.0.2", path = "../../etalon", default-features = false }

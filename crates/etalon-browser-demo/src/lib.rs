@@ -12,4 +12,7 @@ mod readback;
 mod render;
 
 #[cfg(target_arch = "wasm32")]
-pub use browser::{create_session, Session};
+pub use browser::{create_session, create_session_for_profile, Session};
+
+#[cfg(any(target_arch = "wasm32", test))]
+mod requirements;

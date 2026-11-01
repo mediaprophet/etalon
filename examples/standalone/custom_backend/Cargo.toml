@@ -11,7 +11,7 @@ default = ["web"]
 web = ["etalon/web"]
 
 [dependencies]
-etalon = { version = "0.0.1", features = [
+etalon = { version = "0.0.2", features = [
     "custom",
     "wgsl",
 ], default-features = false }

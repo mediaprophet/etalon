@@ -38,6 +38,16 @@
         Vulkan, DX12, Metal, DSP/NPU or sensor hardware.
         <a href="capabilities.html#coverage">Coverage explained</a>.
       </p>
+      <label for="feature-level">WebGPU feature level requested</label>
+      <select id="feature-level">
+        <option value="compatibility">Compatibility</option>
+        <option value="core">Core</option>
+      </select>
+      <p class="small">
+        Tests request only the resources they use and report required, adapter
+        and device limits. A requested compatibility level is not proof of a
+        physical mobile GPU or that an older browser honored the option.
+      </p>
       <div class="actions">
         <button type="button" class="button primary" id="run-tests">
           Run tests on this device</button

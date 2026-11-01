@@ -33,7 +33,7 @@
         commit for release.
       </p>
       <pre><code>[dependencies]
-etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "dev" }
+etalon = { git = "https://github.com/mediaprophet/etalon.git", tag = "v0.0.2" }
 pollster = "1.0"</code></pre>
       <p>
         Request an adapter and device through the same Rust API on supported
@@ -54,9 +54,9 @@ pollster = "1.0"</code></pre>
       </p>
       <pre><code>[dependencies]
 etalon-sense = { git = "https://github.com/mediaprophet/etalon.git",
-                 branch = "dev" }</code></pre>
+                 tag = "v0.0.2" }</code></pre>
       <p>
-        Before releasing your consumer, replace <code>branch = "dev"</code> with
+        For immutable source pinning, replace <code>tag = "v0.0.2"</code> with
         <code>rev = "&lt;full tested commit SHA&gt;"</code>. This site's exact
         source revision appears below. A local checkout can instead use
         <code>path = "../etalon/crates/etalon-sense"</code> from a sibling

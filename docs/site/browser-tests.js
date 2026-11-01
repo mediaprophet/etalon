@@ -139,7 +139,8 @@ async function run() {
       }),
       30000,
     );
-    const creating = module.create_session();
+    const selectedProfile = document.querySelector("#feature-level").value;
+    const creating = module.create_session_for_profile(selectedProfile);
     try {
       session = await deadline(creating, 30000);
     } catch (error) {

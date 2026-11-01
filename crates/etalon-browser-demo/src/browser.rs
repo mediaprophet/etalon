@@ -65,8 +65,13 @@ pub struct Session {
 
 #[wasm_bindgen]
 pub async fn create_session() -> Session {
+    create_session_for_profile("core".into()).await
+}
+
+#[wasm_bindgen]
+pub async fn create_session_for_profile(profile: String) -> Session {
     let health = Arc::new(Mutex::new(Health::default()));
-    let (gpu, gpu_error, mut info) = match request_gpu(&health).await {
+    let (gpu, gpu_error, mut info) = match request_gpu(&health, &profile).await {
         Ok((gpu, info)) => (Some(gpu), None, info),
         Err(error) => (
             None,
@@ -76,6 +81,7 @@ pub async fn create_session() -> Session {
             }),
         ),
     };
+    info["requested_feature_level"] = json!(profile);
     info["source_revision"] =
         json!(option_env!("ETALON_DEMO_REVISION").unwrap_or("local-unidentified"));
     info["execution"] = json!("Etalon Rust/WASM; GPU cases delegate to browser WebGPU; extension cases execute on WASM CPU");
@@ -91,7 +97,12 @@ pub async fn create_session() -> Session {
     }
 }
 
-async fn request_gpu(health: &Arc<Mutex<Health>>) -> Result<(Gpu, Value), Value> {
+async fn request_gpu(health: &Arc<Mutex<Health>>, profile: &str) -> Result<(Gpu, Value), Value> {
+    let feature_level = match profile {
+        "core" => etalon::FeatureLevel::Core,
+        "compatibility" => etalon::FeatureLevel::Compatibility,
+        _ => return Err(failure("invalid-profile", "Unknown WebGPU feature level")),
+    };
     let navigator = js_sys::Reflect::get(&js_sys::global(), &JsValue::from_str("navigator"))
         .unwrap_or(JsValue::UNDEFINED);
     let exposed_gpu =
@@ -106,14 +117,20 @@ async fn request_gpu(health: &Arc<Mutex<Health>>) -> Result<(Gpu, Value), Value>
         backends: etalon::Backends::BROWSER_WEBGPU,
         ..etalon::InstanceDescriptor::new_without_display_handle()
     });
-    let adapter = instance.request_adapter(&etalon::RequestAdapterOptions {
+    let adapter = instance.request_webgpu_adapter(&etalon::RequestAdapterOptions {
         power_preference: etalon::PowerPreference::LowPower, ..Default::default()
-    }).await.map_err(|e| json!({"status": "unsupported", "code": "adapter-unavailable", "message": bounded(&e.to_string())}))?;
+    }, feature_level).await.map_err(|e| json!({"status": "unsupported", "code": "adapter-unavailable", "message": bounded(&e.to_string())}))?;
     let adapter_info = adapter.get_info();
+    let required = crate::requirements::required_limits(&adapter.limits());
+    if !required.check_limits(&adapter.limits()) {
+        return Err(
+            json!({"status": "unsupported", "code": "insufficient-adapter-limits", "message": "Adapter cannot satisfy this workload's declared minimal limits"}),
+        );
+    }
     let (device, queue) = adapter.request_device(&etalon::DeviceDescriptor {
         label: Some("Etalon browser self-test"),
         required_features: etalon::Features::empty(),
-        required_limits: etalon::Limits::downlevel_defaults(),
+        required_limits: required.clone(),
         ..Default::default()
     }).await.map_err(|e| json!({"status": "fail", "code": "device-request-failed", "message": bounded(&e.to_string())}))?;
     let lost_health = health.clone();
@@ -135,7 +152,7 @@ async fn request_gpu(health: &Arc<Mutex<Health>>) -> Result<(Gpu, Value), Value>
         "driver": bounded(&adapter_info.driver), "driver_info": bounded(&adapter_info.driver_info),
         "available_features": bounded(&format!("{:?}", adapter.features())),
         "enabled_features": format!("{:?}", device.features()),
-        "adapter_limits": limits_json(&adapter.limits()), "device_limits": limits_json(&device.limits()),
+        "required_limits": limits_json(&required), "adapter_limits": limits_json(&adapter.limits()), "device_limits": limits_json(&device.limits()),
     });
     Ok((Gpu { device, queue }, info))
 }
@@ -302,5 +319,10 @@ fn limits_json(l: &etalon::Limits) -> Value {
         "max_compute_invocations_per_workgroup": l.max_compute_invocations_per_workgroup,
         "max_compute_workgroups_per_dimension": l.max_compute_workgroups_per_dimension,
         "max_texture_dimension_2d": l.max_texture_dimension_2d, "max_bind_groups": l.max_bind_groups,
+        "max_bind_groups_plus_vertex_buffers": l.max_bind_groups_plus_vertex_buffers,
+        "max_storage_buffers_per_shader_stage": l.max_storage_buffers_per_shader_stage,
+        "max_color_attachment_bytes_per_sample": l.max_color_attachment_bytes_per_sample,
+        "min_uniform_buffer_offset_alignment": l.min_uniform_buffer_offset_alignment,
+        "min_storage_buffer_offset_alignment": l.min_storage_buffer_offset_alignment,
     })
 }
