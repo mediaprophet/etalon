@@ -81,7 +81,7 @@ pub(crate) async fn canvas(gpu: &Gpu) -> Result<Value, Value> {
         .instance
         .request_webgpu_adapter(
             &etalon::RequestAdapterOptions::default(),
-            etalon::FeatureLevel::Compatibility,
+            gpu.selected_level,
         )
         .await
         .map_err(|error| failure("canvas-other-adapter", &error.to_string()))?;
@@ -142,7 +142,10 @@ pub async fn inspect_adapter_contract(mode: String) -> Result<String, JsValue> {
 }
 
 async fn inspect(mode: &str) -> Result<Value, Value> {
-    if !matches!(mode, "missing" | "zero" | "description") {
+    if !matches!(
+        mode,
+        "missing" | "zero" | "description" | "core-feature" | "core-feature-absent"
+    ) {
         return Err(failure("contract-mode", "Unknown adapter fixture"));
     }
     let instance = etalon::Instance::new(etalon::InstanceDescriptor {
@@ -156,6 +159,39 @@ async fn inspect(mode: &str) -> Result<Value, Value> {
         )
         .await
         .map_err(|error| failure("contract-adapter", &error.to_string()))?;
+    if matches!(mode, "core-feature" | "core-feature-absent") {
+        let advertised = adapter
+            .features()
+            .contains(etalon::Features::CORE_FEATURES_AND_LIMITS);
+        if advertised != (mode == "core-feature") {
+            return Err(failure(
+                "contract-feature-mapping",
+                "Core feature advertisement was lost or fabricated",
+            ));
+        }
+        if !advertised {
+            return Ok(json!({"mode":mode,"advertised":false,"requested":false}));
+        }
+        let result = adapter
+            .request_device(&etalon::DeviceDescriptor {
+                required_features: etalon::Features::CORE_FEATURES_AND_LIMITS,
+                required_limits: crate::requirements::required_limits(&adapter.limits()),
+                ..Default::default()
+            })
+            .await;
+        match result {
+            Err(error) if error.to_string().contains("fixture-core-feature-request") => {}
+            Err(error) => return Err(failure("contract-feature-request", &error.to_string())),
+            Ok((device, _)) => {
+                device.destroy();
+                return Err(failure(
+                    "contract-feature-request",
+                    "Fixture unexpectedly created a device",
+                ));
+            }
+        }
+        return Ok(json!({"mode":mode,"advertised":true,"requested":true}));
+    }
     let limits = adapter.limits();
     let actual = [
         limits.max_storage_buffers_in_vertex_stage,

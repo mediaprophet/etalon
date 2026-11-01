@@ -155,6 +155,26 @@ mod tests {
             let module = naga::front::wgsl::parse_str(src)
                 .unwrap_or_else(|e| panic!("{name} failed WGSL parse: {e}"));
             assert_eq!(module.entry_points[0].workgroup_size, [64, 1, 1]);
+            let storage_count = module
+                .global_variables
+                .iter()
+                .filter(|(_, var)| matches!(var.space, naga::AddressSpace::Storage { .. }))
+                .count();
+            assert_eq!(
+                storage_count,
+                if name == "graph_radix_scatter.wgsl" {
+                    3
+                } else {
+                    2
+                }
+            );
+            if name != "graph_radix_prefix.wgsl" {
+                assert!(module
+                    .types
+                    .iter()
+                    .any(|(_, ty)| matches!(&ty.inner, naga::TypeInner::Array { stride: 12, .. })));
+            }
+
             let mut validator = naga::valid::Validator::new(
                 naga::valid::ValidationFlags::all(),
                 naga::valid::Capabilities::empty(),

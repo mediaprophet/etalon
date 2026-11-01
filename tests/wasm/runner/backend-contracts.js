@@ -75,6 +75,35 @@ export async function runBackendContracts(page) {
           throw new Error("Oversized limits reached browser requestDevice");
         evidence.push({ ...result, browser_device_requests: deviceRequests });
       }
+      for (const available of [true, false]) {
+        let requested = null;
+        const fixture = {
+          limits: snapshot,
+          features: new Set(available ? ["core-features-and-limits"] : []),
+          requestDevice(descriptor) {
+            requested = descriptor.requiredFeatures;
+            return Promise.reject(new Error("fixture-core-feature-request"));
+          },
+        };
+        Object.defineProperty(gpu, "requestAdapter", {
+          configurable: true,
+          value: () => Promise.resolve(fixture),
+        });
+        const result = JSON.parse(
+          await wasm.inspect_adapter_contract(
+            available ? "core-feature" : "core-feature-absent",
+          ),
+        );
+        if (
+          available
+            ? JSON.stringify(requested) !== '["core-features-and-limits"]'
+            : requested !== null
+        )
+          throw new Error(
+            "Core feature request was lost, fabricated, or implicitly enabled",
+          );
+        evidence.push(result);
+      }
       for (const mode of [
         "null",
         "undefined",
@@ -107,14 +136,15 @@ export async function runBackendContracts(page) {
         const control = JSON.parse(await wasm.adapter_acquisition_control());
         if (
           control.gpu_execution_tested !== false ||
-          control.attempts?.length !== 4 ||
-          calls.length !== 4 ||
+          control.attempts?.length !== 5 ||
+          calls.length !== 5 ||
           control.attempts.some((a) => a.result.status !== mode) ||
           calls[0].length !== 0 ||
           calls[1].length !== 1 ||
           Object.keys(calls[1][0]).length !== 0 ||
           JSON.stringify(calls[2][0]) !== '{"featureLevel":"core"}' ||
-          JSON.stringify(calls[3][0]) !== '{"featureLevel":"compatibility"}'
+          JSON.stringify(calls[3][0]) !== '{"featureLevel":"compatibility"}' ||
+          JSON.stringify(calls[4][0]) !== '{"forceFallbackAdapter":true}'
         )
           throw new Error(
             `Independent acquisition control failed: ${JSON.stringify(control)}`,

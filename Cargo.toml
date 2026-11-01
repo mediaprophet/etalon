@@ -90,6 +90,7 @@ etalon = { version = "0.0.2", path = "./etalon", default-features = false, featu
     "std",
     "serde",
     "wgsl",
+    "webgpu",
     "vulkan",
     "gles",
     "dx12",

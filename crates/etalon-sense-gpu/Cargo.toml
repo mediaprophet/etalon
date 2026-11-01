@@ -13,11 +13,17 @@ vulkan = ["etalon/vulkan"]
 dx12 = ["etalon/dx12"]
 metal = ["etalon/metal"]
 gles = ["etalon/gles"]
+webgpu = ["etalon/webgpu"]
 
 [dependencies]
 etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl"] }
 etalon-signal = { path = "../etalon-signal" }
 etalon-sense-core = { path = "../etalon-sense-core" }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl", "webgpu"] }
+wasm-bindgen = { workspace = true, features = ["std"] }
+js-sys = { workspace = true, features = ["std"] }
 
 [dev-dependencies]
 naga = { workspace = true, features = ["wgsl-in"] }

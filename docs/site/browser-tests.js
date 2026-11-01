@@ -83,10 +83,10 @@ function qualify(report, catalog) {
       };
     });
   const passed =
-    catalog.length === 20 &&
-    gpuCases.length === 18 &&
-    report.results.length === 20 &&
-    new Set(report.results.map((item) => item.id)).size === 20 &&
+    catalog.length === 21 &&
+    gpuCases.length === 19 &&
+    report.results.length === 21 &&
+    new Set(report.results.map((item) => item.id)).size === 21 &&
     catalog.every((test) =>
       report.results.some(
         (item) => item.id === test.id && item.status === "pass",
@@ -97,17 +97,17 @@ function qualify(report, catalog) {
     (item) => item.status === "unsupported",
   ).length;
   const reason = passed
-    ? "All 20 Rust/WASM cases passed, including all 18 GPU cases."
+    ? "All 21 Rust/WASM cases passed, including all 19 GPU cases."
     : unavailable
       ? `${unavailable} GPU cases unavailable. ${firstFailure?.details?.message || "No complete GPU result."}`
       : firstFailure
         ? `${firstFailure.id}: ${firstFailure.details?.message || firstFailure.details?.reason || firstFailure.status}`
-        : "The complete 20-case suite did not pass.";
+        : "The complete 21-case suite did not pass.";
   report.qualification = {
     status: passed ? "passed" : "failed",
     reason: reason.slice(0, 2000),
-    expected_cases: 20,
-    expected_gpu_cases: 18,
+    expected_cases: 21,
+    expected_gpu_cases: 19,
     gpu_cases: gpuCases,
   };
   qualification.textContent = `GPU qualification ${passed ? "PASSED" : "FAILED"} — ${report.qualification.reason}`;
@@ -146,7 +146,8 @@ function exportReport(report) {
   download.disabled = false;
 }
 async function run() {
-  if (active || blocked) return;
+  if (active || blocked || document.body.dataset.etalonDiagnostic === "running")
+    return;
   active = true;
   const selectedProfile = profileSelector.value;
   profileSelector.disabled = true;
@@ -415,5 +416,6 @@ if (profile !== null && !["auto", "core", "compatibility"].includes(profile)) {
   progress.textContent = "Invalid feature-level query parameter.";
 } else {
   if (profile !== null) profileSelector.value = profile;
+  document.body.dataset.etalonReady = "true";
   if (query.get("autorun") === "1") run();
 }

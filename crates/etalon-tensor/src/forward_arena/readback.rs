@@ -1,5 +1,5 @@
 use super::ForwardArena;
-use core::task::{Poll, Waker};
+use core::task::{Context, Poll, Waker};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, Mutex,
@@ -18,6 +18,7 @@ pub enum TokenReadbackError {
     MappedRangeUnavailable,
     #[error("GPU polling failed: {0}")]
     Poll(#[from] etalon::PollError),
+    /// Retained for source compatibility; async token reads no longer start a worker.
     #[error("GPU polling worker could not start: {0}")]
     PollWorker(std::io::Error),
     #[error("GPU polling returned without completing token mapping")]
@@ -43,6 +44,62 @@ fn finish(state: &Mutex<Completion>, result: Result<(), TokenReadbackError>) {
     };
     if let Some(waker) = waker {
         waker.wake();
+    }
+}
+
+fn poll_completion(
+    state: &Mutex<Completion>,
+    cx: &mut Context<'_>,
+) -> Poll<Result<(), TokenReadbackError>> {
+    let mut state = state.lock().unwrap();
+    if let Some(result) = state.result.take() {
+        Poll::Ready(result)
+    } else {
+        if !state
+            .waker
+            .as_ref()
+            .is_some_and(|saved| saved.will_wake(cx.waker()))
+        {
+            state.waker = Some(cx.waker().clone());
+        }
+        Poll::Pending
+    }
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+struct NativeMapWait<'a, F, D> {
+    completion: &'a Mutex<Completion>,
+    progress: F,
+    expired: D,
+}
+
+#[cfg(not(target_arch = "wasm32"))]
+impl<F, D> core::future::Future for NativeMapWait<'_, F, D>
+where
+    F: FnMut() -> Result<(), etalon::PollError> + Unpin,
+    D: FnMut() -> bool + Unpin,
+{
+    type Output = Result<(), TokenReadbackError>;
+
+    fn poll(self: core::pin::Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
+        let this = self.get_mut();
+        if let ready @ Poll::Ready(_) = poll_completion(this.completion, cx) {
+            return ready;
+        }
+        if (this.expired)() {
+            finish(
+                this.completion,
+                Err(TokenReadbackError::Poll(etalon::PollError::Timeout)),
+            );
+        } else if let Err(error) = (this.progress)() {
+            finish(this.completion, Err(TokenReadbackError::Poll(error)));
+        }
+        let result = poll_completion(this.completion, cx);
+        if result.is_pending() {
+            // One nonblocking device poll per executor turn; native callbacks need active progress.
+            cx.waker().wake_by_ref();
+        }
+        result
     }
 }
 
@@ -97,6 +154,8 @@ impl ForwardArena {
     }
 
     /// Submit the token copy first. Dropping the future cancels and unmaps staging.
+    /// Native executors drive one nonblocking device poll per turn until completion or five seconds.
+    /// No background worker survives cancellation. Browser callbacks use the event loop.
     pub async fn try_read_token_async(
         &self,
         device: &etalon::Device,
@@ -104,38 +163,19 @@ impl ForwardArena {
         let (guard, state) = self.begin_token_map()?;
         #[cfg(not(target_arch = "wasm32"))]
         {
-            let device = device.clone();
-            let state = Arc::clone(&state);
-            std::thread::Builder::new()
-                .name("etalon-token-map".into())
-                .spawn(move || {
-                    // Native needs active polling; the callback completes state before poll returns.
-                    match device.poll(etalon::PollType::wait_or_timeout(
-                        core::time::Duration::from_secs(5),
-                    )) {
-                        Err(error) => finish(&state, Err(TokenReadbackError::Poll(error))),
-                        Ok(_) => {
-                            let done = state.lock().unwrap().done;
-                            if !done {
-                                finish(&state, Err(TokenReadbackError::MissingCallback));
-                            }
-                        }
-                    }
-                })
-                .map_err(TokenReadbackError::PollWorker)?;
+            let started = std::time::Instant::now();
+            NativeMapWait {
+                completion: &state,
+                progress: || device.poll(etalon::PollType::Poll).map(|_| ()),
+                expired: || started.elapsed() >= core::time::Duration::from_secs(5),
+            }
+            .await?;
         }
         #[cfg(target_arch = "wasm32")]
-        let _ = device; // Browser WebBuffer::map_async registers Promise callbacks; poll is a no-op.
-        core::future::poll_fn(|cx| {
-            let mut state = state.lock().unwrap();
-            if let Some(result) = state.result.take() {
-                Poll::Ready(result)
-            } else {
-                state.waker = Some(cx.waker().clone());
-                Poll::Pending
-            }
-        })
-        .await?;
+        {
+            let _ = device; // Browser map Promise callbacks progress through the event loop.
+            core::future::poll_fn(|cx| poll_completion(&state, cx)).await?;
+        }
         guard.token()
     }
 
@@ -170,39 +210,4 @@ impl ForwardArena {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::task::Wake;
-
-    struct Counter(std::sync::atomic::AtomicUsize);
-    impl Wake for Counter {
-        fn wake(self: Arc<Self>) {
-            self.0.fetch_add(1, Ordering::Relaxed);
-        }
-    }
-
-    #[test]
-    fn callback_wakes_once_and_retains_first_completion() {
-        let counter = Arc::new(Counter(std::sync::atomic::AtomicUsize::new(0)));
-        let state = Mutex::new(Completion {
-            waker: Some(Waker::from(counter.clone())),
-            ..Completion::default()
-        });
-        finish(&state, Ok(()));
-        finish(&state, Err(TokenReadbackError::MappingFailed));
-        assert_eq!(counter.0.load(Ordering::Relaxed), 1);
-        assert!(state.lock().unwrap().result.take().unwrap().is_ok());
-        finish(&state, Err(TokenReadbackError::MissingCallback));
-        assert!(state.lock().unwrap().result.is_none());
-    }
-
-    #[test]
-    fn completion_before_first_poll_is_retained() {
-        let state = Mutex::new(Completion::default());
-        finish(&state, Err(TokenReadbackError::MappingFailed));
-        assert!(matches!(
-            state.lock().unwrap().result.take(),
-            Some(Err(TokenReadbackError::MappingFailed))
-        ));
-    }
-}
+mod tests;

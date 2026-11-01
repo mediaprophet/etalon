@@ -16,7 +16,7 @@ MAX_FILES = 50_000
 MAX_BROWSER_BYTES = 32 * 1024 * 1024
 ASSETS = (
     "index.html", "getting-started.html", "licensing.html", "capabilities.html",
-    "testing.html", "browser-tests.js", "styles.css",
+    "testing.html", "browser-tests.js", "adapter-diagnostic.js", "styles.css",
 )
 BROWSER_FILES = ("etalon_browser_demo.js", "etalon_browser_demo_bg.wasm")
 JS_REFERENCES = re.compile(

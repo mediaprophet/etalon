@@ -16,7 +16,7 @@ pub(crate) fn required_limits(adapter: &Limits) -> Limits {
         max_dynamic_storage_buffers_per_pipeline_layout: 0,
         max_sampled_textures_per_shader_stage: 0,
         max_samplers_per_shader_stage: 0,
-        max_storage_buffers_per_shader_stage: 5,
+        max_storage_buffers_per_shader_stage: 4,
         max_storage_buffers_in_vertex_stage: 0,
         max_storage_buffers_in_fragment_stage: 0,
         max_storage_textures_per_shader_stage: 0,
@@ -52,7 +52,7 @@ mod tests {
     #[test]
     fn lower_capability_limits_do_not_require_unused_desktop_resources() {
         let mut adapter = Limits::downlevel_defaults();
-        adapter.max_storage_buffers_per_shader_stage = 5;
+        adapter.max_storage_buffers_per_shader_stage = 4;
         adapter.max_storage_buffers_in_vertex_stage = 0;
         adapter.max_storage_buffers_in_fragment_stage = 0;
         adapter.max_compute_invocations_per_workgroup = 64;

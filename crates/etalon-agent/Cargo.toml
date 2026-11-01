@@ -40,7 +40,6 @@ sensing-gpu-gles = ["sensing-gpu", "etalon-sense/gpu-gles"]
 [dependencies]
 etalon = { workspace = true }
 etalon-types = { workspace = true }
-etalon-hal = { workspace = true, optional = true }
 etalon-sense = { path = "../etalon-sense", optional = true }
 log = { workspace = true }
 bytemuck = { workspace = true }
@@ -53,5 +52,8 @@ windows = { workspace = true, features = [
     "Win32_System_LibraryLoader",
 ] }
 
-[dev-dependencies]
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+etalon-hal = { workspace = true, optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 tempfile.workspace = true

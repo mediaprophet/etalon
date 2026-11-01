@@ -6,6 +6,26 @@ use crate::{
     GpuQueryError,
 };
 
+#[repr(C)]
+#[derive(Clone, Copy, bytemuck::Pod, bytemuck::Zeroable)]
+struct RadixEntry {
+    key_lo: u32,
+    key_hi: u32,
+    index: u32,
+}
+
+impl RadixEntry {
+    fn new(key: u64, index: u32) -> Self {
+        Self {
+            key_lo: key as u32,
+            key_hi: (key >> 32) as u32,
+            index,
+        }
+    }
+}
+
+const _: () = assert!(core::mem::size_of::<RadixEntry>() == 12);
+
 pub struct GpuRadixSorter {
     pub hist_pipeline: etalon::ComputePipeline,
     pub prefix_pipeline: etalon::ComputePipeline,
@@ -152,45 +172,28 @@ impl GpuRadixSorter {
     ) -> Result<etalon::Buffer, GpuQueryError> {
         let n = keys.len();
         let limits = device.limits();
-        let (key_bytes, idx_bytes, wg, total_bins, hist_size) = sort_sizes(n, &limits)?;
-        let mut packed = vec![0u32; n * 2];
-        for (i, &x) in keys.iter().enumerate() {
-            packed[i * 2] = x as u32;
-            packed[i * 2 + 1] = (x >> 32) as u32;
-        }
-        let idx: Vec<u32> = (0..n as u32).collect();
-
+        let (entry_bytes, wg, total_bins, hist_size) = sort_sizes(n, &limits)?;
+        let packed: Vec<RadixEntry> = keys
+            .iter()
+            .enumerate()
+            .map(|(index, &key)| RadixEntry::new(key, index as u32))
+            .collect();
         let usage_st = etalon::BufferUsages::STORAGE
             | etalon::BufferUsages::COPY_SRC
             | etalon::BufferUsages::COPY_DST;
-
-        let k0 = device.create_buffer(&etalon::BufferDescriptor {
-            label: Some("etalon-radix-k0"),
-            size: key_bytes,
+        let entries0 = device.create_buffer(&etalon::BufferDescriptor {
+            label: Some("etalon-radix-entries0"),
+            size: entry_bytes,
             usage: usage_st,
             mapped_at_creation: false,
         });
-        let k1 = device.create_buffer(&etalon::BufferDescriptor {
-            label: Some("etalon-radix-k1"),
-            size: key_bytes,
+        let entries1 = device.create_buffer(&etalon::BufferDescriptor {
+            label: Some("etalon-radix-entries1"),
+            size: entry_bytes,
             usage: usage_st,
             mapped_at_creation: false,
         });
-        let i0 = device.create_buffer(&etalon::BufferDescriptor {
-            label: Some("etalon-radix-i0"),
-            size: idx_bytes,
-            usage: usage_st,
-            mapped_at_creation: false,
-        });
-        let i1 = device.create_buffer(&etalon::BufferDescriptor {
-            label: Some("etalon-radix-i1"),
-            size: idx_bytes,
-            usage: usage_st,
-            mapped_at_creation: false,
-        });
-
-        queue.write_buffer(&k0, 0, bytemuck::cast_slice(&packed));
-        queue.write_buffer(&i0, 0, bytemuck::cast_slice(&idx));
+        queue.write_buffer(&entries0, 0, bytemuck::cast_slice(&packed));
 
         let hist_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("etalon-radix-hist"),
@@ -259,15 +262,13 @@ impl GpuRadixSorter {
 
         let out_stage = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("etalon-radix-out-stage"),
-            size: idx_bytes,
+            size: entry_bytes,
             usage: etalon::BufferUsages::MAP_READ | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let mut src_k = &k0;
-        let mut src_i = &i0;
-        let mut dst_k = &k1;
-        let mut dst_i = &i1;
+        let mut src = &entries0;
+        let mut dst = &entries1;
 
         let mut enc = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
             label: Some("etalon-radix-single-submission-enc"),
@@ -280,7 +281,7 @@ impl GpuRadixSorter {
                 entries: &[
                     etalon::BindGroupEntry {
                         binding: 0,
-                        resource: src_k.as_entire_binding(),
+                        resource: src.as_entire_binding(),
                     },
                     etalon::BindGroupEntry {
                         binding: 1,
@@ -299,53 +300,56 @@ impl GpuRadixSorter {
                 entries: &[
                     etalon::BindGroupEntry {
                         binding: 0,
-                        resource: src_k.as_entire_binding(),
+                        resource: src.as_entire_binding(),
                     },
                     etalon::BindGroupEntry {
                         binding: 1,
-                        resource: src_i.as_entire_binding(),
+                        resource: dst.as_entire_binding(),
                     },
                     etalon::BindGroupEntry {
                         binding: 2,
-                        resource: dst_k.as_entire_binding(),
-                    },
-                    etalon::BindGroupEntry {
-                        binding: 3,
-                        resource: dst_i.as_entire_binding(),
-                    },
-                    etalon::BindGroupEntry {
-                        binding: 4,
                         resource: off_buf.as_entire_binding(),
                     },
                     etalon::BindGroupEntry {
-                        binding: 5,
+                        binding: 3,
                         resource: param_buf.as_entire_binding(),
                     },
                 ],
             });
 
-            let mut pass = enc.begin_compute_pass(&etalon::ComputePassDescriptor {
-                label: Some("etalon-radix-lsd-pass"),
-                timestamp_writes: None,
-            });
-            pass.set_pipeline(&self.hist_pipeline);
-            pass.set_bind_group(0, &hist_bg, &[]);
-            pass.dispatch_workgroups(wg, 1, 1);
+            // Each dispatch already has a usage scope; separate passes are a conservative backend boundary.
+            {
+                let mut pass = enc.begin_compute_pass(&etalon::ComputePassDescriptor {
+                    label: Some("etalon-radix-hist-pass"),
+                    timestamp_writes: None,
+                });
+                pass.set_pipeline(&self.hist_pipeline);
+                pass.set_bind_group(0, &hist_bg, &[]);
+                pass.dispatch_workgroups(wg, 1, 1);
+            }
+            {
+                let mut pass = enc.begin_compute_pass(&etalon::ComputePassDescriptor {
+                    label: Some("etalon-radix-prefix-pass"),
+                    timestamp_writes: None,
+                });
+                pass.set_pipeline(&self.prefix_pipeline);
+                pass.set_bind_group(0, &prefix_bg, &[]);
+                pass.dispatch_workgroups(1, 1, 1);
+            }
+            {
+                let mut pass = enc.begin_compute_pass(&etalon::ComputePassDescriptor {
+                    label: Some("etalon-radix-scatter-pass"),
+                    timestamp_writes: None,
+                });
+                pass.set_pipeline(&self.scatter_pipeline);
+                pass.set_bind_group(0, &sc_bg, &[]);
+                pass.dispatch_workgroups(wg, 1, 1);
+            }
 
-            pass.set_pipeline(&self.prefix_pipeline);
-            pass.set_bind_group(0, &prefix_bg, &[]);
-            pass.dispatch_workgroups(1, 1, 1);
-
-            pass.set_pipeline(&self.scatter_pipeline);
-            pass.set_bind_group(0, &sc_bg, &[]);
-            pass.dispatch_workgroups(wg, 1, 1);
-            drop(pass);
-
-            std::mem::swap(&mut src_k, &mut dst_k);
-            std::mem::swap(&mut src_i, &mut dst_i);
+            std::mem::swap(&mut src, &mut dst);
         }
 
-        enc.copy_buffer_to_buffer(src_i, 0, &out_stage, 0, idx_bytes);
+        enc.copy_buffer_to_buffer(src, 0, &out_stage, 0, entry_bytes);
         queue.submit(Some(enc.finish()));
 
         Ok(out_stage)
@@ -356,8 +360,12 @@ fn copy_sorted_rows(raw: &[u8], keys: &[u64], out: &mut [u32]) -> Result<usize, 
     validate_capacity(keys.len(), out.len())?;
     let mut previous = None;
     for i in 0..keys.len() {
-        let row = read_word(raw, i)?;
-        let key = *keys.get(row as usize).ok_or(GpuQueryError::InvalidOutput)?;
+        let entry = i.checked_mul(3).ok_or(GpuQueryError::InvalidOutput)?;
+        let row = read_word(raw, entry + 2)?;
+        let key = u64::from(read_word(raw, entry)?) | (u64::from(read_word(raw, entry + 1)?) << 32);
+        if keys.get(row as usize) != Some(&key) {
+            return Err(GpuQueryError::InvalidOutput);
+        }
         let current = (key, row);
         if previous.is_some_and(|prev| current <= prev) {
             return Err(GpuQueryError::InvalidOutput);
@@ -365,27 +373,26 @@ fn copy_sorted_rows(raw: &[u8], keys: &[u64], out: &mut [u32]) -> Result<usize, 
         previous = Some(current);
     }
     for (i, row) in out[..keys.len()].iter_mut().enumerate() {
-        *row = read_word(raw, i)?;
+        *row = read_word(raw, i * 3 + 2)?;
     }
     Ok(keys.len())
 }
 
-fn sort_sizes(
-    n: usize,
-    limits: &etalon::Limits,
-) -> Result<(u64, u64, u32, u32, u64), GpuQueryError> {
+fn sort_sizes(n: usize, limits: &etalon::Limits) -> Result<(u64, u32, u32, u64), GpuQueryError> {
     let n = u32::try_from(n).map_err(|_| GpuQueryError::InputTooLarge)?;
-    n.checked_mul(2).ok_or(GpuQueryError::InputTooLarge)?;
-    let key_bytes = u64::from(n) * 8;
-    let idx_bytes = u64::from(n) * 4;
+    n.checked_mul(3).ok_or(GpuQueryError::InputTooLarge)?;
+    let entry_bytes = u64::from(n) * core::mem::size_of::<RadixEntry>() as u64;
+    if entry_bytes > isize::MAX as u64 {
+        return Err(GpuQueryError::InputTooLarge);
+    }
     let wg = n.div_ceil(64);
-    check_dispatch(limits, wg, 64, 1024, 5)?;
+    check_dispatch(limits, wg, 64, 1024, 3)?;
     let total_bins = wg.checked_mul(256).ok_or(GpuQueryError::InputTooLarge)?;
     let hist_size = u64::from(total_bins) * 4;
-    for size in [key_bytes, idx_bytes, hist_size] {
+    for size in [entry_bytes, hist_size] {
         check_buffer(limits, size, true)?;
     }
-    Ok((key_bytes, idx_bytes, wg, total_bins, hist_size))
+    Ok((entry_bytes, wg, total_bins, hist_size))
 }
 
 #[cfg(test)]

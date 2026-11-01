@@ -70,6 +70,11 @@ const CASES: &[(&str, &str, bool)] = &[
         true,
     ),
     (
+        "signal-gpu-iq-power",
+        "Sensing IQ-power GPU outputs and cancellation",
+        true,
+    ),
+    (
         "agent-gpu-lease",
         "Queue completion and retained GPU buffer leases",
         true,
@@ -83,6 +88,7 @@ pub(crate) struct Health {
 }
 
 pub(crate) struct Gpu {
+    pub(crate) selected_level: etalon::FeatureLevel,
     pub(crate) instance: etalon::Instance,
     pub(crate) adapter: etalon::Adapter,
     pub(crate) device: etalon::Device,
@@ -271,6 +277,7 @@ impl Session {
             "tensor-gpu-attention" => crate::domain_tensor::attention(device, queue).await,
             "tensor-forward-readback" => crate::domain_tensor::forward(device, queue).await,
             "browser-canvas-capabilities" => crate::backend_contracts::canvas(gpu).await,
+            "signal-gpu-iq-power" => crate::domain_signal::run(device, queue).await,
             "agent-gpu-lease" => crate::domain_agent::run(device, queue).await,
             _ => {
                 let count = id

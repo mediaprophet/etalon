@@ -1002,6 +1002,7 @@ dependencies = [
  "etalon",
  "etalon-agent",
  "etalon-nquin",
+ "etalon-sense-gpu",
  "etalon-tensor",
  "etalon-types",
  "etalon-wgsl-forge",
@@ -1379,8 +1380,10 @@ dependencies = [
  "etalon",
  "etalon-sense-core",
  "etalon-signal",
+ "js-sys",
  "naga",
  "pollster",
+ "wasm-bindgen",
 ]
 
 [[package]]

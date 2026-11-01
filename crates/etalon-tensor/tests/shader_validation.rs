@@ -21,3 +21,20 @@ fn actual_topk_shader_parses_and_validates_without_optional_features() {
 fn actual_attention_shader_parses_and_validates_without_optional_features() {
     validate_portable_shader(etalon_tensor::FUSED_ATTENTION_WGSL);
 }
+
+#[test]
+fn packed_attention_shader_validates_with_exactly_four_storage_bindings() {
+    let source = etalon_tensor::packed_fused_attention_wgsl();
+    validate_portable_shader(&source);
+    let module = naga::front::wgsl::parse_str(&source).unwrap();
+    let storage_count = module
+        .global_variables
+        .iter()
+        .filter(|(_, variable)| matches!(variable.space, naga::AddressSpace::Storage { .. }))
+        .count();
+    assert_eq!(storage_count, 4);
+    assert!(!module.global_variables.iter().any(|(_, variable)| variable
+        .binding
+        .as_ref()
+        .is_some_and(|binding| binding.binding == 5)));
+}

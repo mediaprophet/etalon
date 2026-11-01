@@ -62,6 +62,30 @@ def command(args, timeout=20):
         return outputs[0].decode("utf-8")
 
 
+def device_environment(serial):
+    """Collect bounded raw evidence; an absent setting never means protection is off."""
+    fields = {}
+    probes = (
+        ("advanced_protection_mode", ["settings", "get", "secure", "advanced_protection_mode"], 128),
+        ("build_fingerprint", ["getprop", "ro.build.fingerprint"], 1024),
+        ("gpu_service", ["dumpsys", "gpu"], 16384),
+    )
+    for name, args, budget in probes:
+        try:
+            raw = command(["adb", "-s", serial, "shell", *args], timeout=5).strip()
+            encoded = raw.encode("utf-8")
+            value = encoded[:budget].decode("utf-8", "ignore")
+            fields[name] = {"status": "unavailable" if raw in ("", "null") else "reported",
+                            "value": value, "truncated": len(encoded) > budget}
+            if name == "advanced_protection_mode":
+                fields[name]["interpretation"] = {"1": "reported-enabled", "0": "reported-disabled"}.get(raw, "unknown")
+                fields[name]["user_scope"] = "ADB shell default settings user; not proof of browser policy"
+        except (OSError, ValueError, subprocess.SubprocessError, TimeoutError) as error:
+            fields[name] = {"status": "unavailable", "error": str(error)[:512]}
+    return {"schema": "etalon.android-environment.v1", "read_only": True,
+            "automatic_upload": False, "fields": fields}
+
+
 def http_get(port, path):
     with urlopen(f"http://127.0.0.1:{port}{path}", timeout=3) as response:
         data = response.read(MAX_REPORT_BYTES + 1)
@@ -105,7 +129,7 @@ class DeviceSession:
             raise ValueError("ADB did not return an allocated DevTools port")
         self.forward_port = int(port)
         self.before = {item["id"] for item in pages(self.forward_port)}
-        query = urlencode({"autorun": "1", "feature-level": feature_level, "etalon-run": self.token})
+        query = urlencode({"autorun": "0", "feature-level": feature_level, "etalon-run": self.token})
         self.url = f"http://127.0.0.1:{self.reverse_port}/testing.html?{query}"
         self.adb("shell", "am", "start", "-a", "android.intent.action.VIEW", "-d",
                  shlex.quote(self.url), "--ez", "create_new_tab", "true", "-p", "com.android.chrome")
@@ -205,6 +229,7 @@ def receipt_path(path):
 def qualify_device(serial, host_port, revision, receipt, feature_level="core", timeout=120):
     session = DeviceSession(serial, host_port, uuid.uuid4().hex, timeout)
     report = None
+    android_environment = device_environment(serial)
     failure = None
     try:
         endpoint = session.open(feature_level)
@@ -223,7 +248,8 @@ def qualify_device(serial, host_port, revision, receipt, feature_level="core", t
                                  if failure else f"Cleanup failed: {cleanup_error}")
     envelope = {"schema": "etalon.android-qualification.v1", "device_serial": serial,
                 "requested_feature_level": feature_level, "expected_revision": revision,
-                "qualification": "failed" if failure else "passed", "report": report}
+                "qualification": "failed" if failure else "passed", "report": report,
+                "android_environment": android_environment}
     if failure:
         envelope["failure"] = str(failure)[:4000]
     payload = (json.dumps(envelope, indent=2) + "\n").encode("utf-8")

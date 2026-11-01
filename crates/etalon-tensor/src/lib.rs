@@ -11,7 +11,8 @@ pub use kernel_limits::TensorPipelineError;
 pub mod view;
 
 pub use attention::{
-    online_softmax_rescale, AttentionParams, FusedAttentionParams, FusedAttentionPipeline,
+    online_softmax_rescale, pack_attention_weights_and_mask, packed_fused_attention_wgsl,
+    AttentionParams, FusedAttentionParams, FusedAttentionPipeline, PackedAttentionError,
     FUSED_ATTENTION_WGSL,
 };
 pub use cuda_mega::{

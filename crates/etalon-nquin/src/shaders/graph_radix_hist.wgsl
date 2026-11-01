@@ -5,15 +5,21 @@ struct Params {
     _pad1: u32,
 }
 
-@group(0) @binding(0) var<storage, read> keys_in: array<u32>;
+struct RadixEntry {
+    key_lo: u32,
+    key_hi: u32,
+    index: u32,
+}
+
+@group(0) @binding(0) var<storage, read> entries_in: array<RadixEntry>;
 @group(0) @binding(1) var<storage, read_write> wg_hist: array<u32>;
 @group(0) @binding(2) var<uniform> params: Params;
 
 var<workgroup> local_hist: array<atomic<u32>, 256>;
 
 fn digit_at(i: u32, shift: u32) -> u32 {
-    let lo = keys_in[i * 2u];
-    let hi = keys_in[i * 2u + 1u];
+    let lo = entries_in[i].key_lo;
+    let hi = entries_in[i].key_hi;
     if (shift < 32u) {
         return (lo >> shift) & 255u;
     }

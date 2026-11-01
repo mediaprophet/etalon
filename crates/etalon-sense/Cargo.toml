@@ -33,16 +33,20 @@ gpu-gles = ["gpu", "etalon-sense-gpu/gles"]
 etalon-sense-core = { path = "../etalon-sense-core" }
 etalon-sense-runtime = { path = "../etalon-sense-runtime" }
 etalon-signal = { path = "../etalon-signal" }
-etalon-sense-host = { path = "../etalon-sense-host", optional = true }
-etalon-sense-wasapi = { path = "../etalon-sense-wasapi", optional = true }
 etalon-sense-wifi = { path = "../etalon-sense-wifi", optional = true }
-etalon-sense-ble = { path = "../etalon-sense-ble", optional = true }
 etalon-sense-cellular = { path = "../etalon-sense-cellular", optional = true }
 etalon-sense-sdr = { path = "../etalon-sense-sdr", optional = true }
 etalon-sense-nfc = { path = "../etalon-sense-nfc", optional = true }
-etalon-sense-pcsc = { path = "../etalon-sense-pcsc", optional = true }
 etalon-sense-windows-sensors = { path = "../etalon-sense-windows-sensors", optional = true }
 etalon-sense-cpu = { path = "../etalon-sense-cpu", optional = true }
 etalon-sense-camera = { path = "../etalon-sense-camera", optional = true }
-etalon-sense-camera-windows = { path = "../etalon-sense-camera-windows", optional = true }
 etalon-sense-gpu = { path = "../etalon-sense-gpu", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+etalon-sense-wasapi = { path = "../etalon-sense-wasapi", optional = true }
+etalon-sense-ble = { path = "../etalon-sense-ble", optional = true }
+etalon-sense-pcsc = { path = "../etalon-sense-pcsc", optional = true }
+etalon-sense-camera-windows = { path = "../etalon-sense-camera-windows", optional = true }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+etalon-sense-host = { path = "../etalon-sense-host", optional = true }

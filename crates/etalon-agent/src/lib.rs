@@ -2,12 +2,16 @@
 //!
 //! Provides the coordination layer between cold memory-mapping / kernel preparation
 //! and zero-heap hot-path hardware submission across Vulkan, DX12, Metal, and CUDA.
+//! CUDA and OS memory interop are native-only. Accelerator reports and portable
+//! compute, lease and slab contracts remain available on WebAssembly.
 
 pub mod accelerator;
 pub mod capability;
 pub mod compute_lane;
+#[cfg(not(target_family = "wasm"))]
 pub mod cuda_lane;
 pub mod hal_lane;
+#[cfg(not(target_family = "wasm"))]
 pub mod interop;
 pub mod lease;
 pub mod slab;
@@ -19,6 +23,7 @@ pub use etalon_sense as sensing;
 
 pub use capability::{AgentError, CapabilityState, SiliconCapability};
 pub use compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
+#[cfg(not(target_family = "wasm"))]
 pub use cuda_lane::{
     CudaComputeLane, CudaDriverApi, CudaPreparedPlan, CudaSubmission, PinBackend, PinnedRegion,
 };

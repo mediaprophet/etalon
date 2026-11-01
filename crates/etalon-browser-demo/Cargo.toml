@@ -21,6 +21,7 @@ serde_json = { workspace = true }
 etalon-nquin = { path = "../etalon-nquin", default-features = false, features = ["std", "gpu"] }
 etalon-tensor = { path = "../etalon-tensor", default-features = false, features = ["std"] }
 etalon-agent = { path = "../etalon-agent", default-features = false, features = ["std"] }
+etalon-sense-gpu = { path = "../etalon-sense-gpu", default-features = false, features = ["webgpu"] }
 bytemuck = { workspace = true }
 etalon-wgsl-forge = { path = "../etalon-wgsl-forge", default-features = false, features = [
     "std",

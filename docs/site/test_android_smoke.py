@@ -102,6 +102,7 @@ class OwnershipTests(unittest.TestCase):
             endpoint = self.session.open("compatibility")
             self.assertEqual(endpoint, "ws://127.0.0.1:45678/devtools/page/owned")
             self.assertIn("feature-level=compatibility", self.session.url)
+            self.assertIn("autorun=0", self.session.url)
             self.session.close()
         tails = [args[3:] for args in self.commands]
         self.assertIn(["reverse", "--no-rebind", "tcp:8081", "tcp:43210"], tails)
@@ -149,6 +150,28 @@ class OwnershipTests(unittest.TestCase):
         http.assert_called_once_with(45678, "/json/close/owned")
 
 
+class EnvironmentTests(unittest.TestCase):
+    def test_missing_protection_is_unknown_and_only_read_commands_are_used(self):
+        with patch.object(SMOKE, "command", side_effect=["null\n", "fingerprint", "gpu detail"]) as call:
+            result = SMOKE.device_environment("selected-phone")
+        fields = result["fields"]
+        self.assertEqual(fields["advanced_protection_mode"]["interpretation"], "unknown")
+        self.assertEqual(fields["advanced_protection_mode"]["status"], "unavailable")
+        self.assertEqual([c.args[0] for c in call.call_args_list], [
+            ["adb", "-s", "selected-phone", "shell", "settings", "get", "secure", "advanced_protection_mode"],
+            ["adb", "-s", "selected-phone", "shell", "getprop", "ro.build.fingerprint"],
+            ["adb", "-s", "selected-phone", "shell", "dumpsys", "gpu"],
+        ])
+
+    def test_errors_and_oversized_unicode_are_bounded_and_not_inferred(self):
+        with patch.object(SMOKE, "command", side_effect=[ValueError("permission denied"), "🛰" * 1000, TimeoutError("deadline")]):
+            fields = SMOKE.device_environment("phone")["fields"]
+        self.assertEqual(fields["advanced_protection_mode"]["status"], "unavailable")
+        self.assertTrue(fields["build_fingerprint"]["truncated"])
+        self.assertLessEqual(len(fields["build_fingerprint"]["value"].encode("utf-8")), 1024)
+        self.assertEqual(fields["gpu_service"]["status"], "unavailable")
+
+
 class OrchestrationTests(unittest.TestCase):
     def test_receipt_retains_full_report_and_cleanup_runs_on_pass_or_failure(self):
         for passes in (True, False):
@@ -191,6 +214,10 @@ class OrchestrationTests(unittest.TestCase):
 
 @unittest.skipUnless(shutil.which("node"), "Node is required for mocked CDP tests")
 class ProtocolTests(unittest.TestCase):
+    def test_browser_diagnostic_bounds_and_rendering_events(self):
+        result = subprocess.run(["node", "--test", str(SMOKE.REPO / "tests/wasm/runner/android-diagnostics.test.js")], capture_output=True, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stdout.decode("utf-8", "replace") + result.stderr.decode("utf-8", "replace"))
+
     def test_page_protocol_completion_timeout_errors_and_disconnect(self):
         module = (SMOKE.REPO / "tests/wasm/runner/android-smoke.js").as_uri()
         code = """
@@ -209,9 +236,14 @@ class Socket extends EventTarget {
 }
 const socket = new Socket();
 const client = new CdpClient(socket);
-assert.equal(await collectReport(client, 'http://127.0.0.1:8080/testing.html?etalon-run=own', 1000), '{"ok":true}');
-assert.equal(socket.requests[0].method, 'Runtime.evaluate');
-assert.ok(socket.requests[0].params.expression.includes('location.href !=='));
+socket.dispatchEvent(new MessageEvent('message', {data: JSON.stringify({method: 'Log.entryAdded', params: {entry: {source: 'rendering', level: 'warning', text: 'No available adapters.'}}})}));
+const report = JSON.parse(await collectReport(client, 'http://127.0.0.1:8080/testing.html?etalon-run=own', 1000));
+assert.equal(report.ok, true);
+assert.equal(report.browser_diagnostics.automatic_upload, false);
+assert.equal(report.browser_diagnostics.events[0].text, 'No available adapters.');
+assert.deepEqual(socket.requests.slice(0, 2).map(r => r.method), ['Log.enable', 'Runtime.enable']);
+assert.equal(socket.requests[2].method, 'Runtime.evaluate');
+assert.ok(socket.requests[2].params.expression.includes('location.href !=='));
 client.close(); assert.ok(socket.closed);
 assert.ok(socket.requests.every(r => r.method !== 'Browser.close' && r.method !== 'Target.closeTarget'));
 let now = 0;
