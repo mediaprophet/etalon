@@ -190,19 +190,30 @@ self.addEventListener("activate", (event) =>
 self.addEventListener("fetch", (event) => {
   const request = event.request;
   const url = new URL(request.url);
-  if (
-    request.method !== "GET" ||
-    !url.href.startsWith(self.registration.scope) ||
-    (url.searchParams.has("rev") && url.searchParams.get("rev") !== REVISION)
-  )
+  if (request.method !== "GET" || !url.href.startsWith(self.registration.scope))
     return;
+  const mismatched =
+    url.searchParams.has("rev") && url.searchParams.get("rev") !== REVISION;
   event.respondWith(
     (async () => {
       url.search = "";
       url.hash = "";
       if (url.href === self.registration.scope) url.pathname += "index.html";
       const cache = await caches.open(CACHE);
-      return (await cache.match(url)) || fetch(request);
+      const cached = await cache.match(url);
+      if (request.mode === "navigate" && cached) return cached;
+      if (mismatched)
+        return new Response(
+          "Application revision differs from the active offline bundle. Close all Etalon windows and reopen after the update is ready.",
+          {
+            status: 409,
+            headers: {
+              "Content-Type": "text/plain",
+              "Cache-Control": "no-store",
+            },
+          },
+        );
+      return cached || fetch(request);
     })(),
   );
 });
