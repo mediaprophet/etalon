@@ -842,6 +842,27 @@ jobs:
 
           cargo --locked xtask test --llvm-cov
 
+      - name: (Linux) Qualify prepared submission allocation on software Vulkan
+        if: matrix.os == 'ubuntu-24.04'
+        shell: bash
+        run: |
+          set -e
+
+          # Mesa installs lavapipe; keep the software target explicit in the run evidence.
+          echo "Prepared qualification target: Mesa software Vulkan (lavapipe)"
+          cat "$VK_DRIVER_FILES"
+          vulkaninfo --summary
+          cargo llvm-cov --no-cfg-coverage --no-report test --locked --all-features -p etalon-test --test etalon-prepared -- --ignored --test-threads=1
+
+      - name: (Linux) Qualify prepared sensing on software Vulkan
+        if: matrix.os == 'ubuntu-24.04'
+        shell: bash
+        run: |
+          set -e
+
+          # Functional success does not promote the sensing allocation class.
+          cargo llvm-cov --no-cfg-coverage --no-report test --locked --all-features -p etalon-sense-gpu --lib -- --ignored --test-threads=1
+
       - name: Check Naga snapshots
         # git diff doesn't check untracked files, we need to stage those then compare with HEAD.
         run: git add --intent-to-add -- naga/tests/out && git diff --exit-code HEAD -- naga/tests/out
@@ -930,7 +951,8 @@ jobs:
         uses: EmbarkStudios/cargo-deny-action@3c6349835b2b7b196a839186cb8b78e02f7b5f25 # v2.1.1
         with:
           command: check bans licenses sources
-          arguments: --manifest-path sensing-vendor-adapters/Cargo.toml --all-features --workspace
+          manifest-path: sensing-vendor-adapters/Cargo.toml
+          arguments: --all-features --workspace
           command-arguments: --config .deny.toml -Dwarnings -Aunmatched-organization
           rust-version: ${{ env.REPO_MSRV }}
 

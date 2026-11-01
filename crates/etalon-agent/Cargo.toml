@@ -27,7 +27,10 @@ sensing-cpu = ["sensing", "etalon-sense/cpu"]
 sensing-camera = ["sensing", "etalon-sense/camera"]
 sensing-camera-windows = ["sensing-camera", "etalon-sense/camera-windows"]
 sensing-camera-windows-unqualified = ["sensing-camera-windows", "etalon-sense/camera-windows-unqualified"]
-sensing-camera-windows-unqualified-copy = ["sensing-camera-windows-unqualified", "etalon-sense/camera-windows-unqualified-copy"]
+sensing-camera-windows-unqualified-copy = [
+    "sensing-camera-windows-unqualified",
+    "etalon-sense/camera-windows-unqualified-copy"
+]
 sensing-gpu = ["sensing", "etalon-sense/gpu"]
 sensing-gpu-vulkan = ["sensing-gpu", "etalon-sense/gpu-vulkan"]
 sensing-gpu-dx12 = ["sensing-gpu", "etalon-sense/gpu-dx12"]

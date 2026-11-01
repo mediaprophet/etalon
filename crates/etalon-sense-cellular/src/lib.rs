@@ -39,6 +39,7 @@ pub struct CellularSignalBars {
     pub measurement_time_known: bool,
 }
 
+#[cfg(any(windows, test))]
 trait CellularPlatform {
     type Profile;
     type BarsReference;
@@ -52,6 +53,7 @@ trait CellularPlatform {
     fn bars_value(&mut self, bars: &Self::BarsReference) -> Result<u8, CellularError>;
 }
 
+#[cfg(any(windows, test))]
 fn read_bars_with_platform(
     gate: &mut impl PolicyGate,
     platform: &mut impl CellularPlatform,

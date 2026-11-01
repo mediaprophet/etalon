@@ -1,7 +1,8 @@
 # Local vendor deployment admission
 
-Source-only implementation. No manifest validation, deployment artifact reads, library
-loading, Cargo resolution, build or test has been run during implementation.
+The Rust deployment contracts and mock native boundaries are validated by the
+Etalon CI vendor jobs. Native runtime loading and physical device execution need
+separate deployment qualification. See [release validation](../docs/sensing-release.md).
 
 The `etalon-sense-deployment` library accepts a typed `DeploymentManifest`
 containing an opaque nonzero deployment ID and target ID, a protected local
@@ -46,9 +47,9 @@ fallback remains disabled in the explicit providers.
 
 The separate adapter workspace pins cached ORT rc.15 with dynamic loading and
 does not request binary-download features. A consuming workspace can still
-unify features that enable downloads. No lockfile or resolved dependency graph
-has been produced; future qualification must establish offline/no-download
-dependency and artifact controls before building.
+unify features that enable downloads. This workspace retains its own
+`Cargo.lock`, and CI checks its Rust dependency graph. Hosts must still establish
+offline/no-download dependency and artifact controls for their chosen deployment.
 
 ## FastRPC DSP deployment boundary
 
@@ -101,8 +102,9 @@ the native runtime still requires an explicit unsafe trust boundary even when
 artifact admission succeeds. Admission does not install firmware, create a DSP
 protection domain, load libraries or execute module code.
 
-Source-only cases cover refusal before artifact I/O, scratch wiping, identity
-and repeated-path rejection, and lease revocation. They have not been run.
+Mock tests cover refusal before artifact I/O, scratch wiping, identity and
+repeated-path rejection, and lease revocation. CI runs these separately from
+physical FastRPC execution.
 
 ## RTL-SDR deployment boundary
 
