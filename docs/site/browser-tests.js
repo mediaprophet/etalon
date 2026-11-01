@@ -182,11 +182,12 @@ async function run() {
     results: [],
   };
   let session;
+  let module;
   let inFlight;
   let catalog = [];
   try {
     progress.textContent = "Loading the Etalon Rust/WASM build…";
-    const module = await deadline(
+    module = await deadline(
       import("./browser/etalon_browser_demo.js?rev=" + revision),
       30000,
     );
@@ -199,6 +200,7 @@ async function run() {
       }),
       30000,
     );
+    report.debug_logging_enabled = module.configure_debug_logging();
     const creating = module.create_session_for_profile(selectedProfile);
     try {
       session = await deadline(creating, 30000);
@@ -342,6 +344,16 @@ async function run() {
           status: "fail",
           details: { message: String(error).slice(0, 2000) },
         });
+      }
+    }
+    if (module && report.debug_logging_enabled) {
+      try {
+        report.debug_log = parse(module.debug_log_json());
+      } catch (error) {
+        report.debug_log = {
+          status: "export-failed",
+          message: String(error).slice(0, 512),
+        };
       }
     }
     delete document.body.dataset.etalonCase;

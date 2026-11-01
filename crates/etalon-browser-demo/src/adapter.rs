@@ -40,16 +40,19 @@ pub(crate) async fn request_gpu(
             etalon::FeatureLevel::Core => "core",
             etalon::FeatureLevel::Compatibility => "compatibility",
         };
+        log::debug!(target: "etalon_browser_demo::adapter", "Requesting {name} adapter; no power preference or forced fallback");
         match instance
             .request_webgpu_adapter(&etalon::RequestAdapterOptions::default(), *level)
             .await
         {
             Ok(adapter) => {
+                log::debug!(target: "etalon_browser_demo::adapter", "{name} adapter acquired");
                 attempts.push(json!({"feature_level":name,"status":"available"}));
                 selected = Some((adapter, name));
                 break;
             }
             Err(error) => {
+                log::error!(target: "etalon_browser_demo::adapter", "{name} acquisition: {error}");
                 let (status, code) = match &error {
                     etalon::RequestAdapterError::NotFound { .. } => {
                         ("unsupported", "adapter-unavailable")
@@ -78,6 +81,7 @@ pub(crate) async fn request_gpu(
             json!({"status":"unsupported","code":"insufficient-adapter-limits","message":"Adapter cannot satisfy the declared domain-kernel suite limits","required_limits":limits_json(&required),"adapter_limits":limits_json(&adapter.limits()),"adapter_attempts":attempts}),
         );
     }
+    log::debug!(target: "etalon_browser_demo::adapter", "Requesting device with declared workload limits");
     let (device, queue) = adapter.request_device(&etalon::DeviceDescriptor {
         label: Some("Etalon browser library qualification"),
         required_features: etalon::Features::empty(),
@@ -86,12 +90,14 @@ pub(crate) async fn request_gpu(
     }).await.map_err(|error| json!({"status":"fail","code":"device-request-failed","message":bounded(&error.to_string()),"adapter_attempts":attempts}))?;
     let lost_health = health.clone();
     device.set_device_lost_callback(move |reason, message| {
+        log::debug!(target: "etalon_browser_demo::device", "Device lost callback: {reason:?}: {message}");
         if let Ok(mut state) = lost_health.lock() {
             state.lost = Some(bounded(&format!("{reason:?}: {message}")));
         }
     });
     let error_health = health.clone();
     device.on_uncaptured_error(Arc::new(move |error: etalon::Error| {
+        log::error!(target: "etalon_browser_demo::device", "Uncaptured GPU error: {error}");
         if let Ok(mut state) = error_health.lock() {
             state.uncaptured = Some(bounded(&error.to_string()));
         }

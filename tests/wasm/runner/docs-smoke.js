@@ -131,6 +131,39 @@ try {
     null,
     { timeout: 60000 },
   );
+  const report = JSON.parse(
+    await page.locator("#qualification-report").textContent(),
+  );
+  const debug = report.debug_log;
+  if (
+    !report.debug_logging_enabled ||
+    debug?.status !== "enabled" ||
+    debug.level !== "debug" ||
+    debug.automatic_upload !== false ||
+    !Array.isArray(debug.events) ||
+    debug.events.length === 0 ||
+    debug.events.length > debug.max_events ||
+    debug.events.some(
+      (e) =>
+        new TextEncoder().encode(e.message).length > debug.max_message_bytes ||
+        new TextEncoder().encode(e.target).length > debug.max_target_bytes,
+    ) ||
+    !debug.events.some(
+      (e) =>
+        e.target.includes("backend::webgpu") &&
+        e.message.includes("cached_gpu=true"),
+    )
+  )
+    throw new Error(
+      "Bounded Rust debug capture did not include actual backend acquisition",
+    );
+  if (
+    boundary &&
+    !debug.events.some((e) => e.level === "ERROR" || e.level === "WARN")
+  )
+    throw new Error(
+      "Failed adapter acquisition did not produce an error/debug record",
+    );
   const completion = await page.evaluate(() => ({ ...document.body.dataset }));
   const allPassed =
     completion.etalonPassed === "20" &&

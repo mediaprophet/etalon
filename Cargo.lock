@@ -1006,6 +1006,7 @@ dependencies = [
  "etalon-types",
  "etalon-wgsl-forge",
  "js-sys",
+ "log",
  "serde_json",
  "wasm-bindgen",
  "wasm-bindgen-futures",

@@ -87,6 +87,7 @@ pub async fn adapter_acquisition_control() -> String {
                 },
             },
         };
+        log::debug!(target: "etalon_browser_demo::adapter_control", "Direct {mode}: {result}");
         attempts.push(json!({"request":mode,"result":result}));
     }
     json!({"execution":"Rust/WASM direct browser API control","gpu_execution_tested":false,"gpu_present":true,"attempts":attempts}).to_string()
