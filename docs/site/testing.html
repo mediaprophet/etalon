@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="etalon-revision" content="{{REVISION}}" />
+    <title>Test this device | Etalon</title>
+    <link rel="stylesheet" href="styles.css" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self'; img-src 'self' blob:; object-src 'none'; base-uri 'self'"
+    />
+    <script type="module" src="browser-tests.js"></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <nav aria-label="Main navigation">
+        <a class="brand" href="index.html">etalon</a
+        ><a href="capabilities.html">Capabilities</a
+        ><a href="testing.html">Try the tests</a
+        ><a href="getting-started.html">Use the library</a
+        ><a href="doc/etalon/index.html">API</a
+        ><a href="licensing.html">Licensing</a>
+      </nav>
+    </header>
+    <main id="main">
+      <p class="eyebrow">Run the actual Etalon WebAssembly build</p>
+      <h1>Test this browser.<br />Keep the evidence.</h1>
+      <p class="lead">
+        A small, bounded suite for phones, tablets and desktops. Portable tests
+        run without a GPU; browser WebGPU tests run when the browser exposes a
+        suitable adapter.
+      </p>
+      <p class="note">
+        This exercises Etalon's compiled Rust/WASM API over the browser's WebGPU
+        implementation. It is not the full WebGPU CTS and does not test native
+        Vulkan, DX12, Metal, DSP/NPU or sensor hardware.
+        <a href="capabilities.html#coverage">Coverage explained</a>.
+      </p>
+      <div class="actions">
+        <button type="button" class="button primary" id="run-tests">
+          Run tests on this device</button
+        ><button type="button" class="button" id="download-report" disabled>
+          Download local JSON report
+        </button>
+      </div>
+      <p id="test-progress" role="status" aria-live="polite">
+        Ready. No tests have run.
+      </p>
+      <p class="small">
+        No telemetry or automatic upload. Running requests a browser GPU adapter
+        when available. Exported reports include the source revision,
+        browser/viewport, exposed adapter/limits and per-case results. Timings
+        include setup and readback; they are diagnostics, not a device ranking.
+      </p>
+      <section aria-labelledby="environment-title">
+        <h2 id="environment-title">This environment</h2>
+        <pre id="environment">Information appears when you run the suite.</pre>
+      </section>
+      <section aria-labelledby="results-title">
+        <h2 id="results-title">Results</h2>
+        <p id="test-summary">Unrun tests are not passes.</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Test</th>
+                <th>Result</th>
+                <th>Time</th>
+                <th>Evidence</th>
+              </tr>
+            </thead>
+            <tbody id="test-results"></tbody>
+          </table>
+        </div>
+      </section>
+      <section aria-labelledby="render-title">
+        <h2 id="render-title">GPU render readback</h2>
+        <canvas
+          id="render-result"
+          width="64"
+          height="64"
+          aria-label="Verified offscreen GPU triangle readback"
+        ></canvas>
+        <p id="render-caption" class="small">
+          No image yet. Pixels will be displayed only after the render/readback
+          check passes.
+        </p>
+      </section>
+      <h2>Use it across systems</h2>
+      <ol>
+        <li>
+          Open this HTTPS page on the device you want to test, then press Run.
+        </li>
+        <li>
+          Keep browser settings and power/thermal conditions with your notes. An
+          unsupported case reports a missing capability rather than a successful
+          test.
+        </li>
+        <li>
+          Download the local JSON report if you want to compare or share
+          evidence. Pin the reported source revision in your application.
+        </li>
+      </ol>
+      <p>
+        If WebGPU is unavailable, use a browser/OS combination that exposes it,
+        or run the
+        <a
+          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/docs/testing.md"
+          >native Rust tests</a
+        >
+        for that system. Do not infer native driver coverage from these browser
+        results.
+      </p>
+    </main>
+    <footer>
+      <div>
+        Development source:
+        <a href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}"
+          ><code>{{REVISION}}</code></a
+        >. <a href="licensing.html">Project and upstream licensing</a>.
+      </div>
+    </footer>
+  </body>
+</html>

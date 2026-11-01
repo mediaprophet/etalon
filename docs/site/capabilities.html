@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="etalon-revision" content="{{REVISION}}" />
+    <title>Capabilities and changes from wgpu | Etalon</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <nav aria-label="Main navigation">
+        <a class="brand" href="index.html">etalon</a
+        ><a href="capabilities.html">Capabilities</a
+        ><a href="testing.html">Try the tests</a
+        ><a href="getting-started.html">Use the library</a
+        ><a href="doc/etalon/index.html">API</a
+        ><a href="licensing.html">Licensing</a>
+      </nav>
+    </header>
+    <main id="main">
+      <p class="eyebrow">Architecture, extensions and evidence</p>
+      <h1>More than a sensing library.</h1>
+      <p class="lead">
+        Etalon retains wgpu's graphics foundation and adds focused libraries for
+        application execution, generated kernels, semantic records, tensors,
+        rendering and sensing. Availability and proof differ by backend.
+      </p>
+      <h2 id="changes">Changes retained in this fork</h2>
+      <p>
+        These describe this source revision, rather than claiming the current
+        upstream project lacks an equivalent fix.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Area</th>
+              <th>Behavior in Etalon</th>
+              <th>Evidence</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser error scopes</td>
+              <td>
+                A resolved null/undefined error scope returns no error;
+                unexpected JavaScript error values become typed internal errors
+                rather than an unconditional panic.
+              </td>
+              <td>
+                <a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/etalon/src/backend/webgpu.rs"
+                  >Browser backend</a
+                >; runnable empty-scope and negative-validation tests.
+              </td>
+            </tr>
+            <tr>
+              <td>Browser device limits</td>
+              <td>
+                Requested limit serialization checks keys against the adapter's
+                exposed limit properties, accommodating removed keys and
+                compatibility adapters.
+              </td>
+              <td>
+                <a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/etalon/src/backend/webgpu.rs"
+                  >Limit mapping</a
+                >; this-device adapter/device creation and reported limits.
+              </td>
+            </tr>
+            <tr>
+              <td>Vulkan cooperative matrices</td>
+              <td>
+                Feature admission requires the corresponding Vulkan
+                memory-model/device-scope support. It is not enabled merely
+                because a device has a GPU.
+              </td>
+              <td>
+                <a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/etalon-hal/src/vulkan/adapter.rs"
+                  >Vulkan capability checks</a
+                >; native target qualification.
+              </td>
+            </tr>
+            <tr>
+              <td>Prepared compute</td>
+              <td>
+                A private native Vulkan device/queue owner retains fixed
+                buffers, mappings, commands and fence state across executions.
+                It validates setup and explicitly handles poisoning and
+                retirement.
+              </td>
+              <td>
+                <a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/docs/prepared-compute.md"
+                  >Execution contract</a
+                >; native GPU regressions and explicit allocator test.
+              </td>
+            </tr>
+            <tr>
+              <td>Application-oriented libraries</td>
+              <td>
+                Independent APIs extend the foundation with generated kernels,
+                semantic data, tensor operations, rendering, worker transport
+                and sensing.
+              </td>
+              <td>
+                Modules below, Rust tests and focused browser demonstrations.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <h2 id="forge">Generated kernels: WGSL Forge</h2>
+      <p>
+        <code>etalon-wgsl-forge</code> supplies typed kernel/buffer IR, schedule
+        and workgroup descriptions, WGSL emission and Naga validation.
+        Additional HLSL, MSL and CUDA emitters and DXC/SPIR-V tools have
+        target-specific prerequisites. Certification utilities compare outputs
+        with CPU oracles; adapter-keyed manifests and tuning results record
+        declared validation/timing evidence.
+      </p>
+      <p>
+        A generated shader or cached manifest alone is not proof that every
+        backend ran it.
+        <a href="testing.html"
+          >The portable demonstration checks deterministic generation and
+          validates the resulting WGSL.</a
+        >
+      </p>
+      <p>
+        <a href="doc/etalon_wgsl_forge/index.html">Forge API</a> ·
+        <a
+          href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/crates/etalon-wgsl-forge"
+          >Source</a
+        >
+      </p>
+      <h2 id="data">Semantic and tensor processing</h2>
+      <div class="grid">
+        <article class="card">
+          <h3>48-byte NQuin records</h3>
+          <p>
+            <code>etalon-nquin</code> provides the explicit wire layout,
+            field-based filtering, CPU reference operations and GPU
+            filtering/radix-sort implementations. The browser demo checks
+            layout, parity, sieve behavior and stable sorting.
+          </p>
+          <a href="doc/etalon_nquin/index.html">NQuin API</a>
+        </article>
+        <article class="card">
+          <h3>Tensor execution components</h3>
+          <p>
+            <code>etalon-tensor</code> includes tensor views,
+            quantization/dequantization helpers, KV layout, fused attention and
+            top-k pipelines. CUDA and native compute integrations require their
+            selected features and runtime.
+          </p>
+          <a href="doc/etalon_tensor/index.html">Tensor API</a>
+        </article>
+      </div>
+      <h2 id="rendering">Rendering and browser integration</h2>
+      <p>
+        <code>etalon-render</code> supplies volumetric/holographic and EMF
+        pipelines, HUD layout and explicit camera/manifold projection POD
+        contracts. <code>etalon-wasm</code> supplies worker lifecycle and
+        transport primitives, including transferable packets and shared-buffer
+        ring contracts. Hosts still own worker creation, canvas integration and
+        any required cross-origin isolation.
+      </p>
+      <p>
+        The browser rendering demonstration draws an offscreen triangle through
+        Etalon, reads the actual pixels back, verifies them and displays that
+        readback. It does not claim to exercise the complete volumetric/HUD
+        stack.
+      </p>
+      <p>
+        <a href="doc/etalon_render/index.html">Rendering API</a> ·
+        <a href="doc/etalon_wasm/index.html">WASM transport API</a>
+      </p>
+      <h2 id="native">Native execution and resource coordination</h2>
+      <p>
+        <code>etalon-agent</code> exposes accelerator/capability state, buffer
+        regions and leases, queue completion and explicit execution lanes.
+        Native Vulkan prepared compute avoids ordinary per-run command recording
+        for its sealed resources. Other backends and APIs retain their own
+        allocation and synchronization behavior.
+      </p>
+      <p>
+        Linux CI separately measures warmed prepared execution with a Rust
+        allocator instrument and runs a prepared sensing correctness check.
+        Those runs use Mesa software Vulkan; they do not certify physical GPUs
+        or driver/OS memory allocation. Sensing providers retain their declared
+        allocation class until their actual deployment is qualified.
+      </p>
+      <p>
+        <a href="doc/etalon_agent/index.html">Agent API</a> ·
+        <a href="doc/etalon/struct.PreparedCompute.html"
+          >Prepared compute API</a
+        >
+      </p>
+      <h2 id="sensing">Sensing as an optional layer</h2>
+      <p>
+        The portable sensing facade composes sample layout, source, uncertainty,
+        calibration, clocks, permissions and observations with signal
+        primitives. CPU/GPU, radio, camera and audio providers are explicit
+        selections. Vendor DSP/NPU/SDR adapters have separate SDK, runtime and
+        licensing requirements. Etalon does not provide QualiaDB's database,
+        identity or permission ontologies.
+      </p>
+      <p>
+        <a href="getting-started.html#sensing">Sensing guide</a> ·
+        <a href="doc/etalon_sense/index.html">Sensing API</a>
+      </p>
+      <h2 id="coverage">Test coverage by environment</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Environment</th>
+              <th>What can run</th>
+              <th>What a result establishes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>This browser, including phones</td>
+              <td>
+                Compiled Etalon WASM: portable NQuin/Forge checks and browser
+                WebGPU compute, readback, error scopes, validation and offscreen
+                rendering.
+              </td>
+              <td>
+                These cases on this browser/device and exact source build.
+                Missing WebGPU is unsupported, not a pass.
+              </td>
+            </tr>
+            <tr>
+              <td>Native Rust test matrix</td>
+              <td>
+                Unit/compile/validation tests, shader snapshots, native GPU
+                suites and platform-specific checks.
+              </td>
+              <td>
+                The recorded runner, backend, features and revision; consult the
+                actual job logs.
+              </td>
+            </tr>
+            <tr>
+              <td>Native accelerators and sensors</td>
+              <td>
+                Target-specific integration plus host artifact, driver,
+                permission and calibration admission.
+              </td>
+              <td>
+                Requires deployment evidence. A browser test cannot establish
+                DSP/NPU, native Vulkan/DX12/Metal or physical sensor
+                qualification.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p>
+        <a
+          href="https://github.com/mediaprophet/etalon/actions/workflows/ci.yml"
+          >Current CI</a
+        >
+        ·
+        <a
+          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/docs/testing.md"
+          >Native test commands</a
+        >
+        ·
+        <a
+          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/docs/conformance-coverage.md"
+          >Conformance coverage and limits</a
+        >
+      </p>
+    </main>
+    <footer>
+      <div>
+        Development source:
+        <a href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}"
+          ><code>{{REVISION}}</code></a
+        >. <a href="licensing.html">Project and upstream licensing</a>.
+      </div>
+    </footer>
+  </body>
+</html>

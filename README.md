@@ -14,6 +14,8 @@ Named after the optical Fabry-Pérot etalon—the scientific archetype of precis
 
 **Homepage:** https://mediaprophet.github.io/etalon/
 
+**Capabilities:** [Etalon extensions and wgpu changes](https://mediaprophet.github.io/etalon/capabilities.html) | [Run the browser tests](https://mediaprophet.github.io/etalon/testing.html)
+
 **Library guide:** [Getting started](https://mediaprophet.github.io/etalon/getting-started.html) | [Public API](https://mediaprophet.github.io/etalon/doc/etalon/) | [Sensing API](https://mediaprophet.github.io/etalon/doc/etalon_sense/)
 
 The documentation site follows the development branch and records its exact source revision. Pin a tested commit for reproducible consumers.

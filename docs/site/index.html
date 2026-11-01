@@ -3,11 +3,8 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Etalon | Graphics, compute and sensing libraries</title>
-    <meta
-      name="description"
-      content="Etalon Rust libraries for graphics, prepared GPU compute and composable sensing."
-    />
+    <meta name="etalon-revision" content="{{REVISION}}" />
+    <title>Graphics, compute and portable execution | Etalon</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -15,109 +12,136 @@
     <header>
       <nav aria-label="Main navigation">
         <a class="brand" href="index.html">etalon</a
-        ><a href="getting-started.html">Get started</a
-        ><a href="doc/etalon/index.html">API reference</a
-        ><a href="licensing.html">Licensing</a
-        ><a href="https://github.com/mediaprophet/etalon">GitHub</a>
+        ><a href="capabilities.html">Capabilities</a
+        ><a href="testing.html">Try the tests</a
+        ><a href="getting-started.html">Use the library</a
+        ><a href="doc/etalon/index.html">API</a
+        ><a href="licensing.html">Licensing</a>
       </nav>
     </header>
     <main id="main">
-      <p class="eyebrow">Rust libraries for QualiaDB and other projects</p>
-      <h1>Graphics, compute<br />and sensing. Composable.</h1>
+      <p class="eyebrow">Rust graphics and compute · native and WebAssembly</p>
+      <h1>A graphics foundation.<br />A wider execution toolkit.</h1>
       <p class="lead">
-        Use Etalon for graphics and GPU execution, or select the sensing
-        contracts and signal-processing libraries independently. Keep sample
-        buffers, physical meaning and permission decisions explicit.
+        Etalon builds on wgpu with browser fixes, prepared native compute,
+        shader generation, semantic data processing, tensor and rendering
+        libraries. Use it independently or with QualiaDB and other applications.
       </p>
       <div class="actions">
-        <a class="button primary" href="getting-started.html">Use the library</a
-        ><a class="button" href="doc/etalon_sense/index.html"
-          >Explore sensing APIs</a
+        <a class="button primary" href="testing.html"
+          >Run tests on this device</a
+        ><a class="button" href="capabilities.html">Explore the capabilities</a
+        ><a class="button" href="getting-started.html"
+          >Use the Rust libraries</a
         >
       </div>
       <p class="note">
-        <strong>Development documentation.</strong> This site follows the
-        <code>dev</code> branch. Pin a tested commit for reproducible consumers.
-        Platform-specific SDKs, devices and scientific calibration require their
-        own qualification.
+        <strong>Development documentation.</strong> This site follows
+        <code>dev</code> and identifies its exact source revision. Browser
+        demonstrations run the compiled Etalon WebAssembly build. Native-only
+        features have separate tests and platform requirements.
       </p>
       <div class="grid">
         <article class="card">
-          <span class="label">Graphics</span>
-          <h3>One safe API</h3>
+          <span class="label">Graphics &amp; compute</span>
+          <h3>One application API</h3>
           <p>
-            Native Vulkan, DirectX 12 and Metal, plus browser WebGPU. Build
-            above Etalon's validation layer.
+            Validated resources, render and compute pipelines, buffers and
+            textures. Native Vulkan, DX12, Metal and GLES; browser WebGPU
+            through the Rust/WASM bridge.
           </p>
           <a href="doc/etalon/index.html">Graphics API</a>
         </article>
         <article class="card">
-          <span class="label">Sensing</span>
-          <h3>Explicit contracts</h3>
+          <span class="label">Shader generation</span>
+          <h3>Generate and verify</h3>
           <p>
-            Caller-owned sample layouts, uncertainty, calibration, clock
-            domains, policy composition and observation envelopes.
+            Typed kernel and schedule IR, WGSL generation, Naga validation and
+            additional target emitters. CPU comparisons, hardware profiles and
+            tuning are explicit tools.
           </p>
-          <a href="doc/etalon_sense_core/index.html">Sensing contracts</a>
+          <a href="capabilities.html#forge">WGSL Forge</a>
         </article>
         <article class="card">
-          <span class="label">Signals</span>
-          <h3>Process your buffers</h3>
+          <span class="label">Semantic &amp; tensor data</span>
+          <h3>Structured GPU workloads</h3>
           <p>
-            Decode I/Q, compute power, transform spectra and apply filters with
-            explicit numeric and size checks.
+            48-byte NQuin wire records, filtering and stable radix sorting.
+            Tensor views, quantization utilities, attention and top-k building
+            blocks.
           </p>
-          <a href="doc/etalon_signal/index.html">Signal processing</a>
+          <a href="capabilities.html#data">Data and tensor libraries</a>
         </article>
         <article class="card">
-          <span class="label">Compute</span>
+          <span class="label">Rendering &amp; workers</span>
+          <h3>Build an application</h3>
+          <p>
+            Volumetric and EMF pipelines, HUD layout, explicit camera/projection
+            contracts and browser worker transport mechanisms.
+          </p>
+          <a href="capabilities.html#rendering"
+            >Rendering and browser support</a
+          >
+        </article>
+        <article class="card">
+          <span class="label">Native execution</span>
           <h3>Prepare, then reuse</h3>
           <p>
-            Fixed-shape native Vulkan compute with private resource ownership.
-            Backend support and allocation qualification are explicit.
+            Private Vulkan compute resources and reusable submission. Resource
+            leases and explicit accelerator coordination complement ordinary
+            graphics APIs.
           </p>
-          <a href="doc/etalon/struct.PreparedCompute.html">Prepared compute</a>
+          <a href="capabilities.html#native">Prepared execution</a>
+        </article>
+        <article class="card">
+          <span class="label">Sensing</span>
+          <h3>Preserve measurement meaning</h3>
+          <p>
+            Optional sample, uncertainty, clock and calibration contracts;
+            signal processing and explicitly selected device/accelerator
+            adapters.
+          </p>
+          <a href="getting-started.html#sensing">Sensing libraries</a>
         </article>
       </div>
-      <h2>Start with a small dependency</h2>
+      <h2>Try it on a phone or desktop</h2>
       <p>
-        The default sensing facade provides portable contracts, runtime
-        coordination and signal primitives. Select device and acceleration
-        providers through features.
+        The browser test page runs actual Rust/WASM operations and reports each
+        result: pass, fail or unsupported. It exercises compute, readback,
+        validation and rendering, plus portable NQuin and Forge functions.
+        Results stay on the device unless you download and share them.
       </p>
+      <p>
+        <a href="testing.html">Open the device test runner</a> ·
+        <a href="capabilities.html#coverage"
+          >Understand what each test covers</a
+        >
+      </p>
+      <h2>What comes from wgpu, and what Etalon adds</h2>
+      <p>
+        The safe graphics API, native backend foundation and shader compiler
+        originate in wgpu/Naga. Etalon retains that attribution and adds its own
+        integration libraries and recorded fixes.
+        <a href="capabilities.html#changes">See the source-backed changes</a>;
+        browser tests do not establish native driver or WebGPU conformance
+        certification.
+      </p>
+      <h2>Choose a small dependency</h2>
       <pre><code>[dependencies]
-etalon-sense = { git = "https://github.com/mediaprophet/etalon.git",
-                 branch = "dev", features = ["cpu", "sdr"] }</code></pre>
+etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "dev" }
+# Or choose a focused etalon-* library for your application.</code></pre>
       <p>
-        Etalon packages are consumed through Git or a local sibling checkout;
-        they are not published to crates.io.
-        <a href="getting-started.html"
-          >See a complete I/Q example and provider choices.</a
-        >
-      </p>
-      <h2>Libraries without a universal policy</h2>
-      <p>
-        Etalon provides sensing mechanisms. Applications own identity,
-        permissions, inference and storage. QualiaDB can bind observations into
-        its semantic and custody systems; environmental or telescope-style
-        observations need no invented human subject.
-      </p>
-      <p class="small">
-        Source at
-        <a href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}"
-          ><code>{{REVISION}}</code></a
-        >.
-        <a
-          href="https://github.com/mediaprophet/etalon/actions/workflows/ci.yml"
-          >Inspect CI results for the selected revision.</a
-        >
+        Packages are available through Git or local checkouts. Before release,
+        pin a full tested commit rather than a moving branch.
+        <a href="getting-started.html">Read the integration guide</a>.
       </p>
     </main>
     <footer>
       <div>
-        Etalon-specific material: CC BY-NC-ND 4.0. Upstream and third-party
-        material retains its own terms.
-        <a href="licensing.html">Read the boundaries.</a>
+        Development source:
+        <a href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}"
+          ><code>{{REVISION}}</code></a
+        >. <a href="licensing.html">Project and upstream licensing</a>.
       </div>
     </footer>
   </body>

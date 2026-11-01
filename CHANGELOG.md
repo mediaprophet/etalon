@@ -45,6 +45,8 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ### Added/New Features
 
+- Added a revision-matched Rust/WASM browser test page with 13 portable/GPU cases, render readback, local reports and mobile-friendly layout, alongside a broader Etalon capability guide.
+
 - Add private prepared Vulkan execution and a sensing IQ-power live provider
   that reuses upload, command, submission and readback resources. Caller sample
   buffers are bounded; target allocation and driver qualification remain explicit.

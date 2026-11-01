@@ -13,9 +13,24 @@ from urllib.parse import unquote, urlsplit
 
 MAX_BYTES = 512 * 1024 * 1024
 MAX_FILES = 50_000
-ASSETS = ("index.html", "getting-started.html", "licensing.html", "styles.css")
+MAX_BROWSER_BYTES = 32 * 1024 * 1024
+ASSETS = (
+    "index.html", "getting-started.html", "licensing.html", "capabilities.html",
+    "testing.html", "browser-tests.js", "styles.css",
+)
+BROWSER_FILES = ("etalon_browser_demo.js", "etalon_browser_demo_bg.wasm")
+JS_REFERENCES = re.compile(
+    r"(?:\b(?:import|export)\s+(?:[^;]*?\s+from\s+)?|"
+    r"\bimport\s*\(\s*|\bnew\s+URL\s*\(\s*)[\"']([^\"']+)[\"']"
+)
 REQUIRED_DOCS = (
     "etalon/index.html",
+    "etalon_wgsl_forge/index.html",
+    "etalon_nquin/index.html",
+    "etalon_tensor/index.html",
+    "etalon_render/index.html",
+    "etalon_wasm/index.html",
+    "etalon_agent/index.html",
     "etalon_sense/index.html",
     "etalon_sense_core/index.html",
     "etalon_sense_runtime/index.html",
@@ -47,11 +62,11 @@ def inspect_tree(root):
         current = Path(current)
         for name in directories:
             if (current / name).is_symlink():
-                raise ValueError("rustdoc directory contains a symbolic link")
+                raise ValueError("input directory contains a symbolic link")
         for name in sorted(names):
             path = current / name
             if path.is_symlink() or not path.is_file():
-                raise ValueError("rustdoc input is not an ordinary file")
+                raise ValueError("input is not an ordinary file")
             size += path.stat().st_size
             files.append(path.relative_to(root))
             if size > MAX_BYTES or len(files) > MAX_FILES:
@@ -59,34 +74,71 @@ def inspect_tree(root):
     return files, size
 
 
+def validate_reference(site, source, link, same_origin=False):
+    parsed = urlsplit(link)
+    if parsed.scheme or parsed.netloc:
+        if same_origin:
+            raise ValueError(f"browser module requires a remote dependency: {link}")
+        return
+    if not parsed.path:
+        return
+    if parsed.path.startswith("/"):
+        raise ValueError(f"project Pages asset requires a relative link: {link}")
+    path = (source.parent / unquote(parsed.path)).resolve()
+    if not path.is_relative_to(site) or not path.is_file():
+        raise ValueError(f"missing or unsafe local link in {source.name}: {link}")
+
+
 def validate_links(site):
+    site = site.resolve()
     for asset in ASSETS:
-        if not asset.endswith(".html"):
-            continue
-        parser = Links()
-        parser.feed((site / asset).read_text(encoding="utf-8"))
-        for link in parser.links:
-            parsed = urlsplit(link)
-            if parsed.scheme or parsed.netloc or not parsed.path:
-                continue
-            path = (site / unquote(parsed.path)).resolve()
-            if not path.is_relative_to(site) or not path.is_file():
-                raise ValueError(f"missing or unsafe local link in {asset}: {link}")
+        source = site / asset
+        if asset.endswith(".html"):
+            parser = Links()
+            parser.feed(source.read_text(encoding="utf-8"))
+            for link in parser.links:
+                validate_reference(site, source, link)
+    modules = [site / asset for asset in ASSETS if asset.endswith(".js")]
+    modules.extend((site / "browser").rglob("*.js"))
+    for source in modules:
+        for reference in JS_REFERENCES.findall(source.read_text(encoding="utf-8")):
+            validate_reference(site, source, reference, same_origin=True)
 
 
-def build(rustdoc, output, revision):
+def inspect_browser(root):
+    files, size = inspect_tree(root)
+    if size > MAX_BROWSER_BYTES or len(files) > 128:
+        raise ValueError("browser artifact budget exceeded")
+    for filename in BROWSER_FILES:
+        if Path(filename) not in files:
+            raise ValueError(f"required compiled browser asset is missing: {filename}")
+    for relative in files:
+        if relative.as_posix() not in BROWSER_FILES and not (
+            relative.parts[0] == "snippets" and relative.suffix == ".js"
+        ):
+            raise ValueError(f"unexpected browser build artifact: {relative}")
+    with (root / BROWSER_FILES[1]).open("rb") as module:
+        if module.read(8) != b"\0asm\x01\0\0\0":
+            raise ValueError("browser artifact is not a WebAssembly version 1 module")
+    return files, size
+
+
+def build(rustdoc, output, revision, browser_assets):
     if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
         raise ValueError("revision must be a full Git commit SHA")
     rustdoc = rustdoc.resolve(strict=True)
+    browser_assets = browser_assets.resolve(strict=True)
     output = output.resolve()
     if output.exists():
         raise ValueError("refusing to replace an existing artifact directory")
-    if output.is_relative_to(rustdoc):
-        raise ValueError("output must be outside the rustdoc input")
+    if output.is_relative_to(rustdoc) or output.is_relative_to(browser_assets):
+        raise ValueError("output must be outside the build inputs")
     for path in REQUIRED_DOCS:
         if not (rustdoc / path).is_file():
             raise ValueError(f"required public documentation is missing: {path}")
     files, size = inspect_tree(rustdoc)
+    browser_files, browser_size = inspect_browser(browser_assets)
+    size += browser_size
     assets = Path(__file__).resolve().parent
     rendered = {}
     for asset in ASSETS:
@@ -96,7 +148,7 @@ def build(rustdoc, output, revision):
         value = source.read_text(encoding="utf-8")
         rendered[asset] = value.replace("{{REVISION}}", html.escape(revision.lower()))
     size += sum(len(value.encode("utf-8")) for value in rendered.values())
-    if size > MAX_BYTES or len(files) + len(ASSETS) + 1 > MAX_FILES:
+    if size > MAX_BYTES or len(files) + len(browser_files) + len(ASSETS) + 1 > MAX_FILES:
         raise ValueError("documentation artifact budget exceeded")
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=".etalon-pages-", dir=output.parent) as scratch:
@@ -106,6 +158,10 @@ def build(rustdoc, output, revision):
             destination = site / "doc" / relative
             destination.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(rustdoc / relative, destination)
+        for relative in browser_files:
+            destination = site / "browser" / relative
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(browser_assets / relative, destination)
         for asset in ASSETS:
             (site / asset).write_text(rendered[asset], encoding="utf-8", newline="\n")
         (site / ".nojekyll").write_text("", encoding="ascii")
@@ -117,11 +173,12 @@ def build(rustdoc, output, revision):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--rustdoc", required=True, type=Path)
+    parser.add_argument("--browser-assets", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
     parser.add_argument("--revision", required=True)
     arguments = parser.parse_args()
     try:
-        build(arguments.rustdoc, arguments.output, arguments.revision)
+        build(arguments.rustdoc, arguments.output, arguments.revision, arguments.browser_assets)
     except (OSError, ValueError) as error:
         parser.exit(1, f"Documentation assembly failed: {error}\n")
 

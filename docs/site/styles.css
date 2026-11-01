@@ -215,3 +215,54 @@ footer > div {
     padding: 10px 6px;
   }
 }
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+  min-height: 48px;
+}
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.table-wrap {
+  overflow-x: auto;
+}
+.table-wrap table {
+  min-width: 570px;
+}
+#environment {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+}
+#test-results details {
+  max-width: 430px;
+}
+#test-results pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 260px;
+  padding: 12px;
+  font-size: 12px;
+}
+.status {
+  font-weight: 700;
+}
+.status.pass {
+  color: #006344;
+}
+.status.fail {
+  color: #9c2530;
+}
+.status.unsupported,
+.status.not_run {
+  color: #71550b;
+}
+#render-result {
+  width: min(320px, 100%);
+  height: auto;
+  image-rendering: pixelated;
+  border: 1px solid var(--line);
+  background: #dce5df;
+}
