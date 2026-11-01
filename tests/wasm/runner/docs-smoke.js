@@ -55,7 +55,14 @@ try {
       ({ mode, rejectionMessage }) => {
         window.__etalonAdapterRequests = [];
         const requestAdapter = (options) => {
-          window.__etalonAdapterRequests.push(options);
+          window.__etalonAdapterRequests.push({
+            options,
+            hasFeatureLevel: Object.hasOwn(options, "featureLevel"),
+            hasForceFallbackAdapter: Object.hasOwn(
+              options,
+              "forceFallbackAdapter",
+            ),
+          });
           return mode === "adapter-null"
             ? Promise.resolve(null)
             : Promise.reject(
@@ -85,6 +92,28 @@ try {
     null,
     { timeout: 60000 },
   );
+  const completion = await page.evaluate(() => ({ ...document.body.dataset }));
+  const allPassed =
+    completion.etalonPassed === "13" &&
+    completion.etalonFailed === "0" &&
+    completion.etalonUnsupported === "0" &&
+    completion.etalonNotRun === "0";
+  const expectedQualification = allPassed ? "passed" : "failed";
+  if (completion.etalonQualification !== expectedQualification)
+    throw new Error(
+      "Overall qualification is missing or contradicts actual case results",
+    );
+  if (mode === "software-webgpu" && completion.etalonQualification !== "passed")
+    throw new Error(
+      `Software WebGPU qualification failed: ${JSON.stringify(completion).slice(0, 16000)}`,
+    );
+  if (boundary && completion.etalonQualification !== "failed")
+    throw new Error(
+      "Synthetic unavailable/rejected adapter was incorrectly qualified",
+    );
+  process.stderr.write(
+    `Overall qualification: ${completion.etalonQualification}\n`,
+  );
   const environment = await page.locator("#environment").innerText();
   process.stderr.write(environment.slice(0, 16000) + "\n");
   if (boundary) {
@@ -104,11 +133,20 @@ try {
         ? "adapter-unavailable"
         : "adapter-request-rejected";
     const runtime = JSON.parse(environment);
+    if (observed.requests.length !== 1)
+      throw new Error("Rust/WASM did not make exactly one adapter request");
+    const request = observed.requests[0];
+    const expectedFeatureLevel = featureLevel === "compatibility";
     if (
-      observed.requests.length !== 1 ||
-      observed.requests[0].featureLevel !== featureLevel
+      request.hasFeatureLevel !== expectedFeatureLevel ||
+      (expectedFeatureLevel &&
+        request.options.featureLevel !== "compatibility") ||
+      request.hasForceFallbackAdapter ||
+      request.options.powerPreference !== "low-power"
     )
-      throw new Error("Rust/WASM did not make the expected adapter request");
+      throw new Error(
+        `Rust/WASM adapter request differs from the expected upstream shape: ${JSON.stringify(request)}`,
+      );
     if (
       runtime.gpu_status !== expectedStatus ||
       runtime.gpu_reason?.code !== expectedCode

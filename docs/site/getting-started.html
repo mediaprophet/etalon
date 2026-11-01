@@ -47,6 +47,25 @@ pollster = "1.0"</code></pre>
         distinct; their types are not automatically interchangeable. Select
         matching Etalon packages in a consuming project.
       </p>
+      <h2 id="browser-adapters">Browser WebGPU adapters</h2>
+      <p>
+        For a workload that fits WebGPU Compatibility limits, request that level
+        explicitly from Rust. The standard adapter method requests Core. Inspect
+        the adapter's limits and request only the features and resources the
+        workload needs; a missing adapter is a failed GPU capability check, not
+        a CPU fallback.
+      </p>
+      <pre><code>let adapter = instance.request_webgpu_adapter(
+    &amp;etalon::RequestAdapterOptions::default(),
+    etalon::FeatureLevel::Compatibility,
+).await?;</code></pre>
+      <p>
+        The browser API is available with Etalon's <code>webgpu</code> feature
+        on <code>wasm32</code>. <code>BrowserRequestRejected</code> preserves a
+        browser rejection; <code>NotFound</code> means no matching adapter was
+        returned. The <a href="testing.html">device suite</a> reports GPU
+        qualification separately from portable CPU results.
+      </p>
       <h2 id="sensing">Sensing: add the portable facade</h2>
       <p>
         Use Rust 1.96.1 for the repository's current toolchain. For initial

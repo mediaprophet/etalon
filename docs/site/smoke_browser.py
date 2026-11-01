@@ -39,6 +39,9 @@ def check_result(document, require_gpu=False, boundary_mode=None):
         if not value.isascii() or not value.isdecimal():
             raise ValueError("browser completion counters are missing or invalid")
         counts[name] = int(value)
+    expected_qualification = "passed" if counts == {"passed": 13, "failed": 0, "unsupported": 0, "not-run": 0} else "failed"
+    if state.get("data-etalon-qualification") != expected_qualification:
+        raise ValueError("overall qualification is missing or contradicts the actual case results")
     if boundary_mode is not None:
         if require_gpu or boundary_mode not in ("adapter-null", "adapter-rejected"):
             raise ValueError("invalid synthetic boundary qualification mode")
@@ -79,6 +82,7 @@ def run(site):
                                         ("software-webgpu", "core"),
                                         ("software-webgpu", "compatibility"),
                                         ("adapter-null", "core"),
+                                        ("adapter-null", "compatibility"),
                                         ("adapter-rejected", "core")):
                 with tempfile.TemporaryDirectory(prefix="etalon-browser-smoke-") as scratch:
                     profile = Path(scratch) / "profile"
@@ -99,6 +103,7 @@ def run(site):
                     boundary = mode if mode in ("adapter-null", "adapter-rejected") else None
                     counts = check_result(result.stdout.decode("utf-8"), require_gpu=(mode == "software-webgpu"), boundary_mode=boundary)
                     print(json.dumps({"mode": mode, "requested_feature_level": feature_level,
+                                      "qualification": "passed" if counts["passed"] == 13 else "failed",
                                       "execution": "synthetic adapter boundary through Rust/WASM" if boundary else "Rust/WASM over browser WebGPU", **counts}))
                     print(result.stderr.decode("utf-8", "replace")[-16000:])
         finally:

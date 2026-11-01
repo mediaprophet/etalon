@@ -1162,11 +1162,12 @@ impl ContextWebGpu {
             )));
         }
         let mapped_options = webgpu_sys::GpuRequestAdapterOptions::new();
-        mapped_options.set_feature_level(match feature_level {
-            wgt::FeatureLevel::Core => "core",
-            wgt::FeatureLevel::Compatibility => "compatibility",
-        });
-        mapped_options.set_force_fallback_adapter(options.force_fallback_adapter);
+        if feature_level == wgt::FeatureLevel::Compatibility {
+            mapped_options.set_feature_level("compatibility");
+        }
+        if options.force_fallback_adapter {
+            mapped_options.set_force_fallback_adapter(true);
+        }
         let mapped_power_preference = match options.power_preference {
             wgt::PowerPreference::None => None,
             wgt::PowerPreference::LowPower => Some(webgpu_sys::GpuPowerPreference::LowPower),
