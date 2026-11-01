@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 
 const REVISION = "5f361e53deccf39d7e31d42f1f0d7c90e9377d13";
-const MAX_OUTPUT = 900 * 1024;
+const MAX_OUTPUT = 500 * 1024;
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((all, value, index, raw) => {
     if (index % 2 === 0) all.push([value, raw[index + 1]]);
@@ -10,7 +10,7 @@ const args = Object.fromEntries(
 );
 for (const key of ["--chrome", "--profile", "--url", "--variant"])
   if (!args[key]) throw new Error(`Missing ${key}`);
-if (!["baseline", "swangle"].includes(args["--variant"]))
+if (!["baseline", "swangle", "swiftshader-vulkan"].includes(args["--variant"]))
   throw new Error("Invalid diagnostic variant");
 const address = new URL(args["--url"]);
 if (address.hostname !== "127.0.0.1" || address.protocol !== "http:")
@@ -28,11 +28,20 @@ const flags = [
 ];
 if (args["--variant"] === "swangle")
   flags.push("--use-gl=angle", "--use-angle=swiftshader");
-const context = await chromium.launchPersistentContext(args["--profile"], {
-  executablePath: args["--chrome"],
-  headless: true,
-  args: flags,
-});
+if (args["--variant"] === "swiftshader-vulkan")
+  flags.push(
+    "--enable-features=Vulkan",
+    "--use-angle=vulkan",
+    "--use-vulkan=swiftshader",
+    "--disable-vulkan-surface",
+  );
+const launch = (suffix = "") =>
+  chromium.launchPersistentContext(args["--profile"] + suffix, {
+    executablePath: args["--chrome"],
+    headless: true,
+    args: flags,
+  });
+let context = await launch();
 
 async function instrument(page) {
   await page.addInitScript(() => {
@@ -207,85 +216,142 @@ async function sessionScenario(page) {
   }, REVISION);
 }
 
-async function rawScenario(page, descriptor) {
-  return page.evaluate(async (descriptor) => {
-    const checkpoint = async (name) => {
-      window.__traceStage = `raw-api: ${name}`;
-      await new Promise((resolve) => setTimeout(resolve, 20));
-    };
-    await checkpoint("request default Core adapter");
-    const adapter = await navigator.gpu.requestAdapter({});
-    if (!adapter) throw new Error("No Core adapter for raw control");
-    const device = await adapter.requestDevice(descriptor);
-    const states = [];
-    let lost = null;
-    device.lost.then((info) => {
-      lost = { reason: info.reason, message: info.message };
-    });
-    const record = async (name) => {
-      await checkpoint(name);
-      states.push({ stage: name, lost });
-    };
-    try {
-      window.__traceStage = "raw-api: baseline configure";
-      const baseline = new OffscreenCanvas(1, 1).getContext("webgpu");
-      baseline.configure({
-        device,
-        format: navigator.gpu.getPreferredCanvasFormat(),
-        usage: 16,
-        alphaMode: "opaque",
-        viewFormats: [],
-      });
-      states.push({ stage: "baseline configured", lost });
-      const probe = new OffscreenCanvas(1, 1).getContext("webgpu");
-      device.pushErrorScope("validation");
-      device.pushErrorScope("internal");
-      device.pushErrorScope("out-of-memory");
-      window.__traceStage = "raw-api: rgba16float configure and acquire";
-      probe.configure({ device, format: "rgba16float" });
-      const texture = probe.getCurrentTexture();
-      states.push({ stage: "rgba16float texture acquired", lost });
-      window.__traceStage = "raw-api: rgba16float texture destroy";
-      texture.destroy();
-      states.push({ stage: "rgba16float texture destroyed", lost });
-      window.__traceStage = "raw-api: probe unconfigure";
-      probe.unconfigure();
-      const scopes = await Promise.all([
-        device.popErrorScope(),
-        device.popErrorScope(),
-        device.popErrorScope(),
-      ]);
-      states.push({ stage: "probe unconfigured and scopes settled", lost });
-      window.__traceStage = "raw-api: baseline texture acquire";
-      const format = baseline.getCurrentTexture().format;
-      states.push({ stage: "baseline texture acquired", lost });
-      window.__traceStage = "raw-api: second Compatibility adapter request";
-      const other = await navigator.gpu.requestAdapter({
-        featureLevel: "compatibility",
-      });
-      await record("second adapter resolved");
-      let queue;
-      try {
-        await device.queue.onSubmittedWorkDone();
-        queue = "resolved";
-      } catch (error) {
-        queue = String(error).slice(0, 1000);
-      }
-      await record("queue completion");
-      return {
-        descriptor,
-        format,
-        second_adapter: Boolean(other),
-        scopes: scopes.map((error) => error?.message || null),
-        states,
-        queue,
-        lost,
+async function rawScenario(page, descriptor, mode) {
+  return page.evaluate(
+    async ({ descriptor, mode }) => {
+      const mark = (name) => {
+        window.__traceStage = `${mode}: ${name}`;
       };
-    } finally {
-      window.__traceStage = "raw-api: explicit device cleanup";
-      device.destroy();
-    }
-  }, descriptor);
+      mark("request default Core adapter");
+      const adapter = await navigator.gpu.requestAdapter({});
+      if (!adapter) throw new Error("No Core adapter for raw control");
+      const device = await adapter.requestDevice(descriptor);
+      let lost = null,
+        context,
+        texture,
+        pendingScopes;
+      const result = { mode, descriptor, scopes: [], checkpoints: [] };
+      device.lost.then((info) => {
+        lost = { reason: info.reason, message: info.message };
+      });
+      const checkpoint = async (name) => {
+        mark(name);
+        await new Promise((resolve) => setTimeout(resolve, 50));
+        result.checkpoints.push({ stage: name, lost });
+      };
+      const popScopes = () =>
+        Promise.allSettled([
+          device.popErrorScope(),
+          device.popErrorScope(),
+          device.popErrorScope(),
+        ]);
+      const storeScopes = (values) =>
+        values.map((value) =>
+          value.status === "fulfilled"
+            ? { status: value.status, error: value.value?.message || null }
+            : {
+                status: value.status,
+                error: String(value.reason).slice(0, 1000),
+              },
+        );
+      const cleanup = () => {
+        if (
+          texture &&
+          ![
+            "raw-hdr-no-destroy",
+            "raw-baseline",
+            "raw-hdr-acquire-settle",
+          ].includes(mode)
+        ) {
+          mark("explicit texture destroy");
+          texture.destroy();
+        }
+        if (context) {
+          mark("context unconfigure");
+          context.unconfigure();
+          context = null;
+        }
+        texture = null;
+      };
+      try {
+        context = new OffscreenCanvas(1, 1).getContext("webgpu");
+        device.pushErrorScope("validation");
+        device.pushErrorScope("internal");
+        device.pushErrorScope("out-of-memory");
+        const baseline = mode === "raw-baseline";
+        const configureOnly =
+          mode === "raw-hdr-configure" || mode === "raw-hdr-configure-settle";
+        const settleFirst = [
+          "raw-hdr-configure-settle",
+          "raw-hdr-acquire-settle",
+          "raw-baseline",
+        ].includes(mode);
+        result.format = baseline
+          ? navigator.gpu.getPreferredCanvasFormat()
+          : "rgba16float";
+        mark("configure");
+        context.configure({ device, format: result.format });
+        if (!configureOnly) {
+          mark("getCurrentTexture");
+          texture = context.getCurrentTexture();
+        }
+        if (!settleFirst) cleanup();
+        mark(
+          settleFirst
+            ? "scope settlement BEFORE cleanup"
+            : "scope settlement AFTER cleanup",
+        );
+        pendingScopes = popScopes();
+        result.scopes = storeScopes(await pendingScopes);
+        result.lost_before_cleanup = lost;
+        if (settleFirst) {
+          await checkpoint("settled before cleanup");
+          cleanup();
+        }
+        await checkpoint("cleanup completed");
+        mark("queue completion");
+        let timer;
+        try {
+          await Promise.race([
+            device.queue.onSubmittedWorkDone(),
+            new Promise((_, reject) => {
+              timer = setTimeout(
+                () => reject(new Error("Queue completion timed out")),
+                3000,
+              );
+            }),
+          ]);
+          result.queue = "resolved";
+        } catch (error) {
+          result.queue = String(error).slice(0, 1000);
+        } finally {
+          clearTimeout(timer);
+        }
+        await checkpoint("after queue completion");
+        result.lost_before_device_destroy = lost;
+      } catch (error) {
+        result.failure = String(error).slice(0, 1500);
+      } finally {
+        // Attach handlers to every popped scope even on synchronous API failure.
+        if (!pendingScopes) {
+          try {
+            result.scopes = storeScopes(await popScopes());
+          } catch (error) {
+            result.scope_cleanup_failure = String(error).slice(0, 1000);
+          }
+        }
+        try {
+          cleanup();
+        } catch (error) {
+          result.context_cleanup_failure = String(error).slice(0, 1000);
+        }
+        mark("explicit device cleanup");
+        device.destroy();
+      }
+      return result;
+    },
+    { descriptor, mode },
+  );
 }
 
 const output = {
@@ -298,7 +364,20 @@ const output = {
 };
 let descriptor;
 try {
-  for (const scenario of ["canvas-alone", "full-suite", "raw-api"]) {
+  for (const scenario of [
+    "canvas-alone",
+    "full-suite",
+    "raw-baseline",
+    "raw-hdr-configure",
+    "raw-hdr-configure-settle",
+    "raw-hdr-no-destroy",
+    "raw-hdr-acquire-settle",
+    "raw-hdr-original",
+  ]) {
+    if (scenario.startsWith("raw-")) {
+      await context.close();
+      context = await launch(`-${scenario}`);
+    }
     const page = await context.newPage();
     const record = { scenario, errors: [] };
     page.on("pageerror", (error) => {
@@ -314,12 +393,12 @@ try {
       if (revision !== REVISION) throw new Error("Page source mismatch");
       const execute = async () => {
         if (scenario === "canvas-alone") return sessionScenario(page);
-        if (scenario === "raw-api") {
+        if (scenario.startsWith("raw-")) {
           if (!descriptor)
             throw new Error(
               "Missing actual Rust device descriptor; refusing guessed raw control",
             );
-          return rawScenario(page, descriptor);
+          return rawScenario(page, descriptor, scenario);
         }
         await page.locator("#feature-level").selectOption("core");
         await page.locator("#run-tests").click();
@@ -341,7 +420,7 @@ try {
           new Promise((_, reject) => {
             timer = setTimeout(
               () => reject(new Error("Diagnostic scenario timed out")),
-              65000,
+              scenario.startsWith("raw-") ? 15000 : 65000,
             );
           }),
         ]);
@@ -374,5 +453,5 @@ try {
 }
 const encoded = JSON.stringify(output);
 if (Buffer.byteLength(encoded) > MAX_OUTPUT)
-  throw new Error("Diagnostic output exceeds 900 KiB budget");
+  throw new Error("Diagnostic output exceeds 500 KiB budget");
 process.stdout.write(encoded);
