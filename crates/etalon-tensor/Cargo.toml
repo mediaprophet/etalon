@@ -22,3 +22,6 @@ hashbrown = { workspace = true }
 log = { workspace = true }
 thiserror = "2.0.21"
 etalon-agent = { workspace = true, optional = true }
+
+[dev-dependencies]
+naga = { workspace = true, features = ["wgsl-in"] }

@@ -51,6 +51,17 @@ try {
   page.on("pageerror", (error) => {
     if (messages.length < 8) messages.push(String(error).slice(0, 1000));
   });
+  if (mode === "software-webgpu") {
+    await page.addInitScript(() => {
+      window.__etalonDeviceDestruction = [];
+      const original = GPUDevice.prototype.destroy;
+      GPUDevice.prototype.destroy = function (...args) {
+        if (window.__etalonDeviceDestruction.length < 4)
+          window.__etalonDeviceDestruction.push(String(new Error("device.destroy").stack).slice(0, 3000));
+        return original.apply(this, args);
+      };
+    });
+  }
   if (boundary) {
     await page.addInitScript(
       ({ mode, rejectionMessage }) => {
@@ -99,6 +110,10 @@ try {
     completion.etalonFailed === "0" &&
     completion.etalonUnsupported === "0" &&
     completion.etalonNotRun === "0";
+  if (!allPassed && mode === "software-webgpu") {
+    const destruction = await page.evaluate(() => window.__etalonDeviceDestruction);
+    process.stderr.write(`Device destruction calls: ${JSON.stringify(destruction)}\n`);
+  }
   const expectedQualification = allPassed ? "passed" : "failed";
   if (completion.etalonQualification !== expectedQualification)
     throw new Error(
