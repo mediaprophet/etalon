@@ -3,16 +3,9 @@ use std::io::Read;
 use std::path::Path;
 
 use super::{
-    AcceleratorDevice, AcceleratorKind, NpuProbeReport, ProbeStatus, MAX_DEVICES,
+    npu_driver, AcceleratorDevice, AcceleratorKind, NpuProbeReport, ProbeStatus, MAX_DEVICES,
     MAX_PROPERTY_BYTES,
 };
-
-pub(super) fn npu_driver(name: &str) -> bool {
-    matches!(
-        name,
-        "ivpu" | "amdxdna" | "qaic" | "ethosu" | "ethosn" | "edgetpu_platform"
-    )
-}
 
 fn bounded_text(path: &Path) -> Result<String, String> {
     let file = fs::File::open(path).map_err(|error| error.to_string())?;

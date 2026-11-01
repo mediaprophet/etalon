@@ -1,6 +1,6 @@
 #[cfg(any(target_os = "android", test))]
 mod android;
-#[cfg(any(target_os = "linux", target_os = "android", test))]
+#[cfg(any(target_os = "linux", test))]
 mod linux;
 mod types;
 #[cfg(target_os = "windows")]
@@ -19,6 +19,14 @@ const MAX_DEVICES: usize = 64;
     test
 ))]
 const MAX_PROPERTY_BYTES: usize = 4096;
+
+#[cfg(any(target_os = "linux", target_os = "android", test))]
+pub(super) fn npu_driver(name: &str) -> bool {
+    matches!(
+        name,
+        "ivpu" | "amdxdna" | "qaic" | "ethosu" | "ethosn" | "edgetpu_platform"
+    )
+}
 
 /// Enumerate OS-visible NPUs without initializing an inference provider.
 pub fn probe_npus() -> NpuProbeReport {

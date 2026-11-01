@@ -14,14 +14,18 @@ fn sizes_use_64_lanes_and_all_256_bins() {
 
 #[test]
 fn rejects_device_limits_before_allocation() {
-    let mut limits = etalon::Limits::default();
-    limits.max_compute_workgroups_per_dimension = 1;
+    let limits = etalon::Limits {
+        max_compute_workgroups_per_dimension: 1,
+        ..Default::default()
+    };
     assert_eq!(
         sort_sizes(65, &limits),
         Err(GpuQueryError::UnsupportedLimits)
     );
-    limits = etalon::Limits::default();
-    limits.max_storage_buffer_binding_size = 512;
+    let limits = etalon::Limits {
+        max_storage_buffer_binding_size: 512,
+        ..Default::default()
+    };
     assert_eq!(
         sort_sizes(1, &limits),
         Err(GpuQueryError::UnsupportedLimits)
