@@ -31,7 +31,8 @@
       <p class="lead">
         A small, bounded suite for phones, tablets and desktops. Portable tests
         run without a GPU; browser WebGPU tests run when the browser exposes a
-        suitable adapter.
+        suitable adapter. If no WebGPU adapter is available, a separate
+        Rust/WASM WebGL2 rendering and pixel-readback test runs automatically.
       </p>
       <p class="note">
         This exercises Etalon's compiled Rust/WASM API over the browser's WebGPU
@@ -46,7 +47,7 @@
         <p>
           Run individual Rust/WASM acquisition checks to identify the exact API
           step that returns null or an exception. This does not run GPU
-          workloads or mark GPU qualification as passed.
+          workloads or mark WebGPU qualification as passed.
         </p>
         <div class="actions">
           <button type="button" class="button" id="run-adapter-diagnostic">
@@ -92,10 +93,10 @@
         role="status"
         aria-live="polite"
       >
-        GPU qualification not run.
+        WebGPU qualification not run.
       </h2>
       <p class="small">
-        GPU qualification passes only when all 21 Rust/WASM cases pass,
+        WebGPU qualification passes only when all 21 Rust/WASM cases pass,
         including all 19 GPU cases. Any unavailable, failed or unrun case fails
         qualification; passing CPU cases cannot establish that WebGPU works on
         this device.
@@ -130,6 +131,23 @@
           </table>
         </div>
       </section>
+      <section aria-labelledby="webgl-fallback-title">
+        <h2 id="webgl-fallback-title">WebGL2 rendering fallback</h2>
+        <p>
+          When WebGPU adapter acquisition returns unavailable, Etalon tries its
+          WebGL2 backend for rendering and verified pixel readback. This uses
+          the compiled Rust/WASM library. WebGL2 has no compute-shader API, so
+          the WebGPU compute cases remain unavailable and the WebGPU
+          qualification stays failed. Browser security settings are unchanged.
+        </p>
+        <p id="webgl-fallback-status" role="status" aria-live="polite">
+          WebGL2 fallback not run.
+        </p>
+        <details>
+          <summary>Fallback evidence</summary>
+          <pre id="webgl-fallback-evidence"></pre>
+        </details>
+      </section>
       <section aria-labelledby="render-title">
         <h2 id="render-title">GPU render readback</h2>
         <canvas
@@ -159,11 +177,11 @@
         </li>
       </ol>
       <p>
-        Adapter-acquisition failure prevents GPU workloads from running. The
-        report retains Etalon requests, independent browser controls and debug
-        events; it does not establish a driver or policy cause. Native Rust
-        tests qualify a separate backend and do not establish mobile browser
-        support.
+        WebGPU adapter-acquisition failure prevents WebGPU workloads from
+        running. The report retains Etalon requests, independent browser
+        controls and debug events; it does not establish a driver or policy
+        cause. Native Rust tests qualify a separate backend and do not establish
+        mobile browser support.
       </p>
       <p>
         The exported report includes the exact source commit, library version,

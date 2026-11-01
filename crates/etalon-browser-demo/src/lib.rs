@@ -56,3 +56,10 @@ mod environment_webgl;
 
 #[cfg(target_arch = "wasm32")]
 mod domain_signal;
+
+#[cfg(target_arch = "wasm32")]
+mod webgl_fallback;
+#[cfg(target_arch = "wasm32")]
+mod webgl_readback;
+#[cfg(target_arch = "wasm32")]
+pub use webgl_fallback::webgl_render_fallback;

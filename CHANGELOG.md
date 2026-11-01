@@ -49,6 +49,8 @@ The agent changed the development version to 0.0.3 without the user's instructio
 
 ### Follow-up portability and diagnostics
 
+- Add a Rust/WASM WebGL2 rendering fallback when WebGPU adapter acquisition is unavailable. Verify offscreen WGSL rendering through pixel readback and report it separately; WebGPU compute qualification remains failed when no WebGPU adapter is acquired.
+
 - Preserve the selected browser feature level in canvas association checks and expose the optional `CORE_FEATURES_AND_LIMITS` feature without enabling it implicitly.
 - Add four-storage-buffer attention with caller-buffered weight/mask packing; retain the existing attention API. Pack radix key/index records to reduce storage bindings, with explicit stage passes and validated readback.
 - Capture bounded CDP rendering warnings before Android qualification starts, retain diagnostics on failure, and add an independent forced-fallback adapter probe. A separate Rust/WASM errors-only diagnostic identifies failing acquisition tests and API steps with source/version metadata.

@@ -11,6 +11,21 @@ const SOURCE: &str = r#"
 "#;
 
 pub(crate) async fn run(device: &etalon::Device, queue: &etalon::Queue) -> Result<Vec<u8>, Value> {
+    run_backend(device, queue, false).await
+}
+
+pub(crate) async fn run_webgl(
+    device: &etalon::Device,
+    queue: &etalon::Queue,
+) -> Result<Vec<u8>, Value> {
+    run_backend(device, queue, true).await
+}
+
+async fn run_backend(
+    device: &etalon::Device,
+    queue: &etalon::Queue,
+    webgl: bool,
+) -> Result<Vec<u8>, Value> {
     let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
         label: Some("bounded offscreen triangle"),
         source: etalon::ShaderSource::Wgsl(SOURCE.into()),
@@ -96,7 +111,11 @@ pub(crate) async fn run(device: &etalon::Device, queue: &etalon::Queue) -> Resul
         size,
     );
     queue.submit([encoder.finish()]);
-    let mapped = readback::read(&staging).await;
+    let mapped = if webgl {
+        crate::webgl_readback::read(device, &staging).await
+    } else {
+        readback::read(&staging).await
+    };
     staging.destroy();
     texture.destroy();
     let pixels = mapped?;

@@ -8,6 +8,8 @@ const tbody = document.querySelector("#test-results");
 const revision = document.querySelector('meta[name="etalon-revision"]').content;
 const profileSelector = document.querySelector("#feature-level");
 const receipt = document.querySelector("#qualification-report");
+const fallbackStatus = document.querySelector("#webgl-fallback-status");
+const fallbackEvidence = document.querySelector("#webgl-fallback-evidence");
 let active = false;
 let blocked = false;
 let reportUrl;
@@ -110,12 +112,14 @@ function qualify(report, catalog) {
     expected_gpu_cases: 19,
     gpu_cases: gpuCases,
   };
-  qualification.textContent = `GPU qualification ${passed ? "PASSED" : "FAILED"} — ${report.qualification.reason}`;
+  qualification.textContent = `WebGPU qualification ${passed ? "PASSED" : "FAILED"} — ${report.qualification.reason}`;
   qualification.className = `status ${passed ? "pass" : "fail"}`;
   document.body.dataset.etalonQualification = report.qualification.status;
 }
 function preview(session) {
-  const bytes = session.image_rgba();
+  previewBytes(session.image_rgba(), "WebGPU");
+}
+function previewBytes(bytes, backend) {
   const caption = document.querySelector("#render-caption");
   if (bytes.length !== 64 * 64 * 4)
     throw new Error("Unexpected render readback size.");
@@ -126,12 +130,62 @@ function preview(session) {
       0,
       0,
     );
-    caption.textContent =
-      "64 × 64 GPU-rendered pixels, read back and checked before display.";
+    caption.textContent = `64 × 64 ${backend} GPU-rendered pixels, read back and checked in Rust/WASM before display.`;
   } else {
     caption.textContent =
       "Readback verified; this browser could not display the 2D preview.";
   }
+}
+async function runWebglFallback(module, report) {
+  fallbackStatus.textContent = "WebGL2 rendering fallback running…";
+  fallbackStatus.className = "status not_run";
+  let result;
+  try {
+    result = parse(await deadline(module.webgl_render_fallback(), 15000));
+    if (
+      !result ||
+      !["pass", "fail", "unsupported"].includes(result.status) ||
+      result.source_revision !== revision ||
+      result.backend !== "WebGL2"
+    ) {
+      throw new Error("Invalid or mismatched WebGL2 fallback receipt.");
+    }
+    if (result.status === "pass") {
+      if (
+        result.render_readback !== true ||
+        result.compute_supported !== false ||
+        !Array.isArray(result.image_rgba) ||
+        result.image_rgba.length !== 64 * 64 * 4 ||
+        result.image_rgba.some((v) => !Number.isInteger(v) || v < 0 || v > 255)
+      ) {
+        throw new Error("Incomplete WebGL2 rendering evidence.");
+      }
+      previewBytes(result.image_rgba, "WebGL2");
+      result.image_bytes = result.image_rgba.length;
+    }
+    delete result.image_rgba;
+  } catch (error) {
+    result = {
+      status: "fail",
+      backend: "WebGL2",
+      source_revision: revision,
+      render_readback: false,
+      compute_supported: false,
+      details: {
+        code: error.code || "fallback-exception",
+        message: String(error).slice(0, 2000),
+      },
+    };
+    if (error.code === "timeout") blocked = true;
+  }
+  report.webgl_fallback = result;
+  document.body.dataset.etalonWebglFallback = result.status;
+  fallbackStatus.className = `status ${result.status}`;
+  fallbackStatus.textContent =
+    result.status === "pass"
+      ? "WebGL2 rendering and pixel readback PASSED. WebGPU qualification remains FAILED; compute operations remain unavailable."
+      : `WebGL2 rendering fallback ${result.status.toUpperCase()}: ${result.details?.message || "See the fallback evidence."}`;
+  fallbackEvidence.textContent = bounded(result);
 }
 function exportReport(report) {
   const json = JSON.stringify(report, null, 2);
@@ -152,6 +206,11 @@ async function run() {
   const selectedProfile = profileSelector.value;
   profileSelector.disabled = true;
   receipt.textContent = "";
+  fallbackStatus.textContent =
+    "WebGL2 fallback not run; it is attempted if no WebGPU adapter is available.";
+  fallbackStatus.className = "status not_run";
+  fallbackEvidence.textContent = "";
+  document.body.dataset.etalonWebglFallback = "not_run";
   start.disabled = true;
   download.disabled = true;
   if (reportUrl) URL.revokeObjectURL(reportUrl);
@@ -160,7 +219,7 @@ async function run() {
   document.body.dataset.etalonState = "running";
   document.body.dataset.etalonQualification = "running";
   qualification.textContent =
-    "GPU qualification running — no pass established.";
+    "WebGPU qualification running — no pass established.";
   qualification.className = "status not_run";
   const canvas = document.querySelector("#render-result");
   canvas.getContext("2d")?.clearRect(0, 0, 64, 64);
@@ -323,6 +382,14 @@ async function run() {
         ...report.context,
         ...report.runtime,
       });
+    }
+    if (
+      !blocked &&
+      report.runtime?.gpu_reason?.code === "adapter-unavailable"
+    ) {
+      progress.textContent =
+        "Testing Etalon Rust/WASM rendering through WebGL2…";
+      await runWebglFallback(module, report);
     }
     report.counts = totals(report);
     progress.textContent = blocked
