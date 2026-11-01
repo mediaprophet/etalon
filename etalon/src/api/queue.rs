@@ -325,7 +325,7 @@ impl Queue {
     /// [q::s]: Queue::submit
     /// [i::p_a]: Instance::poll_all
     /// [d::p]: Device::poll
-    pub fn on_submitted_work_done(&self, callback: impl FnOnce() + Send + 'static) {
+    pub fn on_submitted_work_done(&self, callback: impl FnOnce() + WasmNotSend + 'static) {
         self.inner.on_submitted_work_done(Box::new(callback));
     }
 

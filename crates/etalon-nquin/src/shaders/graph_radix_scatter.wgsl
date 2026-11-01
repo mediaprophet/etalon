@@ -12,7 +12,7 @@ struct Params {
 @group(0) @binding(4) var<storage, read> wg_offsets: array<u32>;
 @group(0) @binding(5) var<uniform> params: Params;
 
-var<workgroup> wg_digits: array<u32, 256>;
+var<workgroup> wg_digits: array<u32, 64>;
 
 fn digit_at(i: u32, shift: u32) -> u32 {
     let lo = keys_in[i * 2u];
@@ -23,7 +23,7 @@ fn digit_at(i: u32, shift: u32) -> u32 {
     return (hi >> (shift - 32u)) & 255u;
 }
 
-@compute @workgroup_size(256)
+@compute @workgroup_size(64)
 fn main(
     @builtin(global_invocation_id) gid: vec3<u32>,
     @builtin(local_invocation_id) lid: vec3<u32>,
@@ -32,7 +32,10 @@ fn main(
     let i = gid.x;
     let t = lid.x;
     let valid = i < params.n;
-    let d = select(0xFFFFFFFFu, digit_at(i, params.shift), valid);
+    var d = 0xFFFFFFFFu;
+    if (valid) {
+        d = digit_at(i, params.shift);
+    }
     wg_digits[t] = d;
     workgroupBarrier();
 

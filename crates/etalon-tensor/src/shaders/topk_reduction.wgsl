@@ -31,6 +31,7 @@ struct Params {
 
 // Block logits, mutated (masked) across the K rounds.
 var<workgroup> s_val: array<f32, MAX_BLOCK>;
+var<workgroup> s_idx: array<u32, MAX_BLOCK>;
 // Per-thread reduction scratch.
 var<workgroup> r_val: array<f32, WG>;
 var<workgroup> r_idx: array<u32, WG>;
@@ -51,11 +52,13 @@ fn topk_block(
         if (i >= bsize) { break; }
         let g = base + i;
         var v = NEG_INF;
+        var idx = 0xFFFFFFFFu;
         if (g < params.n) {
             let raw = logits[g];
-            if (raw == raw) { v = raw; } // NaN != NaN ⇒ leaves -inf
+            if (raw == raw) { v = raw; idx = g; } // NaN != NaN ⇒ leaves -inf
         }
         s_val[i] = v;
+        s_idx[i] = idx;
         i = i + WG;
     }
     workgroupBarrier();
@@ -67,12 +70,15 @@ fn topk_block(
 
         // Each thread scans its strided slice for a local best (lowest idx on ties).
         var best_v = NEG_INF;
-        var best_i = 0u;
+        var best_i = 0xFFFFFFFFu;
         var j = tid;
         loop {
             if (j >= bsize) { break; }
             let v = s_val[j];
-            if (v > best_v) { best_v = v; best_i = j; }
+            let idx = s_idx[j];
+            if (idx != 0xFFFFFFFFu && (best_i == 0xFFFFFFFFu || v > best_v || (v == best_v && idx < best_i))) {
+                best_v = v; best_i = idx;
+            }
             j = j + WG;
         }
         r_val[tid] = best_v;
@@ -88,7 +94,7 @@ fn topk_block(
                 let oi = r_idx[tid + stride];
                 let cv = r_val[tid];
                 let ci = r_idx[tid];
-                if (ov > cv || (ov == cv && oi < ci)) {
+                if (oi != 0xFFFFFFFFu && (ci == 0xFFFFFFFFu || ov > cv || (ov == cv && oi < ci))) {
                     r_val[tid] = ov;
                     r_idx[tid] = oi;
                 }
@@ -102,8 +108,10 @@ fn topk_block(
             let widx = r_idx[0];
             let out = params.cand_base + blk * params.k + round;
             cand_val[out] = r_val[0];
-            cand_idx[out] = base + widx;
-            s_val[widx] = NEG_INF;
+            cand_idx[out] = widx;
+            if (widx != 0xFFFFFFFFu) {
+                s_idx[widx - base] = 0xFFFFFFFFu;
+            }
         }
         workgroupBarrier();
         round = round + 1u;

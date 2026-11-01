@@ -22,6 +22,7 @@ fn main(
     @builtin(workgroup_id) wid: vec3<u32>,
 ) {
     let t = lid.x; // 0..31
+    smem_quin[t][12] = 0u;
     let base_quin = wid.x * 32u;
     let base_vec4 = base_quin * 3u;
     let total_vec4 = params.n * 3u;

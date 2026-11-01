@@ -16,3 +16,17 @@ pub use browser::{create_session, create_session_for_profile, Session};
 
 #[cfg(any(target_arch = "wasm32", test))]
 mod requirements;
+
+#[cfg(target_arch = "wasm32")]
+mod adapter;
+#[cfg(target_arch = "wasm32")]
+mod domain_agent;
+#[cfg(target_arch = "wasm32")]
+mod domain_nquin;
+#[cfg(target_arch = "wasm32")]
+mod domain_tensor;
+
+#[cfg(target_arch = "wasm32")]
+mod backend_contracts;
+#[cfg(target_arch = "wasm32")]
+pub use backend_contracts::inspect_adapter_contract;

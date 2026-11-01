@@ -39,17 +39,54 @@ const CASES: &[(&str, &str, bool)] = &[
         "Offscreen triangle and pixel assertions",
         true,
     ),
+    (
+        "nquin-gpu-radix",
+        "NQuin GPU stable radix sort and cancellation",
+        true,
+    ),
+    (
+        "nquin-gpu-sieve",
+        "NQuin GPU field sieve and tail cases",
+        true,
+    ),
+    (
+        "tensor-gpu-topk",
+        "Tensor GPU top-k, ties and invalid lanes",
+        true,
+    ),
+    (
+        "tensor-gpu-attention",
+        "Tensor GPU fused attention and all-masked rows",
+        true,
+    ),
+    (
+        "tensor-forward-readback",
+        "Forward arena budgets and async token readback",
+        true,
+    ),
+    (
+        "browser-canvas-capabilities",
+        "Isolated async canvas capabilities",
+        true,
+    ),
+    (
+        "agent-gpu-lease",
+        "Queue completion and retained GPU buffer leases",
+        true,
+    ),
 ];
 
 #[derive(Default, Debug)]
-struct Health {
-    lost: Option<String>,
-    uncaptured: Option<String>,
+pub(crate) struct Health {
+    pub(crate) lost: Option<String>,
+    pub(crate) uncaptured: Option<String>,
 }
 
-struct Gpu {
-    device: etalon::Device,
-    queue: etalon::Queue,
+pub(crate) struct Gpu {
+    pub(crate) instance: etalon::Instance,
+    pub(crate) adapter: etalon::Adapter,
+    pub(crate) device: etalon::Device,
+    pub(crate) queue: etalon::Queue,
 }
 
 #[wasm_bindgen]
@@ -71,7 +108,7 @@ pub async fn create_session() -> Session {
 #[wasm_bindgen]
 pub async fn create_session_for_profile(profile: String) -> Session {
     let health = Arc::new(Mutex::new(Health::default()));
-    let (gpu, gpu_error, mut info) = match request_gpu(&health, &profile).await {
+    let (gpu, gpu_error, mut info) = match crate::adapter::request_gpu(&health, &profile).await {
         Ok((gpu, info)) => (Some(gpu), None, info),
         Err(error) => (
             None,
@@ -84,8 +121,8 @@ pub async fn create_session_for_profile(profile: String) -> Session {
     info["requested_feature_level"] = json!(profile);
     info["source_revision"] =
         json!(option_env!("ETALON_DEMO_REVISION").unwrap_or("local-unidentified"));
-    info["execution"] = json!("Etalon Rust/WASM; GPU cases delegate to browser WebGPU; extension cases execute on WASM CPU");
-    info["bounds"] = json!({"cases": CASES.len(), "max_buffer_bytes": 16384, "image_width": 64, "image_height": 64});
+    info["execution"] = json!("Etalon Rust/WASM; GPU cases delegate to browser WebGPU; two portable cases execute on WASM CPU; domain kernels execute on GPU");
+    info["bounds"] = json!({"cases": CASES.len(), "max_buffer_bytes": 32768, "image_width": 64, "image_height": 64});
     Session {
         gpu,
         gpu_error,
@@ -95,73 +132,6 @@ pub async fn create_session_for_profile(profile: String) -> Session {
         destroyed: std::cell::Cell::new(false),
         image: std::cell::RefCell::new(Vec::new()),
     }
-}
-
-async fn request_gpu(health: &Arc<Mutex<Health>>, profile: &str) -> Result<(Gpu, Value), Value> {
-    let feature_level = match profile {
-        "core" => etalon::FeatureLevel::Core,
-        "compatibility" => etalon::FeatureLevel::Compatibility,
-        _ => return Err(failure("invalid-profile", "Unknown WebGPU feature level")),
-    };
-    let navigator = js_sys::Reflect::get(&js_sys::global(), &JsValue::from_str("navigator"))
-        .unwrap_or(JsValue::UNDEFINED);
-    let exposed_gpu =
-        js_sys::Reflect::get(&navigator, &JsValue::from_str("gpu")).unwrap_or(JsValue::UNDEFINED);
-    if exposed_gpu.is_null() || exposed_gpu.is_undefined() {
-        return Err(json!({
-            "status": "unsupported", "code": "adapter-unavailable",
-            "message": "navigator.gpu is unavailable in this browser context",
-        }));
-    }
-    let instance = etalon::Instance::new(etalon::InstanceDescriptor {
-        backends: etalon::Backends::BROWSER_WEBGPU,
-        ..etalon::InstanceDescriptor::new_without_display_handle()
-    });
-    let adapter = instance.request_webgpu_adapter(&etalon::RequestAdapterOptions {
-        power_preference: etalon::PowerPreference::LowPower, ..Default::default()
-    }, feature_level).await.map_err(|error| {
-        let (status, code) = match &error {
-            etalon::RequestAdapterError::NotFound { .. } => ("unsupported", "adapter-unavailable"),
-            etalon::RequestAdapterError::BrowserRequestRejected { .. } => ("fail", "adapter-request-rejected"),
-            _ => ("fail", "adapter-request-failed"),
-        };
-        json!({"status": status, "code": code, "stage": "adapter-request", "message": bounded(&error.to_string())})
-    })?;
-    let adapter_info = adapter.get_info();
-    let required = crate::requirements::required_limits(&adapter.limits());
-    if !required.check_limits(&adapter.limits()) {
-        return Err(
-            json!({"status": "unsupported", "code": "insufficient-adapter-limits", "message": "Adapter cannot satisfy this workload's declared minimal limits"}),
-        );
-    }
-    let (device, queue) = adapter.request_device(&etalon::DeviceDescriptor {
-        label: Some("Etalon browser self-test"),
-        required_features: etalon::Features::empty(),
-        required_limits: required.clone(),
-        ..Default::default()
-    }).await.map_err(|e| json!({"status": "fail", "code": "device-request-failed", "message": bounded(&e.to_string())}))?;
-    let lost_health = health.clone();
-    device.set_device_lost_callback(move |reason, message| {
-        if let Ok(mut state) = lost_health.lock() {
-            state.lost = Some(bounded(&format!("{reason:?}: {message}")));
-        }
-    });
-    let error_health = health.clone();
-    device.on_uncaptured_error(Arc::new(move |error: etalon::Error| {
-        if let Ok(mut state) = error_health.lock() {
-            state.uncaptured = Some(bounded(&error.to_string()));
-        }
-    }));
-    let info = json!({
-        "gpu_status": "available", "backend": format!("{:?}", adapter_info.backend),
-        "adapter": bounded(&adapter_info.name), "vendor": adapter_info.vendor, "device": adapter_info.device,
-        "device_type": format!("{:?}", adapter_info.device_type),
-        "driver": bounded(&adapter_info.driver), "driver_info": bounded(&adapter_info.driver_info),
-        "available_features": bounded(&format!("{:?}", adapter.features())),
-        "enabled_features": format!("{:?}", device.features()),
-        "required_limits": limits_json(&required), "adapter_limits": limits_json(&adapter.limits()), "device_limits": limits_json(&device.limits()),
-    });
-    Ok((Gpu { device, queue }, info))
 }
 
 #[wasm_bindgen]
@@ -244,7 +214,7 @@ impl Session {
     }
 
     async fn execute(&self, id: &str, gpu: &Gpu) -> Result<Value, Value> {
-        let Gpu { device, queue } = gpu;
+        let Gpu { device, queue, .. } = gpu;
         match id {
             "empty-error-scope" => {
                 let scope = device.push_error_scope(etalon::ErrorFilter::Validation);
@@ -284,6 +254,13 @@ impl Session {
                     "message": "Red triangle over blue clear; all pixel values and interior/exterior samples checked"}))
             }
             "compute-changed-inputs" => compute::changed_inputs(device, queue).await,
+            "nquin-gpu-radix" => crate::domain_nquin::radix(device, queue).await,
+            "nquin-gpu-sieve" => crate::domain_nquin::sieve(device, queue).await,
+            "tensor-gpu-topk" => crate::domain_tensor::topk(device, queue).await,
+            "tensor-gpu-attention" => crate::domain_tensor::attention(device, queue).await,
+            "tensor-forward-readback" => crate::domain_tensor::forward(device, queue).await,
+            "browser-canvas-capabilities" => crate::backend_contracts::canvas(gpu).await,
+            "agent-gpu-lease" => crate::domain_agent::run(device, queue).await,
             _ => {
                 let count = id
                     .strip_prefix("compute-")
@@ -299,7 +276,7 @@ pub(crate) fn failure(code: &str, message: &str) -> Value {
     json!({"code": code, "message": bounded(message)})
 }
 
-fn bounded(text: &str) -> String {
+pub(crate) fn bounded(text: &str) -> String {
     text.chars().take(1024).collect()
 }
 
@@ -316,20 +293,4 @@ fn result(id: &str, started: f64, outcome: Result<Value, Value>) -> String {
         ),
     };
     json!({"id": id, "status": status, "duration_ms": (js_sys::Date::now() - started).max(0.0), "details": details}).to_string()
-}
-
-fn limits_json(l: &etalon::Limits) -> Value {
-    json!({
-        "max_buffer_size": l.max_buffer_size,
-        "max_storage_buffer_binding_size": l.max_storage_buffer_binding_size,
-        "max_compute_workgroup_size_x": l.max_compute_workgroup_size_x,
-        "max_compute_invocations_per_workgroup": l.max_compute_invocations_per_workgroup,
-        "max_compute_workgroups_per_dimension": l.max_compute_workgroups_per_dimension,
-        "max_texture_dimension_2d": l.max_texture_dimension_2d, "max_bind_groups": l.max_bind_groups,
-        "max_bind_groups_plus_vertex_buffers": l.max_bind_groups_plus_vertex_buffers,
-        "max_storage_buffers_per_shader_stage": l.max_storage_buffers_per_shader_stage,
-        "max_color_attachment_bytes_per_sample": l.max_color_attachment_bytes_per_sample,
-        "min_uniform_buffer_offset_alignment": l.min_uniform_buffer_offset_alignment,
-        "min_storage_buffer_offset_alignment": l.min_storage_buffer_offset_alignment,
-    })
 }

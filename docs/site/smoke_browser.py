@@ -39,22 +39,22 @@ def check_result(document, require_gpu=False, boundary_mode=None):
         if not value.isascii() or not value.isdecimal():
             raise ValueError("browser completion counters are missing or invalid")
         counts[name] = int(value)
-    expected_qualification = "passed" if counts == {"passed": 13, "failed": 0, "unsupported": 0, "not-run": 0} else "failed"
+    expected_qualification = "passed" if counts == {"passed": 20, "failed": 0, "unsupported": 0, "not-run": 0} else "failed"
     if state.get("data-etalon-qualification") != expected_qualification:
         raise ValueError("overall qualification is missing or contradicts the actual case results")
     if boundary_mode is not None:
         if require_gpu or boundary_mode not in ("adapter-null", "adapter-rejected"):
             raise ValueError("invalid synthetic boundary qualification mode")
-        expected = {"passed": 2, "failed": 0, "unsupported": 11, "not-run": 0}
+        expected = {"passed": 2, "failed": 0, "unsupported": 18, "not-run": 0}
         if boundary_mode == "adapter-rejected":
-            expected.update(failed=11, unsupported=0)
+            expected.update(failed=18, unsupported=0)
         if counts != expected:
             raise ValueError("synthetic adapter boundary counts differ: " + json.dumps(counts))
         return counts
-    if counts["passed"] < 2 or counts["failed"] != 0 or counts["not-run"] != 0 or sum(counts.values()) != 13:
+    if counts["passed"] < 2 or counts["failed"] != 0 or counts["not-run"] != 0 or sum(counts.values()) != 20:
         raise ValueError("WASM tests failed or did not execute: " + json.dumps(counts) + "; cases=" + state.get("data-etalon-errors", "")[:4000])
-    if require_gpu and (counts["passed"] != 13 or counts["unsupported"] != 0):
-        raise ValueError("GPU qualification requires all 13 cases: " + json.dumps(counts))
+    if require_gpu and (counts["passed"] != 20 or counts["unsupported"] != 0):
+        raise ValueError("GPU qualification requires all 20 cases: " + json.dumps(counts))
     return counts
 
 
@@ -103,7 +103,7 @@ def run(site):
                     boundary = mode if mode in ("adapter-null", "adapter-rejected") else None
                     counts = check_result(result.stdout.decode("utf-8"), require_gpu=(mode == "software-webgpu"), boundary_mode=boundary)
                     print(json.dumps({"mode": mode, "requested_feature_level": feature_level,
-                                      "qualification": "passed" if counts["passed"] == 13 else "failed",
+                                      "qualification": "passed" if counts["passed"] == 20 else "failed",
                                       "execution": "synthetic adapter boundary through Rust/WASM" if boundary else "Rust/WASM over browser WebGPU", **counts}))
                     print(result.stderr.decode("utf-8", "replace")[-16000:])
         finally:
@@ -114,9 +114,21 @@ def run(site):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--site", required=True, type=Path)
+    parser.add_argument("--adb-device", help="Qualify an explicitly selected physical Android device")
+    parser.add_argument("--expected-revision")
+    parser.add_argument("--receipt", type=Path)
+    parser.add_argument("--feature-level", choices=("core", "compatibility"), default="core")
+    parser.add_argument("--timeout", type=int, default=120)
     arguments = parser.parse_args()
     try:
-        run(arguments.site)
+        if arguments.adb_device:
+            if not arguments.expected_revision or not arguments.receipt:
+                raise ValueError("Android qualification requires --expected-revision and --receipt")
+            from android_smoke import run as run_android
+            run_android(arguments.site, arguments.adb_device, arguments.expected_revision,
+                        arguments.receipt, arguments.feature_level, arguments.timeout)
+        else:
+            run(arguments.site)
     except (OSError, ValueError, subprocess.SubprocessError) as error:
         parser.exit(1, f"Assembled browser qualification failed: {error}\n")
 

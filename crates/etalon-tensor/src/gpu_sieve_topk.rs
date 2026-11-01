@@ -57,6 +57,11 @@ pub struct TopkReductionPipeline {
 
 impl TopkReductionPipeline {
     pub fn new(device: &etalon::Device) -> Self {
+        Self::try_new(device).expect("top-k reduction exceeds device compute limits")
+    }
+
+    pub fn try_new(device: &etalon::Device) -> Result<Self, crate::TensorPipelineError> {
+        crate::kernel_limits::check(&device.limits(), 3, 8_704)?;
         let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("etalon-topk-reduction-shader"),
             source: etalon::ShaderSource::Wgsl(TOPK_REDUCTION_WGSL.into()),
@@ -125,7 +130,7 @@ impl TopkReductionPipeline {
             cache: None,
         });
 
-        Self { pipeline, layout }
+        Ok(Self { pipeline, layout })
     }
 
     pub fn dispatch<'a>(

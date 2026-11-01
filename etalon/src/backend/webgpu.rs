@@ -1,5 +1,7 @@
 #![allow(clippy::type_complexity)]
 
+mod adapter_properties;
+mod canvas_capabilities;
 mod defined_non_null_js_value;
 mod ext_bindings;
 #[allow(clippy::allow_attributes)]
@@ -22,7 +24,6 @@ use core::{
     pin::Pin,
     task::{self, Poll},
 };
-use etalon_sync::atomic::{AtomicU8, Ordering};
 use wgt::Backends;
 
 use js_sys::Promise;
@@ -33,6 +34,7 @@ use crate::{
     Blas, SurfaceTargetUnsafe, Tlas, WriteOnly,
 };
 
+use adapter_properties::{map_adapter_info, map_wgt_limits};
 use defined_non_null_js_value::DefinedNonNullJsValue;
 
 // We need to mark various types as Send and Sync to satisfy the Rust type system.
@@ -800,106 +802,6 @@ fn map_wgt_features(supported_features: webgpu_sys::GpuSupportedFeatures) -> wgt
     etalon_features
 }
 
-fn map_wgt_limits(limits: webgpu_sys::GpuSupportedLimits) -> wgt::Limits {
-    wgt::Limits {
-        max_texture_dimension_1d: limits.max_texture_dimension_1d(),
-        max_texture_dimension_2d: limits.max_texture_dimension_2d(),
-        max_texture_dimension_3d: limits.max_texture_dimension_3d(),
-        max_texture_array_layers: limits.max_texture_array_layers(),
-        max_bind_groups: limits.max_bind_groups(),
-        max_bind_groups_plus_vertex_buffers: limits.max_bind_groups_plus_vertex_buffers(),
-        max_bindings_per_bind_group: limits.max_bindings_per_bind_group(),
-        max_dynamic_uniform_buffers_per_pipeline_layout: limits
-            .max_dynamic_uniform_buffers_per_pipeline_layout(),
-        max_dynamic_storage_buffers_per_pipeline_layout: limits
-            .max_dynamic_storage_buffers_per_pipeline_layout(),
-        max_sampled_textures_per_shader_stage: limits.max_sampled_textures_per_shader_stage(),
-        max_samplers_per_shader_stage: limits.max_samplers_per_shader_stage(),
-        max_storage_buffers_per_shader_stage: limits.max_storage_buffers_per_shader_stage(),
-        max_storage_buffers_in_vertex_stage: limits.max_storage_buffers_in_vertex_stage(),
-        max_storage_buffers_in_fragment_stage: limits.max_storage_buffers_in_fragment_stage(),
-        max_storage_textures_per_shader_stage: limits.max_storage_textures_per_shader_stage(),
-        max_storage_textures_in_vertex_stage: limits.max_storage_textures_in_vertex_stage(),
-        max_storage_textures_in_fragment_stage: limits.max_storage_textures_in_fragment_stage(),
-        max_uniform_buffers_per_shader_stage: limits.max_uniform_buffers_per_shader_stage(),
-        max_binding_array_elements_per_shader_stage: 0,
-        max_binding_array_sampler_elements_per_shader_stage: 0,
-        max_binding_array_acceleration_structure_elements_per_shader_stage: 0,
-        max_uniform_buffer_binding_size: limits.max_uniform_buffer_binding_size() as u64,
-        max_storage_buffer_binding_size: limits.max_storage_buffer_binding_size() as u64,
-        max_vertex_buffers: limits.max_vertex_buffers(),
-        max_buffer_size: limits.max_buffer_size() as u64,
-        max_vertex_attributes: limits.max_vertex_attributes(),
-        max_vertex_buffer_array_stride: limits.max_vertex_buffer_array_stride(),
-        max_inter_stage_shader_variables: limits.max_inter_stage_shader_variables(),
-        min_uniform_buffer_offset_alignment: limits.min_uniform_buffer_offset_alignment(),
-        min_storage_buffer_offset_alignment: limits.min_storage_buffer_offset_alignment(),
-        max_color_attachments: limits.max_color_attachments(),
-        max_color_attachment_bytes_per_sample: limits.max_color_attachment_bytes_per_sample(),
-        max_compute_workgroup_storage_size: limits.max_compute_workgroup_storage_size(),
-        max_compute_invocations_per_workgroup: limits.max_compute_invocations_per_workgroup(),
-        max_compute_workgroup_size_x: limits.max_compute_workgroup_size_x(),
-        max_compute_workgroup_size_y: limits.max_compute_workgroup_size_y(),
-        max_compute_workgroup_size_z: limits.max_compute_workgroup_size_z(),
-        max_compute_workgroups_per_dimension: limits.max_compute_workgroups_per_dimension(),
-        max_immediate_size: wgt::Limits::default().max_immediate_size,
-        max_non_sampler_bindings: wgt::Limits::default().max_non_sampler_bindings,
-
-        max_task_workgroup_total_count: wgt::Limits::default().max_task_workgroup_total_count,
-        max_task_workgroups_per_dimension: wgt::Limits::default().max_task_workgroups_per_dimension,
-        max_mesh_workgroup_total_count: wgt::Limits::default().max_mesh_workgroup_total_count,
-        max_mesh_workgroups_per_dimension: wgt::Limits::default().max_mesh_workgroups_per_dimension,
-        max_task_invocations_per_workgroup: wgt::Limits::default()
-            .max_task_invocations_per_workgroup,
-        max_task_invocations_per_dimension: wgt::Limits::default()
-            .max_task_invocations_per_dimension,
-        max_mesh_invocations_per_workgroup: wgt::Limits::default()
-            .max_mesh_invocations_per_workgroup,
-        max_mesh_invocations_per_dimension: wgt::Limits::default()
-            .max_mesh_invocations_per_dimension,
-        max_task_payload_size: wgt::Limits::default().max_task_payload_size,
-        max_mesh_output_vertices: wgt::Limits::default().max_mesh_output_vertices,
-        max_mesh_output_primitives: wgt::Limits::default().max_mesh_output_primitives,
-        max_mesh_output_layers: wgt::Limits::default().max_mesh_output_layers,
-        max_mesh_multiview_view_count: wgt::Limits::default().max_mesh_multiview_view_count,
-
-        max_blas_primitive_count: wgt::Limits::default().max_blas_primitive_count,
-        max_blas_geometry_count: wgt::Limits::default().max_blas_geometry_count,
-        max_tlas_instance_count: wgt::Limits::default().max_tlas_instance_count,
-        max_acceleration_structures_per_shader_stage: wgt::Limits::default()
-            .max_acceleration_structures_per_shader_stage,
-        max_buffers_and_acceleration_structures_per_shader_stage: wgt::Limits::default()
-            .max_buffers_and_acceleration_structures_per_shader_stage,
-
-        max_multiview_view_count: wgt::Limits::default().max_multiview_view_count,
-
-        max_ray_dispatch_count: wgt::Limits::default().max_ray_dispatch_count,
-        max_ray_recursion_depth: wgt::Limits::default().max_ray_recursion_depth,
-    }
-}
-
-fn map_adapter_info(adapter_info: &webgpu_sys::GpuAdapterInfo) -> wgt::AdapterInfo {
-    // Adapter information mapped from webgpu-sys GpuAdapterInfo
-    wgt::AdapterInfo {
-        name: adapter_info.description().to_string(),
-        vendor: 0,
-        device: 0,
-        device_type: if adapter_info.is_fallback_adapter() {
-            wgt::DeviceType::Cpu
-        } else {
-            wgt::DeviceType::Other
-        },
-        device_pci_bus_id: String::new(),
-        driver: String::new(),
-        driver_info: String::new(),
-        backend: wgt::Backend::BrowserWebGpu,
-        subgroup_min_size: adapter_info.subgroup_min_size(),
-        subgroup_max_size: adapter_info.subgroup_max_size(),
-        transient_saves_memory: None,
-        limit_bucket: None,
-    }
-}
-
 fn map_js_sys_limits(
     limits: &wgt::Limits,
     supported: Option<&webgpu_sys::GpuSupportedLimits>,
@@ -1014,20 +916,17 @@ pub(crate) fn request_adapter_null_error(requested_backends: Backends) -> wgt::R
 
 fn future_request_device(
     result: Result<webgpu_sys::GpuDevice, wasm_bindgen::JsValue>,
+    adapter_ident: crate::cmp::Identifier,
 ) -> Result<(dispatch::DispatchDevice, dispatch::DispatchQueue), crate::RequestDeviceError> {
     result
         .map(|device| {
             let queue = device.queue();
 
-            // A `GPUDevice` is the first point at which we can empirically probe
-            // which canvas formats this browser actually supports (see
-            // `probe_rgba16float_canvas_support`). Run it once here so that
-            // `Surface::get_capabilities` can report `Rgba16Float` truthfully.
-            rgba16float_probe::probe_rgba16float_canvas_support(&device);
-
             (
                 WebDevice {
                     inner: device,
+                    adapter_ident,
+                    rgba16float_canvas_support: Rc::new(OnceCell::new()),
                     ident: crate::cmp::Identifier::create(),
                     error_scope_count: Rc::new(Cell::new(0)),
                     uncaptured_error_listener: Rc::new(RefCell::new(None)),
@@ -1326,6 +1225,8 @@ pub struct WebAdapter {
 #[derive(Debug, Clone)]
 pub struct WebDevice {
     pub(crate) inner: webgpu_sys::GpuDevice,
+    adapter_ident: crate::cmp::Identifier,
+    rgba16float_canvas_support: Rc<OnceCell<bool>>,
     /// Unique identifier for this Device.
     ident: crate::cmp::Identifier,
     /// Current number of error scopes that have been pushed on the device.
@@ -1824,6 +1725,21 @@ impl dispatch::AdapterInterface for WebAdapter {
         let mapped_desc = webgpu_sys::GpuDeviceDescriptor::new();
 
         let supported_limits = self.inner.limits();
+        let mut limit_error = None;
+        desc.required_limits.check_limits_with_fail_fn(
+            &map_wgt_limits(supported_limits.clone()),
+            true,
+            |name, requested, supported| {
+                limit_error = Some(crate::RequestDeviceError {
+                    inner: crate::RequestDeviceErrorKind::WebGpu(format!(
+                        "Requested limit {name}={requested} is incompatible with adapter limit {supported}"
+                    )),
+                });
+            },
+        );
+        if let Some(error) = limit_error {
+            return Box::pin(core::future::ready(Err(error)));
+        }
         let required_limits = map_js_sys_limits(&desc.required_limits, Some(&supported_limits));
         mapped_desc.set_required_limits(&required_limits);
 
@@ -1870,9 +1786,10 @@ impl dispatch::AdapterInterface for WebAdapter {
 
         let device_promise = self.inner.request_device_with_descriptor(&mapped_desc);
 
+        let adapter_ident = self.ident.clone();
         Box::pin(MakeSendFuture::new(
             wasm_bindgen_futures::JsFuture::from(device_promise),
-            future_request_device,
+            move |result| future_request_device(result, adapter_ident.clone()),
         ))
     }
 
@@ -4317,91 +4234,13 @@ fn environment_color_gamut() -> Option<wgt::DisplayGamut> {
     }
 }
 
-/// Probing and caching of whether this browser can configure an `rgba16float`
-/// WebGPU canvas. Only the reader functions are visible outside this module; the
-/// cached state and the probe machinery are private to it.
-mod rgba16float_probe {
-    use super::*;
-
-    /// Cached result of probing whether this browser can configure a WebGPU canvas
-    /// with the `rgba16float` format: [`PROBE_UNKNOWN`] until first probed,
-    /// otherwise [`PROBE_SUPPORTED`]/[`PROBE_UNSUPPORTED`].
-    ///
-    /// Canvas-format support is process-wide and immutable at runtime, so a single
-    /// probe suffices. The probe (see [`probe_rgba16float_canvas_support`]) is
-    /// empirical (it actually calls `configure()` rather than checking a
-    /// browser/version), so it starts reporting supported automatically once a
-    /// browser (e.g. Firefox, <https://bugzilla.mozilla.org/show_bug.cgi?id=1834395>)
-    /// adds support, with no etalon change required.
-    static RGBA16FLOAT_CANVAS_SUPPORT: AtomicU8 = AtomicU8::new(PROBE_UNKNOWN);
-    const PROBE_UNKNOWN: u8 = 0;
-    const PROBE_UNSUPPORTED: u8 = 1;
-    const PROBE_SUPPORTED: u8 = 2;
-
-    /// Whether `Surface::get_capabilities` should advertise `Rgba16Float`.
-    ///
-    /// Optimistic (advertised) until the probe has determined it is unsupported:
-    /// the no-panic handling in [`WebSurface::configure`]/
-    /// [`WebSurface::get_current_texture`] recovers if an app selects it before a
-    /// device exists on a browser that rejects it.
-    pub(super) fn rgba16float_canvas_supported() -> bool {
-        RGBA16FLOAT_CANVAS_SUPPORT.load(Ordering::Relaxed) != PROBE_UNSUPPORTED
-    }
-
-    /// Probe (once, then cache) whether this browser can configure a `rgba16float`
-    /// WebGPU canvas, by actually configuring a throwaway 1x1 `OffscreenCanvas`.
-    ///
-    /// Some browsers list `rgba16float` as a context format but throw from
-    /// `configure` (current Firefox), which on wasm would otherwise be an
-    /// uncatchable panic. Detecting it empirically (instead of sniffing the user
-    /// agent) means the result self-corrects when the browser ships support.
-    pub(super) fn probe_rgba16float_canvas_support(device: &webgpu_sys::GpuDevice) {
-        if RGBA16FLOAT_CANVAS_SUPPORT.load(Ordering::Relaxed) != PROBE_UNKNOWN {
-            return;
-        }
-        // If the probe can't run (e.g. no `OffscreenCanvas`), leave the support
-        // state unknown so we keep advertising the format optimistically.
-        let Some(supported) = try_configure_rgba16float_canvas(device) else {
-            return;
-        };
-        RGBA16FLOAT_CANVAS_SUPPORT.store(
-            if supported {
-                PROBE_SUPPORTED
-            } else {
-                PROBE_UNSUPPORTED
-            },
-            Ordering::Relaxed,
-        );
-    }
-
-    /// Returns `Some(true)`/`Some(false)` if a `rgba16float` canvas could/couldn't
-    /// be configured, or `None` if the probe itself couldn't be set up.
-    fn try_configure_rgba16float_canvas(device: &webgpu_sys::GpuDevice) -> Option<bool> {
-        let canvas = web_sys::OffscreenCanvas::new(1, 1).ok()?;
-        let context = canvas.get_context("webgpu").ok()??;
-        let context: webgpu_sys::GpuCanvasContext = context.unchecked_into();
-        let config = webgpu_sys::GpuCanvasConfiguration::new(
-            device,
-            map_texture_format(wgt::TextureFormat::Rgba16Float),
-        );
-        let supported = context.configure(&config).is_ok();
-        if supported {
-            // Leave the throwaway context unconfigured before it's dropped.
-            context.unconfigure();
-        }
-        Some(supported)
-    }
-}
-
-impl dispatch::SurfaceInterface for WebSurface {
-    fn get_capabilities(&self, _adapter: &dispatch::DispatchAdapter) -> wgt::SurfaceCapabilities {
+impl WebSurface {
+    fn canvas_capabilities(&self, rgba16float_supported: bool) -> wgt::SurfaceCapabilities {
         let mut formats = vec![
             wgt::TextureFormat::Rgba8Unorm,
             wgt::TextureFormat::Bgra8Unorm,
         ];
-        // Only advertise `Rgba16Float` where the browser can actually configure
-        // it as a canvas (some, e.g. current Firefox, throw from `configure`).
-        if rgba16float_probe::rgba16float_canvas_supported() {
+        if rgba16float_supported {
             formats.push(wgt::TextureFormat::Rgba16Float);
         }
         let mut mapped_formats = formats.iter().map(|format| map_texture_format(*format));
@@ -4462,6 +4301,12 @@ impl dispatch::SurfaceInterface for WebSurface {
             // Statically set to RENDER_ATTACHMENT for now. See https://gpuweb.github.io/gpuweb/#dom-gpucanvasconfiguration-usage
             usages: wgt::TextureUsages::RENDER_ATTACHMENT,
         }
+    }
+}
+
+impl dispatch::SurfaceInterface for WebSurface {
+    fn get_capabilities(&self, _adapter: &dispatch::DispatchAdapter) -> wgt::SurfaceCapabilities {
+        self.canvas_capabilities(false)
     }
 
     fn display_hdr_info(&self, _adapter: &dispatch::DispatchAdapter) -> wgt::DisplayHdrInfo {

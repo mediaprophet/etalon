@@ -2,8 +2,14 @@
 
 use super::capability::CapabilityState;
 use super::compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
+use super::lease::{BufferRegion, SubmissionLease};
 use core::sync::atomic::{AtomicU64, Ordering};
-use std::sync::Arc;
+use core::{
+    future::Future,
+    pin::Pin,
+    task::{Context, Poll, Waker},
+};
+use std::sync::{Arc, Mutex};
 
 /// A prepared compute pipeline and workgroup sizing on an Etalon device.
 #[derive(Clone)]
@@ -37,7 +43,7 @@ pub enum HalOracleError {
     OutputMismatch { index: usize },
 }
 
-/// Native Etalon compute lane requiring synchronous completion indices.
+/// Etalon compute lane with queue-scoped callback completion on native and WebGPU.
 pub struct HalComputeLane {
     device: Arc<etalon::Device>,
     queue: Arc<etalon::Queue>,
@@ -126,16 +132,14 @@ impl HalComputeLane {
         cmd: etalon::CommandBuffer,
     ) -> Result<SubmissionToken, &'static str> {
         self.clear_verification();
-        if cfg!(target_arch = "wasm32") {
-            return Err("HalComputeLane submission requires native completion indices");
-        }
         let next_fence = self
             .submitted_counter
             .checked_add(1)
             .ok_or("Submission fence exhausted")?;
-        self.queue
-            .submit(std::iter::once(cmd))
-            .ok_or("Queue submission did not start")?;
+        let submission = self.queue.submit(std::iter::once(cmd));
+        if cfg!(not(target_arch = "wasm32")) && submission.is_none() {
+            return Err("Queue submission did not start");
+        }
         self.submitted_counter = next_fence;
         let fence_value = self.submitted_counter;
         let completed = Arc::clone(&self.completed_counter);
@@ -146,11 +150,9 @@ impl HalComputeLane {
     }
 
     /// Block until the GPU has completed all work up to `token`.
+    #[cfg(not(target_arch = "wasm32"))]
     pub fn wait_for(&self, token: SubmissionToken) -> bool {
-        if token.queue != self.queue_id
-            || token.fence_value == 0
-            || token.fence_value > self.submitted_counter
-        {
+        if !self.issued_token(token) {
             return false;
         }
         while self.completed_counter.load(Ordering::Acquire) < token.fence_value {
@@ -163,6 +165,74 @@ impl HalComputeLane {
             }
         }
         self.completed_counter.load(Ordering::Acquire) >= token.fence_value
+    }
+
+    /// Await queue completion without blocking. Native runtimes must keep polling the device
+    /// elsewhere until completion; browser WebGPU progresses on its event loop.
+    pub async fn wait_for_async(&self, token: SubmissionToken) -> bool {
+        if !self.issued_token(token) {
+            return false;
+        }
+        if self.completed_counter() >= token.fence_value {
+            return true;
+        }
+        let wait = CompletionWait::default();
+        let state = Arc::clone(&wait.0);
+        let completed = Arc::clone(&self.completed_counter);
+        let fence = self.submitted_counter;
+        self.queue.on_submitted_work_done(move || {
+            completed.fetch_max(fence, Ordering::Release);
+            let waker = {
+                let mut state = state.lock().unwrap();
+                state.ready = true;
+                state.waker.take()
+            };
+            if let Some(waker) = waker {
+                waker.wake();
+            }
+        });
+        wait.await;
+        true
+    }
+
+    /// Submit work and retain its resource until this queue completes, even if the lease is dropped.
+    /// Submission failure returns the resource and error. This cold operation allocates.
+    pub fn lease_submission<T: etalon::WasmNotSendSync + 'static>(
+        &mut self,
+        cmd: etalon::CommandBuffer,
+        resource: T,
+        region: BufferRegion,
+    ) -> Result<(SubmissionToken, SubmissionLease<T>), (T, &'static str)> {
+        let token = match self.submit_command_buffer(cmd) {
+            Ok(token) => token,
+            Err(error) => return Err((resource, error)),
+        };
+        let (lease, retained) = SubmissionLease::queue_bound(
+            resource,
+            region,
+            token,
+            Arc::clone(&self.completed_counter),
+        );
+        self.queue.on_submitted_work_done(move || {
+            drop(retained);
+        });
+        Ok((token, lease))
+    }
+
+    pub(crate) fn owns_lease(&self, token: SubmissionToken, completion: &Arc<AtomicU64>) -> bool {
+        lease_owner_matches(
+            &self.completed_counter,
+            completion,
+            token,
+            self.queue_id,
+            self.submitted_counter,
+        )
+    }
+
+    fn issued_token(&self, token: SubmissionToken) -> bool {
+        token.queue == self.queue_id
+            && token.fence_value != 0
+            && token.fence_value <= self.submitted_counter
     }
 }
 
@@ -216,15 +286,55 @@ impl ComputeLane for HalComputeLane {
     }
 
     fn poll_completion(&self, token: PerQueueCompletionToken) -> bool {
-        if token.queue != self.queue_id
-            || token.fence_value == 0
-            || token.fence_value > self.submitted_counter
-        {
+        if !self.issued_token(token) {
             return false;
         }
         let _ = self.device.poll(etalon::PollType::Poll);
         self.completed_counter.load(Ordering::Acquire) >= token.fence_value
     }
+}
+
+#[derive(Default)]
+struct WaitState {
+    ready: bool,
+    waker: Option<Waker>,
+}
+
+#[derive(Default)]
+struct CompletionWait(Arc<Mutex<WaitState>>);
+
+impl Future for CompletionWait {
+    type Output = ();
+
+    fn poll(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<()> {
+        let mut state = self.0.lock().unwrap();
+        if state.ready {
+            Poll::Ready(())
+        } else {
+            state.waker = Some(cx.waker().clone());
+            Poll::Pending
+        }
+    }
+}
+
+impl Drop for CompletionWait {
+    fn drop(&mut self) {
+        let waker = self.0.lock().unwrap().waker.take();
+        drop(waker);
+    }
+}
+
+fn lease_owner_matches(
+    lane: &Arc<AtomicU64>,
+    lease: &Arc<AtomicU64>,
+    token: SubmissionToken,
+    queue: QueueId,
+    latest: u64,
+) -> bool {
+    Arc::ptr_eq(lane, lease)
+        && token.queue == queue
+        && token.fence_value != 0
+        && token.fence_value <= latest
 }
 
 fn validate_oracle(
@@ -324,5 +434,38 @@ mod tests {
             check(SubmissionToken::new(QueueId(7), 3), 3, 3, &[1], &[1]),
             Err(HalOracleError::StaleSubmission)
         );
+    }
+
+    #[test]
+    fn foreign_lane_and_unissued_tokens_cannot_reclaim() {
+        let lane = Arc::new(AtomicU64::new(1));
+        let foreign = Arc::new(AtomicU64::new(1));
+        let token = SubmissionToken::new(QueueId(7), 1);
+        assert!(lease_owner_matches(&lane, &lane, token, QueueId(7), 1));
+        assert!(!lease_owner_matches(&lane, &foreign, token, QueueId(7), 1));
+        assert!(!lease_owner_matches(&lane, &lane, token, QueueId(8), 1));
+        assert!(!lease_owner_matches(&lane, &lane, token, QueueId(7), 0));
+        assert!(!lease_owner_matches(
+            &lane,
+            &lane,
+            SubmissionToken::new(QueueId(7), 0),
+            QueueId(7),
+            1
+        ));
+    }
+
+    #[test]
+    fn dropping_async_wait_unregisters_its_task() {
+        let mut wait = Box::pin(CompletionWait::default());
+        let state = Arc::clone(&wait.0);
+        let waker = Waker::noop();
+        let mut cx = Context::from_waker(waker);
+        assert!(wait.as_mut().poll(&mut cx).is_pending());
+        assert!(state.lock().unwrap().waker.is_some());
+        drop(wait);
+        assert!(state.lock().unwrap().waker.is_none());
+        state.lock().unwrap().ready = true;
+        let mut wait = Box::pin(CompletionWait(state));
+        assert!(wait.as_mut().poll(&mut cx).is_ready());
     }
 }
