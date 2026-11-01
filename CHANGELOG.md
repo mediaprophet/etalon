@@ -1,5 +1,10 @@
 # Change Log
 
+## 0.0.2 release publication
+
+- Publish the final 0.0.2 snapshot as `v0.0.2-release`, preserving the historical prerelease tag. Stable/latest and the 0.0.2 maintenance line identify qualified releases; further development remains on dev.
+- Expand Pages with whole-library capabilities and test evidence; publish release documentation from stable. Add independent Git-consumer qualification.
+
 <!--
 Please add your PR to the changelog! Choose from a top level and bottom
 level category, then write your changes like follows:

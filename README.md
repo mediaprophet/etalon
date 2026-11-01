@@ -18,7 +18,7 @@ Named after the optical Fabry-Pérot etalon—the scientific archetype of precis
 
 **Library guide:** [Getting started](https://mediaprophet.github.io/etalon/getting-started.html) | [Public API](https://mediaprophet.github.io/etalon/doc/etalon/) | [Sensing API](https://mediaprophet.github.io/etalon/doc/etalon_sense/)
 
-The documentation site follows the development branch and records its exact source revision. Pin a tested commit for reproducible consumers.
+The documentation site publishes the qualified `stable` release and records its exact source revision. Future development stays on `dev`; pin a release tag or full commit for reproducible consumers.
 
 > **Upstream:** Etalon is derived from [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu), which is dual-licensed under Apache-2.0 and MIT. See [Upstream & Attribution](#upstream--attribution) and [Licensing](#intellectual-property--licensing-notice).
 
@@ -73,7 +73,7 @@ Etalon is not published to crates.io (every workspace package sets `publish = fa
 
 ```toml
 [dependencies]
-etalon = { git = "https://github.com/mediaprophet/etalon.git", tag = "v0.0.2" }
+etalon = { git = "https://github.com/mediaprophet/etalon.git", tag = "v0.0.2-release" }
 pollster = "1.0"
 ```
 
@@ -81,14 +81,16 @@ pollster = "1.0"
 
 Etalon is at an early stage and breaking changes are expected. Choose the branch that matches how much change your project can absorb:
 
-| Branch     | Purpose                                                                                                                                               |
-| ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stable`   | Reserved for general-use releases; use the explicit release tag until this branch is created.                                                         |
-| `latest`   | For experimental users who want the newest usable state. Can change without notice.                                                                   |
-| `v0.0.1.x` | The v0.0.1 version line and its fixes. Projects that need a specific version can depend on this branch. Future version lines follow the same pattern. |
-| `dev`      | Active development. May be broken at any time.                                                                                                        |
+| Target                        | Purpose                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------ |
+| `v0.0.2-release` (tag)        | Immutable final 0.0.2 source release.                                                |
+| `v0.0.2.x` (branch)           | Qualified 0.0.2 maintenance line.                                                    |
+| `stable`, `latest` (branches) | Most recent qualified release; both remain on 0.0.2 until another release qualifies. |
+| `dev` (branch)                | Further development; not a release guarantee.                                        |
 
-Use tag `v0.0.2` for this source release. For immutable builds, pin its specific commit with `rev = "<commit>"` instead of a branch. See the [0.0.2 release notes](docs/releases/0.0.2.md). `trunk` and `qualia-main` are retained for existing consumers.
+Use `tag = "v0.0.2-release"` for 0.0.2, or `branch = "latest"` to follow qualified releases. Cargo.lock retains the selected commit until you explicitly update it. For an immutable build use the full release commit with `rev`. See the [0.0.2 final release notes](docs/releases/0.0.2-release.md).
+
+The earlier `v0.0.2` tag remains the historical prerelease and does **not** contain the final fixes. It has not been moved. `trunk`, `main`, `qualia-main`, and `v0.0.1.x` are retained historical refs; they are not the current release channels.
 
 > **Note:** Etalon's crates use the `etalon-*` names, or keep upstream names (`naga`, `naga-types`), at version `0.0.2`. A project that also depends on upstream `wgpu`/`naga` from crates.io gets two separate copies. Their types are not interchangeable.
 

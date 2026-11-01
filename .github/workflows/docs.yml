@@ -2,7 +2,7 @@ name: Docs
 
 on:
   push:
-    branches: [dev, trunk]
+    branches: [dev, stable, trunk]
   pull_request:
   workflow_dispatch:
 
@@ -110,8 +110,8 @@ jobs:
           path: ${{ runner.temp }}/etalon-pages
 
   deploy:
-    name: Deploy development documentation
-    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    name: Deploy release documentation
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/stable'
     needs: build
     runs-on: ubuntu-latest
     timeout-minutes: 10

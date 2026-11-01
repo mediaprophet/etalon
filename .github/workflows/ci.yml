@@ -8,9 +8,8 @@ on:
       - qualia-main
       - main
       - dev
-      - latest
       - stable
-      - "v[0-9]*"
+      # latest and version-line aliases promote already-qualified stable commits.
   workflow_dispatch:
 
 env:
