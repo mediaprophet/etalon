@@ -187,6 +187,24 @@ async function runWebglFallback(module, report) {
       : `WebGL2 rendering fallback ${result.status.toUpperCase()}: ${result.details?.message || "See the fallback evidence."}`;
   fallbackEvidence.textContent = bounded(result);
 }
+function captureDebug(module, report, target, phase) {
+  try {
+    target.debug_environment_attached = module.set_debug_environment(
+      JSON.stringify({
+        ...report.context,
+        runtime: report.runtime,
+        source_revision: revision,
+        phase,
+      }),
+    );
+    target.debug_log = parse(module.debug_log_json());
+  } catch (error) {
+    target.debug_log = {
+      status: "export-failed",
+      message: String(error).slice(0, 512),
+    };
+  }
+}
 function exportReport(report) {
   const json = JSON.stringify(report, null, 2);
   if (new TextEncoder().encode(json).length > 262144) {
@@ -389,7 +407,11 @@ async function run() {
     ) {
       progress.textContent =
         "Testing Etalon Rust/WASM rendering through WebGL2…";
+      if (report.debug_logging_enabled)
+        captureDebug(module, report, report, "webgpu");
+      const fallbackDebug = module.configure_debug_logging();
       await runWebglFallback(module, report);
+      report.webgl_fallback.debug_logging_enabled = fallbackDebug;
     }
     report.counts = totals(report);
     progress.textContent = blocked
@@ -425,21 +447,13 @@ async function run() {
       }
     }
     if (module && report.debug_logging_enabled) {
-      try {
-        report.debug_environment_attached = module.set_debug_environment(
-          JSON.stringify({
-            ...report.context,
-            runtime: report.runtime,
-            source_revision: revision,
-          }),
-        );
-        report.debug_log = parse(module.debug_log_json());
-      } catch (error) {
-        report.debug_log = {
-          status: "export-failed",
-          message: String(error).slice(0, 512),
-        };
-      }
+      const target = report.webgl_fallback || report;
+      captureDebug(
+        module,
+        report,
+        target,
+        report.webgl_fallback ? "webgl2" : "webgpu",
+      );
     }
     delete document.body.dataset.etalonCase;
     report.finished_at = new Date().toISOString();
