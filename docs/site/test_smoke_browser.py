@@ -29,6 +29,24 @@ class BrowserCompletionTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="2" data-etalon-failed="0" data-etalon-unsupported="10" data-etalon-not-run="1"></body>')
 
+    def test_synthetic_rejection_requires_explicit_boundary_mode(self):
+        document = '<body data-etalon-state="complete" data-etalon-passed="2" data-etalon-failed="11" data-etalon-unsupported="0" data-etalon-not-run="0"></body>'
+        self.assertEqual(SMOKE.check_result(document, boundary_mode="adapter-rejected")["failed"], 11)
+        with self.assertRaises(ValueError):
+            SMOKE.check_result(document)
+        with self.assertRaises(ValueError):
+            SMOKE.check_result(document, boundary_mode="adapter-null")
+        with self.assertRaises(ValueError):
+            SMOKE.check_result(document, require_gpu=True, boundary_mode="adapter-rejected")
+
+    def test_synthetic_null_cannot_count_as_gpu_qualification(self):
+        document = '<body data-etalon-state="complete" data-etalon-passed="2" data-etalon-failed="0" data-etalon-unsupported="11" data-etalon-not-run="0"></body>'
+        self.assertEqual(SMOKE.check_result(document, boundary_mode="adapter-null")["unsupported"], 11)
+        with self.assertRaises(ValueError):
+            SMOKE.check_result(document, require_gpu=True)
+        with self.assertRaises(ValueError):
+            SMOKE.check_result(document, boundary_mode="adapter-rejected")
+
     def test_nonterminal_results_cannot_pass(self):
         with self.assertRaises(ValueError):
             SMOKE.check_result('<body data-etalon-state="running" data-etalon-passed="7" data-etalon-failed="0" data-etalon-unsupported="0" data-etalon-not-run="0"></body>')

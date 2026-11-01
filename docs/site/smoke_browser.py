@@ -27,7 +27,7 @@ class TerminalState(HTMLParser):
             self.state = dict(attrs)
 
 
-def check_result(document, require_gpu=False):
+def check_result(document, require_gpu=False, boundary_mode=None):
     parser = TerminalState()
     parser.feed(document)
     state = parser.state
@@ -39,6 +39,15 @@ def check_result(document, require_gpu=False):
         if not value.isascii() or not value.isdecimal():
             raise ValueError("browser completion counters are missing or invalid")
         counts[name] = int(value)
+    if boundary_mode is not None:
+        if require_gpu or boundary_mode not in ("adapter-null", "adapter-rejected"):
+            raise ValueError("invalid synthetic boundary qualification mode")
+        expected = {"passed": 2, "failed": 0, "unsupported": 11, "not-run": 0}
+        if boundary_mode == "adapter-rejected":
+            expected.update(failed=11, unsupported=0)
+        if counts != expected:
+            raise ValueError("synthetic adapter boundary counts differ: " + json.dumps(counts))
+        return counts
     if counts["passed"] < 2 or counts["failed"] != 0 or counts["not-run"] != 0 or sum(counts.values()) != 13:
         raise ValueError("WASM tests failed or did not execute: " + json.dumps(counts) + "; cases=" + state.get("data-etalon-errors", "")[:4000])
     if require_gpu and (counts["passed"] != 13 or counts["unsupported"] != 0):
@@ -68,7 +77,9 @@ def run(site):
         try:
             for mode, feature_level in (("default-availability", "core"),
                                         ("software-webgpu", "core"),
-                                        ("software-webgpu", "compatibility")):
+                                        ("software-webgpu", "compatibility"),
+                                        ("adapter-null", "core"),
+                                        ("adapter-rejected", "core")):
                 with tempfile.TemporaryDirectory(prefix="etalon-browser-smoke-") as scratch:
                     profile = Path(scratch) / "profile"
                     command = [
@@ -85,9 +96,10 @@ def run(site):
                     profile_size = sum(p.stat().st_size for p in profile.rglob("*") if p.is_file())
                     if profile_size > MAX_PROFILE_BYTES:
                         raise ValueError("browser profile budget exceeded")
-                    counts = check_result(result.stdout.decode("utf-8"), require_gpu=(mode == "software-webgpu"))
+                    boundary = mode if mode in ("adapter-null", "adapter-rejected") else None
+                    counts = check_result(result.stdout.decode("utf-8"), require_gpu=(mode == "software-webgpu"), boundary_mode=boundary)
                     print(json.dumps({"mode": mode, "requested_feature_level": feature_level,
-                                      "execution": "Rust/WASM over browser WebGPU", **counts}))
+                                      "execution": "synthetic adapter boundary through Rust/WASM" if boundary else "Rust/WASM over browser WebGPU", **counts}))
                     print(result.stderr.decode("utf-8", "replace")[-16000:])
         finally:
             server.shutdown()
