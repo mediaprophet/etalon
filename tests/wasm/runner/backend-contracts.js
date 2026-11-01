@@ -75,6 +75,63 @@ export async function runBackendContracts(page) {
           throw new Error("Oversized limits reached browser requestDevice");
         evidence.push({ ...result, browser_device_requests: deviceRequests });
       }
+      for (const mode of [
+        "null",
+        "undefined",
+        "rejected",
+        "call-threw",
+        "adapter-returned",
+      ]) {
+        const calls = [];
+        Object.defineProperty(gpu, "requestAdapter", {
+          configurable: true,
+          value: function (...args) {
+            if (this !== gpu)
+              throw new Error("Rust control lost the GPU receiver");
+            calls.push(args);
+            if (mode === "call-threw")
+              throw new DOMException("control-exception", "OperationError");
+            if (mode === "rejected")
+              return Promise.reject(
+                new DOMException("control-rejection", "OperationError"),
+              );
+            return Promise.resolve(
+              mode === "null"
+                ? null
+                : mode === "undefined"
+                  ? undefined
+                  : { info: { vendor: "fixture-control" } },
+            );
+          },
+        });
+        const control = JSON.parse(await wasm.adapter_acquisition_control());
+        if (
+          control.gpu_execution_tested !== false ||
+          control.attempts?.length !== 4 ||
+          calls.length !== 4 ||
+          control.attempts.some((a) => a.result.status !== mode) ||
+          calls[0].length !== 0 ||
+          calls[1].length !== 1 ||
+          Object.keys(calls[1][0]).length !== 0 ||
+          JSON.stringify(calls[2][0]) !== '{"featureLevel":"core"}' ||
+          JSON.stringify(calls[3][0]) !== '{"featureLevel":"compatibility"}'
+        )
+          throw new Error(
+            `Independent acquisition control failed: ${JSON.stringify(control)}`,
+          );
+        if (
+          (mode === "rejected" || mode === "call-threw") &&
+          control.attempts.some((a) => a.result.name !== "OperationError")
+        )
+          throw new Error(
+            "Independent acquisition control discarded exception names",
+          );
+        evidence.push({
+          mode: `direct-control-${mode}`,
+          request_shapes_verified: true,
+          outcomes_verified: true,
+        });
+      }
       for (const mode of ["auto-null-compatibility", "auto-core-rejection"]) {
         const calls = [];
         const rejection = "etalon-auto-core-rejection";

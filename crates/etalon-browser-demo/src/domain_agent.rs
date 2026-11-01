@@ -39,8 +39,7 @@ fn copy_command(
 pub(crate) async fn run(device: &etalon::Device, queue: &etalon::Queue) -> Result<Value, Value> {
     // HalComputeLane shares its native/browser API; browser handles stay on this thread.
     #[allow(clippy::arc_with_non_send_sync)]
-    let device_handle = Arc::new(device.clone());
-    let queue_handle = Arc::new(queue.clone());
+    let (device_handle, queue_handle) = (Arc::new(device.clone()), Arc::new(queue.clone()));
     let mut lane = HalComputeLane::new(
         Arc::clone(&device_handle),
         Arc::clone(&queue_handle),

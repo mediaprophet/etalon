@@ -91,12 +91,14 @@ try {
     await page.addInitScript(
       ({ mode, rejectionMessage }) => {
         window.__etalonAdapterRequests = [];
-        const requestAdapter = (options) => {
+        const requestAdapter = (...args) => {
+          const options = args[0];
           window.__etalonAdapterRequests.push({
             options,
-            hasFeatureLevel: Object.hasOwn(options, "featureLevel"),
+            argumentCount: args.length,
+            hasFeatureLevel: Object.hasOwn(options || {}, "featureLevel"),
             hasForceFallbackAdapter: Object.hasOwn(
-              options,
+              options || {},
               "forceFallbackAdapter",
             ),
           });
@@ -184,8 +186,31 @@ try {
         ? "adapter-unavailable"
         : "adapter-request-rejected";
     const runtime = JSON.parse(environment);
-    if (observed.requests.length !== 1)
-      throw new Error("Rust/WASM did not make exactly one adapter request");
+    if (observed.requests.length !== 5)
+      throw new Error(
+        "Expected one Etalon request followed by four independent controls",
+      );
+    const control = runtime.adapter_acquisition_control;
+    const expectedControlStatus = mode === "adapter-null" ? "null" : "rejected";
+    if (
+      control?.gpu_execution_tested !== false ||
+      control.attempts?.length !== 4 ||
+      control.attempts.some((a) => a.result.status !== expectedControlStatus)
+    )
+      throw new Error(
+        "Independent Rust/WASM controls did not preserve browser outcomes",
+      );
+    const controls = observed.requests.slice(1);
+    if (
+      controls[0].argumentCount !== 0 ||
+      controls[1].argumentCount !== 1 ||
+      Object.keys(controls[1].options).length !== 0 ||
+      JSON.stringify(controls[2].options) !== '{"featureLevel":"core"}' ||
+      JSON.stringify(controls[3].options) !== '{"featureLevel":"compatibility"}'
+    )
+      throw new Error(
+        "Independent Rust/WASM request arguments differ from their labels",
+      );
     const request = observed.requests[0];
     const expectedFeatureLevel = featureLevel === "compatibility";
     if (
