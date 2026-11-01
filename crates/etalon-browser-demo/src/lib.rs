@@ -63,3 +63,11 @@ mod webgl_fallback;
 mod webgl_readback;
 #[cfg(target_arch = "wasm32")]
 pub use webgl_fallback::webgl_render_fallback;
+
+#[cfg(target_arch = "wasm32")]
+mod app_storage;
+#[cfg(target_arch = "wasm32")]
+pub use app_storage::{
+    delete_local_report, list_local_reports, load_local_report, request_storage_persistence,
+    save_local_report, storage_capabilities,
+};

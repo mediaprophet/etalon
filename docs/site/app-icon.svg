@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Etalon</title>
+  <rect width="512" height="512" fill="#006b5e" />
+  <path d="M160 160h192v40H204v36h128v40H204v36h148v40H160z" fill="#f3f6f3" />
+</svg>

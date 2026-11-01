@@ -4,6 +4,10 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="etalon-revision" content="{{REVISION}}" />
+    <meta name="etalon-version" content="0.0.2" />
+    <meta name="theme-color" content="#006b5e" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="app-icon-192.png" />
     <title>Test this device | Etalon</title>
     <link rel="stylesheet" href="styles.css" />
     <meta
@@ -12,6 +16,8 @@
     />
     <script type="module" src="browser-tests.js"></script>
     <script type="module" src="adapter-diagnostic.js"></script>
+    <script type="module" src="app-install.js"></script>
+    <script type="module" src="app-storage.js"></script>
   </head>
   <body data-etalon-qualification="not_run">
     <a class="skip" href="#main">Skip to content</a>
@@ -40,6 +46,38 @@
         Vulkan, DX12, Metal, DSP/NPU or sensor hardware.
         <a href="capabilities.html#coverage">Coverage explained</a>.
       </p>
+      <section aria-labelledby="app-install-heading">
+        <h2 id="app-install-heading">Install the WASM test app</h2>
+        <p>
+          Install Etalon, open it from your launcher, and run the same Rust/WASM
+          tests in app mode. Reports identify the display mode and app revision
+          so you can compare installed and browser runs. Installation keeps
+          browser GPU security rules in force.
+        </p>
+        <button type="button" class="button" id="install-app" disabled>
+          Install app
+        </button>
+        <p id="app-install-status" role="status" aria-live="polite">
+          If your browser does not offer the install button, use its menu:
+          Install app or Add to Home screen. On iOS, use Share, then Add to Home
+          Screen.
+        </p>
+        <p id="app-mode-status" class="small">Checking display mode…</p>
+        <p
+          id="app-offline-status"
+          class="small"
+          role="status"
+          aria-live="polite"
+        >
+          Preparing offline app assets…
+        </p>
+        <p
+          id="app-update-status"
+          class="small"
+          role="status"
+          aria-live="polite"
+        ></p>
+      </section>
       <section aria-labelledby="adapter-diagnostic-heading">
         <h2 id="adapter-diagnostic-heading">
           Adapter diagnostic — errors only
@@ -160,6 +198,47 @@
           No image yet. Pixels will be displayed only after the render/readback
           check passes.
         </p>
+      </section>
+      <section aria-labelledby="storage-heading">
+        <h2 id="storage-heading">Keep reports on this device</h2>
+        <p>
+          Save a completed report to this browser's private local file storage.
+          Saving is explicit: no automatic report storage or upload. The report
+          store holds at most 16 reports, each up to 256 KiB, within a 4 MiB
+          total budget. You can export or delete saved reports below.
+        </p>
+        <label for="local-report-source">Report to save</label>
+        <select id="local-report-source">
+          <option value="qualification-report">Device test suite</option>
+          <option value="adapter-diagnostic-report">Adapter diagnostic</option>
+        </select>
+        <div class="actions">
+          <button type="button" class="button" id="save-local-report" disabled>
+            Save current report locally
+          </button>
+          <button type="button" class="button" id="refresh-local-reports">
+            Refresh saved reports
+          </button>
+          <button type="button" class="button" id="request-persistence">
+            Request persistent storage
+          </button>
+        </div>
+        <p id="storage-status" role="status" aria-live="polite">
+          Checking local storage capabilities…
+        </p>
+        <p class="small">
+          Persistence requires a browser grant; requesting it does not guarantee
+          approval. The browser reports whether it was granted. Private file
+          storage and the offline bundle can also work in ordinary tabs.
+          <a href="capabilities.html#app-storage"
+            >App and storage capabilities explained</a
+          >.
+        </p>
+        <details>
+          <summary>Storage capability evidence</summary>
+          <pre id="storage-capabilities"></pre>
+        </details>
+        <div id="local-reports" aria-label="Saved local reports"></div>
       </section>
       <h2>Use it across systems</h2>
       <ol>

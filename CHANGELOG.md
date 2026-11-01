@@ -49,6 +49,8 @@ The agent changed the development version to 0.0.3 without the user's instructio
 
 ### Follow-up portability and diagnostics
 
+- Add an installable Rust/WASM test app with hash-verified offline assets, explicit app-mode diagnostics and a bounded OPFS receipt vault. Storage persistence is requested only by the user; saved reports remain local and can be exported or deleted.
+
 - Add a Rust/WASM WebGL2 rendering fallback when WebGPU adapter acquisition is unavailable. Verify offscreen WGSL rendering through pixel readback and report it separately; WebGPU compute qualification remains failed when no WebGPU adapter is acquired.
 
 - Preserve the selected browser feature level in canvas association checks and expose the optional `CORE_FEATURES_AND_LIMITS` feature without enabling it implicitly.

@@ -42,7 +42,9 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/dev' }}
 
       - name: Validate site assembler
-        run: python3 -m unittest discover -s docs/site -p "test_*.py"
+        run: |
+          python3 -m unittest discover -s docs/site -p "test_*.py"
+          node --test tests/wasm/runner/service-worker.test.js
 
       - name: Read exact wasm-bindgen version from Cargo.lock
         id: bindgen-version

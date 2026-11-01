@@ -3,6 +3,8 @@
 
 import argparse
 import html
+import hashlib
+import json
 from html.parser import HTMLParser
 import os
 from pathlib import Path
@@ -17,7 +19,10 @@ MAX_BROWSER_BYTES = 32 * 1024 * 1024
 ASSETS = (
     "index.html", "getting-started.html", "licensing.html", "capabilities.html",
     "testing.html", "browser-tests.js", "adapter-diagnostic.js", "styles.css",
+    "app-install.js", "app-environment.js", "app-storage.js", "wasm-runtime.js", "service-worker.js",
+    "manifest.webmanifest", "app-icon.svg",
 )
+BINARY_ASSETS = ("app-icon-192.png", "app-icon-512.png")
 BROWSER_FILES = ("etalon_browser_demo.js", "etalon_browser_demo_bg.wasm")
 JS_REFERENCES = re.compile(
     r"(?:\b(?:import|export)\s+(?:[^;]*?\s+from\s+)?|"
@@ -123,6 +128,25 @@ def inspect_browser(root):
     return files, size
 
 
+def write_offline_manifest(site, revision):
+    paths = [name for name in ASSETS if name != "service-worker.js"] + list(BINARY_ASSETS)
+    paths += [path.relative_to(site).as_posix() for path in sorted((site / "browser").rglob("*")) if path.is_file()]
+    if len(paths) > 160:
+        raise ValueError("offline asset count exceeded")
+    assets, total = [], 0
+    for name in paths:
+        path = site / name
+        length = path.stat().st_size
+        total += length
+        if total > 40 * 1024 * 1024:
+            raise ValueError("offline asset byte budget exceeded")
+        assets.append({"path": name, "bytes": length, "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+    payload = json.dumps({"schema": "etalon.offline-assets.v1", "revision": revision, "assets": assets}, separators=(",", ":"))
+    if len(payload.encode()) > 65536:
+        raise ValueError("offline manifest byte budget exceeded")
+    (site / "offline-assets.json").write_text(payload, encoding="utf-8")
+
+
 def build(rustdoc, output, revision, browser_assets):
     if not re.fullmatch(r"[0-9a-fA-F]{40}", revision):
         raise ValueError("revision must be a full Git commit SHA")
@@ -148,6 +172,11 @@ def build(rustdoc, output, revision, browser_assets):
         value = source.read_text(encoding="utf-8")
         rendered[asset] = value.replace("{{REVISION}}", html.escape(revision.lower()))
     size += sum(len(value.encode("utf-8")) for value in rendered.values())
+    for name in BINARY_ASSETS:
+        source = assets / name
+        if source.is_symlink() or source.stat().st_size > 256 * 1024:
+            raise ValueError("icon budget exceeded")
+        size += source.stat().st_size
     if size > MAX_BYTES or len(files) + len(browser_files) + len(ASSETS) + 1 > MAX_FILES:
         raise ValueError("documentation artifact budget exceeded")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -164,6 +193,9 @@ def build(rustdoc, output, revision, browser_assets):
             shutil.copyfile(browser_assets / relative, destination)
         for asset in ASSETS:
             (site / asset).write_text(rendered[asset], encoding="utf-8", newline="\n")
+        for name in BINARY_ASSETS:
+            shutil.copyfile(assets / name, site / name)
+        write_offline_manifest(site, revision.lower())
         (site / ".nojekyll").write_text("", encoding="ascii")
         validate_links(site.resolve())
         os.rename(site, output)

@@ -1,3 +1,4 @@
+import { runPwaContracts } from "./pwa-contracts.js";
 import { chromium } from "playwright";
 import { runBackendContracts } from "./backend-contracts.js";
 import { runAdapterDiagnosticContracts } from "./adapter-diagnostic-contracts.js";
@@ -403,6 +404,14 @@ try {
         report.source_revision,
       );
       process.stderr.write(`Adapter diagnostic UI: ${JSON.stringify(ui)}\n`);
+      const pwa = await runPwaContracts(
+        context,
+        args["--url"],
+        report.source_revision,
+      );
+      process.stderr.write(
+        `PWA and storage contracts: ${JSON.stringify(pwa)}\n`,
+      );
     }
   }
   const document = await page.content();

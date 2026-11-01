@@ -183,6 +183,41 @@
         <a href="doc/etalon_render/index.html">Rendering API</a> ·
         <a href="doc/etalon_wasm/index.html">WASM transport API</a>
       </p>
+      <h2 id="app-storage">Installed app and local storage</h2>
+      <p>
+        The installable test app launches the same Etalon Rust/WASM library in a
+        standalone window. Its manifest defines the launch URL, scope and
+        presentation. Installation does not automatically grant WebGPU or native
+        SDK access; each API still depends on browser support, permissions and
+        the device. Reports record actual display mode and source revision for
+        comparison. See the
+        <a href="https://www.w3.org/TR/appmanifest/"
+          >W3C Web Application Manifest specification</a
+        >.
+      </p>
+      <p>
+        The service worker caches the app bundle for offline use. Separately,
+        the Rust/WASM report store uses the origin-private file system (OPFS) to
+        retain reports you explicitly save, with export and deletion controls.
+        Neither feature requires standalone display mode: both can operate in
+        ordinary browser tabs where the APIs are available. Storage belongs to
+        the browser's origin context; installation is not a grant to read
+        arbitrary device files. The
+        <a href="https://fs.spec.whatwg.org/">WHATWG File System Standard</a>
+        defines the private file-system API.
+      </p>
+      <p>
+        The report store is bounded to 16 reports, 256 KiB per report and 4 MiB
+        total; cached application assets have a separate budget. Browser quota
+        estimates and persistence status are shown on the
+        <a href="testing.html#storage-heading">device test page</a>. A
+        persistence request can be denied, and browser grant policies differ;
+        installation alone does not establish a grant. Granted persistence
+        protects against automatic storage eviction, while the user can still
+        clear site data. The
+        <a href="https://storage.spec.whatwg.org/">WHATWG Storage Standard</a>
+        defines these quota, permission and persistence semantics.
+      </p>
       <h2 id="native">Native execution and resource coordination</h2>
       <p>
         <code>etalon-agent</code> exposes accelerator/capability state, buffer
