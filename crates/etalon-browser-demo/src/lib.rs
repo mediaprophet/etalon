@@ -40,3 +40,8 @@ pub use adapter_control::adapter_acquisition_control;
 mod debug_log;
 #[cfg(target_arch = "wasm32")]
 pub use debug_log::{configure_debug_logging, debug_log_json};
+
+#[cfg(target_arch = "wasm32")]
+mod environment_info;
+#[cfg(target_arch = "wasm32")]
+pub use environment_info::browser_environment_json;

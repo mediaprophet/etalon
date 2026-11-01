@@ -137,6 +137,14 @@ try {
   const debug = report.debug_log;
   if (
     !report.debug_logging_enabled ||
+    !report.debug_environment_attached ||
+    debug.schema !== "etalon.debug-log.v1" ||
+    debug.source_revision !== report.source_revision ||
+    debug.library_version !== report.runtime.library_version ||
+    debug.environment?.browser !== report.context.browser ||
+    !debug.environment?.browser_details ||
+    debug.environment.browser_details.navigator.user_agent.value !==
+      report.context.browser ||
     debug?.status !== "enabled" ||
     debug.level !== "debug" ||
     debug.automatic_upload !== false ||
