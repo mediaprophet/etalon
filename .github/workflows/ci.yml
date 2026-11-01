@@ -580,7 +580,8 @@ jobs:
     name: Core MSRV Check ${{ matrix.name }}
     runs-on: ${{ matrix.os }}
 
-    permissions: {}
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout repo
@@ -620,13 +621,35 @@ jobs:
           # If we find a dependency that needs to be downgraded to achieve
           # the MSRV, we can do it here with `cargo update -p <crate> --precise <version>`
 
+      - name: (Windows) Test DXC credential cleanup boundaries
+        if: matrix.os == 'windows-2022'
+        shell: pwsh
+        run: python -m unittest discover -s .github/actions/native-dxc-auth -p test_cleanup.py
+
+      - name: (Windows) Validate authenticated static DXC release metadata
+        if: matrix.os == 'windows-2022'
+        id: static-dxc
+        shell: pwsh
+        env:
+          DXC_GITHUB_TOKEN: ${{ github.token }}
+        run: ./.github/actions/native-dxc-auth/prepare.ps1
+
       - name: Check native
         shell: bash
+        env:
+          CURL_HOME: ${{ steps.static-dxc.outputs.curl-home }}
         run: |
           set -e
 
           # check `etalon-core-remote` and `etalon-core` all features. This will also get `etalon-core-remote-types` and `etalon-hal` and `etalon-types`.
           cargo check --target ${{ matrix.target }} --all-features -p etalon-core -p etalon-core-remote
+
+      - name: (Windows) Remove static DXC transport credentials
+        if: always() && matrix.os == 'windows-2022'
+        shell: pwsh
+        env:
+          DXC_CURL_HOME: ${{ steps.static-dxc.outputs.curl-home }}
+        run: ./.github/actions/native-dxc-auth/cleanup.ps1
 
   # Check that the libraries build — but not that there are no warnings or that tests pass -
   # with `-Zdirect-minimal-versions` which lowers all dependencies from the workspace packages
@@ -952,8 +975,8 @@ jobs:
         with:
           command: check bans licenses sources
           manifest-path: sensing-vendor-adapters/Cargo.toml
-          arguments: --all-features --workspace
-          command-arguments: --config .deny.toml -Dwarnings -Aunmatched-organization
+          arguments: --all-features --workspace --config sensing-vendor-adapters/.deny.toml
+          command-arguments: -Dwarnings -Aunmatched-organization
           rust-version: ${{ env.REPO_MSRV }}
 
   doctest:

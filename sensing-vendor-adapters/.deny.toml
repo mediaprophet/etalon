@@ -1,0 +1,24 @@
+# Isolated Rust adapter graph. This is a stricter subset of the root policy.
+# External native SDK/driver binaries still require separate deployment approval.
+[graph]
+exclude-unpublished = false
+exclude-dev = true
+
+[bans]
+multiple-versions = "deny"
+wildcards = "deny"
+allow-wildcard-paths = true
+
+[licenses]
+# Only licenses encountered here, all already allowed by the root policy.
+allow = ["Apache-2.0", "ISC", "MIT"]
+# Preserve the repository's private CC licensing treatment.
+private = { ignore = true }
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"
+required-git-spec = "rev"
+
+[sources.allow-org]
+github = []

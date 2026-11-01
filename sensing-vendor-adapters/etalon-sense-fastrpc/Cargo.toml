@@ -14,4 +14,4 @@ etalon-sense-dsp-wire = { path = "../etalon-sense-dsp-wire" }
 etalon-sense-deployment = { path = "../etalon-sense-deployment" }
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
-libloading = "=0.8.9"
+libloading = "=0.9.0"
