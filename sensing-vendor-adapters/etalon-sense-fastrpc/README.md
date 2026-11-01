@@ -74,7 +74,7 @@ Hard memory, deadline and no-egress constraints require host process isolation.
 There is no CPU fallback, runtime discovery, unsigned-module enablement, assumed
 available hardware, or claim that an echoed target proves physical DSP execution.
 
-Qualification remains deferred. Source tests cover scalar/layout invariants,
+Native target qualification remains deferred. CI host tests cover scalar/layout invariants,
 one-close ownership, independent-session close serialization, revoked admission,
 generation mismatch, failed invocation/argument mutation, allocation
 classification and scratch cleanup. Later checks must include C ABI
