@@ -27,20 +27,22 @@ class TerminalState(HTMLParser):
             self.state = dict(attrs)
 
 
-def check_result(document):
+def check_result(document, require_gpu=False):
     parser = TerminalState()
     parser.feed(document)
     state = parser.state
     if state.get("data-etalon-state") != "complete":
         raise ValueError("browser tests never reached the terminal completion marker")
     counts = {}
-    for name in ("passed", "failed", "unsupported"):
+    for name in ("passed", "failed", "unsupported", "not-run"):
         value = state.get("data-etalon-" + name, "")
         if not value.isascii() or not value.isdecimal():
             raise ValueError("browser completion counters are missing or invalid")
         counts[name] = int(value)
-    if counts["passed"] < 2 or counts["failed"] != 0:
+    if counts["passed"] < 2 or counts["failed"] != 0 or counts["not-run"] != 0 or sum(counts.values()) != 13:
         raise ValueError("WASM tests failed or did not execute: " + json.dumps(counts) + "; cases=" + state.get("data-etalon-errors", "")[:4000])
+    if require_gpu and (counts["passed"] != 13 or counts["unsupported"] != 0):
+        raise ValueError("GPU qualification requires all 13 cases: " + json.dumps(counts))
     return counts
 
 
@@ -64,20 +66,18 @@ def run(site):
         worker = threading.Thread(target=server.serve_forever, daemon=True)
         worker.start()
         try:
-            for width, height in ((1280, 900), (412, 915)):
+            for mode, feature_level in (("default-availability", "core"),
+                                        ("software-webgpu", "core"),
+                                        ("software-webgpu", "compatibility")):
                 with tempfile.TemporaryDirectory(prefix="etalon-browser-smoke-") as scratch:
                     profile = Path(scratch) / "profile"
                     command = [
-                        chrome, "--headless", "--no-sandbox", "--no-first-run",
-                        "--no-default-browser-check", "--disable-background-networking",
-                        "--disable-component-update", "--disable-extensions", "--disable-sync",
-                        "--disable-dev-shm-usage", "--disk-cache-size=1048576",
-                        "--media-cache-size=1048576", "--virtual-time-budget=30000",
-                        "--timeout=40000", "--dump-dom", "--force-device-scale-factor=1",
-                        f"--window-size={width},{height}", f"--user-data-dir={profile}",
-                        f"http://127.0.0.1:{server.server_port}/testing.html?autorun=1",
+                        "node", str(Path(__file__).resolve().parents[2] / "tests/wasm/runner/docs-smoke.js"),
+                        "--chrome", chrome, "--profile", str(profile),
+                        "--mode", mode, "--feature-level", feature_level,
+                        "--url", f"http://127.0.0.1:{server.server_port}/testing.html",
                     ]
-                    result = subprocess.run(command, capture_output=True, timeout=50)
+                    result = subprocess.run(command, capture_output=True, timeout=110)
                     if result.returncode:
                         raise ValueError("headless Chrome failed: " + result.stderr[-2000:].decode("utf-8", "replace"))
                     if len(result.stdout) > MAX_DOM_BYTES:
@@ -85,8 +85,10 @@ def run(site):
                     profile_size = sum(p.stat().st_size for p in profile.rglob("*") if p.is_file())
                     if profile_size > MAX_PROFILE_BYTES:
                         raise ValueError("browser profile budget exceeded")
-                    counts = check_result(result.stdout.decode("utf-8"))
-                    print(json.dumps({"requested_window": [width, height], **counts}))
+                    counts = check_result(result.stdout.decode("utf-8"), require_gpu=(mode == "software-webgpu"))
+                    print(json.dumps({"mode": mode, "requested_feature_level": feature_level,
+                                      "execution": "Rust/WASM over browser WebGPU", **counts}))
+                    print(result.stderr.decode("utf-8", "replace")[-16000:])
         finally:
             server.shutdown()
             worker.join(timeout=5)

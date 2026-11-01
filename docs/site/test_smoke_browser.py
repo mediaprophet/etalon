@@ -10,20 +10,36 @@ SPEC.loader.exec_module(SMOKE)
 
 class BrowserCompletionTests(unittest.TestCase):
     def test_complete_portable_cases_preserve_unsupported_count(self):
-        result = SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="7" data-etalon-failed="0" data-etalon-unsupported="6"></body>')
-        self.assertEqual(result, {"passed": 7, "failed": 0, "unsupported": 6})
+        result = SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="7" data-etalon-failed="0" data-etalon-unsupported="6" data-etalon-not-run="0"></body>')
+        self.assertEqual(result, {"passed": 7, "failed": 0, "unsupported": 6, "not-run": 0})
+
+    def test_gpu_qualification_rejects_unsupported_cases(self):
+        with self.assertRaises(ValueError):
+            SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="2" data-etalon-failed="0" data-etalon-unsupported="11" data-etalon-not-run="0"></body>', require_gpu=True)
+
+    def test_gpu_qualification_requires_all_cases(self):
+        result = SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="13" data-etalon-failed="0" data-etalon-unsupported="0" data-etalon-not-run="0"></body>', require_gpu=True)
+        self.assertEqual(result["passed"], 13)
+
+    def test_incomplete_case_count_cannot_pass(self):
+        with self.assertRaises(ValueError):
+            SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="2" data-etalon-failed="0" data-etalon-unsupported="0" data-etalon-not-run="0"></body>')
+
+    def test_not_run_cases_cannot_pass(self):
+        with self.assertRaises(ValueError):
+            SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="2" data-etalon-failed="0" data-etalon-unsupported="10" data-etalon-not-run="1"></body>')
 
     def test_nonterminal_results_cannot_pass(self):
         with self.assertRaises(ValueError):
-            SMOKE.check_result('<body data-etalon-state="running" data-etalon-passed="7" data-etalon-failed="0" data-etalon-unsupported="0"></body>')
+            SMOKE.check_result('<body data-etalon-state="running" data-etalon-passed="7" data-etalon-failed="0" data-etalon-unsupported="0" data-etalon-not-run="0"></body>')
 
     def test_failed_case_cannot_pass(self):
         with self.assertRaises(ValueError):
-            SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="7" data-etalon-failed="1" data-etalon-unsupported="0"></body>')
+            SMOKE.check_result('<body data-etalon-state="complete" data-etalon-passed="7" data-etalon-failed="1" data-etalon-unsupported="0" data-etalon-not-run="0"></body>')
 
     def test_missing_counters_cannot_pass(self):
         with self.assertRaises(ValueError):
-            SMOKE.check_result('<body data-etalon-state="complete"></body>')
+            SMOKE.check_result('<body data-etalon-state="complete" data-etalon-not-run="0"></body>')
 
 
 if __name__ == "__main__":

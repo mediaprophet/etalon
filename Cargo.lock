@@ -932,7 +932,7 @@ checksum = "5692dd7b5a1978a5aeb0ce83b7655c58ca8efdcb79d21036ea249da95afec2c6"
 
 [[package]]
 name = "etalon"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "arrayvec",
  "bitflags 2.13.2",
@@ -959,7 +959,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-agent"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "etalon",
@@ -974,7 +974,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-benchmark"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "bincode",
@@ -996,10 +996,11 @@ dependencies = [
 
 [[package]]
 name = "etalon-browser-demo"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon",
  "etalon-nquin",
+ "etalon-types",
  "etalon-wgsl-forge",
  "js-sys",
  "serde_json",
@@ -1029,7 +1030,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-core"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "arrayvec",
  "bit-set 0.11.1",
@@ -1067,42 +1068,42 @@ dependencies = [
 
 [[package]]
 name = "etalon-core-deps-apple"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-hal",
 ]
 
 [[package]]
 name = "etalon-core-deps-emscripten"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-hal",
 ]
 
 [[package]]
 name = "etalon-core-deps-linux-android-bsd"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-hal",
 ]
 
 [[package]]
 name = "etalon-core-deps-wasm"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-hal",
 ]
 
 [[package]]
 name = "etalon-core-deps-windows"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-hal",
 ]
 
 [[package]]
 name = "etalon-core-remote"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-core",
  "etalon-core-remote-types",
@@ -1114,7 +1115,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-core-remote-types"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-types",
  "hashbrown 0.17.1",
@@ -1169,7 +1170,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-examples"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "cfg-if",
@@ -1199,7 +1200,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-hal"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "android_system_properties",
  "arrayvec",
@@ -1257,7 +1258,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-info"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "bitflags 2.13.2",
@@ -1273,7 +1274,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-naga-bridge"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-types",
  "naga",
@@ -1281,7 +1282,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-nquin"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "etalon",
@@ -1292,7 +1293,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-render"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "etalon",
@@ -1303,7 +1304,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-ble",
  "etalon-sense-camera",
@@ -1325,7 +1326,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-ble"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "windows",
@@ -1333,14 +1334,14 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-camera"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
 ]
 
 [[package]]
 name = "etalon-sense-camera-windows"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-camera",
  "windows",
@@ -1349,7 +1350,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-cellular"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "windows",
@@ -1357,18 +1358,18 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-core"
-version = "0.0.1"
+version = "0.0.2"
 
 [[package]]
 name = "etalon-sense-cpu"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
 ]
 
 [[package]]
 name = "etalon-sense-gpu"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon",
  "etalon-sense-core",
@@ -1379,7 +1380,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-host"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "etalon-signal",
@@ -1387,21 +1388,21 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-nfc"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
 ]
 
 [[package]]
 name = "etalon-sense-pcsc"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-nfc",
 ]
 
 [[package]]
 name = "etalon-sense-runtime"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "etalon-signal",
@@ -1409,7 +1410,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-sdr"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "etalon-signal",
@@ -1417,7 +1418,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-wasapi"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "windows",
@@ -1425,7 +1426,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-wifi"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "windows",
@@ -1433,7 +1434,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-windows-sensors"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "etalon-sense-core",
  "windows",
@@ -1441,11 +1442,11 @@ dependencies = [
 
 [[package]]
 name = "etalon-signal"
-version = "0.0.1"
+version = "0.0.2"
 
 [[package]]
 name = "etalon-sync"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "cfg-if",
  "lock_api",
@@ -1457,7 +1458,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-tensor"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "etalon",
@@ -1470,7 +1471,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-test"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "approx",
@@ -1517,7 +1518,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-types"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitflags 2.13.2",
  "bytemuck",
@@ -1536,7 +1537,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-wasm"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "etalon-types",
@@ -1546,7 +1547,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-wgsl-forge"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "blake3",
  "bytemuck",
@@ -1995,7 +1996,7 @@ checksum = "e17592d60ebacc7d5e169f4663c5f84f9161cc90328abcfe8456f41e4dfcb284"
 
 [[package]]
 name = "hlsl-snapshots"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "nanoserde",
@@ -2314,7 +2315,7 @@ checksum = "11d3d7f243d5c5a8b9bb5d6dd2b1602c0cb0b9db1621bafc7ed66e35ff9fe092"
 
 [[package]]
 name = "lock-analyzer"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "ron",
@@ -2437,7 +2438,7 @@ checksum = "add0ac067452ff1aca8c5002111bd6b1c895baee6e45fcbc44e0193aea17be56"
 
 [[package]]
 name = "naga"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "arbitrary",
  "arrayvec",
@@ -2475,7 +2476,7 @@ dependencies = [
 
 [[package]]
 name = "naga-cli"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "anyhow",
  "argh",
@@ -2488,7 +2489,7 @@ dependencies = [
 
 [[package]]
 name = "naga-fuzz"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "arbitrary",
  "cfg_aliases",
@@ -2498,7 +2499,7 @@ dependencies = [
 
 [[package]]
 name = "naga-test"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bitflags 2.13.2",
  "naga",
@@ -2510,7 +2511,7 @@ dependencies = [
 
 [[package]]
 name = "naga-types"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "arbitrary",
  "bytemuck",
@@ -3134,7 +3135,7 @@ checksum = "b4596b6d070b27117e987119b4dac604f3c58cfb0b191112e24771b2faeac1a6"
 
 [[package]]
 name = "player"
-version = "0.0.1"
+version = "0.0.2"
 dependencies = [
  "bytemuck",
  "env_logger",

@@ -17,4 +17,11 @@ wasm-bindgen-futures = { workspace = true, features = ["std"] }
 js-sys = { workspace = true, features = ["std"] }
 serde_json = { workspace = true }
 etalon-nquin = { path = "../etalon-nquin", default-features = false, features = ["std"] }
-etalon-wgsl-forge = { path = "../etalon-wgsl-forge", default-features = false, features = ["std", "wgsl", "naga-validate"] }
+etalon-wgsl-forge = { path = "../etalon-wgsl-forge", default-features = false, features = [
+    "std",
+    "wgsl",
+    "naga-validate"
+] }
+
+[dev-dependencies]
+etalon-types = { workspace = true }
