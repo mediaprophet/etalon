@@ -49,6 +49,7 @@ The agent changed the development version to 0.0.3 without the user's instructio
 
 ### Follow-up portability and diagnostics
 
+- Keep browser app controls disabled until their handlers load; expose bounded startup failures, timeouts and build identity in downloadable receipts. Capture module transport failures in browser qualification.
 - Add explicit Rust/WASM BLE GATT access, bounded notification receipts, browser network metadata and permission-mediated camera capture with bounded frame processing. Unsupported radio scans and unknown infrared capability remain explicit.
 - Add an installable Rust/WASM test app with hash-verified offline assets, explicit app-mode diagnostics and a bounded OPFS receipt vault. Storage persistence is requested only by the user; saved reports remain local and can be exported or deleted.
 

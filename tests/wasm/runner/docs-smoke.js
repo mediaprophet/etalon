@@ -1,3 +1,4 @@
+import { runStartupContracts } from "./startup-contracts.js";
 import { runCameraContracts } from "./camera-contracts.js";
 import { runRadioContracts } from "./radio-contracts.js";
 import { runPwaContracts } from "./pwa-contracts.js";
@@ -56,10 +57,33 @@ const context = await chromium.launchPersistentContext(args["--profile"], {
   args: browserArgs,
 });
 const messages = [];
+const networkErrors = [];
+let observedPage;
 const boundary = mode === "adapter-null" || mode === "adapter-rejected";
 const rejectionMessage = "etalon-injected-adapter-rejection";
 try {
   const page = context.pages()[0] || (await context.newPage());
+  observedPage = page;
+  page.on("requestfailed", (request) => {
+    if (networkErrors.length < 16)
+      networkErrors.push({
+        kind: "requestfailed",
+        url: request.url().slice(0, 1024),
+        reason: request.failure()?.errorText,
+      });
+  });
+  page.on("response", (response) => {
+    if (response.status() >= 400 && networkErrors.length < 16)
+      networkErrors.push({
+        kind: "http",
+        url: response.url().slice(0, 1024),
+        status: response.status(),
+      });
+  });
+  page.on("console", (entry) => {
+    if (entry.type() === "error" && messages.length < 8)
+      messages.push(entry.text().slice(0, 1000));
+  });
   page.on("pageerror", (error) => {
     if (messages.length < 8) messages.push(String(error).slice(0, 1000));
   });
@@ -147,6 +171,20 @@ try {
     );
   }
   await page.goto(args["--url"], { waitUntil: "load", timeout: 30000 });
+  await page.waitForFunction(
+    () => ["ready", "failed"].includes(document.body.dataset.etalonStartup),
+    null,
+    { timeout: 30000 },
+  );
+  const startup = await page.evaluate(() => ({
+    status: document.body.dataset.etalonStartup,
+    ready: document.body.dataset.etalonReady,
+    receipt: document.querySelector("#app-startup-report").textContent,
+  }));
+  if (startup.status !== "ready" || startup.ready !== "true")
+    throw new Error(
+      `App startup failed before executing tests: ${JSON.stringify(startup)}`,
+    );
   const selector = page.locator("#feature-level");
   if ((await selector.count()) > 0) await selector.selectOption(featureLevel);
   else if (featureLevel !== "core") throw new Error("Feature selector missing");
@@ -400,6 +438,13 @@ try {
       `Adapter diagnostic contracts: ${JSON.stringify(diagnostics)}\n`,
     );
     if (featureLevel === "core") {
+      const startupContracts = await runStartupContracts(
+        context,
+        args["--url"],
+      );
+      process.stderr.write(
+        `Startup contracts: ${JSON.stringify(startupContracts)}\n`,
+      );
       const ui = await runAdapterDiagnosticPage(
         context,
         args["--url"],
@@ -425,7 +470,20 @@ try {
     throw new Error("Browser DOM budget exceeded");
   process.stdout.write(document);
 } catch (error) {
-  throw new Error(`${error}; browser errors: ${messages.join("; ")}`);
+  const startup = await observedPage
+    ?.evaluate(() => ({
+      state: document.body?.dataset.etalonState,
+      ready: document.body?.dataset.etalonReady,
+      startup: document.body?.dataset.etalonStartup,
+      progress: document.querySelector("#test-progress")?.textContent,
+      receipt: document
+        .querySelector("#app-startup-report")
+        ?.textContent?.slice(0, 16000),
+    }))
+    .catch(() => null);
+  throw new Error(
+    `${error}; startup: ${JSON.stringify(startup)}; network errors: ${JSON.stringify(networkErrors)}; browser errors: ${messages.join("; ")}`,
+  );
 } finally {
   await context.close();
 }

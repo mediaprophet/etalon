@@ -52,6 +52,9 @@ function bounded(value) {
       );
 }
 function buttons() {
+  if (document.body.dataset.etalonComponentRadio === "failed") return;
+  document.querySelector("#refresh-radio").disabled =
+    !wasm || closed || capabilityBusy;
   const enabled = Boolean(bluetooth) && !closed && !busy;
   controls.connect.disabled = !enabled || !available || connected;
   controls.read.disabled = !enabled || !connected;
@@ -260,6 +263,7 @@ window.addEventListener("online", refreshCapabilities);
 window.addEventListener("offline", refreshCapabilities);
 navigator.connection?.addEventListener("change", refreshCapabilities);
 async function initialize() {
+  if (document.body.dataset.etalonComponentRadio === "failed") return;
   const epoch = ++generation;
   buttons();
   try {

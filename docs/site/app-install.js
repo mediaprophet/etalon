@@ -10,6 +10,7 @@ let installPrompt;
 let installing = false;
 
 function showMode() {
+  if (document.body.dataset.etalonComponentInstall === "failed") return;
   const environment = appEnvironment();
   document.body.dataset.etalonAppMode = environment.display_mode;
   mode.textContent = environment.installed_display_mode
@@ -24,6 +25,7 @@ for (const name of ["standalone", "fullscreen", "minimal-ui", "browser"])
     .matchMedia?.(`(display-mode: ${name})`)
     .addEventListener?.("change", showMode);
 window.addEventListener("beforeinstallprompt", (event) => {
+  if (document.body.dataset.etalonComponentInstall === "failed") return;
   event.preventDefault();
   installPrompt = event;
   status.textContent =
@@ -31,6 +33,7 @@ window.addEventListener("beforeinstallprompt", (event) => {
   showMode();
 });
 window.addEventListener("appinstalled", () => {
+  if (document.body.dataset.etalonComponentInstall === "failed") return;
   installPrompt = undefined;
   status.textContent =
     "App installed. Open Etalon from your launcher and run the tests there.";
@@ -90,6 +93,7 @@ function workerStatus(worker) {
   });
 }
 async function registerApp() {
+  if (document.body.dataset.etalonComponentInstall === "failed") return;
   if (!window.isSecureContext || !("serviceWorker" in navigator)) {
     offline.textContent =
       "Offline installation is unavailable in this browser context. Online Rust/WASM tests remain available.";

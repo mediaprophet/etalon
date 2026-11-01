@@ -233,6 +233,7 @@ function exportReport(report) {
   download.disabled = false;
 }
 async function run() {
+  if (document.body.dataset.etalonComponentSuite === "failed") return;
   if (active || blocked || document.body.dataset.etalonDiagnostic === "running")
     return;
   active = true;
@@ -505,12 +506,21 @@ window.addEventListener("pagehide", () => {
 });
 const query = new URLSearchParams(location.search);
 const profile = query.get("feature-level");
-if (profile !== null && !["auto", "core", "compatibility"].includes(profile)) {
+if (document.body.dataset.etalonComponentSuite === "failed") {
+  start.disabled = true;
+  profileSelector.disabled = true;
+} else if (
+  profile !== null &&
+  !["auto", "core", "compatibility"].includes(profile)
+) {
   blocked = true;
   start.disabled = true;
   progress.textContent = "Invalid feature-level query parameter.";
 } else {
   if (profile !== null) profileSelector.value = profile;
   document.body.dataset.etalonReady = "true";
+  start.disabled = document.body.dataset.etalonDiagnostic === "running";
+  profileSelector.disabled = false;
+  progress.textContent = "Ready. No tests have run.";
   if (query.get("autorun") === "1") run();
 }
