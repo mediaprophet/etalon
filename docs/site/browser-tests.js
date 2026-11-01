@@ -201,6 +201,16 @@ async function run() {
       30000,
     );
     report.debug_logging_enabled = module.configure_debug_logging();
+    try {
+      report.context.browser_details = parse(
+        await deadline(module.browser_environment_json(), 5000),
+      );
+    } catch (error) {
+      report.context.browser_details = {
+        status: "metadata-unavailable",
+        message: String(error).slice(0, 512),
+      };
+    }
     const creating = module.create_session_for_profile(selectedProfile);
     try {
       session = await deadline(creating, 30000);
@@ -348,6 +358,13 @@ async function run() {
     }
     if (module && report.debug_logging_enabled) {
       try {
+        report.debug_environment_attached = module.set_debug_environment(
+          JSON.stringify({
+            ...report.context,
+            runtime: report.runtime,
+            source_revision: revision,
+          }),
+        );
         report.debug_log = parse(module.debug_log_json());
       } catch (error) {
         report.debug_log = {

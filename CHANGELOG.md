@@ -45,6 +45,8 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ### Mobile browser portability and resource ownership
 
+- Browser reports include bounded local debug logs with exact source/library versions and browser/device metadata. Optional metadata retains availability status; acquisition controls do not count as GPU passes.
+
 - Preserve optional browser limits and adapter diagnostics, move float-canvas probing to explicit asynchronous capability discovery, and add recorded Core/Compatibility/Auto qualification profiles without silently weakening caller requirements.
 - Add portable GPU radix/sieve and token readback, bounded tensor-arena allocation, corrected 96-byte fused-attention uniforms, and top-k edge-case handling. Android NPU discovery remains distinct from runtime or execution verification.
 - **Breaking:** construct submission leases through `HalComputeLane::lease_submission`; unrestricted construction/public resource fields are removed and reclamation is gated by issuing-queue completion. See the [mobile resolution disposition](docs/mobile-resolution-2026-11-01.md) for migration and native async polling requirements.

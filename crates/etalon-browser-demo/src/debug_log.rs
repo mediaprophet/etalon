@@ -10,6 +10,7 @@ use wasm_bindgen::prelude::*;
 
 const MAX_EVENTS: usize = 128;
 const MAX_JSON_BYTES: usize = 64 * 1024;
+const MAX_ENVIRONMENT_BYTES: usize = 16 * 1024;
 const MAX_MESSAGE_BYTES: usize = 512;
 const MAX_TARGET_BYTES: usize = 96;
 
@@ -25,11 +26,13 @@ struct State {
     events: VecDeque<Event>,
     sequence: u64,
     dropped: u64,
+    environment: Option<serde_json::Value>,
 }
 static STATE: Mutex<State> = Mutex::new(State {
     events: VecDeque::new(),
     sequence: 0,
     dropped: 0,
+    environment: None,
 });
 static INSTALLED: OnceLock<bool> = OnceLock::new();
 static LOGGER: BrowserLogger = BrowserLogger;
@@ -103,9 +106,28 @@ pub fn configure_debug_logging() -> bool {
         state.events.clear();
         state.sequence = 0;
         state.dropped = 0;
+        state.environment = None;
     }
     log::set_max_level(log::LevelFilter::Debug);
     log::debug!(target: "etalon_browser_demo", "Local debug capture enabled; maximum {MAX_EVENTS} events");
+    true
+}
+
+#[wasm_bindgen]
+pub fn set_debug_environment(encoded: &str) -> bool {
+    if encoded.len() > MAX_ENVIRONMENT_BYTES {
+        return false;
+    }
+    let Ok(value) = serde_json::from_str::<serde_json::Value>(encoded) else {
+        return false;
+    };
+    if !value.is_object() || value.to_string().len() > MAX_ENVIRONMENT_BYTES {
+        return false;
+    }
+    let Ok(mut state) = STATE.lock() else {
+        return false;
+    };
+    state.environment = Some(value);
     true
 }
 
@@ -115,6 +137,11 @@ pub fn debug_log_json() -> String {
         return json!({"status":"capture-unavailable"}).to_string();
     };
     // Reserve metadata space; keep newest events and account for JSON escaping.
+    let metadata_bytes = state
+        .environment
+        .as_ref()
+        .map_or(4, |value| value.to_string().len())
+        + 2048;
     let mut events = Vec::new();
     let mut bytes = 2usize;
     for event in state.events.iter().rev() {
@@ -123,7 +150,7 @@ pub fn debug_log_json() -> String {
             "target":event.target,"message":event.message,"truncated":event.truncated,
         });
         let encoded_bytes = value.to_string().len() + 1;
-        if bytes + encoded_bytes > MAX_JSON_BYTES - 1024 {
+        if bytes + encoded_bytes > MAX_JSON_BYTES - metadata_bytes {
             break;
         }
         bytes += encoded_bytes;
@@ -131,7 +158,11 @@ pub fn debug_log_json() -> String {
     }
     let omitted = state.events.len() - events.len();
     events.reverse();
-    json!({"status":if INSTALLED.get() == Some(&true) {"enabled"} else {"not-installed"},
+    json!({"schema":"etalon.debug-log.v1",
+        "source_revision":option_env!("ETALON_DEMO_REVISION").unwrap_or("local-unidentified"),
+        "library_version":env!("CARGO_PKG_VERSION"),"build_target":"wasm32-unknown-unknown",
+        "environment":state.environment,
+        "status":if INSTALLED.get() == Some(&true) {"enabled"} else {"not-installed"},
         "level":"debug","max_events":MAX_EVENTS,"max_message_bytes":MAX_MESSAGE_BYTES,
         "max_target_bytes":MAX_TARGET_BYTES,"max_json_bytes":MAX_JSON_BYTES,
         "dropped_events":state.dropped.saturating_add(omitted as u64),

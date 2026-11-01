@@ -118,6 +118,7 @@ pub async fn create_session_for_profile(profile: String) -> Session {
             }),
         ),
     };
+    info["library_version"] = json!(env!("CARGO_PKG_VERSION"));
     info["requested_feature_level"] = json!(profile);
     info["source_revision"] =
         json!(option_env!("ETALON_DEMO_REVISION").unwrap_or("local-unidentified"));
