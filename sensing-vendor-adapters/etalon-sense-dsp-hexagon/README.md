@@ -43,10 +43,9 @@ uses no unsourced vendor FFI.
 
 ## Qualification status
 
-Source-only implementation. No compiler, build, test, emulator, DSP, device,
-runtime library or network operation has been run. Host tests exercise the
-arithmetic kernel and unsupported-target refusal as source specifications;
-the target dispatch test requires a suitable native test runtime/harness.
-Allocation measurement, cross-target compilation, CPU-oracle comparison,
-firmware/RPC integration, policy and timing/cancellation qualification remain
-deferred. No claim is made that this DSP can be loaded from the current host.
+CI host tests exercise the arithmetic kernel and unsupported-target refusal.
+They do not compile or execute the native Hexagon branch. Its target dispatch
+test requires a suitable native test runtime/harness. Target allocation
+measurement, cross-compilation, firmware/RPC integration, policy and
+timing/cancellation qualification remain deployment requirements. No claim is
+made that a DSP image has been loaded or qualified from the current host.

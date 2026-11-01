@@ -134,17 +134,17 @@ The synchronous native read has no hard-deadline or cancellation interface.
 The backend must not claim the existing bounded `SdrReader` contract; callers
 needing enforceable deadlines must establish process/device isolation or use a
 separately implemented cancellable backend. Caller I/Q buffers are bounded,
-while libusb/driver/runtime allocations remain unbounded. No runtime was loaded,
-device selected, packaging script run, or build/test performed.
+while libusb/driver/runtime allocations remain unbounded. Rust/mock checks run
+in CI; native runtime loading, device execution and deployment packaging have
+not been qualified.
 
 ## GPU deployment boundary
 
-The current sensing GPU provider remains explicitly `ColdUnbounded` for live
-dispatch. The public buffer mapping API boxes callbacks, the native backend
-adds callback ownership, and command recording/submission have no public
-caller-owned recording arena. The same process must preserve the device/queue
-pair and synchronize submissions. File admission cannot establish a hot
-zero-heap execution path or hardware identity. The coordinated changes and
-deferred allocation/device checks are recorded in
-`../docs/plans/sensing-zero-heap-gpu-completion-PROPOSAL.md`; no shared API was
-changed by this deployment implementation.
+The ordinary sensing GPU provider remains explicitly `ColdUnbounded` for live
+dispatch. Its buffer mapping and command recording/submission use ordinary
+Etalon APIs with internal allocation. The prepared sensing provider instead
+uses a private Vulkan lane with fixed resources and caller readback storage;
+its live allocation class also remains `ColdUnbounded` pending qualification.
+See [prepared compute](../docs/prepared-compute.md) for the implemented ownership,
+policy, timeout and allocation boundaries. File admission establishes neither
+a hot zero-heap execution path nor hardware identity.
