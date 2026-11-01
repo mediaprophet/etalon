@@ -1,6 +1,6 @@
-# Etalon — Fiduciary WebGPU & Graphics Standard for QualiaDB & Webizen
+# Etalon — EMF Synthesis, Sensing and Compute for QualiaDB
 
-> High-performance, memory-safe, cross-platform graphics and GPU compute engine hardened for QualiaDB cognitive pipelines, Aether spatial hosts, and Webizen OS-Shell.
+> Rust foundations for electromagnetic-field synthesis, sensing and computation, designed for QualiaDB and Webizen systems.
 
 [![CI](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml/badge.svg)](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml)
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](LICENSE)
@@ -8,9 +8,15 @@
 [![Ecosystem: QualiaDB](https://img.shields.io/badge/Ecosystem-QualiaDB-blue.svg)](https://github.com/mediaprophet/qualiaDB)
 [![Platform: Vulkan_|_Metal_|_DX12_|_WebGPU](https://img.shields.io/badge/Backends-Vulkan_%7C_Metal_%7C_DX12_%7C_WebGPU-orange.svg)](#architecture--workspace-structure)
 
-**Etalon** is the human-agency and fiduciary GPU acceleration and graphics standard powering the spatial computing environment of [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), the [Aether](https://github.com/mediaprophet/rust-app-framework) human-agency application framework, and [QualiaDB](https://github.com/mediaprophet/qualiaDB)'s 10D manifold neural rendering and WGSL Forge compute kernels.
+**Etalon** is being developed as an EMF synthesis, sensing and compute library specifically for [QualiaDB](https://github.com/mediaprophet/qualiaDB) systems. It brings together device and observation contracts, signal processing, generated compute kernels, tensor operations, semantic data buffers and electromagnetic-field visualization. Graphics is one supporting execution and presentation capability within that broader direction.
 
-Named after the optical Fabry-Pérot etalon—the scientific archetype of precision measurement and wave interferometry—Etalon is maintained as an enhanced, hardened fork of [wgpu](https://github.com/gfx-rs/wgpu) 30 by the gfx-rs developers. It provides an authoritative reference implementation that resolves critical upstream edge cases, W3C specification churn, and browser/webview incompatibilities that disrupt production WebGPU and native graphics deployments.
+Etalon supplies Rust execution, accelerator and device-facing building blocks. QualiaDB supplies semantic context, inference, q42 uncertainty representation, human-centered permissions and evidence custody. Their integration is explicit: Etalon does not replace QualiaDB's database or policy systems. Use by any project remains subject to the applicable licence terms.
+
+Version 0.0.2 provides foundations for this direction. Implemented synthesis-related building blocks include deterministic shader/kernel generation and rendering; these do not establish a general waveform generator, physical RF transmitter or complete EMF simulation/inference system. Qualification is specific to the API, backend and device exercised.
+
+Named after the optical Fabry-Pérot etalon, the library builds on [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu) 30 and Naga, retaining their graphics, validation and shader-compiler foundation and upstream attribution.
+
+The current Etalon-specific CC BY-NC-ND 4.0 licence is an interim arrangement while the underlying code is built. The intended QualiaDB/Webizen licensing framework will be defined through separate work that depends on that implementation. The current licence and component notices govern use in the meantime; this documentation update does not change them.
 
 **Homepage:** https://mediaprophet.github.io/etalon/
 
