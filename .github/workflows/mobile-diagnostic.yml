@@ -1,0 +1,125 @@
+name: Mobile browser diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  trace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      REPRO_REVISION: 5f361e53deccf39d7e31d42f1f0d7c90e9377d13
+      REPRO_RUN: "41274003094"
+      REPRO_ARTIFACT: browser-reproduction-5f361e53deccf39d7e31d42f1f0d7c90e9377d13
+    steps:
+      - name: Checkout diagnostic controller
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Download bounded existing WASM artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh api "repos/$GITHUB_REPOSITORY/actions/runs/$REPRO_RUN/artifacts" > "$RUNNER_TEMP/repro-artifacts.json"
+          python3 - <<'PY'
+          import json, os, pathlib
+          items = json.loads((pathlib.Path(os.environ["RUNNER_TEMP"]) / "repro-artifacts.json").read_text())["artifacts"]
+          matches = [item for item in items if item["name"] == os.environ["REPRO_ARTIFACT"]]
+          if len(matches) != 1 or matches[0]["expired"] or not 0 < matches[0]["size_in_bytes"] <= 32 * 1024 * 1024:
+              raise SystemExit("Missing, expired, ambiguous or oversized reproduction artifact")
+          PY
+          gh run download "$REPRO_RUN" --repo "$GITHUB_REPOSITORY" --name "$REPRO_ARTIFACT" --dir "$RUNNER_TEMP/mobile-repro-assets"
+
+      - name: Assemble the exact reproduction page
+        shell: bash
+        run: |
+          git fetch --no-tags --depth=1 origin "$REPRO_REVISION"
+          python3 - <<'PY'
+          import os, pathlib, shutil, subprocess
+          root = pathlib.Path(os.environ["RUNNER_TEMP"])
+          assets = root / "mobile-repro-assets"
+          files = list(assets.rglob("*"))
+          if any(path.is_symlink() for path in files) or sum(path.stat().st_size for path in files if path.is_file()) > 32 * 1024 * 1024:
+              raise SystemExit("Extracted artifact exceeds input budget or contains symlinks")
+          expected = {"etalon_browser_demo.js", "etalon_browser_demo_bg.wasm"}
+          if {path.name for path in files if path.is_file()} != expected:
+              raise SystemExit("Unexpected reproduction artifact contents")
+          site = root / "mobile-repro-site"
+          (site / "browser").mkdir(parents=True, exist_ok=False)
+          for name in expected:
+              shutil.copyfile(assets / name, site / "browser" / name)
+          revision = os.environ["REPRO_REVISION"]
+          for name in ("testing.html", "styles.css", "browser-tests.js"):
+              data = subprocess.check_output(["git", "show", f"{revision}:docs/site/{name}"])
+              if len(data) > 1024 * 1024:
+                  raise SystemExit("Source asset exceeds budget")
+              if name == "testing.html":
+                  data = data.replace(b"{{REVISION}}", revision.encode())
+              (site / name).write_bytes(data)
+          PY
+
+      - name: Install locked browser controller without browser downloads
+        run: npm ci --prefix tests/wasm/runner --ignore-scripts --no-audit --no-fund
+
+      - name: Trace exact WASM with baseline and SwANGLE configurations
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from functools import partial
+          from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+          import json, os, pathlib, shutil, subprocess, tempfile, threading
+          root = pathlib.Path(os.environ["RUNNER_TEMP"])
+          output = root / "mobile-diagnostic-receipts"
+          output.mkdir(exist_ok=False)
+          chrome = shutil.which("google-chrome") or shutil.which("google-chrome-stable")
+          if not chrome:
+              raise SystemExit("Existing host Chrome is required; no browser download")
+          class Handler(SimpleHTTPRequestHandler):
+              def log_message(self, *args):
+                  pass
+          with tempfile.TemporaryDirectory(prefix="etalon-mobile-diagnostic-", dir=root) as scratch:
+              with ThreadingHTTPServer(("127.0.0.1", 0), partial(Handler, directory=str(root / "mobile-repro-site"))) as server:
+                  worker = threading.Thread(target=server.serve_forever, daemon=True)
+                  worker.start()
+                  try:
+                      for variant in ("baseline", "swangle"):
+                          command = ["node", "tests/wasm/runner/mobile-trace.js", "--chrome", chrome,
+                                     "--profile", str(pathlib.Path(scratch) / variant), "--variant", variant,
+                                     "--url", f"http://127.0.0.1:{server.server_port}/testing.html"]
+                          result = subprocess.run(command, capture_output=True, timeout=240)
+                          if len(result.stdout) + len(result.stderr) > 1024 * 1024:
+                              raise SystemExit("Diagnostic command exceeds output budget")
+                          if result.returncode:
+                              receipt = {"variant": variant, "controller_failure": result.stderr.decode("utf-8", "replace")[-4000:]}
+                          else:
+                              receipt = json.loads(result.stdout)
+                          data = json.dumps(receipt, indent=2).encode()
+                          if len(data) > 1024 * 1024:
+                              raise SystemExit("Diagnostic receipt exceeds output budget")
+                          (output / f"{variant}.json").write_bytes(data)
+                          print(json.dumps({"variant": variant, "controller_exit": result.returncode,
+                              "scenarios": [{"scenario": case["scenario"], "failure": case.get("failure"),
+                                  "qualification": case.get("result", {}).get("qualification"),
+                                  "cases": case.get("result", {}).get("cases"),
+                                  "device_events": [event for event in case.get("trace", []) if event["operation"] in ("device.lost", "device.destroy")]}
+                                  for case in receipt.get("scenarios", [])]}))
+                  finally:
+                      server.shutdown()
+                      worker.join(timeout=5)
+          PY
+
+      - name: Retain bounded diagnostic receipts
+        if: always()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: mobile-diagnostic-${{ github.run_id }}
+          path: ${{ runner.temp }}/mobile-diagnostic-receipts
+          retention-days: 3
+          if-no-files-found: error
