@@ -266,3 +266,18 @@ button:disabled {
   border: 1px solid var(--line);
   background: #dce5df;
 }
+
+#camera-video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  background: #122c33;
+}
+#ble-service,
+#ble-characteristic,
+#ble-write-hex {
+  display: block;
+  width: min(100%, 36rem);
+  box-sizing: border-box;
+  font: inherit;
+}

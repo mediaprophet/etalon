@@ -1,3 +1,5 @@
+import { runCameraContracts } from "./camera-contracts.js";
+import { runRadioContracts } from "./radio-contracts.js";
 import { runPwaContracts } from "./pwa-contracts.js";
 import { chromium } from "playwright";
 import { runBackendContracts } from "./backend-contracts.js";
@@ -404,6 +406,10 @@ try {
         report.source_revision,
       );
       process.stderr.write(`Adapter diagnostic UI: ${JSON.stringify(ui)}\n`);
+      const camera = await runCameraContracts(page);
+      process.stderr.write(`Camera contracts: ${JSON.stringify(camera)}\n`);
+      const radio = await runRadioContracts(page);
+      process.stderr.write(`Radio contracts: ${JSON.stringify(radio)}\n`);
       const pwa = await runPwaContracts(
         context,
         args["--url"],
