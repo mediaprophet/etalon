@@ -3,3 +3,5 @@
 **/target/
 naga/tests/in/
 naga/tests/out/
+# Preserve byte-exact upstream references and recorded source hashes.
+sensing-vendor-adapters/sdk-reference/

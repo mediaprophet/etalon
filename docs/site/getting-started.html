@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Get started | Etalon</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <nav aria-label="Main navigation">
+        <a class="brand" href="index.html">etalon</a
+        ><a href="getting-started.html" aria-current="page">Get started</a
+        ><a href="doc/etalon/index.html">API reference</a
+        ><a href="licensing.html">Licensing</a
+        ><a href="https://github.com/mediaprophet/etalon">GitHub</a>
+      </nav>
+    </header>
+    <main id="main" class="content">
+      <p class="eyebrow">Library guide</p>
+      <h1>Start from your data.</h1>
+      <p class="lead">
+        The sensing libraries can process caller-owned samples without opening a
+        device or starting a service.
+      </p>
+      <h2>1. Add the portable facade</h2>
+      <p>
+        Use Rust 1.96.1 for the repository's current toolchain. For initial
+        development:
+      </p>
+      <pre><code>[dependencies]
+etalon-sense = { git = "https://github.com/mediaprophet/etalon.git",
+                 branch = "dev" }</code></pre>
+      <p>
+        Before releasing your consumer, replace <code>branch = "dev"</code> with
+        <code>rev = "&lt;full tested commit SHA&gt;"</code>. This site's exact
+        source revision appears below. A local checkout can instead use
+        <code>path = "../etalon/crates/etalon-sense"</code> from a sibling
+        application's manifest; adjust the relative path to that manifest's
+        directory.
+      </p>
+      <h2>2. Compute I/Q power</h2>
+      <p>
+        This complete example decodes one little-endian signed-i16 pair and
+        returns its uncalibrated squared amplitude. No acquisition or
+        physical-unit interpretation is implied.
+      </p>
+      <pre><code>use etalon_sense::signal::{
+    decode::ByteOrder,
+    pipeline::i16_iq_power_into,
+};
+
+fn main() -&gt; Result&lt;(), etalon_sense::signal::SignalError&gt; {
+    let raw = [3_u8, 0, 4, 0];
+    let mut decoded = [0.0_f32; 2];
+    let mut power = [0.0_f64; 1];
+
+    let count = i16_iq_power_into(
+        &amp;raw,
+        ByteOrder::LittleEndian,
+        1.0,
+        &amp;mut decoded,
+        &amp;mut power,
+    )?;
+    assert_eq!(count, 1);
+    assert_eq!(power, [25.0]);
+    Ok(())
+}</code></pre>
+      <p>
+        Keep the input encoding, scale, clock domain, calibration references and
+        physical units alongside processed values. A numeric power value is not
+        automatically watts, dBm, identity evidence or a calibrated measurement.
+      </p>
+      <h2>3. Select the capabilities you need</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Capability</th>
+            <th>Selection</th>
+            <th>API</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Contracts and observations</td>
+            <td>Default facade</td>
+            <td><a href="doc/etalon_sense_core/index.html">core</a></td>
+          </tr>
+          <tr>
+            <td>Runtime coordination</td>
+            <td>Default facade</td>
+            <td><a href="doc/etalon_sense_runtime/index.html">runtime</a></td>
+          </tr>
+          <tr>
+            <td>Signal primitives</td>
+            <td>Default facade</td>
+            <td><a href="doc/etalon_signal/index.html">signal</a></td>
+          </tr>
+          <tr>
+            <td>CPU processing provider</td>
+            <td><code>features = ["cpu"]</code></td>
+            <td><a href="doc/etalon_sense_cpu/index.html">CPU provider</a></td>
+          </tr>
+          <tr>
+            <td>Generic host reader</td>
+            <td><code>features = ["host"]</code></td>
+            <td><a href="doc/etalon_sense_host/index.html">Host reader</a></td>
+          </tr>
+          <tr>
+            <td>Generic SDR reader</td>
+            <td><code>features = ["sdr"]</code></td>
+            <td><a href="doc/etalon_sense_sdr/index.html">SDR contracts</a></td>
+          </tr>
+          <tr>
+            <td>NFC declarations</td>
+            <td><code>features = ["nfc"]</code></td>
+            <td><a href="doc/etalon_sense_nfc/index.html">NFC</a></td>
+          </tr>
+          <tr>
+            <td>Camera contracts</td>
+            <td><code>features = ["camera"]</code></td>
+            <td><a href="doc/etalon_sense_camera/index.html">Camera</a></td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        Windows acquisition providers are opt-in features such as
+        <code>wifi</code>, <code>ble</code>, <code>wasapi</code>,
+        <code>pcsc</code> and <code>windows-sensors</code>. Native camera
+        capture has explicit unqualified feature gates. Review the selected
+        provider's source, platform requirements and permission contract before
+        acquisition.
+      </p>
+      <h2>Native GPU and vendor adapters</h2>
+      <p>
+        Graphics and compute consumers use the <code>etalon</code> package.
+        <a href="doc/etalon/struct.PreparedCompute.html">Prepared compute</a>
+        owns a private native Vulkan execution lane with fixed resources.
+        Ordinary GPU providers and native runtimes do not automatically satisfy
+        a strict hot zero-allocation requirement.
+      </p>
+      <p>
+        Select <code>features = ["gpu-vulkan"]</code> on the sensing facade for
+        the <a href="doc/etalon_sense_gpu/index.html">GPU sensing API</a>,
+        including its prepared I/Q power provider. Preparation binds an actual
+        selected adapter to host policy checks. The provider remains
+        <code>ColdUnbounded</code> pending qualification; the logical buffer
+        budget does not cap driver or policy callback allocation.
+      </p>
+      <p>
+        The
+        <a
+          href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/sensing-vendor-adapters"
+          >vendor adapter workspace</a
+        >
+        contains explicit DSP/FastRPC, RTL-SDR and model-runtime integrations.
+        These are separate dependencies with SDK, driver, native allocation and
+        licensing requirements. A generic <code>sdr</code> feature does not
+        install or select an RTL-SDR driver.
+      </p>
+      <h2>Using observations with QualiaDB</h2>
+      <p>
+        Pass the common observation envelope with the exact resolved payload and
+        a host-defined semantic mapping. QualiaDB owns its database, inference,
+        Sanctuary/guardianship permissions and evidence custody. Capture
+        approval does not implicitly authorize later processing, storage or
+        export. Generic applications can implement their own authorities without
+        depending on QualiaDB.
+      </p>
+      <p class="note">
+        Device indices, USB strings, radio identifiers and declared source IDs
+        are evidence inputs, not authenticated entity identities. Unknown
+        timestamps, quality and uncertainty remain unknown.
+      </p>
+      <p class="small">
+        Documentation source:
+        <a href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}"
+          ><code>{{REVISION}}</code></a
+        >.
+      </p>
+    </main>
+    <footer>
+      <div>
+        <a href="index.html">Etalon</a> &middot;
+        <a href="licensing.html">Licensing and native runtime boundaries</a>
+      </div>
+    </footer>
+  </body>
+</html>

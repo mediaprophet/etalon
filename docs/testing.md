@@ -256,6 +256,11 @@ listed above remain in place.
 
 ## Memory Initialization Testing
 
+The prepared native compute API has separate reuse/validation regressions and an
+explicitly ignored allocator qualification binary. See
+[Prepared native compute](prepared-compute.md#qualification) for its allocation
+boundary, target evidence requirements, and qualification command.
+
 Simple tests can fail to detect when necessary memory initialization is omitted because
 allocations that happen to be satisfied by fresh kernel-provided pages are zero, even though
 the actual allocator being invoked does not guarantee that.

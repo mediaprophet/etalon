@@ -34,11 +34,11 @@ int etalon_iq_power_skel_handle_invoke(remote_handle64 handle,
 The original skeleton implements three exact scalar shapes, with zero method
 attributes and no extended-scalar variant:
 
-| Method | Scalar | Native arguments |
-| --- | --- | --- |
-| Open, 0 | `0x00020001` | int32 URI-byte-length buffer, NUL-terminated URI buffer, one output handle |
-| Close, 1 | `0x01000010` | one input handle |
-| IQ power, 2 | `0x02010100` | one input byte buffer, one output byte buffer |
+| Method      | Scalar       | Native arguments                                                           |
+| ----------- | ------------ | -------------------------------------------------------------------------- |
+| Open, 0     | `0x00020001` | int32 URI-byte-length buffer, NUL-terminated URI buffer, one output handle |
+| Close, 1    | `0x01000010` | one input handle                                                           |
+| IQ power, 2 | `0x02010100` | one input byte buffer, one output byte buffer                              |
 
 Open/close ignore the leading native handle, matching QAIC-generated behavior;
 close's target handle is the explicit input handle argument. The opened numeric

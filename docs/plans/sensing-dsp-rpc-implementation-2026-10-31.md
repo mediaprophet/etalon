@@ -7,14 +7,14 @@ sensing plans and the shared accelerator/compiler APIs are preserved.
 
 ## Source composition
 
-| Library | Responsibility | Allocation boundary |
-| --- | --- | --- |
-| `etalon-sense-dsp` | Exact host-registry target and operation/revision routing, pinned provider descriptor, no alternate-device fallback | Caller-owned bounded bindings and buffers |
-| `etalon-sense-dsp-hexagon` | Native Hexagon complex-i16 IQ power into little-endian f64 output | Zero-heap source path; measurement deferred |
-| `etalon-sense-dsp-wire` | Versioned 64-byte header, canonical lengths, echoed identity and numeric-result checks | Caller-owned byte slices |
-| `etalon-sense-dsp-service` | Native dispatch, image target/capacity, bounded session lifecycle and Rust/C skeleton boundary | Bounded caller buffers and atomic32 context; SDK obligations remain |
-| `etalon-sense-fastrpc` | Linux/Android dynamic host transport, synchronous handle ownership and live-processing provider | `ColdUnbounded` native runtime; bounded sample/workspace slices |
-| `etalon-sense-deployment::fastrpc` | Local artifact length/hash admission, authenticated declarations and authority revalidation | Caller-owned streaming scratch and aggregate artifact-byte budget |
+| Library                            | Responsibility                                                                                                      | Allocation boundary                                                 |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `etalon-sense-dsp`                 | Exact host-registry target and operation/revision routing, pinned provider descriptor, no alternate-device fallback | Caller-owned bounded bindings and buffers                           |
+| `etalon-sense-dsp-hexagon`         | Native Hexagon complex-i16 IQ power into little-endian f64 output                                                   | Zero-heap source path; measurement deferred                         |
+| `etalon-sense-dsp-wire`            | Versioned 64-byte header, canonical lengths, echoed identity and numeric-result checks                              | Caller-owned byte slices                                            |
+| `etalon-sense-dsp-service`         | Native dispatch, image target/capacity, bounded session lifecycle and Rust/C skeleton boundary                      | Bounded caller buffers and atomic32 context; SDK obligations remain |
+| `etalon-sense-fastrpc`             | Linux/Android dynamic host transport, synchronous handle ownership and live-processing provider                     | `ColdUnbounded` native runtime; bounded sample/workspace slices     |
+| `etalon-sense-deployment::fastrpc` | Local artifact length/hash admission, authenticated declarations and authority revalidation                         | Caller-owned streaming scratch and aggregate artifact-byte budget   |
 
 The concrete operation is revision 1 of `0x4951504f57455231`: each signed
 little-endian i16 I/Q pair becomes its exact integer-valued f64 `I² + Q²`.

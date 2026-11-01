@@ -1,5 +1,10 @@
 # Sensing GPU Completion and Polling Proposal
 
+Historical proposal: the private native Vulkan prepared-execution implementation
+is now described in [Prepared native compute](../prepared-compute.md). The
+ordinary callback/encoding APIs discussed below still allocate; target allocation
+qualification and consuming-provider admission remain separate requirements.
+
 Status: proposal only. No Etalon API or backend changes are included here. The proposal targets bounded caller-owned readback completion for sensing providers and separates application-level improvements from work required inside Etalon.
 
 ## Current API boundary
@@ -40,14 +45,14 @@ Provide a `DeviceQueuePair` owner created only from Etalon's paired device reque
 
 ## Lifecycle and safety states
 
-| State | Allowed action | Terminal/transition rule |
-|---|---|---|
-| `Idle` | Begin one map with a new generation | Capacity and byte budget checked before submission |
-| `Submitted` | Poll or await; no readback view | A timeout or loss invalidates the generation |
-| `Mapping` | Callback may publish status only | No buffer reuse until callback/poll state is resolved |
-| `Mapped` | Acquire one bounded view and copy to caller buffer | Drop view before unmap |
-| `Cancelled` | No further read; unmap and discard/retire as required | Late callback is ignored by generation |
-| `Failed` / `DeviceLost` | Return failure; no sample output is trusted | Provider is poisoned; create new resources through host policy |
+| State                   | Allowed action                                        | Terminal/transition rule                                       |
+| ----------------------- | ----------------------------------------------------- | -------------------------------------------------------------- |
+| `Idle`                  | Begin one map with a new generation                   | Capacity and byte budget checked before submission             |
+| `Submitted`             | Poll or await; no readback view                       | A timeout or loss invalidates the generation                   |
+| `Mapping`               | Callback may publish status only                      | No buffer reuse until callback/poll state is resolved          |
+| `Mapped`                | Acquire one bounded view and copy to caller buffer    | Drop view before unmap                                         |
+| `Cancelled`             | No further read; unmap and discard/retire as required | Late callback is ignored by generation                         |
+| `Failed` / `DeviceLost` | Return failure; no sample output is trusted           | Provider is poisoned; create new resources through host policy |
 
 Do not retain sample bytes in internal completion slots. Slots carry only request generation and status. The GPU input/output buffers and map buffer still retain sample-derived data until overwritten or destroyed; neither `unmap` nor dropping the provider is a secure-erasure guarantee.
 

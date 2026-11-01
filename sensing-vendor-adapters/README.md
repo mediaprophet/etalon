@@ -10,8 +10,9 @@ Hard memory and no-egress enforcement remain host duties.
 The drafts pin the locally cached ORT `2.0.0-rc.15`, with dynamic loading and
 without requesting the binary-download feature. Cargo feature unification in a
 larger consuming workspace can still enable other features, including downloads.
-No lockfile has been generated and no dependency resolution, build, test,
-runtime loading or device access has been performed. Public SDK-interface
+The independent workspace now retains its own lockfile for reproducible CI.
+Rust compilation and mock tests are tracked separately from native runtime and
+device qualification; CI success does not establish physical hardware support. Public SDK-interface
 reference sources were downloaded with authorization; their pinned provenance
 and licenses are retained in `sdk-reference`. No project data was uploaded.
 

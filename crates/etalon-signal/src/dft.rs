@@ -14,7 +14,7 @@ pub enum DftScale {
 }
 
 /// Transform interleaved complex samples using row-major interleaved complex
-/// coefficients: output[k] = sum(input[n] * coefficient[k,n]). The caller
+/// coefficients: `output[k] = sum(input[n] * coefficient[k,n])`. The caller
 /// selects sign, coefficient generation, frequency labeling, and windowing.
 ///
 /// All inputs and results are checked before modifying output. Coefficient

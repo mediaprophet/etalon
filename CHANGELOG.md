@@ -45,6 +45,10 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ### Added/New Features
 
+- Add private prepared Vulkan execution and a sensing IQ-power live provider
+  that reuses upload, command, submission and readback resources. Caller sample
+  buffers are bounded; target allocation and driver qualification remain explicit.
+
 - Add an opt-in RTL-SDR receive adapter with explicit local runtime/dependency
   admission, device policy gates and caller-owned I/Q buffers. Native read
   deadlines and hardware qualification remain external requirements.

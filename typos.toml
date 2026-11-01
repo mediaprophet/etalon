@@ -3,6 +3,8 @@
 ignore-hidden = false
 extend-exclude = [
     '/.git',
+    # Upstream reference bytes are verified against pinned source hashes.
+    'sensing-vendor-adapters/sdk-reference/**',
     # spirv-asm isn't real source code
     '*.spvasm',
     'etalon/src/documentation/images/big-picture.xml',

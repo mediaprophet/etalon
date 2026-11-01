@@ -1360,6 +1360,8 @@ dependencies = [
  "etalon",
  "etalon-sense-core",
  "etalon-signal",
+ "naga",
+ "pollster",
 ]
 
 [[package]]

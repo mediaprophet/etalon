@@ -57,6 +57,7 @@ impl PcscUid {
     }
 }
 
+#[cfg(any(windows, test))]
 fn uid_from_response(response: &[u8]) -> Result<PcscUid, PcscError> {
     if response.len() < 2 {
         return Err(PcscError::InvalidResponse);

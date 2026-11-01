@@ -1,5 +1,7 @@
 //! OS-reported magnetic heading, not a position or identity.
-use crate::{AdaptError, SensorError};
+use crate::AdaptError;
+#[cfg(windows)]
+use crate::SensorError;
 use etalon_sense_core::{
     evidence::EvidenceOrigin,
     observation::{
