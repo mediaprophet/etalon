@@ -41,20 +41,22 @@ Bottom level categories:
 
 This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.com/gfx-rs/wgpu) 30. For the history of changes made before the fork, see the [upstream wgpu changelog](https://github.com/gfx-rs/wgpu/blob/trunk/CHANGELOG.md).
 
-## Unreleased
+## 0.0.3
 
 ### Mobile browser portability and resource ownership
 
 - Preserve optional browser limits and adapter diagnostics, move float-canvas probing to explicit asynchronous capability discovery, and add recorded Core/Compatibility/Auto qualification profiles without silently weakening caller requirements.
 - Add portable GPU radix/sieve and token readback, bounded tensor-arena allocation, corrected 96-byte fused-attention uniforms, and top-k edge-case handling. Android NPU discovery remains distinct from runtime or execution verification.
 - **Breaking:** construct submission leases through `HalComputeLane::lease_submission`; unrestricted construction/public resource fields are removed and reclamation is gated by issuing-queue completion. See the [mobile resolution disposition](docs/mobile-resolution-2026-11-01.md) for migration and native async polling requirements.
-- Expand browser qualification to 20 cases, including 18 GPU cases, with optional ADB device selection. Integrated hosted and physical-device qualification remains pending; no mobile performance or CTS result is claimed.
+- Expand browser qualification to 20 cases, including 18 GPU cases, with optional ADB device selection. Qualification requires every declared case to execute successfully; physical-device results remain separate from hosted checks. No mobile performance or CTS result is claimed.
 
 ### Browser error reporting
 
 - Restore upstream's default Core adapter-request shape while retaining explicit Compatibility requests; show failed GPU qualification prominently when the browser suite cannot execute GPU work.
 
 - Preserve browser adapter-request rejection details instead of misreporting them as an unavailable adapter.
+
+## 0.0.2
 
 ### Release preparation
 

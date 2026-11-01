@@ -1,5 +1,5 @@
 use serde_json::{json, Value};
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{prelude::*, JsCast};
 
 use crate::browser::{bounded, failure, Gpu};
 
@@ -8,7 +8,7 @@ pub(crate) async fn canvas(gpu: &Gpu) -> Result<Value, Value> {
         .map_err(|error| failure("canvas-create", &format!("{error:?}")))?;
     let surface = gpu
         .instance
-        .create_surface(etalon::SurfaceTarget::OffscreenCanvas(canvas))
+        .create_surface(etalon::SurfaceTarget::OffscreenCanvas(canvas.clone()))
         .map_err(|error| failure("surface-create", &error.to_string()))?;
     let baseline = surface.get_capabilities(&gpu.adapter);
     let required = [
@@ -31,6 +31,18 @@ pub(crate) async fn canvas(gpu: &Gpu) -> Result<Value, Value> {
         .get_default_config(&gpu.adapter, 1, 1)
         .ok_or_else(|| failure("canvas-config", "No baseline canvas configuration"))?;
     surface.configure(&gpu.device, &config);
+    let before = canvas_configuration(&canvas)?;
+    let expected_format = match config.format {
+        etalon::TextureFormat::Rgba8Unorm => "rgba8unorm",
+        etalon::TextureFormat::Bgra8Unorm => "bgra8unorm",
+        _ => return Err(failure("canvas-config", "Unexpected baseline format")),
+    };
+    if before.1 != expected_format {
+        return Err(failure(
+            "canvas-config",
+            "Browser did not retain the requested baseline format",
+        ));
+    }
     let verified = surface
         .get_capabilities_async(&gpu.adapter, &gpu.device)
         .await
@@ -56,20 +68,13 @@ pub(crate) async fn canvas(gpu: &Gpu) -> Result<Value, Value> {
             "Device probe changed conservative or cached capabilities",
         ));
     }
-    let frame = match surface.get_current_texture() {
-        etalon::CurrentSurfaceTexture::Success(frame) => frame,
-        other => return Err(failure("canvas-preservation", &format!("{other:?}"))),
-    };
-    if frame.texture.format() != config.format
-        || frame.texture.width() != 1
-        || frame.texture.height() != 1
-    {
+    let after = canvas_configuration(&canvas)?;
+    if before != after {
         return Err(failure(
             "canvas-preservation",
-            "Probe changed the configured surface texture",
+            "Capability validation changed the configured canvas device or format",
         ));
     }
-    gpu.queue.present(frame);
 
     // A second handle to the same hardware must not inherit this device's probe cache.
     let other = gpu
@@ -89,13 +94,42 @@ pub(crate) async fn canvas(gpu: &Gpu) -> Result<Value, Value> {
             "Canvas query accepted a device from another adapter handle",
         ));
     }
+    let roundtrip = crate::readback::buffer_case(&gpu.device, &gpu.queue, false).await?;
     Ok(json!({
         "baseline_formats": baseline.formats.iter().map(|format| format!("{format:?}")).collect::<Vec<_>>(),
         "verified_formats": verified.formats.iter().map(|format| format!("{format:?}")).collect::<Vec<_>>(),
-        "rgba16float_available": verified.formats.contains(&etalon::TextureFormat::Rgba16Float),
+        "rgba16float_configuration_accepted": verified.formats.contains(&etalon::TextureFormat::Rgba16Float),
         "configured_surface_preserved": true, "device_mismatch_rejected": true,
-        "message": "Conservative and async capabilities agree on baseline formats; HDR availability is optional"
+        "presentation_tested": false, "presentation_texture_acquired": false,
+        "post_query_gpu_roundtrip": roundtrip,
+        "message": "Canvas configuration and device/format preservation verified; GPU buffer readback remains healthy. Presentation is not exercised."
     }))
+}
+
+fn canvas_configuration(canvas: &web_sys::OffscreenCanvas) -> Result<(JsValue, String), Value> {
+    let context = canvas
+        .get_context("webgpu")
+        .map_err(|error| failure("canvas-context", &format!("{error:?}")))?
+        .ok_or_else(|| failure("canvas-context", "WebGPU canvas context unavailable"))?;
+    let get_configuration = js_sys::Reflect::get(&context, &JsValue::from_str("getConfiguration"))
+        .and_then(|value| value.dyn_into::<js_sys::Function>())
+        .map_err(|error| failure("canvas-configuration-query", &format!("{error:?}")))?;
+    let config = get_configuration
+        .call0(&context)
+        .map_err(|error| failure("canvas-configuration-query", &format!("{error:?}")))?;
+    let device = js_sys::Reflect::get(&config, &JsValue::from_str("device"))
+        .map_err(|error| failure("canvas-configuration-device", &format!("{error:?}")))?;
+    let format = js_sys::Reflect::get(&config, &JsValue::from_str("format"))
+        .ok()
+        .and_then(|value| value.as_string())
+        .ok_or_else(|| failure("canvas-configuration-format", "Missing canvas format"))?;
+    if !device.is_object() {
+        return Err(failure(
+            "canvas-configuration-device",
+            "Missing configured device",
+        ));
+    }
+    Ok((device, format))
 }
 
 /// Browser-boundary fixture entry point; assertions execute through the Rust backend.

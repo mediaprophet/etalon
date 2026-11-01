@@ -236,6 +236,7 @@ async function run() {
     const views = catalog.map(row);
     for (let i = 0; i < catalog.length; i += 1) {
       const test = catalog[i];
+      document.body.dataset.etalonCase = test.id;
       progress.textContent = `Running ${i + 1}/${catalog.length}: ${test.label || test.id}`;
       let result;
       try {
@@ -323,6 +324,7 @@ async function run() {
         });
       }
     }
+    delete document.body.dataset.etalonCase;
     report.finished_at = new Date().toISOString();
     report.counts = totals(report);
     qualify(report, catalog);

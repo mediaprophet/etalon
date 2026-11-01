@@ -54,11 +54,11 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-core"
-version = "0.0.2"
+version = "0.0.3"
 
 [[package]]
 name = "etalon-sense-deployment"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "libc",
  "sha2",
@@ -66,14 +66,14 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-dsp"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-core",
 ]
 
 [[package]]
 name = "etalon-sense-dsp-hexagon"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-core",
  "etalon-sense-dsp",
@@ -81,7 +81,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-dsp-service"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-core",
  "etalon-sense-dsp-hexagon",
@@ -90,11 +90,11 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-dsp-wire"
-version = "0.0.2"
+version = "0.0.3"
 
 [[package]]
 name = "etalon-sense-fastrpc"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-core",
  "etalon-sense-deployment",
@@ -105,7 +105,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-npu"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-deployment",
  "ort",
@@ -113,7 +113,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-qnn"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-deployment",
  "etalon-sense-npu",
@@ -122,7 +122,7 @@ dependencies = [
 
 [[package]]
 name = "etalon-sense-rtlsdr"
-version = "0.0.2"
+version = "0.0.3"
 dependencies = [
  "etalon-sense-core",
  "etalon-sense-deployment",
