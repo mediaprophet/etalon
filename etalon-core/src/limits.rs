@@ -558,7 +558,9 @@ mod tests {
     #[test]
     fn enumerate_webgpu_features() {
         let difference = Features::all_webgpu_mask().difference(
-            Features::DEPTH_CLIP_CONTROL
+            // Browser-negotiated marker; native buckets do not advertise it.
+            Features::CORE_FEATURES_AND_LIMITS
+                .union(Features::DEPTH_CLIP_CONTROL)
                 .union(Features::DEPTH32FLOAT_STENCIL8)
                 .union(Features::TEXTURE_COMPRESSION_ASTC)
                 .union(Features::TEXTURE_COMPRESSION_ASTC_SLICED_3D)
@@ -586,6 +588,16 @@ mod tests {
             difference.is_empty(),
             "New WebGPU features should be assigned to appropriate limit buckets; missing {difference:?}"
         );
+    }
+
+    #[test]
+    fn native_buckets_do_not_advertise_browser_feature_level() {
+        let marker = Features::CORE_FEATURES_AND_LIMITS;
+        assert!(!UPLEVEL.features.intersects(marker));
+        assert!(!EXEMPT_FEATURES.intersects(marker));
+        for bucket in buckets() {
+            assert!(!bucket.features.intersects(marker), "{}", bucket.name());
+        }
     }
 
     #[test]
