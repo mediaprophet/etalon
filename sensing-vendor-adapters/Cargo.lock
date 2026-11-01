@@ -100,7 +100,7 @@ dependencies = [
  "etalon-sense-deployment",
  "etalon-sense-dsp",
  "etalon-sense-dsp-wire",
- "libloading 0.8.9",
+ "libloading",
 ]
 
 [[package]]
@@ -126,7 +126,7 @@ version = "0.0.1"
 dependencies = [
  "etalon-sense-core",
  "etalon-sense-deployment",
- "libloading 0.8.9",
+ "libloading",
 ]
 
 [[package]]
@@ -144,16 +144,6 @@ name = "libc"
 version = "0.2.191"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
-
-[[package]]
-name = "libloading"
-version = "0.8.9"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55"
-dependencies = [
- "cfg-if",
- "windows-link",
-]
 
 [[package]]
 name = "libloading"
@@ -229,7 +219,7 @@ version = "2.0.0-rc.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "37c87aa7a90b7ff3e0fe36cccd475df8d67f15f07f4d6c370c4b38464232813c"
 dependencies = [
- "libloading 0.9.0",
+ "libloading",
  "ndarray",
  "ort-sys",
  "smallvec",

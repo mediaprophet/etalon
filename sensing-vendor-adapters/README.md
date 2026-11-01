@@ -14,7 +14,8 @@ The independent workspace now retains its own lockfile for reproducible CI.
 Rust compilation and mock tests are tracked separately from native runtime and
 device qualification; CI success does not establish physical hardware support. Public SDK-interface
 reference sources were downloaded with authorization; their pinned provenance
-and licenses are retained in `sdk-reference`. No project data was uploaded.
+and licenses are retained in `sdk-reference`. Retrieving those public references
+required no project data upload.
 
 This workspace is separate from the main Etalon wildcard workspace. Earlier
 isolated drafts are retained in `sensing-vendor-drafts-archive`; the main facade
