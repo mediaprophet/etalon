@@ -245,6 +245,40 @@ try {
       throw new Error(
         `WebGL2 fallback did not independently verify rendering after WebGPU null: ${JSON.stringify(fallback)}`,
       );
+    const fallbackLog = fallback.debug_log;
+    if (
+      !fallback.debug_logging_enabled ||
+      !fallback.debug_environment_attached ||
+      fallbackLog?.schema !== "etalon.debug-log.v1" ||
+      fallbackLog.source_revision !== report.source_revision ||
+      fallbackLog.library_version !== report.runtime.library_version ||
+      fallbackLog.environment?.browser !== report.context.browser ||
+      fallbackLog.environment?.browser_details?.navigator?.user_agent?.value !==
+        report.context.browser ||
+      fallbackLog.environment?.phase !== "webgl2" ||
+      debug.environment?.phase !== "webgpu" ||
+      fallbackLog.status !== "enabled" ||
+      fallbackLog.level !== "debug" ||
+      fallbackLog.automatic_upload !== false ||
+      fallbackLog.max_events !== 128 ||
+      fallbackLog.max_json_bytes !== 65536 ||
+      !Array.isArray(fallbackLog.events) ||
+      fallbackLog.events.length === 0 ||
+      fallbackLog.events.length > fallbackLog.max_events ||
+      new TextEncoder().encode(JSON.stringify(fallbackLog)).length >
+        fallbackLog.max_json_bytes ||
+      fallbackLog.events.some(
+        (e) =>
+          new TextEncoder().encode(e.message).length >
+            fallbackLog.max_message_bytes ||
+          new TextEncoder().encode(e.target).length >
+            fallbackLog.max_target_bytes,
+      ) ||
+      new TextEncoder().encode(JSON.stringify(report, null, 2)).length > 262144
+    )
+      throw new Error(
+        "WebGL2 phase did not retain a separate bounded versioned debug log",
+      );
     const caption = await page.locator("#render-caption").textContent();
     if (!caption.includes("WebGL2"))
       throw new Error("Fallback image is missing its actual backend label");

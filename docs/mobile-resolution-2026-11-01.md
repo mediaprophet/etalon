@@ -114,3 +114,19 @@ The expanded browser suite adds an explicit sensing GPU case for IQ-power output
 The first-party WASM suite enables Etalon's existing `webgl` backend and requests a separate GL adapter associated with a bounded offscreen canvas when WebGPU acquisition reports `adapter-unavailable`. The fallback executes the same WGSL triangle, reads back 16 KiB of pixels, checks every pixel's allowed colors and six positions, and exports its own versioned result. It polls mapping callbacks without blocking the browser and bounds readback to five seconds, then destroys the device and releases its private context.
 
 A WebGL2 render pass does not change the 21-case WebGPU qualification or provide compute shaders. NQuin, tensor and sensing compute workloads still require their supported compute backend; this change does not emulate them through fragment shaders or label CPU execution as GPU execution. The two portable WASM CPU cases retain their separate results. No browser protection settings are changed.
+
+## Review of the additional WebGL2 / public-use recommendations
+
+WebGL2 render-to-texture is a viable route for selected GPU calculations. It needs explicit texture-backed algorithms and qualification, rather than treating a GL adapter as a WebGPU compute device. The current rendering fallback does not implement the proposed radix, sieve, top-k, attention or sensing fragment paths. Their CPU implementations, where available, must report CPU execution even if buffers are transferred through WebGL.
+
+Implementation constraints from review:
+
+- Use an explicit canvas-associated GL adapter, as required by the existing public API. Surface-less enumeration returning no adapter is documented behavior, not by itself an upstream defect.
+- For a row of `count` u32 outputs, use checked alignment of `count * 4` to 256 bytes; a fixed 256-byte stride fails at 65 and 257 elements. Respect texture dimensions and staging budgets.
+- Keep storage-capacity validation. Uniform buffers cannot replace storage bindings or compute entry points; a fragment path needs its own shaders, bindings and resource layout.
+- Read downlevel flags from `Adapter::get_downlevel_capabilities()`. Repeated nonblocking polling with browser event-loop yields is needed for GL mapping completion.
+- The GLES texture-to-buffer implementation leaves `PIXEL_PACK_BUFFER` bound. Review identified this state-cleanup gap; a regression reproducing its effect is required before attributing any observed failure to it.
+- Enabling WASM SIMD permits vector instructions but does not prove automatic vectorization, multithreading or Apple AMX access. Browser WebNN exposure does not establish NPU availability; creating a context is an execution-resource admission step, not passive discovery.
+- A browser's null adapter result does not identify a unique policy or driver gate. Do not infer universal phone support, a fixed driver version, or permission to disable protection settings from these recommendations.
+
+The [WebGL2 specification](https://registry.khronos.org/webgl/specs/latest/2.0/) supplies the rendering/context contract. Any additional fragment GPGPU implementation must report its actual algorithm, backend, limits and numerical checks separately from WebGPU qualification. Version remains 0.0.2.
