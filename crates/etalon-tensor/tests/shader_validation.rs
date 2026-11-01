@@ -3,9 +3,13 @@ use naga::valid::{Capabilities, ValidationFlags, Validator};
 fn validate_portable_shader(source: &str) {
     let module = naga::front::wgsl::parse_str(source)
         .unwrap_or_else(|error| panic!("{}", error.emit_to_string(source)));
-    Validator::new(ValidationFlags::all(), Capabilities::empty())
-        .validate(&module)
-        .unwrap_or_else(|error| panic!("{error:?}"));
+    // Core pack/unpack2x16float operates on f32 values; it does not require shader-f16.
+    Validator::new(
+        ValidationFlags::all(),
+        Capabilities::SHADER_FLOAT16_IN_FLOAT32,
+    )
+    .validate(&module)
+    .unwrap_or_else(|error| panic!("{error:?}"));
 }
 
 #[test]
