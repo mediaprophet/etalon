@@ -46,4 +46,3 @@ etalon-sense-cpu = { path = "../etalon-sense-cpu", optional = true }
 etalon-sense-camera = { path = "../etalon-sense-camera", optional = true }
 etalon-sense-camera-windows = { path = "../etalon-sense-camera-windows", optional = true }
 etalon-sense-gpu = { path = "../etalon-sense-gpu", optional = true }
-

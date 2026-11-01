@@ -9,4 +9,3 @@ description = "Validated host-fed camera and infrared frame ingestion boundary"
 
 [dependencies]
 etalon-sense-core = { path = "../etalon-sense-core" }
-

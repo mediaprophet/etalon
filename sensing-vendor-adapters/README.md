@@ -1,13 +1,13 @@
 # Isolated sensing vendor adapters
 
 This separate Cargo workspace contains OpenVINO NPU and Qualcomm QNN HTP
-model-execution drafts, portable DSP routing, a native Hexagon IQ-power kernel,
+model-execution adapters, portable DSP routing, a native Hexagon IQ-power kernel,
 and synchronous FastRPC host/service and RTL-SDR receive implementations. Applications select
 these packages directly. QNN HTP model execution is distinct from native DSP
 kernels. Compatible local runtimes, drivers and hardware remain required.
 Hard memory and no-egress enforcement remain host duties.
 
-The drafts pin the locally cached ORT `2.0.0-rc.15`, with dynamic loading and
+The adapters pin ORT `2.0.0-rc.15`, with dynamic loading and
 without requesting the binary-download feature. Cargo feature unification in a
 larger consuming workspace can still enable other features, including downloads.
 The independent workspace now retains its own lockfile for reproducible CI.

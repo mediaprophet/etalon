@@ -14,7 +14,7 @@
 //! retain samples and powers until overwritten or destroyed; secure erasure is
 //! not guaranteed.
 //!
-//! The [`prepared`] module instead prepares a private Vulkan lane on a selected
+//! The `prepared` module instead prepares a private Vulkan lane on a selected
 //! adapter. Its fixed resources avoid ordinary per-run command recording, but
 //! its live descriptor remains `ColdUnbounded` pending target qualification.
 #![forbid(unsafe_code)]

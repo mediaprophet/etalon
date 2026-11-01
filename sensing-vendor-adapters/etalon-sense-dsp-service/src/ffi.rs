@@ -25,8 +25,7 @@ pub unsafe extern "C" fn etalon_iq_power_open(
     if provider_id == 0
         || max_pairs == 0
         || max_pairs > MAX_PAIRS
-        || uri_len < 2
-        || uri_len > MAX_URI_BYTES + 1
+        || !(2..=MAX_URI_BYTES + 1).contains(&uri_len)
         || !disjoint(uri, uri_len, handle.cast(), 8)
     {
         return -1;
@@ -90,38 +89,37 @@ pub unsafe extern "C" fn etalon_iq_power_process(
     if input_len > max_input || output_len > max_output {
         return -1;
     }
-    match CONTEXT.with_active(handle, |active| {
-        let generation = active.generation();
-        let mut service = match HexagonIqPowerService::new(provider_id, generation, max_pairs) {
-            Ok(service) => service,
-            Err(_) => return -2,
-        };
-        // The unsafe caller supplies valid allocations; the native lease spans dispatch.
-        let input = unsafe { core::slice::from_raw_parts(input, input_len) };
-        let (identity, pairs, _) = match decode_request(input) {
-            Ok(request) => request,
-            Err(_) => return -1,
-        };
-        if identity.provider_id() != provider_id
-            || identity.generation() != generation
-            || pairs > max_pairs
-            || response_bytes(pairs) != Ok(output_len)
-        {
-            return -1;
-        }
-        // Consume after full validation; a subsequent kernel failure cannot reuse it.
-        if active.consume_request(identity.request_id()).is_err() {
-            return -3;
-        }
-        let output = unsafe { core::slice::from_raw_parts_mut(output, output_len) };
-        match service.process(input, output) {
-            Ok(()) => 0,
-            Err(_) => -3,
-        }
-    }) {
-        Ok(status) => status,
-        Err(_) => -3,
-    }
+    CONTEXT
+        .with_active(handle, |active| {
+            let generation = active.generation();
+            let mut service = match HexagonIqPowerService::new(provider_id, generation, max_pairs) {
+                Ok(service) => service,
+                Err(_) => return -2,
+            };
+            // The unsafe caller supplies valid allocations; the native lease spans dispatch.
+            let input = unsafe { core::slice::from_raw_parts(input, input_len) };
+            let (identity, pairs, _) = match decode_request(input) {
+                Ok(request) => request,
+                Err(_) => return -1,
+            };
+            if identity.provider_id() != provider_id
+                || identity.generation() != generation
+                || pairs > max_pairs
+                || response_bytes(pairs) != Ok(output_len)
+            {
+                return -1;
+            }
+            // Consume after full validation; a subsequent kernel failure cannot reuse it.
+            if active.consume_request(identity.request_id()).is_err() {
+                return -3;
+            }
+            let output = unsafe { core::slice::from_raw_parts_mut(output, output_len) };
+            match service.process(input, output) {
+                Ok(()) => 0,
+                Err(_) => -3,
+            }
+        })
+        .unwrap_or(-3)
 }
 
 fn disjoint(input: *const u8, input_len: usize, output: *mut u8, output_len: usize) -> bool {
