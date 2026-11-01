@@ -41,7 +41,11 @@ Bottom level categories:
 
 This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.com/gfx-rs/wgpu) 30. For the history of changes made before the fork, see the [upstream wgpu changelog](https://github.com/gfx-rs/wgpu/blob/trunk/CHANGELOG.md).
 
-## 0.0.3
+## 0.0.2 — continuing development; mobile qualification failed
+
+### Version correction
+
+The agent changed the development version to 0.0.3 without the user's instruction while the requested mobile GPU outcome remained unsuccessful. This created a misleading progress signal and avoidable review/retest work. Development is restored to 0.0.2; prior commits remain in the audit history. No 0.0.3 tag or release was created. CI success does not establish successful mobile qualification. See the [continuing-development notes](docs/releases/0.0.2-development.md).
 
 ### Mobile browser portability and resource ownership
 
@@ -58,7 +62,7 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 - Preserve browser adapter-request rejection details instead of misreporting them as an unavailable adapter.
 
-## 0.0.2
+## 0.0.2 — historical prerelease snapshot
 
 ### Release preparation
 
