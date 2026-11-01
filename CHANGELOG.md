@@ -43,6 +43,10 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ## Unreleased
 
+### Browser error reporting
+
+- Preserve browser adapter-request rejection details instead of misreporting them as an unavailable adapter.
+
 ### Release preparation
 
 - Prepare the 0.0.2 Git source release; [release notes](docs/releases/0.0.2.md) describe capabilities, usage, qualification boundaries and unchanged licensing.

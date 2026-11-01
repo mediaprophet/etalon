@@ -119,7 +119,14 @@ async fn request_gpu(health: &Arc<Mutex<Health>>, profile: &str) -> Result<(Gpu,
     });
     let adapter = instance.request_webgpu_adapter(&etalon::RequestAdapterOptions {
         power_preference: etalon::PowerPreference::LowPower, ..Default::default()
-    }, feature_level).await.map_err(|e| json!({"status": "unsupported", "code": "adapter-unavailable", "message": bounded(&e.to_string())}))?;
+    }, feature_level).await.map_err(|error| {
+        let (status, code) = match &error {
+            etalon::RequestAdapterError::NotFound { .. } => ("unsupported", "adapter-unavailable"),
+            etalon::RequestAdapterError::BrowserRequestRejected { .. } => ("fail", "adapter-request-rejected"),
+            _ => ("fail", "adapter-request-failed"),
+        };
+        json!({"status": status, "code": code, "stage": "adapter-request", "message": bounded(&error.to_string())})
+    })?;
     let adapter_info = adapter.get_info();
     let required = crate::requirements::required_limits(&adapter.limits());
     if !required.check_limits(&adapter.limits()) {

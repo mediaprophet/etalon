@@ -979,7 +979,15 @@ fn future_request_adapter(
     requested_backends: Backends,
 ) -> Result<dispatch::DispatchAdapter, wgt::RequestAdapterError> {
     result
-        .map_err(|_| request_adapter_null_error(requested_backends))
+        .map_err(|error| {
+            let message = js_sys::Reflect::get(&error, &JsValue::from_str("message"))
+                .ok()
+                .and_then(|value| value.as_string())
+                .unwrap_or_else(|| format!("{error:?}"));
+            wgt::RequestAdapterError::BrowserRequestRejected {
+                message: message.chars().take(1024).collect(),
+            }
+        })
         .and_then(|adapter| match adapter.into_option() {
             Some(adapter) => Ok(WebAdapter {
                 inner: adapter,

@@ -271,6 +271,12 @@ pub enum RequestAdapterError {
     /// Attempted to obtain adapter specified by environment variable, but the environment variable
     /// was not set.
     EnvNotSet,
+
+    /// The browser rejected the adapter request rather than returning no adapter.
+    BrowserRequestRejected {
+        /// The browser's rejection diagnostic.
+        message: String,
+    },
 }
 
 impl core::error::Error for RequestAdapterError {}
@@ -318,6 +324,9 @@ impl fmt::Display for RequestAdapterError {
                 }
             }
             RequestAdapterError::EnvNotSet => f.write_str("ETALON_ADAPTER_NAME not set")?,
+            RequestAdapterError::BrowserRequestRejected { message } => {
+                write!(f, "Browser WebGPU adapter request rejected: {message}")?;
+            }
         }
         Ok(())
     }
