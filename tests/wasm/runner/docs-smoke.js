@@ -143,6 +143,8 @@ try {
     !Array.isArray(debug.events) ||
     debug.events.length === 0 ||
     debug.events.length > debug.max_events ||
+    new TextEncoder().encode(JSON.stringify(debug)).length >
+      debug.max_json_bytes ||
     debug.events.some(
       (e) =>
         new TextEncoder().encode(e.message).length > debug.max_message_bytes ||

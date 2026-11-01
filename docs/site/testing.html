@@ -131,21 +131,18 @@
         </li>
       </ol>
       <p>
-        If WebGPU is unavailable, use a browser/OS combination that exposes it,
-        or run the
-        <a
-          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/docs/testing.md"
-          >native Rust tests</a
-        >
-        for that system. Do not infer native driver coverage from these browser
-        results.
+        Adapter-acquisition failure prevents GPU workloads from running. The
+        report retains Etalon requests, independent browser controls and debug
+        events; it does not establish a driver or policy cause. Native Rust
+        tests qualify a separate backend and do not establish mobile browser
+        support.
       </p>
       <p>
         The exported report includes a local Rust debug log (up to 128 events,
-        512 message bytes per event) and reports dropped entries. Adapter
-        acquisition controls are diagnostic evidence, not GPU passes. Browser
-        GPU-process and driver-internal logs are not available to this page.
-        Nothing is uploaded automatically.
+        512 message bytes per event, with a 64 KiB serialized budget) and
+        reports dropped entries. Adapter acquisition controls are diagnostic
+        evidence, not GPU passes. Browser GPU-process and driver-internal logs
+        are not available to this page. Nothing is uploaded automatically.
       </p>
     </main>
     <footer>

@@ -9,6 +9,7 @@ use std::{
 use wasm_bindgen::prelude::*;
 
 const MAX_EVENTS: usize = 128;
+const MAX_JSON_BYTES: usize = 64 * 1024;
 const MAX_MESSAGE_BYTES: usize = 512;
 const MAX_TARGET_BYTES: usize = 96;
 
@@ -113,19 +114,28 @@ pub fn debug_log_json() -> String {
     let Ok(state) = STATE.lock() else {
         return json!({"status":"capture-unavailable"}).to_string();
     };
-    let events: Vec<_> = state
-        .events
-        .iter()
-        .map(|event| {
-            json!({
-                "sequence":event.sequence,"time_ms":event.time_ms,"level":event.level,
-                "target":event.target,"message":event.message,"truncated":event.truncated,
-            })
-        })
-        .collect();
+    // Reserve metadata space; keep newest events and account for JSON escaping.
+    let mut events = Vec::new();
+    let mut bytes = 2usize;
+    for event in state.events.iter().rev() {
+        let value = json!({
+            "sequence":event.sequence,"time_ms":event.time_ms,"level":event.level,
+            "target":event.target,"message":event.message,"truncated":event.truncated,
+        });
+        let encoded_bytes = value.to_string().len() + 1;
+        if bytes + encoded_bytes > MAX_JSON_BYTES - 1024 {
+            break;
+        }
+        bytes += encoded_bytes;
+        events.push(value);
+    }
+    let omitted = state.events.len() - events.len();
+    events.reverse();
     json!({"status":if INSTALLED.get() == Some(&true) {"enabled"} else {"not-installed"},
         "level":"debug","max_events":MAX_EVENTS,"max_message_bytes":MAX_MESSAGE_BYTES,
-        "max_target_bytes":MAX_TARGET_BYTES,"dropped_events":state.dropped,"events":events,
+        "max_target_bytes":MAX_TARGET_BYTES,"max_json_bytes":MAX_JSON_BYTES,
+        "dropped_events":state.dropped.saturating_add(omitted as u64),
+        "export_omitted_events":omitted,"events":events,
         "automatic_upload":false})
     .to_string()
 }
