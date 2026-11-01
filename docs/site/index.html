@@ -20,125 +20,203 @@
       </nav>
     </header>
     <main id="main">
-      <p class="eyebrow">Rust graphics and compute · native and WebAssembly</p>
-      <h1>A graphics foundation.<br />A wider execution toolkit.</h1>
+      <p class="eyebrow">
+        Etalon 0.0.2 · Rust libraries for native and WebAssembly
+      </p>
+      <h1>Graphics, compute<br />and application execution.</h1>
       <p class="lead">
-        Etalon builds on wgpu with browser fixes, prepared native compute,
-        shader generation, semantic data processing, tensor and rendering
-        libraries. Use it independently or with QualiaDB and other applications.
+        A cross-platform graphics foundation, a shader compiler, and focused
+        libraries for generated kernels, semantic data, tensors, rendering,
+        workers and sensing. Build with Etalon independently or integrate it
+        into QualiaDB and other applications.
       </p>
       <div class="actions">
-        <a class="button primary" href="testing.html"
-          >Run tests on this device</a
-        ><a class="button" href="capabilities.html">Explore the capabilities</a
-        ><a class="button" href="getting-started.html"
-          >Use the Rust libraries</a
+        <a class="button primary" href="getting-started.html#versions"
+          >Use release 0.0.2</a
         >
+        <a class="button" href="testing.html">Run the WASM tests</a>
+        <a class="button" href="capabilities.html">Explore APIs and evidence</a>
       </div>
       <p class="note">
-        <strong>Development documentation.</strong> This site follows
-        <code>dev</code> and identifies its exact source revision. Browser
-        demonstrations run the compiled Etalon WebAssembly build. Native-only
-        features have separate tests and platform requirements.
+        <strong>Stable release documentation.</strong> This site follows
+        <code>stable</code> and records its exact source revision. Pin
+        <code>v0.0.2-release</code> or its commit for reproducible consumers.
+        <a href="getting-started.html#versions"
+          >Choose a release, stable, latest or development target</a
+        >.
       </p>
+      <h2>Choose the layer your application needs</h2>
       <div class="grid">
         <article class="card">
-          <span class="label">Graphics &amp; compute</span>
-          <h3>One application API</h3>
+          <span class="label">Graphics API</span>
+          <h3>Render and dispatch compute</h3>
           <p>
-            Validated resources, render and compute pipelines, buffers and
-            textures. Native Vulkan, DX12, Metal and GLES; browser WebGPU
-            through the Rust/WASM bridge.
+            Validated resources, buffers, textures and pipelines. Native Vulkan,
+            DX12, Metal and GLES; Rust/WASM access to browser WebGPU and WebGL2.
           </p>
-          <a href="doc/etalon/index.html">Graphics API</a>
+          <a href="capabilities.html#graphics">Graphics APIs and tests</a>
         </article>
         <article class="card">
-          <span class="label">Shader generation</span>
-          <h3>Generate and verify</h3>
+          <span class="label">Naga compiler</span>
+          <h3>Parse, validate and translate</h3>
           <p>
-            Typed kernel and schedule IR, WGSL generation, Naga validation and
-            additional target emitters. CPU comparisons, hardware profiles and
-            tuning are explicit tools.
+            Shader-language frontends, a shared intermediate representation and
+            target writers for WGSL, SPIR-V, GLSL, HLSL and MSL workflows.
           </p>
-          <a href="capabilities.html#forge">WGSL Forge</a>
+          <a href="capabilities.html#compiler">Compiler and shader evidence</a>
         </article>
         <article class="card">
-          <span class="label">Semantic &amp; tensor data</span>
-          <h3>Structured GPU workloads</h3>
+          <span class="label">Prepared native compute</span>
+          <h3>Reuse a fixed execution plan</h3>
           <p>
-            48-byte NQuin wire records, filtering and stable radix sorting.
-            Tensor views, quantization utilities, attention and top-k building
-            blocks.
+            Prepare validated Vulkan work once, retain private buffers and
+            completion state, then execute into caller-owned output storage.
           </p>
-          <a href="capabilities.html#data">Data and tensor libraries</a>
-        </article>
-        <article class="card">
-          <span class="label">Rendering &amp; workers</span>
-          <h3>Build an application</h3>
-          <p>
-            Volumetric and EMF pipelines, HUD layout, explicit camera/projection
-            contracts and browser worker transport mechanisms.
-          </p>
-          <a href="capabilities.html#rendering"
-            >Rendering and browser support</a
+          <a href="capabilities.html#native"
+            >Prepared API and allocation tests</a
           >
         </article>
         <article class="card">
-          <span class="label">Native execution</span>
-          <h3>Prepare, then reuse</h3>
+          <span class="label">WGSL Forge</span>
+          <h3>Generate and evaluate kernels</h3>
           <p>
-            Private Vulkan compute resources and reusable submission. Resource
-            leases and explicit accelerator coordination complement ordinary
-            graphics APIs.
+            Typed kernel and schedule descriptions, shader emission, CPU
+            oracles, adapter-specific certification records and tuning tools.
           </p>
-          <a href="capabilities.html#native">Prepared execution</a>
+          <a href="capabilities.html#forge">Forge API and verification</a>
         </article>
         <article class="card">
-          <span class="label">Sensing</span>
-          <h3>Preserve measurement meaning</h3>
+          <span class="label">NQuin data</span>
+          <h3>Filter and sort semantic records</h3>
           <p>
-            Optional sample, uncertainty, clock and calibration contracts;
-            signal processing and explicitly selected device/accelerator
-            adapters.
+            48-byte wire records with explicit alignment and parity. CPU
+            reference operations and GPU filtering and stable radix sorting.
           </p>
-          <a href="getting-started.html#sensing">Sensing libraries</a>
+          <a href="capabilities.html#data">NQuin APIs and GPU cases</a>
+        </article>
+        <article class="card">
+          <span class="label">Tensor operations</span>
+          <h3>Compose inference building blocks</h3>
+          <p>
+            Tensor views, quantization helpers, KV-cache layouts, fused
+            attention, top-k selection and a bounded forward arena.
+          </p>
+          <a href="capabilities.html#tensors"
+            >Tensor APIs and correctness checks</a
+          >
+        </article>
+        <article class="card">
+          <span class="label">Application rendering</span>
+          <h3>Build spatial views and interfaces</h3>
+          <p>
+            Volumetric and EMF pipelines, HUD layout and hit testing, plus
+            explicit camera and manifold projection data contracts.
+          </p>
+          <a href="capabilities.html#rendering">Renderer APIs and coverage</a>
+        </article>
+        <article class="card">
+          <span class="label">Agents and workers</span>
+          <h3>Coordinate work and ownership</h3>
+          <p>
+            Accelerator state, buffer regions, resource leases and queue
+            completion; worker lifecycle, transferable packets and shared rings.
+          </p>
+          <a href="capabilities.html#coordination"
+            >Coordination APIs and tests</a
+          >
+        </article>
+        <article class="card">
+          <span class="label">Sensing and signals</span>
+          <h3>Process measurements explicitly</h3>
+          <p>
+            Sample, clock, calibration and uncertainty contracts; DSP primitives
+            and separately selected CPU, GPU and device providers.
+          </p>
+          <a href="capabilities.html#sensing">Sensing APIs and signal tests</a>
         </article>
       </div>
-      <h2>Try it on a phone or desktop</h2>
+      <h2>Run the implementation on your device</h2>
       <p>
-        The browser test page runs actual Rust/WASM operations and reports each
-        result: pass, fail or unsupported. It exercises compute, readback,
-        validation and rendering, plus portable NQuin and Forge functions.
-        Results stay on the device unless you download and share them.
+        The installable test app runs the compiled Rust/WASM library. Its
+        reports identify the build, browser, device information and actual
+        execution path. Keep results locally, export them, or compare browser
+        and installed-app runs.
       </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Execution path</th>
+              <th>What the app exercises</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Browser WebGPU</td>
+              <td>
+                Compute, buffer and texture readback, validation, rendering,
+                NQuin radix/sieve, tensor operations, IQ-power processing and
+                resource leases.
+              </td>
+            </tr>
+            <tr>
+              <td>WebGL2 rendering fallback</td>
+              <td>
+                Etalon rendering and verified pixel readback when a WebGPU
+                adapter is unavailable. WebGPU compute remains a separate
+                requirement.
+              </td>
+            </tr>
+            <tr>
+              <td>Portable WASM CPU</td>
+              <td>
+                NQuin wire/parity/filter/sort checks and deterministic Forge
+                shader generation and Naga validation.
+              </td>
+            </tr>
+            <tr>
+              <td>Browser devices and storage</td>
+              <td>
+                Explicit BLE and camera access, exposed network metadata,
+                offline app loading and a bounded local report store.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
       <p>
-        <a href="testing.html">Open the device test runner</a> ·
+        WebGPU qualification requires all 21 suite cases to pass, including 19
+        GPU cases. A successful WebGL2 render is recorded separately.
+        <a href="testing.html">Open the runner</a> ·
         <a href="capabilities.html#coverage"
-          >Understand what each test covers</a
-        >
+          >See native, compiler and browser coverage</a
+        >.
       </p>
-      <h2>What comes from wgpu, and what Etalon adds</h2>
-      <p>
-        The safe graphics API, native backend foundation and shader compiler
-        originate in wgpu/Naga. Etalon retains that attribution and adds its own
-        integration libraries and recorded fixes.
-        <a href="capabilities.html#changes">See the source-backed changes</a>;
-        browser tests do not establish native driver or WebGPU conformance
-        certification.
-      </p>
-      <h2>Choose a small dependency</h2>
+      <h2>Integrate a reproducible release</h2>
       <pre><code>[dependencies]
-etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "dev" }
-# Or choose a focused etalon-* library for your application.</code></pre>
+etalon = { git = "https://github.com/mediaprophet/etalon.git", tag = "v0.0.2-release" }
+# Focused etalon-* crates can be selected from the same release.</code></pre>
       <p>
-        Packages are available through Git or local checkouts. Before release,
-        pin a full tested commit rather than a moving branch.
-        <a href="getting-started.html">Read the integration guide</a>.
+        Package version <code>0.0.2</code> is distributed through Git.
+        <a href="getting-started.html#versions">The version guide</a> explains
+        immutable tags and commits, the <code>stable</code> and
+        <code>latest</code> channels, and future development on
+        <code>dev</code>.
+      </p>
+      <h2>Built on wgpu and Naga</h2>
+      <p>
+        Etalon retains the upstream graphics, validation and compiler foundation
+        and attribution. Its additions include prepared native execution,
+        focused application libraries and recorded browser/backend fixes.
+        <a href="capabilities.html#changes"
+          >Inspect the changes and their source</a
+        >
+        · <a href="licensing.html">Project and upstream licensing</a>.
       </p>
     </main>
     <footer>
       <div>
-        Development source:
+        Documentation source:
         <a href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}"
           ><code>{{REVISION}}</code></a
         >. <a href="licensing.html">Project and upstream licensing</a>.

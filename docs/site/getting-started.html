@@ -26,6 +26,30 @@
         libraries can process caller-owned samples without opening a device or
         starting a service.
       </p>
+      <h2 id="versions">Choose a release target</h2>
+      <p>
+        Etalon 0.0.2 is Git-distributed. Use the immutable final release tag
+        <code>v0.0.2-release</code>, or follow qualified releases with
+        <code>latest</code>. The earlier <code>v0.0.2</code> tag is a preserved
+        historical prerelease and does not contain the final fixes.
+      </p>
+      <pre><code>[dependencies]
+etalon = { git = "https://github.com/mediaprophet/etalon.git", tag = "v0.0.2-release" }
+# Alternative: branch = "latest" follows qualified releases.</code></pre>
+      <p>
+        <code>stable</code> and <code>latest</code> identify the newest
+        qualified release; <code>v0.0.2.x</code> stays on the 0.0.2 maintenance
+        line. Future development stays on <code>dev</code>. Cargo.lock pins the
+        resolved commit until you explicitly update it. Keep all Etalon
+        dependencies on the same tag or full revision.
+      </p>
+      <p>
+        This site publishes from <code>stable</code>. The examples below pin
+        this exact documentation revision. See the
+        <a href="https://github.com/mediaprophet/etalon/releases/latest"
+          >latest release and qualification evidence</a
+        >.
+      </p>
       <h2>Graphics and compute</h2>
       <p>
         Use <code>etalon</code> for the native/browser graphics API, or choose a

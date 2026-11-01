@@ -1,0 +1,37 @@
+name: Git consumer
+
+on:
+  push:
+    branches: [dev, stable]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  consumer:
+    name: Independent native and WASM Git consumer
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CARGO_INCREMENTAL: false
+      CARGO_TERM_COLOR: always
+      CARGO_PROFILE_DEV_DEBUG: 0
+      ETALON_CONSUMER_REPOSITORY: ${{ github.server_url }}/${{ github.repository }}.git
+      ETALON_CONSUMER_REVISION: ${{ github.sha }}
+    steps:
+      - name: Checkout consumer check
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install qualified toolchain
+        run: rustup toolchain install 1.96.1 --no-self-update --profile minimal --target wasm32-unknown-unknown
+
+      - name: Resolve and build an independent Git consumer
+        run: python3 tests/consumer/check_git_consumer.py
