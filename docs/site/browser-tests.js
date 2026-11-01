@@ -21,7 +21,19 @@ function parse(value) {
   return typeof value === "string" ? JSON.parse(value) : value;
 }
 function bounded(value) {
-  return JSON.stringify(value, null, 2).slice(0, 12000);
+  const encoded = JSON.stringify(value, null, 2);
+  const limit = 32768;
+  return encoded.length <= limit
+    ? encoded
+    : JSON.stringify(
+        {
+          truncated: true,
+          preview: encoded.slice(0, limit),
+          full_evidence: "Download the JSON report",
+        },
+        null,
+        2,
+      );
 }
 function deadline(promise, milliseconds) {
   let timer;
