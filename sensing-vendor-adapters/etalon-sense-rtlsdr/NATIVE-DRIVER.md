@@ -83,9 +83,8 @@ arithmetic, not RF calibration. The typed native allocation class remains
 allocation. There is no hard deadline, `SdrReader` bounded-duration claim,
 background thread or CPU substitute.
 
-All builds, tests, runtime loading and hardware execution remain deferred.
-Source-only cases describe rejection of dangerous control values, invalid gain,
+CI runs Rust/mock tests for rejection of dangerous control values, invalid gain,
 late policy denial, short reads, changed configuration, forgotten ownership and
-unknown cleanup. None has been run. ABI/layout, numeric execution, receiver
-behavior, driver interruption, local isolation and allocation measurement still
-require qualification after the cleanup hold is lifted.
+unknown cleanup. Native runtime loading and hardware execution are separate:
+ABI/layout compatibility, receiver behavior, driver interruption, local isolation
+and allocation measurement still require target deployment qualification.

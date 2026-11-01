@@ -2,8 +2,9 @@
 
 Source implementation for a Linux/Android host and the original Etalon IQ-power
 DSP service. This is a vendor workspace extension; it does not change the Etalon
-root manifest, accelerator APIs or compiler code. No build, test, native library
-load or device operation has been performed. It is not qualified hardware support.
+root manifest, accelerator APIs or compiler code. CI compiles its Rust boundary
+and runs mock tests; native library loading and DSP execution remain separate
+deployment qualifications. It is not qualified hardware support.
 
 `FastRpcIqPowerProvider::open` takes a validated
 `etalon_sense_deployment::fastrpc::AdmittedFastRpcDeployment`, an unreused provider

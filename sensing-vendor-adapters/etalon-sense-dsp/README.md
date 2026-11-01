@@ -30,5 +30,5 @@ an actual DSP target. Other SDK providers can register different operations,
 precisions, layouts and devices without changing this router. Host execution of
 ordinary CPU DSP routines must not be registered as physical DSP execution.
 
-Source tests use synthetic providers only to exercise routing and refusal.
-No build, test, device, runtime or network operation has been performed.
+CI host tests use synthetic providers to exercise routing and refusal. They
+do not qualify a native DSP, runtime or remote execution.
