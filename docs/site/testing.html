@@ -12,7 +12,7 @@
     />
     <script type="module" src="browser-tests.js"></script>
   </head>
-  <body>
+  <body data-etalon-qualification="not_run">
     <a class="skip" href="#main">Skip to content</a>
     <header>
       <nav aria-label="Main navigation">
@@ -55,6 +55,20 @@
           Download local JSON report
         </button>
       </div>
+      <h2
+        id="gpu-qualification"
+        class="status not_run"
+        role="status"
+        aria-live="polite"
+      >
+        GPU qualification not run.
+      </h2>
+      <p class="small">
+        GPU qualification passes only when all 13 Rust/WASM cases pass,
+        including all 11 GPU cases. Any unavailable, failed or unrun case fails
+        qualification; passing CPU cases cannot establish that WebGPU works on
+        this device.
+      </p>
       <p id="test-progress" role="status" aria-live="polite">
         Ready. No tests have run.
       </p>

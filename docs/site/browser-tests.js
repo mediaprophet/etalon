@@ -2,6 +2,7 @@ const start = document.querySelector("#run-tests");
 const download = document.querySelector("#download-report");
 const progress = document.querySelector("#test-progress");
 const summary = document.querySelector("#test-summary");
+const qualification = document.querySelector("#gpu-qualification");
 const environment = document.querySelector("#environment");
 const tbody = document.querySelector("#test-results");
 const revision = document.querySelector('meta[name="etalon-revision"]').content;
@@ -63,6 +64,54 @@ function totals(report) {
   summary.textContent = `${counts.pass} passed · ${counts.fail} failed · ${counts.unsupported} unsupported · ${counts.not_run} not run`;
   return counts;
 }
+function qualify(report, catalog) {
+  const gpuCases = catalog
+    .filter((test) => test.requires_gpu)
+    .map((test) => {
+      const result = report.results.find((item) => item.id === test.id);
+      return {
+        id: test.id,
+        status: result?.status || "not_run",
+        reason:
+          result?.details?.message ||
+          result?.details?.reason ||
+          (result?.status === "pass"
+            ? "Rust/WASM case passed"
+            : "GPU case did not pass"),
+      };
+    });
+  const passed =
+    catalog.length === 13 &&
+    gpuCases.length === 11 &&
+    report.results.length === 13 &&
+    new Set(report.results.map((item) => item.id)).size === 13 &&
+    catalog.every((test) =>
+      report.results.some(
+        (item) => item.id === test.id && item.status === "pass",
+      ),
+    );
+  const firstFailure = report.results.find((item) => item.status !== "pass");
+  const unavailable = gpuCases.filter(
+    (item) => item.status === "unsupported",
+  ).length;
+  const reason = passed
+    ? "All 13 Rust/WASM cases passed, including all 11 GPU cases."
+    : unavailable
+      ? `${unavailable} GPU cases unavailable. ${firstFailure?.details?.message || "No complete GPU result."}`
+      : firstFailure
+        ? `${firstFailure.id}: ${firstFailure.details?.message || firstFailure.details?.reason || firstFailure.status}`
+        : "The complete 13-case suite did not pass.";
+  report.qualification = {
+    status: passed ? "passed" : "failed",
+    reason: reason.slice(0, 2000),
+    expected_cases: 13,
+    expected_gpu_cases: 11,
+    gpu_cases: gpuCases,
+  };
+  qualification.textContent = `GPU qualification ${passed ? "PASSED" : "FAILED"} — ${report.qualification.reason}`;
+  qualification.className = `status ${passed ? "pass" : "fail"}`;
+  document.body.dataset.etalonQualification = report.qualification.status;
+}
 function preview(session) {
   const bytes = session.image_rgba();
   const caption = document.querySelector("#render-caption");
@@ -102,6 +151,10 @@ async function run() {
   reportUrl = undefined;
   tbody.replaceChildren();
   document.body.dataset.etalonState = "running";
+  document.body.dataset.etalonQualification = "running";
+  qualification.textContent =
+    "GPU qualification running — no pass established.";
+  qualification.className = "status not_run";
   const canvas = document.querySelector("#render-result");
   canvas.getContext("2d")?.clearRect(0, 0, 64, 64);
   document.querySelector("#render-caption").textContent =
@@ -124,6 +177,7 @@ async function run() {
   };
   let session;
   let inFlight;
+  let catalog = [];
   try {
     progress.textContent = "Loading the Etalon Rust/WASM build…";
     const module = await deadline(
@@ -159,8 +213,19 @@ async function run() {
       );
     }
     environment.textContent = bounded({ ...report.context, ...report.runtime });
-    const catalog = parse(session.cases_json());
-    if (!Array.isArray(catalog) || catalog.length < 2 || catalog.length > 16) {
+    catalog = parse(session.cases_json());
+    if (
+      !Array.isArray(catalog) ||
+      catalog.length < 2 ||
+      catalog.length > 16 ||
+      catalog.some(
+        (test) =>
+          !test ||
+          typeof test.id !== "string" ||
+          typeof test.requires_gpu !== "boolean",
+      )
+    ) {
+      catalog = [];
       throw new Error("Invalid bounded test catalog.");
     }
     const views = catalog.map(row);
@@ -253,6 +318,7 @@ async function run() {
     }
     report.finished_at = new Date().toISOString();
     report.counts = totals(report);
+    qualify(report, catalog);
     document.body.dataset.etalonState = "complete";
     document.body.dataset.etalonPassed = String(report.counts.pass);
     document.body.dataset.etalonFailed = String(report.counts.fail);

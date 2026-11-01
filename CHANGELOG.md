@@ -45,6 +45,8 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 ### Browser error reporting
 
+- Restore upstream's default Core adapter-request shape while retaining explicit Compatibility requests; show failed GPU qualification prominently when the browser suite cannot execute GPU work.
+
 - Preserve browser adapter-request rejection details instead of misreporting them as an unavailable adapter.
 
 ### Release preparation
