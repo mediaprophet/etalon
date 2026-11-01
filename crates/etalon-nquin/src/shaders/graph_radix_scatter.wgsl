@@ -5,18 +5,22 @@ struct Params {
     _pad1: u32,
 }
 
-@group(0) @binding(0) var<storage, read> keys_in: array<u32>;
-@group(0) @binding(1) var<storage, read> idx_in: array<u32>;
-@group(0) @binding(2) var<storage, read_write> keys_out: array<u32>;
-@group(0) @binding(3) var<storage, read_write> idx_out: array<u32>;
-@group(0) @binding(4) var<storage, read> wg_offsets: array<u32>;
-@group(0) @binding(5) var<uniform> params: Params;
+struct RadixEntry {
+    key_lo: u32,
+    key_hi: u32,
+    index: u32,
+}
+
+@group(0) @binding(0) var<storage, read> entries_in: array<RadixEntry>;
+@group(0) @binding(1) var<storage, read_write> entries_out: array<RadixEntry>;
+@group(0) @binding(2) var<storage, read> wg_offsets: array<u32>;
+@group(0) @binding(3) var<uniform> params: Params;
 
 var<workgroup> wg_digits: array<u32, 64>;
 
 fn digit_at(i: u32, shift: u32) -> u32 {
-    let lo = keys_in[i * 2u];
-    let hi = keys_in[i * 2u + 1u];
+    let lo = entries_in[i].key_lo;
+    let hi = entries_in[i].key_hi;
     if (shift < 32u) {
         return (lo >> shift) & 255u;
     }
@@ -50,7 +54,5 @@ fn main(
 
     let base_offset = wg_offsets[d * params.num_wgs + wid.x];
     let pos = base_offset + local_rank;
-    keys_out[pos * 2u] = keys_in[i * 2u];
-    keys_out[pos * 2u + 1u] = keys_in[i * 2u + 1u];
-    idx_out[pos] = idx_in[i];
+    entries_out[pos] = entries_in[i];
 }

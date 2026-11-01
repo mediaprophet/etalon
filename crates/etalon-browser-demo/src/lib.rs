@@ -45,3 +45,14 @@ pub use debug_log::{configure_debug_logging, debug_log_json};
 mod environment_info;
 #[cfg(target_arch = "wasm32")]
 pub use environment_info::browser_environment_json;
+
+#[cfg(target_arch = "wasm32")]
+mod adapter_diagnostic;
+#[cfg(target_arch = "wasm32")]
+pub use adapter_diagnostic::adapter_diagnostic_errors;
+
+#[cfg(target_arch = "wasm32")]
+mod environment_webgl;
+
+#[cfg(target_arch = "wasm32")]
+mod domain_signal;

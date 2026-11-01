@@ -1,9 +1,9 @@
-//! Explicit, caller-selected native GPU execution for bounded sensing kernels.
+//! Explicit, caller-selected portable GPU execution for bounded sensing kernels.
 //!
 //! The ordinary provider accepts an existing Etalon device and queue. It does not discover
 //! devices, authorize capture, attest a provider, qualify hardware, or fall back
-//! to CPU execution. Readback is blocking with a bounded poll timeout and is
-//! available only on native Etalon backends; WebGPU cannot wait synchronously.
+//! to CPU execution. Async readback supports native and Browser WebGPU; the
+//! blocking API and prepared Vulkan path remain native-only.
 //! This provider is explicitly `ColdBoundedBuffers`, not a Tier-1 zero-heap hot path.
 //! Etalon's `BufferSlice::map_async` boxes its callback, and its command encoder,
 //! command buffer, and queue submission APIs do not provide a caller-owned
@@ -18,31 +18,35 @@
 //! adapter. Its fixed resources avoid ordinary per-run command recording, but
 //! its live descriptor remains `ColdUnbounded` pending target qualification.
 #![forbid(unsafe_code)]
-#![cfg(not(target_arch = "wasm32"))]
 
 mod allocation;
 pub use allocation::GpuAllocationClass;
+mod async_compute;
+#[cfg(not(target_arch = "wasm32"))]
+mod blocking;
+mod completion;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod live;
 mod numeric;
 mod pair;
+#[cfg(not(target_arch = "wasm32"))]
 pub mod prepared;
+use completion::MapCompletion;
 use numeric::{
     checked_bytes, make_params, persistent_buffer_bytes, stage_power_values, validate_request,
 };
 pub use pair::{DeviceQueuePair, DeviceRequestGate, DeviceRequestStage, PairRequestError};
 
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::Arc;
 use std::time::Duration;
 
 use etalon::{BindGroup, Buffer, ComputePipeline, Device, Queue};
-use etalon_signal::{
-    decode::ByteOrder,
-    execution::{
-        i16_iq_power_upper_bound, DeviceId, ExecutionAllocationClass, RegisteredSignalProvider,
-    },
-    SignalError,
-};
+pub use etalon_signal::{decode::ByteOrder, execution::DeviceId};
+use etalon_signal::{execution::i16_iq_power_upper_bound, SignalError};
+
+#[cfg(not(target_arch = "wasm32"))]
+use etalon_signal::execution::{ExecutionAllocationClass, RegisteredSignalProvider};
 
 pub const MAX_IQ_PAIRS: usize = 1_048_576;
 pub const DEFAULT_POLL_TIMEOUT: Duration = Duration::from_secs(5);
@@ -74,6 +78,11 @@ pub enum GpuError {
     HotZeroHeapUnsupported,
     BufferBudgetExceeded,
     DeviceLost,
+    Busy,
+    ValidationFailed,
+    OutOfMemory,
+    InternalError,
+    AsyncTimerUnavailable,
 }
 
 /// Caller-selected Etalon device provider for signed-i16 I/Q power.
@@ -81,8 +90,8 @@ pub enum GpuError {
 /// Each call uploads only the provided bytes, runs WGSL to decode the requested
 /// byte order, apply `scale`, and compute IÂ² + QÂ² in f32. Results are converted
 /// to f64 on readback; precision is therefore f32 and can differ from the
-/// reference CPU pipeline's f64 sum. This is blocking, bounded by `max_pairs`,
-/// and native-only. An Etalon device/ID match does not constitute GPU attestation
+/// reference CPU pipeline's f64 sum. Calls are bounded by `max_pairs`; async
+/// execution supports Browser WebGPU and blocking execution remains native-only. An Etalon device/ID match does not constitute GPU attestation
 /// or hardware qualification. Its host path may allocate transient command
 /// resources, and Etalon boxes the map callback, so it does not satisfy a strict
 /// hot zero-heap contract. The completion cell is allocated once per provider.
@@ -104,88 +113,10 @@ pub struct EtalonIqPowerProvider<'a> {
     bind_group: BindGroup,
     pipeline: ComputePipeline,
     completion: Arc<MapCompletion>,
+    active: AtomicBool,
     poisoned: bool,
     last_backend_error: Option<GpuError>,
     loss_state: Option<&'a AtomicBool>,
-}
-
-/// Reusable provider-owned map completion state. Etalon requires a `'static`
-/// callback, so each callback holds an `Arc` clone. Generation checks make a
-/// late callback after cancellation unable to complete a later request.
-struct MapCompletion {
-    state: Mutex<MapCompletionState>,
-}
-
-struct MapCompletionState {
-    generation: u64,
-    result: Option<bool>,
-    retired: bool,
-}
-
-impl MapCompletion {
-    fn new() -> Self {
-        Self {
-            state: Mutex::new(MapCompletionState {
-                generation: 0,
-                result: None,
-                retired: false,
-            }),
-        }
-    }
-
-    fn begin(&self) -> Result<u64, GpuError> {
-        let mut state = self.lock();
-        if state.retired {
-            return Err(GpuError::ProviderPoisoned);
-        }
-        let Some(generation) = state.generation.checked_add(1) else {
-            state.retired = true;
-            return Err(GpuError::ProviderPoisoned);
-        };
-        state.generation = generation;
-        state.result = None;
-        Ok(generation)
-    }
-
-    fn complete(&self, generation: u64, mapped: bool) {
-        let mut state = self.lock();
-        if !state.retired && state.generation == generation {
-            state.result = Some(mapped);
-        }
-    }
-
-    fn result(&self, generation: u64) -> Option<bool> {
-        let state = self.lock();
-        if !state.retired && state.generation == generation {
-            state.result
-        } else {
-            None
-        }
-    }
-
-    /// Invalidate callbacks before unmapping after a failed or timed-out wait.
-    fn invalidate(&self, generation: u64) {
-        let mut state = self.lock();
-        if state.generation != generation {
-            return;
-        }
-        state.result = None;
-        if let Some(next) = state.generation.checked_add(1) {
-            state.generation = next;
-        } else {
-            // No future request is safe at wraparound. Existing callbacks are
-            // ignored even if their generation matches the terminal value.
-            state.retired = true;
-        }
-    }
-
-    fn lock(&self) -> std::sync::MutexGuard<'_, MapCompletionState> {
-        // A poisoned lock still contains bounded state; recover it without
-        // panicking in the completion callback.
-        self.state
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-    }
 }
 
 impl<'a> EtalonIqPowerProvider<'a> {
@@ -366,10 +297,16 @@ impl<'a> EtalonIqPowerProvider<'a> {
             bind_group,
             pipeline,
             completion: Arc::new(MapCompletion::new()),
+            active: AtomicBool::new(false),
             poisoned: false,
             last_backend_error: None,
             loss_state: None,
         })
+    }
+
+    /// Caller registry identity supplied at construction; this is not physical-device attestation.
+    pub const fn device_id(&self) -> DeviceId {
+        self.device_id
     }
 
     pub const fn max_pairs(&self) -> usize {
@@ -398,170 +335,6 @@ impl<'a> EtalonIqPowerProvider<'a> {
         self.loss_state
             .is_some_and(|state| state.load(Ordering::Acquire))
     }
-
-    /// Execute synchronously, preserving detailed Etalon failures.
-    pub fn compute_into(
-        &mut self,
-        bytes: &[u8],
-        byte_order: ByteOrder,
-        scale: f32,
-        workspace: &mut [f32],
-        staged_output: &mut [f64],
-    ) -> Result<usize, GpuError> {
-        self.last_backend_error = None;
-        if self.poisoned {
-            return Err(GpuError::ProviderPoisoned);
-        }
-        if self.is_device_lost() {
-            self.poisoned = true;
-            return Err(GpuError::DeviceLost);
-        }
-        let count = validate_request(
-            bytes,
-            scale,
-            workspace.len(),
-            staged_output.len(),
-            self.max_pairs,
-        )?;
-        let upper_bound = i16_iq_power_upper_bound(scale).map_err(|error| match error {
-            SignalError::InvalidParameter => GpuError::InvalidScale,
-            _ => GpuError::NumericRange,
-        })?;
-
-        self.queue.write_buffer(&self.input, 0, bytes);
-        let params = make_params(scale, byte_order, count);
-        self.queue.write_buffer(&self.params, 0, &params);
-
-        let mut encoder = self
-            .device
-            .create_command_encoder(&etalon::CommandEncoderDescriptor {
-                label: Some("etalon-sense-iq-encoder"),
-            });
-        {
-            let mut pass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
-                label: Some("etalon-sense-iq-pass"),
-                timestamp_writes: None,
-            });
-            pass.set_pipeline(&self.pipeline);
-            pass.set_bind_group(0, &self.bind_group, &[]);
-            pass.dispatch_workgroups(count.div_ceil(WORKGROUP_SIZE) as u32, 1, 1);
-        }
-        let output_bytes = checked_bytes(count, BYTES_PER_OUTPUT_PAIR)? as u64;
-        encoder.copy_buffer_to_buffer(&self.power_values, 0, &self.readback, 0, output_bytes);
-        let command_buffer = encoder.finish();
-        let generation = self.completion.begin()?;
-        let submission = match self.queue.submit([command_buffer]) {
-            Some(submission) => submission,
-            None => {
-                self.completion.invalidate(generation);
-                self.poisoned = true;
-                return Err(GpuError::PollFailed);
-            }
-        };
-
-        let completion = Arc::clone(&self.completion);
-        self.readback
-            .slice(0..output_bytes)
-            .map_async(etalon::MapMode::Read, move |result| {
-                completion.complete(generation, result.is_ok());
-            });
-        let poll = etalon::PollType::Wait {
-            submission_index: Some(submission),
-            timeout: Some(self.poll_timeout),
-        };
-        if let Err(error) = self.device.poll(poll) {
-            self.completion.invalidate(generation);
-            self.readback.unmap();
-            self.poisoned = true;
-            return Err(match error {
-                etalon::PollError::Timeout => GpuError::PollTimedOut,
-                etalon::PollError::CantWait => GpuError::SynchronousWaitUnsupported,
-                _ => GpuError::PollFailed,
-            });
-        }
-        match self.completion.result(generation) {
-            Some(true) => {}
-            Some(false) => {
-                self.completion.invalidate(generation);
-                self.readback.unmap();
-                self.poisoned = true;
-                return Err(GpuError::MapFailed);
-            }
-            None => {
-                self.completion.invalidate(generation);
-                self.readback.unmap();
-                self.poisoned = true;
-                return Err(GpuError::MapCallbackLost);
-            }
-        }
-
-        let slice = self.readback.slice(0..output_bytes);
-        let view = match slice.get_mapped_range() {
-            Ok(view) => view,
-            Err(_) => {
-                self.readback.unmap();
-                self.poisoned = true;
-                return Err(GpuError::MappedRangeFailed);
-            }
-        };
-        for (index, slot) in workspace.iter_mut().enumerate().take(count) {
-            let start = index * 4;
-            *slot = f32::from_le_bytes([
-                view[start],
-                view[start + 1],
-                view[start + 2],
-                view[start + 3],
-            ]);
-        }
-        drop(view);
-        self.readback.unmap();
-
-        if self.is_device_lost() {
-            workspace.fill(0.0);
-            self.poisoned = true;
-            return Err(GpuError::DeviceLost);
-        }
-        stage_power_values(&workspace[..count], staged_output, upper_bound)
-    }
-}
-
-impl RegisteredSignalProvider for EtalonIqPowerProvider<'_> {
-    fn device_id(&self) -> DeviceId {
-        self.device_id
-    }
-
-    /// Persistent provider-owned GPU buffers were admitted against the
-    /// constructor's explicit byte budget. This does not claim zero heap:
-    /// Etalon command recording/submission and map callbacks still allocate.
-    fn execution_allocation_class(&self) -> ExecutionAllocationClass {
-        ExecutionAllocationClass::ColdBoundedBuffers
-    }
-
-    fn i16_iq_power_into(
-        &mut self,
-        bytes: &[u8],
-        byte_order: ByteOrder,
-        scale: f32,
-        workspace: &mut [f32],
-        staged_output: &mut [f64],
-    ) -> Result<usize, SignalError> {
-        match self.compute_into(bytes, byte_order, scale, workspace, staged_output) {
-            Ok(count) => Ok(count),
-            Err(error) => {
-                self.last_backend_error = Some(error);
-                Err(match error {
-                    GpuError::InvalidScale => SignalError::InvalidParameter,
-                    GpuError::CapacityExceeded
-                    | GpuError::InvalidCapacity
-                    | GpuError::LengthMismatch => SignalError::LengthMismatch,
-                    GpuError::EmptyInput => SignalError::EmptyInput,
-                    GpuError::InvalidInput => SignalError::InvalidParameter,
-                    GpuError::NumericRange => SignalError::NumericRange,
-                    _ => SignalError::InvalidParameter,
-                })
-            }
-        }
-    }
 }
 
 fn storage_entry(binding: u32, read_only: bool, min_size: u64) -> etalon::BindGroupLayoutEntry {
@@ -579,3 +352,17 @@ fn storage_entry(binding: u32, read_only: bool, min_size: u64) -> etalon::BindGr
 
 #[cfg(test)]
 mod tests;
+
+impl Drop for EtalonIqPowerProvider<'_> {
+    fn drop(&mut self) {
+        self.readback.unmap();
+        for buffer in [
+            &self.input,
+            &self.power_values,
+            &self.readback,
+            &self.params,
+        ] {
+            buffer.destroy();
+        }
+    }
+}

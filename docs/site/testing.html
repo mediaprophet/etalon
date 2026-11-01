@@ -11,6 +11,7 @@
       content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self'; img-src 'self' blob:; object-src 'none'; base-uri 'self'"
     />
     <script type="module" src="browser-tests.js"></script>
+    <script type="module" src="adapter-diagnostic.js"></script>
   </head>
   <body data-etalon-qualification="not_run">
     <a class="skip" href="#main">Skip to content</a>
@@ -38,6 +39,33 @@
         Vulkan, DX12, Metal, DSP/NPU or sensor hardware.
         <a href="capabilities.html#coverage">Coverage explained</a>.
       </p>
+      <section aria-labelledby="adapter-diagnostic-heading">
+        <h2 id="adapter-diagnostic-heading">
+          Adapter diagnostic — errors only
+        </h2>
+        <p>
+          Run individual Rust/WASM acquisition checks to identify the exact API
+          step that returns null or an exception. This does not run GPU
+          workloads or mark GPU qualification as passed.
+        </p>
+        <div class="actions">
+          <button type="button" class="button" id="run-adapter-diagnostic">
+            Run adapter diagnostic
+          </button>
+          <button
+            type="button"
+            class="button"
+            id="download-adapter-diagnostic"
+            disabled
+          >
+            Download errors-only JSON
+          </button>
+        </div>
+        <p id="adapter-diagnostic-status" role="status" aria-live="polite">
+          Diagnostic not run.
+        </p>
+        <pre id="adapter-diagnostic-report"></pre>
+      </section>
       <label for="feature-level">WebGPU feature level requested</label>
       <select id="feature-level">
         <option value="auto">
@@ -67,8 +95,8 @@
         GPU qualification not run.
       </h2>
       <p class="small">
-        GPU qualification passes only when all 20 Rust/WASM cases pass,
-        including all 18 GPU cases. Any unavailable, failed or unrun case fails
+        GPU qualification passes only when all 21 Rust/WASM cases pass,
+        including all 19 GPU cases. Any unavailable, failed or unrun case fails
         qualification; passing CPU cases cannot establish that WebGPU works on
         this device.
       </p>

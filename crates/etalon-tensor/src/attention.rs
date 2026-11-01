@@ -4,6 +4,12 @@
 //! attention (GQA) with in-shader RoPE, KV cache updates, and online softmax.
 
 use bytemuck::{Pod, Zeroable};
+use std::borrow::Cow;
+
+mod packed;
+pub use packed::{
+    pack_attention_weights_and_mask, packed_fused_attention_wgsl, PackedAttentionError,
+};
 
 /// Raw WGSL shader source for the fused FlashAttention kernel with guarded all-masked row handling.
 pub const FUSED_ATTENTION_WGSL: &str = include_str!("shaders/fused_attention.wgsl");
@@ -77,10 +83,28 @@ impl FusedAttentionPipeline {
     }
 
     pub fn try_new(device: &etalon::Device) -> Result<Self, crate::TensorPipelineError> {
-        crate::kernel_limits::check(&device.limits(), 5, 11_104)?;
+        Self::build(device, false)
+    }
+
+    /// Four storage bindings; binding 1 contains weights followed by packed mask pages.
+    pub fn try_new_packed(device: &etalon::Device) -> Result<Self, crate::TensorPipelineError> {
+        Self::build(device, true)
+    }
+
+    pub fn new_packed(device: &etalon::Device) -> Self {
+        Self::try_new_packed(device).expect("packed fused attention exceeds device compute limits")
+    }
+
+    fn build(device: &etalon::Device, packed: bool) -> Result<Self, crate::TensorPipelineError> {
+        crate::kernel_limits::check(&device.limits(), if packed { 4 } else { 5 }, 11_104)?;
+        let source = if packed {
+            Cow::Owned(packed_fused_attention_wgsl())
+        } else {
+            Cow::Borrowed(FUSED_ATTENTION_WGSL)
+        };
         let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("etalon-fused-attention-shader"),
-            source: etalon::ShaderSource::Wgsl(FUSED_ATTENTION_WGSL.into()),
+            source: etalon::ShaderSource::Wgsl(source),
         });
 
         let entries = [
@@ -104,7 +128,7 @@ impl FusedAttentionPipeline {
         ];
         let layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: Some("etalon-fused-attention-layout"),
-            entries: &entries,
+            entries: &entries[..if packed { 5 } else { 6 }],
         });
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
@@ -134,6 +158,19 @@ impl FusedAttentionPipeline {
         cpass.set_pipeline(&self.pipeline);
         cpass.set_bind_group(0, bind_group, &[]);
         cpass.dispatch_workgroups(num_heads, 1, 1);
+    }
+
+    /// Dispatch Q+attention (`proj_kind == 0`) over per-token mask pages in a batch.
+    pub fn dispatch_batched<'a>(
+        &'a self,
+        cpass: &mut etalon::ComputePass<'a>,
+        bind_group: &'a etalon::BindGroup,
+        num_heads: u32,
+        batch_len: u32,
+    ) {
+        cpass.set_pipeline(&self.pipeline);
+        cpass.set_bind_group(0, bind_group, &[]);
+        cpass.dispatch_workgroups(num_heads, batch_len, 1);
     }
 }
 

@@ -611,11 +611,11 @@ impl CudaMegaPassExecutor {
     }
 
     pub fn cuda_available() -> bool {
-        #[cfg(feature = "cuda")]
+        #[cfg(all(feature = "cuda", not(target_family = "wasm")))]
         {
             etalon_agent::CudaDriverApi::probe().is_some()
         }
-        #[cfg(not(feature = "cuda"))]
+        #[cfg(not(all(feature = "cuda", not(target_family = "wasm"))))]
         {
             false
         }

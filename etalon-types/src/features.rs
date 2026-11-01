@@ -85,6 +85,9 @@ mod webgpu_impl {
 
     #[doc(hidden)]
     pub const WEBGPU_FEATURE_TEXTURE_COMPONENT_SWIZZLE: u64 = 1 << 18;
+
+    #[doc(hidden)]
+    pub const WEBGPU_FEATURE_CORE_FEATURES_AND_LIMITS: u64 = 1 << 19;
 }
 
 /// Prefer `From<(Featuresetalon, FeaturesWebGPU)>` instead, which protects against swapping
@@ -1223,6 +1226,16 @@ features! {
     pub struct FeaturesWebGPU features_webgpu {
         // API:
 
+        /// Enables WebGPU core validation rules and default limits on browser adapters
+        /// that advertise this feature. Compatibility adapters may not support it.
+        ///
+        /// Native backends do not advertise this browser feature-level marker.
+        ///
+        /// See <https://gpuweb.github.io/gpuweb/#core-features-and-limits>.
+        #[name("core-features-and-limits")]
+        #[web(allow)]
+        const CORE_FEATURES_AND_LIMITS = WEBGPU_FEATURE_CORE_FEATURES_AND_LIMITS;
+
         /// By default, polygon depth is clipped to 0-1 range before/during rasterization.
         /// Anything outside of that range is rejected, and respective fragments are not touched.
         ///
@@ -1687,6 +1700,25 @@ mod tests {
             Features::ALLOWED_ON_WEB_BACKEND,
             Features::from_parts(Featuresetalon::SUBGROUP, FeaturesWebGPU::all()),
         );
+    }
+
+    #[test]
+    fn core_features_and_limits_webgpu_roundtrip() {
+        let feature = Features::CORE_FEATURES_AND_LIMITS;
+        assert_eq!(feature.as_str(), Some("core-features-and-limits"));
+        assert_eq!("core-features-and-limits".parse(), Ok(feature));
+        assert!("etalon-core-features-and-limits"
+            .parse::<Features>()
+            .is_err());
+        assert_eq!(FeaturesWebGPU::CORE_FEATURES_AND_LIMITS.bits(), 1 << 19);
+        assert_eq!(
+            Features::from(FeaturesWebGPU::CORE_FEATURES_AND_LIMITS),
+            feature
+        );
+        assert_eq!(Features::from_bits_retain(feature.bits()), feature);
+        assert!(Features::ALLOWED_ON_WEB_BACKEND.contains(feature));
+        assert!(!Features::all_native_mask().intersects(feature));
+        assert!(!Features::default().intersects(feature));
     }
 
     #[test]

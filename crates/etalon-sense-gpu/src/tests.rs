@@ -108,3 +108,16 @@ fn invalidated_callback_cannot_complete_or_reuse_a_later_request() {
     completion.complete(current, true);
     assert_eq!(completion.result(current), Some(true));
 }
+
+#[test]
+fn actual_iq_shader_validates_without_optional_gpu_capabilities() {
+    let source = include_str!("iq_power.wgsl");
+    let module = naga::front::wgsl::parse_str(source)
+        .unwrap_or_else(|error| panic!("{}", error.emit_to_string(source)));
+    naga::valid::Validator::new(
+        naga::valid::ValidationFlags::all(),
+        naga::valid::Capabilities::empty(),
+    )
+    .validate(&module)
+    .unwrap();
+}

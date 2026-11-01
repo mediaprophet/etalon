@@ -1,3 +1,4 @@
+import { BrowserDiagnostics } from "./android-diagnostics.js";
 import { pathToFileURL } from "node:url";
 import { setTimeout as pause } from "node:timers/promises";
 
@@ -9,6 +10,7 @@ export class CdpClient {
     this.socket = socket;
     this.nextId = 0;
     this.pending = new Map();
+    this.diagnostics = new BrowserDiagnostics();
     socket.addEventListener("message", ({ data }) => {
       try {
         if (
@@ -17,6 +19,10 @@ export class CdpClient {
         )
           throw new Error("DevTools message byte budget exceeded");
         const message = JSON.parse(data);
+        if (!Object.hasOwn(message, "id")) {
+          this.diagnostics.capture(message);
+          return;
+        }
         const request = this.pending.get(message.id);
         if (!request) return;
         this.pending.delete(message.id);
@@ -118,9 +124,15 @@ export async function collectReport(
   now = Date.now,
 ) {
   const deadline = now() + timeoutMs;
+  await client.call("Log.enable", {}, Math.min(5000, timeoutMs));
+  await client.call("Runtime.enable", {}, Math.min(5000, timeoutMs));
   const expression = `(() => {
     if (location.href !== ${JSON.stringify(url)}) throw new Error("Qualification page navigated away");
     const state = document.body?.dataset.etalonState;
+    if (!state) {
+      const start = document.querySelector("#run-tests");
+      if (document.body?.dataset.etalonReady === "true" && start && !start.disabled) start.click();
+    }
     if (state !== "complete") return { state };
     const report = document.querySelector("#qualification-report")?.textContent;
     if (!report) throw new Error("Completed page has no qualification report");
@@ -146,7 +158,13 @@ export async function collectReport(
       const report = JSON.parse(value.report);
       if (!report || typeof report !== "object" || Array.isArray(report))
         throw new Error("Qualification report must be an object");
-      return value.report;
+      report.browser_diagnostics = client.diagnostics?.snapshot();
+      const payload = JSON.stringify(report);
+      if (Buffer.byteLength(payload) > MAX_REPORT_BYTES)
+        throw new Error(
+          "Qualification report with diagnostics exceeds byte budget",
+        );
+      return payload;
     }
     await wait(Math.min(200, Math.max(0, deadline - now())));
   }
@@ -177,7 +195,19 @@ async function main() {
     throw new Error("Invalid qualification URL or timeout");
   const client = await CdpClient.connect(args["--endpoint"]);
   try {
-    process.stdout.write(await collectReport(client, url.href, seconds * 1000));
+    try {
+      process.stdout.write(
+        await collectReport(client, url.href, seconds * 1000),
+      );
+    } catch (error) {
+      process.stdout.write(
+        JSON.stringify({
+          schema: "etalon.android-runner-failure.v1",
+          failure: String(error).slice(0, 2000),
+          browser_diagnostics: client.diagnostics.snapshot(),
+        }),
+      );
+    }
   } finally {
     client.close();
   }

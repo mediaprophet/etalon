@@ -15,7 +15,7 @@ const HIGH_ENTROPY_KEYS: [&str; 7] = [
     "wow64",
 ];
 
-fn bounded(text: &str) -> String {
+pub(crate) fn bounded(text: &str) -> String {
     let mut end = text.len().min(MAX_STRING_BYTES);
     while !text.is_char_boundary(end) {
         end -= 1;
@@ -27,7 +27,7 @@ fn status(name: &str) -> Value {
     json!({"status": name})
 }
 
-fn exception(error: &JsValue) -> Value {
+pub(crate) fn exception(error: &JsValue) -> Value {
     let message = error.as_string().or_else(|| {
         Reflect::get(error, &JsValue::from_str("message"))
             .ok()?
@@ -201,5 +201,5 @@ pub async fn browser_environment_json() -> String {
         "secure_context": property(&global, "isSecureContext", boolean),
         "cross_origin_isolated": property(&global, "crossOriginIsolated", boolean),
         "global_type": global_type(&global), "device_pixel_ratio": property(&global, "devicePixelRatio", number),
-        "screen": screen(&global), "bounds": {"string_bytes": MAX_STRING_BYTES, "array_items": MAX_ARRAY_ITEMS}}).to_string()
+        "screen": screen(&global), "webgl": crate::environment_webgl::probe(), "bounds": {"string_bytes": MAX_STRING_BYTES, "array_items": MAX_ARRAY_ITEMS}}).to_string()
 }

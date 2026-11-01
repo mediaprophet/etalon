@@ -47,6 +47,16 @@ This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.
 
 The agent changed the development version to 0.0.3 without the user's instruction while the requested mobile GPU outcome remained unsuccessful. This created a misleading progress signal and avoidable review/retest work. Development is restored to 0.0.2; prior commits remain in the audit history. No 0.0.3 tag or release was created. CI success does not establish successful mobile qualification. See the [continuing-development notes](docs/releases/0.0.2-development.md).
 
+### Follow-up portability and diagnostics
+
+- Preserve the selected browser feature level in canvas association checks and expose the optional `CORE_FEATURES_AND_LIMITS` feature without enabling it implicitly.
+- Add four-storage-buffer attention with caller-buffered weight/mask packing; retain the existing attention API. Pack radix key/index records to reduce storage bindings, with explicit stage passes and validated readback.
+- Capture bounded CDP rendering warnings before Android qualification starts, retain diagnostics on failure, and add an independent forced-fallback adapter probe. A separate Rust/WASM errors-only diagnostic identifies failing acquisition tests and API steps with source/version metadata.
+- Replace native per-token readback threads with cancellation-scoped, nonblocking executor polling. Physical Pixel adapter acquisition remains unresolved.
+
+- Add bounded WebGL renderer evidence and read-only Android setting/firmware/GPU metadata, retaining unknown states without inferring a WebGPU refusal gate.
+- Enable inherited WebGPU consumers, target-gate native provider dependencies and CUDA/OS interop while preserving portable sensor contracts, and expose asynchronous GPU IQ-power processing on WASM.
+
 ### Mobile browser portability and resource ownership
 
 - Browser reports include bounded local debug logs with exact source/library versions and browser/device metadata. Optional metadata retains availability status; acquisition controls do not count as GPU passes.

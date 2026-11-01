@@ -1,6 +1,6 @@
-#[cfg(any(target_os = "android", test))]
+#[cfg(any(target_os = "android", all(test, not(target_family = "wasm"))))]
 mod android;
-#[cfg(any(target_os = "linux", test))]
+#[cfg(any(target_os = "linux", all(test, not(target_family = "wasm"))))]
 mod linux;
 mod types;
 #[cfg(target_os = "windows")]
@@ -16,11 +16,15 @@ const MAX_DEVICES: usize = 64;
     target_os = "windows",
     target_os = "linux",
     target_os = "android",
-    test
+    all(test, not(target_family = "wasm"))
 ))]
 const MAX_PROPERTY_BYTES: usize = 4096;
 
-#[cfg(any(target_os = "linux", target_os = "android", test))]
+#[cfg(any(
+    target_os = "linux",
+    target_os = "android",
+    all(test, not(target_family = "wasm"))
+))]
 pub(super) fn npu_driver(name: &str) -> bool {
     matches!(
         name,

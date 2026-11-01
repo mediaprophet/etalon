@@ -48,7 +48,7 @@ pub(crate) async fn request_gpu(
             Ok(adapter) => {
                 log::debug!(target: "etalon_browser_demo::adapter", "{name} adapter acquired");
                 attempts.push(json!({"feature_level":name,"status":"available"}));
-                selected = Some((adapter, name));
+                selected = Some((adapter, name, *level));
                 break;
             }
             Err(error) => {
@@ -71,7 +71,7 @@ pub(crate) async fn request_gpu(
             }
         }
     }
-    let (adapter, selected_level) = selected.ok_or_else(
+    let (adapter, selected_level, feature_level) = selected.ok_or_else(
         || json!({"status":"fail","code":"adapter-selection","message":"No adapter selected"}),
     )?;
     let adapter_info = adapter.get_info();
@@ -112,6 +112,7 @@ pub(crate) async fn request_gpu(
     });
     Ok((
         Gpu {
+            selected_level: feature_level,
             instance,
             adapter,
             device,

@@ -21,6 +21,8 @@ bytemuck = { workspace = true }
 hashbrown = { workspace = true }
 log = { workspace = true }
 thiserror = "2.0.21"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
 etalon-agent = { workspace = true, optional = true }
 
 [dev-dependencies]

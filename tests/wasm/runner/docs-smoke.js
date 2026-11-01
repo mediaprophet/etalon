@@ -1,5 +1,8 @@
 import { chromium } from "playwright";
 import { runBackendContracts } from "./backend-contracts.js";
+import { runAdapterDiagnosticContracts } from "./adapter-diagnostic-contracts.js";
+import { runEnvironmentWebglContracts } from "./environment-webgl-contracts.js";
+import { runAdapterDiagnosticPage } from "./adapter-diagnostic-page.js";
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((pairs, value, index, all) => {
@@ -85,6 +88,19 @@ try {
           );
         return original.apply(this, args);
       };
+    });
+  }
+  if (mode === "software-webgpu" && featureLevel === "core") {
+    await page.addInitScript(() => {
+      const request = navigator.gpu.requestAdapter.bind(navigator.gpu);
+      Object.defineProperty(navigator.gpu, "requestAdapter", {
+        configurable: true,
+        value: (options) =>
+          document.body.dataset.etalonState === "running" &&
+          options?.featureLevel === "compatibility"
+            ? Promise.resolve(null)
+            : request(options),
+      });
     });
   }
   if (boundary) {
@@ -176,7 +192,7 @@ try {
     );
   const completion = await page.evaluate(() => ({ ...document.body.dataset }));
   const allPassed =
-    completion.etalonPassed === "20" &&
+    completion.etalonPassed === "21" &&
     completion.etalonFailed === "0" &&
     completion.etalonUnsupported === "0" &&
     completion.etalonNotRun === "0";
@@ -229,15 +245,15 @@ try {
         ? "adapter-unavailable"
         : "adapter-request-rejected";
     const runtime = JSON.parse(environment);
-    if (observed.requests.length !== 5)
+    if (observed.requests.length !== 6)
       throw new Error(
-        "Expected one Etalon request followed by four independent controls",
+        "Expected one Etalon request followed by five independent controls",
       );
     const control = runtime.adapter_acquisition_control;
     const expectedControlStatus = mode === "adapter-null" ? "null" : "rejected";
     if (
       control?.gpu_execution_tested !== false ||
-      control.attempts?.length !== 4 ||
+      control.attempts?.length !== 5 ||
       control.attempts.some((a) => a.result.status !== expectedControlStatus)
     )
       throw new Error(
@@ -249,7 +265,9 @@ try {
       controls[1].argumentCount !== 1 ||
       Object.keys(controls[1].options).length !== 0 ||
       JSON.stringify(controls[2].options) !== '{"featureLevel":"core"}' ||
-      JSON.stringify(controls[3].options) !== '{"featureLevel":"compatibility"}'
+      JSON.stringify(controls[3].options) !==
+        '{"featureLevel":"compatibility"}' ||
+      JSON.stringify(controls[4].options) !== '{"forceFallbackAdapter":true}'
     )
       throw new Error(
         "Independent Rust/WASM request arguments differ from their labels",
@@ -279,7 +297,7 @@ try {
     )
       throw new Error("Rust/WASM discarded the browser rejection message");
     if (
-      observed.rows.length !== 20 ||
+      observed.rows.length !== 21 ||
       observed.rows.slice(0, 2).some((r) => r.status !== "pass")
     )
       throw new Error("Portable Rust/WASM cases did not execute");
@@ -302,6 +320,22 @@ try {
   if (mode === "software-webgpu") {
     const contracts = await runBackendContracts(page);
     process.stderr.write(`Backend contracts: ${JSON.stringify(contracts)}\n`);
+    const webgl = await runEnvironmentWebglContracts(page);
+    process.stderr.write(
+      `WebGL evidence contracts: ${JSON.stringify(webgl)}\n`,
+    );
+    const diagnostics = await runAdapterDiagnosticContracts(page);
+    process.stderr.write(
+      `Adapter diagnostic contracts: ${JSON.stringify(diagnostics)}\n`,
+    );
+    if (featureLevel === "core") {
+      const ui = await runAdapterDiagnosticPage(
+        context,
+        args["--url"],
+        report.source_revision,
+      );
+      process.stderr.write(`Adapter diagnostic UI: ${JSON.stringify(ui)}\n`);
+    }
   }
   const document = await page.content();
   if (Buffer.byteLength(document) > 2 * 1024 * 1024)

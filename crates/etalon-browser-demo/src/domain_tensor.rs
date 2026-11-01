@@ -1,8 +1,9 @@
 use bytemuck::Zeroable;
 use core::{future::Future, ops::Deref, task::Poll};
 use etalon_tensor::{
-    ForwardArena, ForwardMode, FusedAttentionParams, FusedAttentionPipeline, TensorArenaError,
-    TokenReadbackError, TopkParams, TopkReductionPipeline,
+    pack_attention_weights_and_mask, ForwardArena, ForwardMode, FusedAttentionParams,
+    FusedAttentionPipeline, TensorArenaError, TokenReadbackError, TopkParams,
+    TopkReductionPipeline,
 };
 use serde_json::{json, Value};
 
@@ -207,38 +208,58 @@ pub(crate) async fn topk(device: &etalon::Device, queue: &etalon::Queue) -> Resu
     )
 }
 
-pub(crate) async fn attention(
+async fn check_attention(
+    pipeline: &FusedAttentionPipeline,
     device: &etalon::Device,
     queue: &etalon::Queue,
+    mask_active: bool,
+    mask: &[u32],
+    expected: &[f32],
 ) -> Result<Value, Value> {
-    let pipeline = FusedAttentionPipeline::try_new(device)
-        .map_err(|e| failure("tensor-attention-limits", &e.to_string()))?;
+    let batch_len = (expected.len() / 2) as u32;
     let params = FusedAttentionParams {
         n_embd: 2,
         n_head: 1,
         n_kv_head: 1,
         head_dim: 2,
         q_heads_per_kv: 1,
-        max_context: 1,
+        max_context: 2,
         slot_kv_elems: 2,
         rope_theta_base: 10000.0,
         rope_scale: 1.0,
-        num_tokens_in_batch: 1,
-        mask_word_count: 1,
+        num_tokens_in_batch: batch_len,
+        mask_active: u32::from(mask_active),
+        mask_word_count: mask.len() as u32 / batch_len,
         out_stride_elems: 2,
-        proj_row_stride: 2,
+        weight_ggml_type: 1,
+        weight_row_elems: 2,
+        weight_byte_len: 8,
         ..FusedAttentionParams::zeroed()
     };
+    let mut packed = [0u32; 4];
+    let limits = device.limits();
+    let byte_limit = limits
+        .max_buffer_size
+        .min(limits.max_storage_buffer_binding_size)
+        .min(16);
+    let count = pack_attention_weights_and_mask(
+        &params,
+        &[0x00, 0x3c, 0, 0, 0, 0, 0x00, 0x3c],
+        mask,
+        &mut packed,
+        byte_limit,
+    )
+    .map_err(|e| failure("tensor-attention-pack", &e.to_string()))?;
     let hidden = upload(
         device,
         queue,
-        bytemuck::cast_slice(&[0.0f32, 0.0]),
+        bytemuck::cast_slice(&vec![0.0f32; expected.len()]),
         etalon::BufferUsages::STORAGE,
     );
-    let weights = upload(
+    let weights_and_mask = upload(
         device,
         queue,
-        bytemuck::cast_slice(&[0u32]),
+        bytemuck::cast_slice(&packed[..count]),
         etalon::BufferUsages::STORAGE,
     );
     let uniform = upload(
@@ -250,80 +271,85 @@ pub(crate) async fn attention(
     let kv = upload(
         device,
         queue,
-        bytemuck::cast_slice(&[0.0f32, 0.0, 3.0, -2.0]),
+        bytemuck::cast_slice(&[0.0f32, 0.0, 3.0, -2.0, 0.0, 0.0, 7.0, 5.0]),
         etalon::BufferUsages::STORAGE,
     );
     let out = upload(
         device,
         queue,
-        bytemuck::cast_slice(&[f32::NAN; 2]),
+        bytemuck::cast_slice(&vec![f32::NAN; expected.len()]),
         etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_SRC,
-    );
-    let mask = upload(
-        device,
-        queue,
-        bytemuck::cast_slice(&[u32::MAX]),
-        etalon::BufferUsages::STORAGE,
     );
     let staging = buffer(
         device,
-        8,
+        expected.len() as u64 * 4,
         etalon::BufferUsages::COPY_DST | etalon::BufferUsages::MAP_READ,
     );
     let group = device.create_bind_group(&etalon::BindGroupDescriptor {
-        label: Some("actual fused attention oracle"),
+        label: Some("actual packed fused attention oracle"),
         layout: &pipeline.layout,
         entries: &[
             entry(0, &hidden),
-            entry(1, &weights),
+            entry(1, &weights_and_mask),
             entry(2, &uniform),
             entry(3, &kv),
             entry(4, &out),
-            entry(5, &mask),
         ],
     });
-    let mut checks = Vec::new();
-    for masked in [false, true] {
-        let params = FusedAttentionParams {
-            mask_active: u32::from(masked),
-            ..params
-        };
-        queue.write_buffer(&uniform, 0, bytemuck::bytes_of(&params));
-        queue.write_buffer(
-            &mask,
-            0,
-            bytemuck::bytes_of(&if masked { 0u32 } else { u32::MAX }),
-        );
-        queue.write_buffer(&out, 0, bytemuck::cast_slice(&[f32::NAN; 2]));
-        let mut encoder = device.create_command_encoder(&Default::default());
-        {
-            let mut pass = encoder.begin_compute_pass(&Default::default());
-            pipeline.dispatch(&mut pass, &group, 1);
-        }
-        encoder.copy_buffer_to_buffer(&out, 0, &staging, 0, 8);
-        queue.submit([encoder.finish()]);
-        let raw = readback::read(&staging).await?;
-        let actual: Vec<f32> = words(&raw)?.into_iter().map(f32::from_bits).collect();
-        let expected = if masked { [0.0, 0.0] } else { [3.0, -2.0] };
-        if actual.len() != 2
-            || actual
-                .iter()
-                .zip(expected)
-                .any(|(&a, e)| !a.is_finite() || (a - e).abs() > 1e-5)
-        {
-            return Err(failure(
-                "tensor-attention-oracle",
-                &format!("Masked={masked}: expected {expected:?}, got {actual:?}"),
-            ));
-        }
-        checks.push(
-            json!({"all_masked": masked, "expected": expected, "actual": actual, "finite": true}),
-        );
+    let mut encoder = device.create_command_encoder(&Default::default());
+    {
+        let mut pass = encoder.begin_compute_pass(&Default::default());
+        pipeline.dispatch_batched(&mut pass, &group, 1, batch_len);
+    }
+    encoder.copy_buffer_to_buffer(&out, 0, &staging, 0, expected.len() as u64 * 4);
+    queue.submit([encoder.finish()]);
+    let raw = readback::read(&staging).await?;
+    let actual: Vec<f32> = words(&raw)?.into_iter().map(f32::from_bits).collect();
+    if actual.len() != expected.len()
+        || actual
+            .iter()
+            .zip(expected)
+            .any(|(&a, &e)| !a.is_finite() || (a - e).abs() > 1e-5)
+    {
+        return Err(failure(
+            "tensor-attention-oracle",
+            &format!("Active={mask_active}, mask={mask:?}: expected {expected:?}, got {actual:?}"),
+        ));
     }
     Ok(
-        json!({"execution": "FusedAttentionPipeline GPU WGSL", "uniform_bytes": 96,
-        "workgroup_size": 64, "heads": 1, "head_dim": 2, "tokens": 1,
-        "cpu_oracle": "one-token softmax is 1; all-masked softmax is 0", "cases": checks, "mismatches": 0}),
+        json!({"mask_active": mask_active, "mask_pages": mask, "batch_tokens": batch_len,
+        "expected": expected, "actual": actual, "finite": true, "packed_bytes": count * 4}),
+    )
+}
+
+pub(crate) async fn attention(
+    device: &etalon::Device,
+    queue: &etalon::Queue,
+) -> Result<Value, Value> {
+    let pipeline = FusedAttentionPipeline::try_new_packed(device)
+        .map_err(|e| failure("tensor-attention-limits", &e.to_string()))?;
+    let mut checks = Vec::new();
+    checks.push(check_attention(&pipeline, device, queue, false, &[], &[3.0, -2.0]).await?);
+    checks.push(check_attention(&pipeline, device, queue, true, &[1], &[3.0, -2.0]).await?);
+    checks.push(check_attention(&pipeline, device, queue, true, &[0], &[0.0, 0.0]).await?);
+    checks.push(check_attention(&pipeline, device, queue, true, &[], &[0.0, 0.0]).await?);
+    checks.push(
+        check_attention(
+            &pipeline,
+            device,
+            queue,
+            true,
+            &[1, 2],
+            &[3.0, -2.0, 7.0, 5.0],
+        )
+        .await?,
+    );
+    Ok(
+        json!({"execution": "FusedAttentionPipeline packed GPU WGSL", "uniform_bytes": 96,
+        "storage_bindings": 4, "workgroup_size": 64, "heads": 1, "head_dim": 2,
+        "cpu_oracle": "one admitted KV value has softmax 1; no admitted values produce finite zero",
+        "dense_empty_mask_checked": true, "active_and_all_masked_checked": true,
+        "distinct_batched_mask_pages_checked": true, "cases": checks, "mismatches": 0}),
     )
 }
 
