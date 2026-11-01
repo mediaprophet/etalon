@@ -45,17 +45,7 @@ async fn probe_rgba16float(
     device.push_error_scope(webgpu_sys::GpuErrorFilter::Internal);
     device.push_error_scope(webgpu_sys::GpuErrorFilter::OutOfMemory);
     let configured = context.configure(&config).is_ok();
-    let acquired = if configured {
-        match context.get_current_texture() {
-            Ok(texture) => {
-                texture.destroy();
-                true
-            }
-            Err(_) => false,
-        }
-    } else {
-        false
-    };
+    // Configuration validation must not acquire a presentation texture.
     context.unconfigure();
 
     // Pop every scope before yielding, and attach rejection handlers even if cancelled.
@@ -79,5 +69,5 @@ async fn probe_rgba16float(
     let validation = validation.map_err(|error| {
         probe_failed(format!("Canvas probe validation scope rejected: {error:?}"))
     })?;
-    Ok(configured && acquired && validation.into_option().is_none())
+    Ok(configured && validation.into_option().is_none())
 }

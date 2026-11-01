@@ -79,14 +79,14 @@ keywords = ["graphics"]
 license = "CC-BY-NC-ND-4.0"
 homepage = "https://mediaprophet.github.io/etalon/"
 repository = "https://github.com/mediaprophet/etalon"
-version = "0.0.2"
+version = "0.0.3"
 publish = false
 
 [workspace.dependencies]
-naga = { version = "0.0.2", path = "./naga" }
+naga = { version = "0.0.3", path = "./naga" }
 naga-test = { path = "./naga-test" }
-naga-types = { version = "0.0.2", path = "./naga-types" }
-etalon = { version = "0.0.2", path = "./etalon", default-features = false, features = [
+naga-types = { version = "0.0.3", path = "./naga-types" }
+etalon = { version = "0.0.3", path = "./etalon", default-features = false, features = [
     "std",
     "serde",
     "wgsl",
@@ -97,31 +97,31 @@ etalon = { version = "0.0.2", path = "./etalon", default-features = false, featu
     "vulkan-portability",
     "angle",
 ] }
-etalon-core = { version = "0.0.2", path = "./etalon-core", default-features = false }
-etalon-core-remote = { version = "0.0.2", path = "./etalon-core-remote" }
-etalon-core-remote-types = { version = "0.0.2", path = "./etalon-core-remote-types" }
-etalon-hal = { version = "0.0.2", path = "./etalon-hal", default-features = false }
-etalon-naga-bridge = { version = "0.0.2", path = "./etalon-naga-bridge" }
-etalon-sync = { version = "0.0.2", path = "./etalon-sync", default-features = false }
-etalon-test = { version = "0.0.2", path = "./tests" }
-etalon-types = { version = "0.0.2", path = "./etalon-types", default-features = false }
-etalon-agent = { version = "0.0.2", path = "./crates/etalon-agent", default-features = false }
-etalon-wgsl-forge = { version = "0.0.2", path = "./crates/etalon-wgsl-forge", default-features = false }
-etalon-nquin = { version = "0.0.2", path = "./crates/etalon-nquin", default-features = false }
-etalon-tensor = { version = "0.0.2", path = "./crates/etalon-tensor", default-features = false }
-etalon-render = { version = "0.0.2", path = "./crates/etalon-render", default-features = false }
-etalon-wasm = { version = "0.0.2", path = "./crates/etalon-wasm", default-features = false }
+etalon-core = { version = "0.0.3", path = "./etalon-core", default-features = false }
+etalon-core-remote = { version = "0.0.3", path = "./etalon-core-remote" }
+etalon-core-remote-types = { version = "0.0.3", path = "./etalon-core-remote-types" }
+etalon-hal = { version = "0.0.3", path = "./etalon-hal", default-features = false }
+etalon-naga-bridge = { version = "0.0.3", path = "./etalon-naga-bridge" }
+etalon-sync = { version = "0.0.3", path = "./etalon-sync", default-features = false }
+etalon-test = { version = "0.0.3", path = "./tests" }
+etalon-types = { version = "0.0.3", path = "./etalon-types", default-features = false }
+etalon-agent = { version = "0.0.3", path = "./crates/etalon-agent", default-features = false }
+etalon-wgsl-forge = { version = "0.0.3", path = "./crates/etalon-wgsl-forge", default-features = false }
+etalon-nquin = { version = "0.0.3", path = "./crates/etalon-nquin", default-features = false }
+etalon-tensor = { version = "0.0.3", path = "./crates/etalon-tensor", default-features = false }
+etalon-render = { version = "0.0.3", path = "./crates/etalon-render", default-features = false }
+etalon-wasm = { version = "0.0.3", path = "./crates/etalon-wasm", default-features = false }
 
 # These _cannot_ have a version specified. If it does, crates.io will look
 # for a version of the package on crates when we publish naga. Path dependencies
 # are allowed through though.
 hlsl-snapshots = { path = "naga/hlsl-snapshots" }
 
-etalon-core-deps-linux-android-bsd = { version = "0.0.2", path = "./etalon-core/platform-deps/linux-android-bsd" }
-etalon-core-deps-windows = { version = "0.0.2", path = "./etalon-core/platform-deps/windows" }
-etalon-core-deps-apple = { version = "0.0.2", path = "./etalon-core/platform-deps/apple" }
-etalon-core-deps-wasm = { version = "0.0.2", path = "./etalon-core/platform-deps/wasm" }
-etalon-core-deps-emscripten = { version = "0.0.2", path = "./etalon-core/platform-deps/emscripten" }
+etalon-core-deps-linux-android-bsd = { version = "0.0.3", path = "./etalon-core/platform-deps/linux-android-bsd" }
+etalon-core-deps-windows = { version = "0.0.3", path = "./etalon-core/platform-deps/windows" }
+etalon-core-deps-apple = { version = "0.0.3", path = "./etalon-core/platform-deps/apple" }
+etalon-core-deps-wasm = { version = "0.0.3", path = "./etalon-core/platform-deps/wasm" }
+etalon-core-deps-emscripten = { version = "0.0.3", path = "./etalon-core/platform-deps/emscripten" }
 
 anyhow = { version = "1.0.104", default-features = false }
 approx = "0.5"

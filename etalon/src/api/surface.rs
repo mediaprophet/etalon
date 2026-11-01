@@ -17,7 +17,7 @@ use crate::*;
 pub type SurfaceConfiguration = wgt::SurfaceConfiguration<Vec<TextureFormat>>;
 static_assertions::assert_impl_all!(SurfaceConfiguration: Send, Sync);
 
-/// Failure to query browser canvas capabilities with a device-backed probe.
+/// Failure to query browser canvas capabilities with device-backed configuration validation.
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[non_exhaustive]
 pub enum SurfaceCapabilitiesError {
@@ -83,13 +83,19 @@ impl Surface<'_> {
         self.inner.get_capabilities(&adapter.inner)
     }
 
-    /// Queries browser canvas capabilities, including a scoped `rgba16float` probe.
+    /// Queries browser canvas capabilities by validating `rgba16float` configuration.
     ///
-    /// The probe uses a separate 1 by 1 canvas and leaves this surface unchanged.
-    /// It awaits validation, internal and allocation error scopes, and caches the
-    /// completed format result on the device. The synchronous browser query omits
-    /// this format because it cannot await validation. Native callers should use
-    /// [`Self::get_capabilities`]. The device must belong to the supplied adapter.
+    /// This uses a separate 1 by 1 canvas and leaves this surface unchanged. It
+    /// awaits validation, internal and allocation error scopes, and caches the
+    /// completed format result on the device. The device must belong to the
+    /// supplied adapter.
+    ///
+    /// Reported formats describe accepted canvas configurations. This query does
+    /// not acquire a presentation texture or verify presentation; applications
+    /// must still handle failures from [`Self::get_current_texture`]. See
+    /// [WebGPU canvas configuration](https://gpuweb.github.io/gpuweb/#dom-gpucanvascontext-configure).
+    /// The synchronous browser query conservatively omits `rgba16float` because
+    /// it cannot await validation. Native callers should use [`Self::get_capabilities`].
     pub async fn get_capabilities_async(
         &self,
         adapter: &Adapter,

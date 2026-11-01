@@ -53,6 +53,13 @@ try {
   });
   if (mode === "software-webgpu") {
     await page.addInitScript(() => {
+      window.__etalonCapabilityAcquisitions = 0;
+      const acquireTexture = GPUCanvasContext.prototype.getCurrentTexture;
+      GPUCanvasContext.prototype.getCurrentTexture = function (...args) {
+        if (document.body.dataset.etalonCase === "browser-canvas-capabilities")
+          window.__etalonCapabilityAcquisitions++;
+        return acquireTexture.apply(this, args);
+      };
       window.__etalonDeviceDestruction = [];
       window.__etalonDeviceLoss = [];
       const requestDevice = GPUAdapter.prototype.requestDevice;
@@ -137,6 +144,11 @@ try {
       `Device destruction calls: ${JSON.stringify(destruction)}\n`,
     );
   }
+  if (
+    mode === "software-webgpu" &&
+    (await page.evaluate(() => window.__etalonCapabilityAcquisitions !== 0))
+  )
+    throw new Error("Canvas capability query acquired a presentation texture");
   const expectedQualification = allPassed ? "passed" : "failed";
   if (completion.etalonQualification !== expectedQualification)
     throw new Error(
