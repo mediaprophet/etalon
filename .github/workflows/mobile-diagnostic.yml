@@ -2,6 +2,11 @@ name: Mobile browser diagnostic
 
 on:
   workflow_dispatch:
+  push:
+    branches: [codex/mobile-resolution]
+    paths:
+      - .github/workflows/mobile-diagnostic.yml
+      - tests/wasm/runner/mobile-trace.js
 
 permissions:
   contents: read
