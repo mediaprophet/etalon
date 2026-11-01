@@ -160,8 +160,10 @@ mod tests {
 
     #[test]
     fn combined_storage_and_uniform_limit_is_checked() {
-        let mut limits = etalon::Limits::default();
-        limits.max_buffers_and_acceleration_structures_per_shader_stage = 5;
+        let mut limits = etalon::Limits {
+            max_buffers_and_acceleration_structures_per_shader_stage: 5,
+            ..Default::default()
+        };
         assert_eq!(
             check_dispatch(&limits, 1, 64, 1024, 5),
             Err(GpuQueryError::UnsupportedLimits)

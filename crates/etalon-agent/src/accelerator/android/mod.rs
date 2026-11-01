@@ -99,7 +99,7 @@ fn add_device(scan: &mut Scan, path: &Path, name: &str, driver: Option<String>, 
         scan.issue("device_limit", "Android accelerator device limit reached");
         return;
     }
-    let kind = if known_npu || driver.as_deref().is_some_and(super::linux::npu_driver) {
+    let kind = if known_npu || driver.as_deref().is_some_and(super::npu_driver) {
         AcceleratorKind::Npu
     } else {
         if driver.is_none() {

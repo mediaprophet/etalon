@@ -88,8 +88,10 @@ mod tests {
     }
     #[test]
     fn checks_storage_and_buffer_limits_before_allocation() {
-        let mut limits = etalon::Limits::default();
-        limits.max_storage_buffer_binding_size = 255;
+        let mut limits = etalon::Limits {
+            max_storage_buffer_binding_size: 255,
+            ..Default::default()
+        };
         assert!(matches!(
             AllocationSizes::checked(1, 1, 1, &limits, 832),
             Err(TensorArenaError::StorageBindingLimit)
