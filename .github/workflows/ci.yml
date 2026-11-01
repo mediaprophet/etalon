@@ -621,10 +621,10 @@ jobs:
           # If we find a dependency that needs to be downgraded to achieve
           # the MSRV, we can do it here with `cargo update -p <crate> --precise <version>`
 
-      - name: (Windows) Test DXC credential cleanup boundaries
+      - name: (Windows) Test DXC credential serialization and cleanup
         if: matrix.os == 'windows-2022'
         shell: pwsh
-        run: python -m unittest discover -s .github/actions/native-dxc-auth -p test_cleanup.py
+        run: python -m unittest discover -s .github/actions/native-dxc-auth -p "test_*.py"
 
       - name: (Windows) Validate authenticated static DXC release metadata
         if: matrix.os == 'windows-2022'

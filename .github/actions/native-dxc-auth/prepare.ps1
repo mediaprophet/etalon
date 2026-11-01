@@ -3,10 +3,9 @@ $ErrorActionPreference = 'Stop'
 $PSNativeCommandUseErrorActionPreference = $false
 
 if (-not $IsWindows) { throw 'This transport is scoped to the Windows Core MSRV job.' }
+. (Join-Path $PSScriptRoot 'credential.ps1')
 $token = $env:DXC_GITHUB_TOKEN
-if ([string]::IsNullOrWhiteSpace($token) -or $token -cnotmatch '^[A-Za-z0-9_]+$') {
-    throw 'A job-scoped GitHub token is required.'
-}
+$netrcContent = ConvertTo-DxcNetrc -Token $token
 if ([string]::IsNullOrWhiteSpace($env:RUNNER_TEMP) -or [string]::IsNullOrWhiteSpace($env:GITHUB_OUTPUT)) {
     throw 'The GitHub runner temporary directory and step output are required.'
 }
@@ -29,7 +28,7 @@ try {
     Set-Acl -LiteralPath $directory -AclObject $acl
 
     $netrc = Join-Path $directory 'credentials.netrc'
-    [IO.File]::WriteAllText($netrc, "machine api.github.com`nlogin x-access-token`npassword $token`n", [Text.UTF8Encoding]::new($false))
+    [IO.File]::WriteAllText($netrc, $netrcContent, [Text.UTF8Encoding]::new($false))
     $netrcPath = $netrc.Replace('\', '/')
     $config = @"
 fail
@@ -95,4 +94,5 @@ netrc-file = "$netrcPath"
 } finally {
     $env:CURL_HOME = $previousCurlHome
     $token = $null
+    $netrcContent = $null
 }

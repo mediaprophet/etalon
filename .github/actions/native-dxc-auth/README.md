@@ -4,7 +4,10 @@ This helper is scoped to the Windows Core MSRV job. It supplies curl with a
 unique runner-temporary configuration and a private netrc entry for
 `api.github.com` only. The job token has `contents: read`; it is not placed in
 arguments, logs, workflow outputs or a generic Authorization header. Only the
-configuration directory path reaches the Cargo step.
+configuration directory path reaches the Cargo step. Credentials are opaque UTF-8
+values bounded to 8192 bytes; control characters and line separators are refused.
+Quoted netrc serialization escapes quotes and backslashes without restricting the
+token alphabet. Synthetic tests exercise curl parsing and host isolation locally.
 
 Preparation uses that same curl configuration to require HTTP 200, an
 authenticated rate-limit bucket greater than the public 60-request limit, the
