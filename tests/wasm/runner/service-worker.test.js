@@ -95,6 +95,16 @@ async function harness(
   });
   vm.runInContext(source.replaceAll("{{REVISION}}", revision), context);
   return {
+    async request(url, mode) {
+      let pending;
+      handlers.fetch({
+        request: { url, method: "GET", mode },
+        respondWith(value) {
+          pending = value;
+        },
+      });
+      return pending;
+    },
     async run(name) {
       let pending;
       handlers[name]({
@@ -151,3 +161,21 @@ for (const option of ["invalid", "oversize"]) {
     assert(!caches.values.has(prefix + C));
   });
 }
+
+test("active app revision stays coherent across a newer-version deep link", async () => {
+  const caches = storage();
+  const app = await harness(caches, A);
+  await app.run("install");
+  const navigation = await app.request(
+    scope + "testing.html?rev=" + B,
+    "navigate",
+  );
+  assert.equal(navigation.status, 200);
+  assert.equal(await navigation.text(), "bounded app");
+  const wasm = await app.request(
+    scope + "browser/etalon_browser_demo_bg.wasm?rev=" + B,
+    "cors",
+  );
+  assert.equal(wasm.status, 409);
+  assert.equal(wasm.headers.get("Cache-Control"), "no-store");
+});
