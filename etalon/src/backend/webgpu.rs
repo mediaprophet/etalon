@@ -886,6 +886,11 @@ fn future_request_adapter(
                 .ok()
                 .and_then(|value| value.as_string())
                 .unwrap_or_else(|| format!("{error:?}"));
+            let name = js_sys::Reflect::get(&error, &JsValue::from_str("name"))
+                .ok()
+                .and_then(|value| value.as_string())
+                .filter(|name| !name.is_empty());
+            let message = name.map_or_else(|| message.clone(), |name| format!("{name}: {message}"));
             wgt::RequestAdapterError::BrowserRequestRejected {
                 message: message.chars().take(1024).collect(),
             }
