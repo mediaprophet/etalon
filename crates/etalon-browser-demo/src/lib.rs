@@ -30,3 +30,8 @@ mod domain_tensor;
 mod backend_contracts;
 #[cfg(target_arch = "wasm32")]
 pub use backend_contracts::inspect_adapter_contract;
+
+#[cfg(target_arch = "wasm32")]
+mod adapter_control;
+#[cfg(target_arch = "wasm32")]
+pub use adapter_control::adapter_acquisition_control;

@@ -291,6 +291,26 @@ async function run() {
         break;
       }
     }
+    if (!blocked && report.runtime?.gpu_reason?.stage === "adapter-request") {
+      progress.textContent =
+        "Comparing direct Rust/WASM browser adapter requests…";
+      try {
+        report.runtime.adapter_acquisition_control = parse(
+          await deadline(module.adapter_acquisition_control(), 5000),
+        );
+      } catch (error) {
+        report.runtime.adapter_acquisition_control = {
+          status: error.code || "diagnostic-error",
+          message: String(error).slice(0, 2000),
+          gpu_execution_tested: false,
+        };
+        if (error.code === "timeout") blocked = true;
+      }
+      environment.textContent = bounded({
+        ...report.context,
+        ...report.runtime,
+      });
+    }
     report.counts = totals(report);
     progress.textContent = blocked
       ? "Run timed out. Reload before another attempt."

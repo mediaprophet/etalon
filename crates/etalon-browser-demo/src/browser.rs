@@ -188,10 +188,15 @@ impl Session {
                 None => self.health_error().map_or(outcome, Err),
             }
         } else {
-            Err(self
+            let mut error = self
                 .gpu_error
                 .clone()
-                .unwrap_or_else(|| failure("gpu-unavailable", "No GPU session")))
+                .unwrap_or_else(|| failure("gpu-unavailable", "No GPU session"));
+            if let Some(fields) = error.as_object_mut() {
+                fields.remove("adapter_attempts");
+                fields.insert("full_evidence".into(), json!("runtime.gpu_reason"));
+            }
+            Err(error)
         };
         self.running.set(false);
         result(&id, started, outcome)
