@@ -73,7 +73,7 @@ jobs:
       - name: Install locked browser controller without browser downloads
         run: npm ci --prefix tests/wasm/runner --ignore-scripts --no-audit --no-fund
 
-      - name: Trace exact WASM with baseline and SwANGLE configurations
+      - name: Trace exact WASM with baseline, SwANGLE and global SwiftShader Vulkan
         shell: bash
         run: |
           python3 - <<'PY'
@@ -94,25 +94,54 @@ jobs:
                   worker = threading.Thread(target=server.serve_forever, daemon=True)
                   worker.start()
                   try:
-                      for variant in ("baseline", "swangle"):
+                      for variant in ("baseline", "swangle", "swiftshader-vulkan"):
                           command = ["node", "tests/wasm/runner/mobile-trace.js", "--chrome", chrome,
                                      "--profile", str(pathlib.Path(scratch) / variant), "--variant", variant,
                                      "--url", f"http://127.0.0.1:{server.server_port}/testing.html"]
-                          result = subprocess.run(command, capture_output=True, timeout=240)
-                          if len(result.stdout) + len(result.stderr) > 1024 * 1024:
-                              raise SystemExit("Diagnostic command exceeds output budget")
-                          if result.returncode:
-                              receipt = {"variant": variant, "controller_failure": result.stderr.decode("utf-8", "replace")[-4000:]}
+                          environment = dict(os.environ, DEBUG="pw:browser")
+                          with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=environment) as process:
+                              streams = [bytearray(), bytearray()]
+                              overflow = [False, False]
+                              def collect(pipe, index):
+                                  limit = (500 if index == 0 else 64) * 1024
+                                  while chunk := pipe.read(4096):
+                                      streams[index].extend(chunk)
+                                      if len(streams[index]) > limit:
+                                          overflow[index] = True
+                                          del streams[index][:-limit]
+                                          if index == 0:
+                                              process.kill()
+                                              return
+                              readers = [threading.Thread(target=collect, args=(pipe, index), daemon=True)
+                                         for index, pipe in enumerate((process.stdout, process.stderr))]
+                              for reader in readers:
+                                  reader.start()
+                              try:
+                                  process.wait(timeout=240)
+                              except subprocess.TimeoutExpired:
+                                  process.kill()
+                                  process.wait()
+                              finally:
+                                  for reader in readers:
+                                      reader.join(timeout=5)
+                              if overflow[0] or any(reader.is_alive() for reader in readers):
+                                  raise SystemExit("Diagnostic command output exceeded budget or did not close")
+                              exit_code = process.returncode
+                          if exit_code:
+                              receipt = {"variant": variant, "controller_failure": streams[1].decode("utf-8", "replace")[-4000:]}
                           else:
-                              receipt = json.loads(result.stdout)
-                          data = json.dumps(receipt, indent=2).encode()
-                          if len(data) > 1024 * 1024:
+                              receipt = json.loads(streams[0])
+                          receipt["browser_stderr"] = streams[1].decode("utf-8", "replace")
+                          receipt["browser_stderr_truncated"] = overflow[1]
+                          data = json.dumps(receipt).encode()
+                          if len(data) > 600 * 1024:
                               raise SystemExit("Diagnostic receipt exceeds output budget")
                           (output / f"{variant}.json").write_bytes(data)
-                          print(json.dumps({"variant": variant, "controller_exit": result.returncode,
+                          print(json.dumps({"variant": variant, "controller_exit": exit_code,
                               "scenarios": [{"scenario": case["scenario"], "failure": case.get("failure"),
                                   "qualification": case.get("result", {}).get("qualification"),
                                   "cases": case.get("result", {}).get("cases"),
+                                  "raw_control": {key: value for key, value in case.get("result", {}).items() if key in ("mode", "failure", "scopes", "checkpoints", "queue", "lost_before_cleanup", "lost_before_device_destroy")},
                                   "device_events": [event for event in case.get("trace", []) if event["operation"] in ("device.lost", "device.destroy")]}
                                   for case in receipt.get("scenarios", [])]}))
                   finally:
