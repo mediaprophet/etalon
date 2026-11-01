@@ -1,4 +1,5 @@
 import { chromium } from "playwright";
+import { runBackendContracts } from "./backend-contracts.js";
 
 const args = Object.fromEntries(
   process.argv.slice(2).reduce((pairs, value, index, all) => {
@@ -94,7 +95,7 @@ try {
   );
   const completion = await page.evaluate(() => ({ ...document.body.dataset }));
   const allPassed =
-    completion.etalonPassed === "13" &&
+    completion.etalonPassed === "20" &&
     completion.etalonFailed === "0" &&
     completion.etalonUnsupported === "0" &&
     completion.etalonNotRun === "0";
@@ -142,7 +143,7 @@ try {
       (expectedFeatureLevel &&
         request.options.featureLevel !== "compatibility") ||
       request.hasForceFallbackAdapter ||
-      request.options.powerPreference !== "low-power"
+      Object.hasOwn(request.options, "powerPreference")
     )
       throw new Error(
         `Rust/WASM adapter request differs from the expected upstream shape: ${JSON.stringify(request)}`,
@@ -160,7 +161,7 @@ try {
     )
       throw new Error("Rust/WASM discarded the browser rejection message");
     if (
-      observed.rows.length !== 13 ||
+      observed.rows.length !== 20 ||
       observed.rows.slice(0, 2).some((r) => r.status !== "pass")
     )
       throw new Error("Portable Rust/WASM cases did not execute");
@@ -179,6 +180,10 @@ try {
     process.stderr.write(
       `Synthetic adapter boundary verified: ${mode}; no GPU execution claimed\n`,
     );
+  }
+  if (mode === "software-webgpu") {
+    const contracts = await runBackendContracts(page);
+    process.stderr.write(`Backend contracts: ${JSON.stringify(contracts)}\n`);
   }
   const document = await page.content();
   if (Buffer.byteLength(document) > 2 * 1024 * 1024)

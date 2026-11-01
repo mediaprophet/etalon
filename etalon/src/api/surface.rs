@@ -17,6 +17,33 @@ use crate::*;
 pub type SurfaceConfiguration = wgt::SurfaceConfiguration<Vec<TextureFormat>>;
 static_assertions::assert_impl_all!(SurfaceConfiguration: Send, Sync);
 
+/// Failure to query browser canvas capabilities with a device-backed probe.
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum SurfaceCapabilitiesError {
+    /// The surface, adapter or device does not use browser WebGPU.
+    UnsupportedBackend,
+    /// The device was not created by the supplied adapter.
+    DeviceMismatch,
+    /// The probe could not complete successfully.
+    ProbeFailed {
+        /// The browser failure reported by the probe.
+        message: String,
+    },
+}
+
+impl fmt::Display for SurfaceCapabilitiesError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::UnsupportedBackend => f.write_str("Canvas probing requires browser WebGPU"),
+            Self::DeviceMismatch => f.write_str("Canvas probe device belongs to another adapter"),
+            Self::ProbeFailed { message } => f.write_str(message),
+        }
+    }
+}
+
+impl error::Error for SurfaceCapabilitiesError {}
+
 /// Handle to a presentable surface.
 ///
 /// A `Surface` represents a platform-specific surface (e.g. a window) onto which rendered images may
@@ -54,6 +81,30 @@ impl Surface<'_> {
     /// Returns specified values (see [`SurfaceCapabilities`]) if surface is incompatible with the adapter.
     pub fn get_capabilities(&self, adapter: &Adapter) -> SurfaceCapabilities {
         self.inner.get_capabilities(&adapter.inner)
+    }
+
+    /// Queries browser canvas capabilities, including a scoped `rgba16float` probe.
+    ///
+    /// The probe uses a separate 1 by 1 canvas and leaves this surface unchanged.
+    /// It awaits validation, internal and allocation error scopes, and caches the
+    /// completed format result on the device. The synchronous browser query omits
+    /// this format because it cannot await validation. Native callers should use
+    /// [`Self::get_capabilities`]. The device must belong to the supplied adapter.
+    pub async fn get_capabilities_async(
+        &self,
+        adapter: &Adapter,
+        device: &Device,
+    ) -> Result<SurfaceCapabilities, SurfaceCapabilitiesError> {
+        #[cfg(webgpu)]
+        if let (Some(surface), Some(adapter), Some(device)) = (
+            self.inner.as_webgpu_opt(),
+            adapter.inner.as_webgpu_opt(),
+            device.inner.as_webgpu_opt(),
+        ) {
+            return surface.get_capabilities_async(adapter, device).await;
+        }
+        let _ = (adapter, device);
+        Err(SurfaceCapabilitiesError::UnsupportedBackend)
     }
 
     /// Returns the HDR and luminance characteristics of the display backing this

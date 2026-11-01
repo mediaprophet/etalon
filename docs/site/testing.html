@@ -40,6 +40,9 @@
       </p>
       <label for="feature-level">WebGPU feature level requested</label>
       <select id="feature-level">
+        <option value="auto">
+          Automatic: Core, then Compatibility if unavailable
+        </option>
         <option value="compatibility">Compatibility</option>
         <option value="core">Core</option>
       </select>
@@ -64,8 +67,8 @@
         GPU qualification not run.
       </h2>
       <p class="small">
-        GPU qualification passes only when all 13 Rust/WASM cases pass,
-        including all 11 GPU cases. Any unavailable, failed or unrun case fails
+        GPU qualification passes only when all 20 Rust/WASM cases pass,
+        including all 18 GPU cases. Any unavailable, failed or unrun case fails
         qualification; passing CPU cases cannot establish that WebGPU works on
         this device.
       </p>
@@ -146,5 +149,6 @@
         >. <a href="licensing.html">Project and upstream licensing</a>.
       </div>
     </footer>
+    <pre id="qualification-report" hidden></pre>
   </body>
 </html>

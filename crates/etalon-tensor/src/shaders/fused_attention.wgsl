@@ -28,7 +28,7 @@ struct AttentionParams {
     proj_row_stride: u32,
     kv_quant: u32,   // W5a: 1 ⇒ int8 KV cache (packed i8 + f32 scale); 0 ⇒ legacy f32
     // W5b Phase 4b: dict-coded KV. `dict_pack` = dict_k (low 16) | n_atoms (high 16); dict_k>0 ⇒ store
-    // k-sparse codes (u16 atom-index | f16 coeff per word) reconstructed from `kv_atoms`. 0 ⇒ f32/int8.
+    // k-sparse codes (u16 atom-index | f16 coeff per word) reconstructed from the trailing KV-arena dictionary. 0 ⇒ f32/int8.
     dict_pack: u32,
 }
 
@@ -546,7 +546,7 @@ fn attention_parallel(qh: u32, kv_head: u32, token_in_batch: u32, lid: u32) {
         }
         let slot = logical % params.max_context;
         var score = 0.0;
-        if params.kv_quant == 1u {
+        if params.kv_quant == 1u && dict_k_val() == 0u {
             // int8 fast read: hoist the per-head scale and load each packed word ONCE (all 4 lanes),
             // instead of reloading the scale every element and each word 4× via `read_k`. Attention is
             // memory-bound, so this cuts the KV loads ~4× on the (default) int8 path. Bit-identical:
@@ -573,7 +573,7 @@ fn attention_parallel(qh: u32, kv_head: u32, token_in_batch: u32, lid: u32) {
         let w = select(exp(score - m_new), 0.0, score <= -3.0e38);
         m_t = m_new;
         l_t = l_t * factor + w;
-        if params.kv_quant == 1u {
+        if params.kv_quant == 1u && dict_k_val() == 0u {
             // int8 fast read (mirror of the K path above): hoist the V scale + read each word once.
             let vscale = kv_cache[kv8_v_scale_idx(slot, kv_head)];
             let hd4 = params.head_dim / 4u;
@@ -622,7 +622,11 @@ fn attention_parallel(qh: u32, kv_head: u32, token_in_batch: u32, lid: u32) {
     for (var d0 = 0u; d0 < params.head_dim; d0 = d0 + MERGE_TILE) {
         for (var c = 0u; c < MERGE_TILE; c = c + 1u) {
             let d = d0 + c;
-            red_acc[c * WG_SIZE + lid] = select(0.0, acc_t[d] * factor_t, d < params.head_dim);
+            var contribution = 0.0;
+            if d < params.head_dim {
+                contribution = acc_t[d] * factor_t;
+            }
+            red_acc[c * WG_SIZE + lid] = contribution;
         }
         workgroupBarrier();
         for (var s = WG_SIZE / 2u; s > 0u; s = s >> 1u) {

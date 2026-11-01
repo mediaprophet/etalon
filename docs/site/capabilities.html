@@ -144,8 +144,10 @@
           <p>
             <code>etalon-nquin</code> provides the explicit wire layout,
             field-based filtering, CPU reference operations and GPU
-            filtering/radix-sort implementations. The browser demo checks
-            layout, parity, sieve behavior and stable sorting.
+            filtering/radix-sort implementations. The browser demo checks layout
+            and parity on the WASM CPU, and runs GPU sieve and stable radix
+            sorting against independent CPU results, including tails, duplicates
+            and cancelled readbacks.
           </p>
           <a href="doc/etalon_nquin/index.html">NQuin API</a>
         </article>
@@ -155,7 +157,9 @@
             <code>etalon-tensor</code> includes tensor views,
             quantization/dequantization helpers, KV layout, fused attention and
             top-k pipelines. CUDA and native compute integrations require their
-            selected features and runtime.
+            selected features and runtime. The browser suite exercises top-k,
+            fused attention, bounded forward-arena allocation and asynchronous
+            readback.
           </p>
           <a href="doc/etalon_tensor/index.html">Tensor API</a>
         </article>
@@ -228,8 +232,9 @@
               <td>This browser, including phones</td>
               <td>
                 Compiled Etalon WASM: portable NQuin/Forge checks and browser
-                WebGPU compute, readback, error scopes, validation and offscreen
-                rendering.
+                WebGPU compute, NQuin radix/sieve, tensor attention/top-k, arena
+                readback, queue leases, canvas capabilities, validation and
+                offscreen rendering.
               </td>
               <td>
                 These cases on this browser/device and exact source build.

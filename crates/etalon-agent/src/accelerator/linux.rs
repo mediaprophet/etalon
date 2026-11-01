@@ -7,8 +7,11 @@ use super::{
     MAX_PROPERTY_BYTES,
 };
 
-fn npu_driver(name: &str) -> bool {
-    matches!(name, "ivpu" | "amdxdna")
+pub(super) fn npu_driver(name: &str) -> bool {
+    matches!(
+        name,
+        "ivpu" | "amdxdna" | "qaic" | "ethosu" | "ethosn" | "edgetpu_platform"
+    )
 }
 
 fn bounded_text(path: &Path) -> Result<String, String> {
@@ -105,6 +108,23 @@ pub(super) fn probe(root: &Path) -> NpuProbeReport {
 mod tests {
     use super::super::HardwarePresence;
     use super::*;
+
+    #[test]
+    fn only_documented_npu_drivers_are_classified_as_npus() {
+        for driver in [
+            "ivpu",
+            "amdxdna",
+            "qaic",
+            "ethosu",
+            "ethosn",
+            "edgetpu_platform",
+        ] {
+            assert!(npu_driver(driver));
+        }
+        for driver in ["fastrpc", "adsprpc", "unknown", "apusys"] {
+            assert!(!npu_driver(driver));
+        }
+    }
 
     #[test]
     fn missing_kernel_interface_is_not_hardware_absence() {

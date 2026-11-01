@@ -20,14 +20,16 @@ fn digit_at(i: u32, shift: u32) -> u32 {
     return (hi >> (shift - 32u)) & 255u;
 }
 
-@compute @workgroup_size(256)
+@compute @workgroup_size(64)
 fn main(
     @builtin(global_invocation_id) gid: vec3<u32>,
     @builtin(local_invocation_id) lid: vec3<u32>,
     @builtin(workgroup_id) wid: vec3<u32>,
 ) {
     let t = lid.x;
-    atomicStore(&local_hist[t], 0u);
+    for (var bin = t; bin < 256u; bin = bin + 64u) {
+        atomicStore(&local_hist[bin], 0u);
+    }
     workgroupBarrier();
 
     let i = gid.x;
@@ -38,5 +40,7 @@ fn main(
     workgroupBarrier();
 
     // Column-major by digit d so device prefix sum is contiguous:
-    wg_hist[t * params.num_wgs + wid.x] = atomicLoad(&local_hist[t]);
+    for (var bin = t; bin < 256u; bin = bin + 64u) {
+        wg_hist[bin * params.num_wgs + wid.x] = atomicLoad(&local_hist[bin]);
+    }
 }

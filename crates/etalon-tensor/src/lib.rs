@@ -5,11 +5,14 @@ pub mod cuda_mega;
 pub mod dml_lane;
 pub mod forward_arena;
 pub mod gpu_sieve_topk;
+mod kernel_limits;
 pub mod kv_cache;
+pub use kernel_limits::TensorPipelineError;
 pub mod view;
 
 pub use attention::{
-    online_softmax_rescale, AttentionParams, FusedAttentionPipeline, FUSED_ATTENTION_WGSL,
+    online_softmax_rescale, AttentionParams, FusedAttentionParams, FusedAttentionPipeline,
+    FUSED_ATTENTION_WGSL,
 };
 pub use cuda_mega::{
     build_parameter_packs, collect_and_validate_layer_keys, weight_fingerprint,
@@ -24,7 +27,9 @@ pub use dml_lane::{
     DmlGemmOp, DmlGemmParams, DmlLane, DmlStatus, DmlTensorDesc2D, DIRECTSTORAGE_PAGE_ALIGN,
     DML_GEMM_WGSL, Q4_K_BLOCK_BYTES, Q4_K_BLOCK_SIZE, Q8_0_BLOCK_BYTES, Q8_0_BLOCK_SIZE,
 };
-pub use forward_arena::{ForwardArena, ForwardMode};
+pub use forward_arena::{
+    ForwardArena, ForwardMode, TensorArenaError, TokenReadbackError, DEFAULT_FORWARD_ARENA_BUDGET,
+};
 pub use gpu_sieve_topk::{LogitMaskHeader, TopkParams, TopkReductionPipeline, TOPK_REDUCTION_WGSL};
 pub use kv_cache::{KvCacheLayout, PagedKvBlockTable};
 pub use view::{QuantScheme, TensorView};

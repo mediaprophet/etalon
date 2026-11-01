@@ -14,9 +14,13 @@ crate-type = ["cdylib", "rlib"]
 etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl", "webgpu"] }
 wasm-bindgen = { workspace = true, features = ["std"] }
 wasm-bindgen-futures = { workspace = true, features = ["std"] }
+web-sys = { workspace = true, features = ["OffscreenCanvas"] }
 js-sys = { workspace = true, features = ["std"] }
 serde_json = { workspace = true }
-etalon-nquin = { path = "../etalon-nquin", default-features = false, features = ["std"] }
+etalon-nquin = { path = "../etalon-nquin", default-features = false, features = ["std", "gpu"] }
+etalon-tensor = { path = "../etalon-tensor", default-features = false, features = ["std"] }
+etalon-agent = { path = "../etalon-agent", default-features = false, features = ["std"] }
+bytemuck = { workspace = true }
 etalon-wgsl-forge = { path = "../etalon-wgsl-forge", default-features = false, features = [
     "std",
     "wgsl",

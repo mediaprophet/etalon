@@ -6,6 +6,8 @@ const qualification = document.querySelector("#gpu-qualification");
 const environment = document.querySelector("#environment");
 const tbody = document.querySelector("#test-results");
 const revision = document.querySelector('meta[name="etalon-revision"]').content;
+const profileSelector = document.querySelector("#feature-level");
+const receipt = document.querySelector("#qualification-report");
 let active = false;
 let blocked = false;
 let reportUrl;
@@ -81,10 +83,10 @@ function qualify(report, catalog) {
       };
     });
   const passed =
-    catalog.length === 13 &&
-    gpuCases.length === 11 &&
-    report.results.length === 13 &&
-    new Set(report.results.map((item) => item.id)).size === 13 &&
+    catalog.length === 20 &&
+    gpuCases.length === 18 &&
+    report.results.length === 20 &&
+    new Set(report.results.map((item) => item.id)).size === 20 &&
     catalog.every((test) =>
       report.results.some(
         (item) => item.id === test.id && item.status === "pass",
@@ -95,17 +97,17 @@ function qualify(report, catalog) {
     (item) => item.status === "unsupported",
   ).length;
   const reason = passed
-    ? "All 13 Rust/WASM cases passed, including all 11 GPU cases."
+    ? "All 20 Rust/WASM cases passed, including all 18 GPU cases."
     : unavailable
       ? `${unavailable} GPU cases unavailable. ${firstFailure?.details?.message || "No complete GPU result."}`
       : firstFailure
         ? `${firstFailure.id}: ${firstFailure.details?.message || firstFailure.details?.reason || firstFailure.status}`
-        : "The complete 13-case suite did not pass.";
+        : "The complete 20-case suite did not pass.";
   report.qualification = {
     status: passed ? "passed" : "failed",
     reason: reason.slice(0, 2000),
-    expected_cases: 13,
-    expected_gpu_cases: 11,
+    expected_cases: 20,
+    expected_gpu_cases: 18,
     gpu_cases: gpuCases,
   };
   qualification.textContent = `GPU qualification ${passed ? "PASSED" : "FAILED"} — ${report.qualification.reason}`;
@@ -137,6 +139,7 @@ function exportReport(report) {
     progress.textContent += " Report exceeds the export byte limit.";
     return;
   }
+  receipt.textContent = json;
   reportUrl = URL.createObjectURL(
     new Blob([json], { type: "application/json" }),
   );
@@ -145,6 +148,9 @@ function exportReport(report) {
 async function run() {
   if (active || blocked) return;
   active = true;
+  const selectedProfile = profileSelector.value;
+  profileSelector.disabled = true;
+  receipt.textContent = "";
   start.disabled = true;
   download.disabled = true;
   if (reportUrl) URL.revokeObjectURL(reportUrl);
@@ -193,7 +199,6 @@ async function run() {
       }),
       30000,
     );
-    const selectedProfile = document.querySelector("#feature-level").value;
     const creating = module.create_session_for_profile(selectedProfile);
     try {
       session = await deadline(creating, 30000);
@@ -217,7 +222,7 @@ async function run() {
     if (
       !Array.isArray(catalog) ||
       catalog.length < 2 ||
-      catalog.length > 16 ||
+      catalog.length > 32 ||
       catalog.some(
         (test) =>
           !test ||
@@ -255,6 +260,7 @@ async function run() {
         };
         if (error.code === "timeout") blocked = true;
       }
+      result.requires_gpu = test.requires_gpu;
       report.results.push(result);
       updateRow(views[i], result);
       totals(report);
@@ -274,6 +280,7 @@ async function run() {
         for (let j = i + 1; j < catalog.length; j += 1) {
           const pending = {
             id: catalog[j].id,
+            requires_gpu: catalog[j].requires_gpu,
             status: "not_run",
             details: { reason: "Earlier timeout; owner destroyed." },
           };
@@ -331,6 +338,7 @@ async function run() {
     ).slice(0, 12000);
     exportReport(report);
     active = false;
+    profileSelector.disabled = blocked;
     start.disabled = blocked;
   }
 }
@@ -348,4 +356,13 @@ download.addEventListener("click", () => {
 window.addEventListener("pagehide", () => {
   if (reportUrl) URL.revokeObjectURL(reportUrl);
 });
-if (new URLSearchParams(location.search).get("autorun") === "1") run();
+const query = new URLSearchParams(location.search);
+const profile = query.get("feature-level");
+if (profile !== null && !["auto", "core", "compatibility"].includes(profile)) {
+  blocked = true;
+  start.disabled = true;
+  progress.textContent = "Invalid feature-level query parameter.";
+} else {
+  if (profile !== null) profileSelector.value = profile;
+  if (query.get("autorun") === "1") run();
+}

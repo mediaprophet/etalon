@@ -17,3 +17,8 @@ pub use sieve::{GpuNQuinSieve, GpuQuinSieve};
 
 pub const NQUIN_BYTES: usize = 48;
 pub const NQUIN_ALIGN: usize = 16;
+
+#[cfg(feature = "gpu")]
+mod readback;
+#[cfg(feature = "gpu")]
+pub use readback::GpuQueryError;

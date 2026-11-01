@@ -9,10 +9,10 @@ struct PrefixParams {
 @group(0) @binding(1) var<storage, read_write> offsets_out: array<u32>;
 @group(0) @binding(2) var<uniform> params: PrefixParams;
 
-var<workgroup> s_data: array<u32, 256>;
+var<workgroup> s_data: array<u32, 64>;
 var<workgroup> s_carry: u32;
 
-@compute @workgroup_size(256)
+@compute @workgroup_size(64)
 fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
     let t = lid.x;
     if (t == 0u) {
@@ -23,12 +23,18 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
     var base: u32 = 0u;
     while (base < params.total_bins) {
         let idx = base + t;
-        let v = select(0u, hist_in[idx], idx < params.total_bins);
+        var v = 0u;
+        if (idx < params.total_bins) {
+            v = hist_in[idx];
+        }
         s_data[t] = v;
         workgroupBarrier();
 
-        for (var offset: u32 = 1u; offset < 256u; offset = offset << 1u) {
-            let addend = select(0u, s_data[t - offset], t >= offset);
+        for (var offset: u32 = 1u; offset < 64u; offset = offset << 1u) {
+            var addend = 0u;
+            if (t >= offset) {
+                addend = s_data[t - offset];
+            }
             workgroupBarrier();
             s_data[t] = s_data[t] + addend;
             workgroupBarrier();
@@ -41,11 +47,11 @@ fn main(@builtin(local_invocation_id) lid: vec3<u32>) {
         }
         workgroupBarrier();
 
-        if (t == 255u) {
-            s_carry = running_carry + s_data[255u];
+        if (t == 63u) {
+            s_carry = running_carry + s_data[63u];
         }
         workgroupBarrier();
 
-        base = base + 256u;
+        base = base + 64u;
     }
 }

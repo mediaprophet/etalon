@@ -4,6 +4,12 @@
 //! eliminating ~420 bind groups per model and reducing speculative verify readback
 //! from 9.72 MB down to 4-64 bytes.
 
+mod allocation;
+mod readback;
+
+pub use allocation::{TensorArenaError, DEFAULT_FORWARD_ARENA_BUDGET};
+pub use readback::TokenReadbackError;
+
 /// Operational mode of the forward execution arena.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ForwardMode {
@@ -17,6 +23,7 @@ pub enum ForwardMode {
 
 /// Unified forward execution arena on an Etalon device.
 pub struct ForwardArena {
+    readback_busy: std::sync::atomic::AtomicBool,
     pub max_batch: u32,
     pub hidden_dim: u32,
     pub num_layers: u32,
@@ -28,8 +35,31 @@ pub struct ForwardArena {
 
 impl ForwardArena {
     pub fn new(device: &etalon::Device, max_batch: u32, hidden_dim: u32, num_layers: u32) -> Self {
-        let max_elements = (max_batch as u64) * (hidden_dim as u64);
-        let byte_size = max_elements * 4; // FP32 elements
+        Self::try_new_with_budget(
+            device,
+            max_batch,
+            hidden_dim,
+            num_layers,
+            DEFAULT_FORWARD_ARENA_BUDGET,
+        )
+        .expect("ForwardArena allocation rejected")
+    }
+
+    pub fn try_new_with_budget(
+        device: &etalon::Device,
+        max_batch: u32,
+        hidden_dim: u32,
+        num_layers: u32,
+        byte_budget: u64,
+    ) -> Result<Self, TensorArenaError> {
+        let sizes = allocation::AllocationSizes::checked(
+            max_batch,
+            hidden_dim,
+            num_layers,
+            &device.limits(),
+            byte_budget,
+        )?;
+        let byte_size = sizes.storage;
 
         let usage_st = etalon::BufferUsages::STORAGE
             | etalon::BufferUsages::COPY_SRC
@@ -58,12 +88,13 @@ impl ForwardArena {
 
         let readback_stage_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("etalon-forward-arena-readback-stage"),
-            size: ((max_batch as u64) * 4).max(64),
+            size: sizes.staging,
             usage: etalon::BufferUsages::MAP_READ | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        Self {
+        Ok(Self {
+            readback_busy: std::sync::atomic::AtomicBool::new(false),
             max_batch,
             hidden_dim,
             num_layers,
@@ -71,18 +102,39 @@ impl ForwardArena {
             residual_buf,
             norm_buf,
             readback_stage_buf,
-        }
+        })
     }
 
     /// Readback size in bytes for a given forward mode.
     /// Eliminates full logit tensor readbacks (reduces 9.72 MB -> 4-64 bytes).
     #[inline(always)]
     pub fn readback_byte_size(&self, mode: ForwardMode) -> usize {
-        match mode {
-            ForwardMode::Prefill { .. } => 0,
-            ForwardMode::DecodeSingle { .. } => 4,
-            ForwardMode::SpeculativeVerify { batch_len, .. } => (batch_len as usize) * 4,
+        usize::try_from(
+            self.try_readback_byte_size(mode)
+                .expect("invalid forward readback mode"),
+        )
+        .expect("forward readback size exceeds address space")
+    }
+
+    pub fn try_readback_byte_size(&self, mode: ForwardMode) -> Result<u64, TensorArenaError> {
+        let batch = match mode {
+            ForwardMode::Prefill { batch_len } => batch_len,
+            ForwardMode::DecodeSingle { .. } => 1,
+            ForwardMode::SpeculativeVerify { batch_len, .. } => {
+                if batch_len > 16 {
+                    return Err(TensorArenaError::InvalidBatch);
+                }
+                batch_len
+            }
+        };
+        if batch == 0 || batch > self.max_batch {
+            return Err(TensorArenaError::InvalidBatch);
         }
+        Ok(if matches!(mode, ForwardMode::Prefill { .. }) {
+            0
+        } else {
+            u64::from(batch) * 4
+        })
     }
 
     /// Record a copy of the final token index / top-k candidates into the readback staging buffer.
@@ -92,33 +144,28 @@ impl ForwardArena {
         token_src: &etalon::Buffer,
         mode: ForwardMode,
     ) {
-        let size = self.readback_byte_size(mode) as u64;
+        self.try_record_readback_copy(encoder, token_src, mode)
+            .expect("invalid forward readback copy");
+    }
+
+    pub fn try_record_readback_copy(
+        &self,
+        encoder: &mut etalon::CommandEncoder,
+        token_src: &etalon::Buffer,
+        mode: ForwardMode,
+    ) -> Result<(), TensorArenaError> {
+        let size = self.try_readback_byte_size(mode)?;
+        if size > token_src.size() || size > self.readback_stage_buf.size() {
+            return Err(TensorArenaError::ReadbackBufferTooSmall);
+        }
         if size > 0 {
             encoder.copy_buffer_to_buffer(token_src, 0, &self.readback_stage_buf, 0, size);
         }
+        Ok(())
     }
 
-    /// Blocking readback of the single decoded token (4 bytes).
+    /// Blocking compatibility wrapper; WebGPU callers must await `read_token_async`.
     pub fn read_token_blocking(&self, device: &etalon::Device) -> Option<u32> {
-        let slice = self.readback_stage_buf.slice(..4);
-        let (tx, rx) = std::sync::mpsc::channel();
-        slice.map_async(etalon::MapMode::Read, move |res| {
-            let _ = tx.send(res);
-        });
-        let _ = device.poll(etalon::PollType::wait_or_timeout(
-            core::time::Duration::from_millis(5000),
-        ));
-        rx.recv().ok()?.ok()?;
-
-        let raw = slice.get_mapped_range().ok()?;
-        let token = if raw.len() >= 4 {
-            let bytes = [raw[0], raw[1], raw[2], raw[3]];
-            Some(u32::from_le_bytes(bytes))
-        } else {
-            None
-        };
-        drop(raw);
-        self.readback_stage_buf.unmap();
-        token
+        self.try_read_token_blocking(device).ok()
     }
 }

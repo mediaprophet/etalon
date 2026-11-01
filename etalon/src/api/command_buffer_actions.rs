@@ -135,7 +135,7 @@ macro_rules! impl_deferred_command_buffer_actions {
         /// [q::s]: Queue::submit
         /// [i::p_a]: Instance::poll_all
         /// [d::p]: Device::poll
-        pub fn on_submitted_work_done(&self, callback: impl FnOnce() + Send + 'static) {
+        pub fn on_submitted_work_done(&self, callback: impl FnOnce() + WasmNotSend + 'static) {
             self.actions
                 .lock()
                 .on_submitted_work_done_callbacks
