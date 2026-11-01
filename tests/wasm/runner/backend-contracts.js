@@ -216,6 +216,31 @@ export async function runBackendContracts(page) {
           }
         }
       }
+      Object.defineProperty(gpu, "requestAdapter", {
+        configurable: true,
+        value: () =>
+          Promise.reject(
+            new DOMException("\x01".repeat(1024), "OperationError"),
+          ),
+      });
+      for (let index = 0; index < 40; index++)
+        await wasm.adapter_acquisition_control();
+      const encodedLog = wasm.debug_log_json();
+      const log = JSON.parse(encodedLog);
+      if (
+        new TextEncoder().encode(encodedLog).length > log.max_json_bytes ||
+        log.events.length > log.max_events ||
+        log.dropped_events <= 0 ||
+        !log.events.some((event) => event.truncated)
+      )
+        throw new Error(
+          "Escaped debug records exceeded their budget or hid truncation",
+        );
+      evidence.push({
+        mode: "debug-log-budget",
+        byte_budget: log.max_json_bytes,
+        overflow_reported: true,
+      });
     } finally {
       if (original) Object.defineProperty(gpu, "requestAdapter", original);
       else delete gpu.requestAdapter;
