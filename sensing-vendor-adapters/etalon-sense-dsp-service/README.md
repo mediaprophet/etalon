@@ -121,13 +121,14 @@ native provider, export the exact handle-aware entry and retain signing evidence
 Replacing the original skeleton with generated QAIC code requires re-admitting
 both sides' method and message contract.
 
-All builds, tests, native linking, runtime loading and device invocations remain
-deferred at the user's request. Source-complete is not qualified deployment.
+CI builds and tests the Rust service boundary and codec/context contracts on
+host platforms. Native DSP linking, runtime loading and device invocation need
+separate deployment qualification.
 Qualification must cover native ABI size/alignment, malformed scalars and
 messages, boundary IQ values, cache/mapping lifetime, native open/close/reopen,
 concurrent close/dispatch, stale and upper-bit handles, wraparound, cross-reset
-generation authority, revocation and CPU-reference comparison. Source tests are
-prepared for the codec, URI grammar and context transitions; none were run.
+generation authority, revocation and CPU-reference comparison. Host codec, URI
+grammar and context tests do not establish that target qualification.
 
 ## Authoritative references
 
