@@ -35,3 +35,8 @@ pub use backend_contracts::inspect_adapter_contract;
 mod adapter_control;
 #[cfg(target_arch = "wasm32")]
 pub use adapter_control::adapter_acquisition_control;
+
+#[cfg(target_arch = "wasm32")]
+mod debug_log;
+#[cfg(target_arch = "wasm32")]
+pub use debug_log::{configure_debug_logging, debug_log_json};

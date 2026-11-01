@@ -891,6 +891,7 @@ fn future_request_adapter(
                 .and_then(|value| value.as_string())
                 .filter(|name| !name.is_empty());
             let message = name.map_or_else(|| message.clone(), |name| format!("{name}: {message}"));
+            log::error!("Browser WebGPU adapter request rejected: {message}");
             wgt::RequestAdapterError::BrowserRequestRejected {
                 message: message.chars().take(1024).collect(),
             }
@@ -902,7 +903,10 @@ fn future_request_adapter(
                 cached_properties: Rc::new(CachedProperties::default()),
             }
             .into()),
-            None => Err(request_adapter_null_error(requested_backends)),
+            None => {
+                log::warn!("Browser WebGPU adapter request resolved to null");
+                Err(request_adapter_null_error(requested_backends))
+            }
         })
 }
 
@@ -1083,6 +1087,10 @@ impl ContextWebGpu {
             mapped_options.set_power_preference(mapped_pref);
         }
 
+        log::debug!(
+            "WebGPU adapter request: cached_gpu={}, feature_level={feature_level:?}, power_preference={:?}, force_fallback_adapter={}",
+            self.gpu.is_some(), options.power_preference, options.force_fallback_adapter,
+        );
         if let Some(gpu) = &self.gpu {
             let adapter_promise = gpu.request_adapter_with_options(&mapped_options);
             Box::pin(MakeSendFuture::new(

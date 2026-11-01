@@ -140,6 +140,13 @@
         for that system. Do not infer native driver coverage from these browser
         results.
       </p>
+      <p>
+        The exported report includes a local Rust debug log (up to 128 events,
+        512 message bytes per event) and reports dropped entries. Adapter
+        acquisition controls are diagnostic evidence, not GPU passes. Browser
+        GPU-process and driver-internal logs are not available to this page.
+        Nothing is uploaded automatically.
+      </p>
     </main>
     <footer>
       <div>

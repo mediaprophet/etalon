@@ -162,6 +162,7 @@ impl Session {
     }
 
     pub async fn run_case(&self, id: String) -> String {
+        log::debug!(target: "etalon_browser_demo::case", "Starting {id}");
         let started = js_sys::Date::now();
         if self.running.replace(true) {
             return result(
@@ -199,6 +200,10 @@ impl Session {
             Err(error)
         };
         self.running.set(false);
+        match &outcome {
+            Ok(_) => log::debug!(target: "etalon_browser_demo::case", "Passed {id}"),
+            Err(error) => log::error!(target: "etalon_browser_demo::case", "{id}: {error}"),
+        }
         result(&id, started, outcome)
     }
 }
