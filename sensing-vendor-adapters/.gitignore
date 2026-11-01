@@ -1,1 +1,4 @@
 /target/
+
+# Freeze the independent vendor workspace for reproducible CI.
+!/Cargo.lock

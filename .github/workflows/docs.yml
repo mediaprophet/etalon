@@ -2,72 +2,87 @@ name: Docs
 
 on:
   push:
-    branches: [trunk, "firefox*"]
+    branches: [dev, trunk]
   pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
 
 env:
-  # This is the MSRV used by all repository infrastructure.
   REPO_MSRV: "1.96.1"
-
   CARGO_INCREMENTAL: false
   CARGO_TERM_COLOR: always
+  CARGO_PROFILE_DEV_DEBUG: 0
   RUST_BACKTRACE: full
 
-# Every time a PR is pushed to, cancel any previous jobs. This
-# makes us behave nicer to github and get faster turnaround times
-# on PRs that are pushed to multiple times in rapid succession.
 concurrency:
-  group: ${{github.workflow}}-${{github.ref}}
-  cancel-in-progress: ${{github.event_name == 'pull_request'}}
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   build:
+    name: Build documentation
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-
+    timeout-minutes: 30
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
       - name: Install documentation toolchain
-        run: |
-          rustup toolchain install ${{ env.REPO_MSRV }} --no-self-update --profile=minimal
-          rustup override set ${{ env.REPO_MSRV }}
+        run: rustup toolchain install ${{ env.REPO_MSRV }} --no-self-update --profile=minimal
 
-      - name: Disable debug symbols
-        shell: bash
-        run: |
-          mkdir -p .cargo
-
-          cat <<EOF >> .cargo/config.toml
-            [profile.dev]
-            debug = false
-          EOF
-
-      - name: Caching
+      - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
         with:
-          key: doc-build
+          key: public-docs
           env-vars: ImageVersion
-          save-if: ${{ github.ref == 'refs/heads/trunk' }}
+          save-if: ${{ github.ref == 'refs/heads/dev' }}
 
-      - name: Build the docs
+      - name: Validate site assembler
+        run: python3 -m unittest discover -s docs/site -p test_build.py
+
+      - name: Build public library documentation
         run: |
-          cargo doc --no-deps --lib --document-private-items
-        env:
-          RUSTDOCFLAGS: --cfg docsrs
-          RUSTC_BOOTSTRAP: 1
+          cargo +${{ env.REPO_MSRV }} doc --locked --no-deps --lib \
+            -p etalon -p etalon-sense -p etalon-sense-core \
+            -p etalon-sense-runtime -p etalon-signal -p etalon-sense-cpu \
+            -p etalon-sense-sdr -p etalon-sense-host -p etalon-sense-nfc \
+            -p etalon-sense-camera -p etalon-sense-gpu \
+            --features etalon-sense/cpu,etalon-sense/sdr,etalon-sense/host,etalon-sense/nfc,etalon-sense/camera,etalon-sense/gpu-vulkan
 
-      - name: Deploy the docs
-        uses: JamesIves/github-pages-deploy-action@fa24774553152dd7873cd16ebd8d959b010c5445 # v4.9.0
-        if: github.ref == 'refs/heads/trunk'
+      - name: Assemble and validate site
+        run: |
+          python3 docs/site/build.py --rustdoc target/doc \
+            --output "${{ runner.temp }}/etalon-pages" --revision "$GITHUB_SHA"
+
+      - name: Upload GitHub Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          folder: target/doc
-          repository-name: mediaprophet/etalon
-          branch: gh-pages
-          target-folder: doc
+          path: ${{ runner.temp }}/etalon-pages
+
+  deploy:
+    name: Deploy development documentation
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/dev'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: github-pages
+      cancel-in-progress: false
+    steps:
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+
+      - name: Deploy GitHub Pages artifact
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

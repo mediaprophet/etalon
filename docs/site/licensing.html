@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Licensing and boundaries | Etalon</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <header>
+      <nav aria-label="Main navigation">
+        <a class="brand" href="index.html">etalon</a
+        ><a href="getting-started.html">Get started</a
+        ><a href="doc/etalon/index.html">API reference</a
+        ><a href="licensing.html" aria-current="page">Licensing</a
+        ><a href="https://github.com/mediaprophet/etalon">GitHub</a>
+      </nav>
+    </header>
+    <main id="main" class="content">
+      <p class="eyebrow">Component boundaries</p>
+      <h1>Keep origin and terms explicit.</h1>
+      <p class="lead">
+        The current Etalon-specific licensing policy is CC BY-NC-ND 4.0.
+        Third-party and inherited material retains its own terms.
+      </p>
+      <h2>Project-specific work</h2>
+      <p>
+        See the repository's
+        <a
+          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/LICENSE"
+          >LICENSE</a
+        >
+        and
+        <a
+          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/LICENSE-QUALIA"
+          >LICENSE-QUALIA</a
+        >. These notices do not replace rights or conditions attached to
+        upstream material.
+      </p>
+      <h2>Inherited graphics implementation</h2>
+      <p>
+        Etalon is a fork of wgpu. Inherited wgpu/Naga material remains available
+        under its MIT/Apache-2.0 terms. The repository preserves the
+        <a
+          href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/upstream-licenses"
+          >upstream texts and attribution</a
+        >.
+      </p>
+      <h2>Reference-only source</h2>
+      <p>
+        Public SDK/interface sources are retained for ABI and provenance review
+        under their individual GPL, BSD or Apache/MIT terms. See the
+        <a
+          href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/sensing-vendor-adapters/sdk-reference/THIRD-PARTY-LICENSES.md"
+          >component notices</a
+        >
+        and provenance manifests. Those reference sources are not included in
+        this documentation artifact or compiled into the portable sensing
+        libraries.
+      </p>
+      <h2>Native runtime combinations</h2>
+      <p>
+        Vendor adapters are a separate workspace and require explicit runtime
+        admission. This separation limits accidental dependencies; it is not a
+        legal certification of every runtime combination. In particular, the
+        RTL-SDR adapter dynamically loads GPL-licensed librtlsdr. Dynamic
+        loading alone does not settle the distribution requirements of a
+        combined product.
+      </p>
+      <p>
+        No native driver, proprietary SDK, firmware or vendor runtime binary is
+        installed or bundled by this site. Review the exact selected
+        SDK/runtime, its dependency closure and redistribution terms before
+        distributing a product that uses it.
+      </p>
+      <h2>Validation and hardware</h2>
+      <p>
+        API documentation and successful software checks do not authenticate a
+        physical device or qualify its scientific accuracy. Native allocation
+        bounds, numerical behavior, reset/cancellation and sample timing need
+        evidence for the particular platform and deployment. Keep unqualified
+        capabilities distinct from measured results.
+      </p>
+      <p class="small">
+        These boundaries preserve the current project policy. Broad dependency
+        replacement and relicensing are separate work.
+      </p>
+    </main>
+    <footer>
+      <div>
+        <a href="index.html">Etalon</a> &middot;
+        <a href="getting-started.html">Library guide</a>
+      </div>
+    </footer>
+  </body>
+</html>

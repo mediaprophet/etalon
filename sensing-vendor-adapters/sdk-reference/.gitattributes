@@ -1,0 +1,2 @@
+# Preserve exact upstream bytes; integrity is checked by recorded SHA-256.
+* -text -whitespace

@@ -1,14 +1,18 @@
 use alloc::{borrow::Cow, string::ToString, sync::Arc};
 
-use wgt::{PrepareComputeError, PreparedComputeDescriptor, PreparedComputeError};
+use wgt::{
+    error::{ErrorType, WebGpuError},
+    PrepareComputeError, PreparedComputeDescriptor, PreparedComputeError,
+};
 
 use crate::{
     binding_model as binding,
     command::ComputePassDescriptor,
-    device::{queue::Queue, Device},
-    instance::Adapter,
+    device::{queue::Queue, Device, WaitIdleError},
+    instance::{Adapter, RequestDeviceError},
     pipeline,
-    resource::{Buffer, RawResourceAccess},
+    resource::{Buffer, InvalidOrDestroyedResourceError, RawResourceAccess},
+    timestamp_normalization::TimestampNormalizerInitError,
 };
 
 pub(super) struct Resources {
@@ -20,10 +24,58 @@ pub(super) struct Resources {
     pub(super) device: Arc<Device>,
 }
 
-fn diagnostic(error: impl core::fmt::Display) -> PrepareComputeError {
+fn classified(reason: PreparedComputeError, error: impl core::fmt::Display) -> PrepareComputeError {
     PrepareComputeError {
-        reason: PreparedComputeError::InvalidDescriptor,
+        reason,
         message: error.to_string(),
+    }
+}
+
+fn reason(error: &impl WebGpuError) -> PreparedComputeError {
+    match error.webgpu_error_type() {
+        ErrorType::Validation => PreparedComputeError::InvalidDescriptor,
+        ErrorType::OutOfMemory => PreparedComputeError::OutOfMemory,
+        ErrorType::DeviceLost => PreparedComputeError::DeviceLost,
+        ErrorType::Internal => PreparedComputeError::Unexpected,
+    }
+}
+
+fn diagnostic(error: impl WebGpuError) -> PrepareComputeError {
+    classified(reason(&error), error)
+}
+
+fn request_diagnostic(error: RequestDeviceError) -> PrepareComputeError {
+    let category = match &error {
+        RequestDeviceError::Device(error) => reason(error),
+        RequestDeviceError::TimestampNormalizerInitFailed(error) => match error {
+            TimestampNormalizerInitError::BindGroupLayout(error)
+            | TimestampNormalizerInitError::PipelineLayout(error) => reason(error),
+            TimestampNormalizerInitError::CreateShaderModule(error) => reason(error),
+            TimestampNormalizerInitError::ComputePipeline(error) => reason(error),
+            TimestampNormalizerInitError::ParseWgsl(_)
+            | TimestampNormalizerInitError::ValidateWgsl(_) => PreparedComputeError::Unexpected,
+        },
+        RequestDeviceError::LimitsExceeded(_)
+        | RequestDeviceError::UnsupportedFeature(_)
+        | RequestDeviceError::ExperimentalFeaturesNotEnabled(_)
+        | RequestDeviceError::AdapterConsumed => PreparedComputeError::UnsupportedConfiguration,
+    };
+    classified(category, error)
+}
+
+fn poll_diagnostic(error: WaitIdleError) -> PrepareComputeError {
+    let category = match &error {
+        WaitIdleError::Device(error) => reason(error),
+        WaitIdleError::Timeout => PreparedComputeError::Timeout,
+        WaitIdleError::WrongSubmissionIndex(..) => PreparedComputeError::InvalidDescriptor,
+    };
+    classified(category, error)
+}
+
+fn resource_diagnostic(error: InvalidOrDestroyedResourceError) -> PrepareComputeError {
+    match error {
+        InvalidOrDestroyedResourceError::InvalidResource(error) => diagnostic(error),
+        InvalidOrDestroyedResourceError::DestroyedResource(error) => diagnostic(error),
     }
 }
 
@@ -34,7 +86,7 @@ impl Resources {
     ) -> Result<Self, PrepareComputeError> {
         let (device, queue) = adapter
             .request_prepared_device(&crate::device::DeviceDescriptor::default())
-            .map_err(diagnostic)?;
+            .map_err(request_diagnostic)?;
         desc.validate(&device.limits)?;
         let create_buffer = |size, usage| {
             device
@@ -146,7 +198,7 @@ impl Resources {
                     submission_index: Some(index),
                     timeout: None,
                 })
-                .map_err(diagnostic)?;
+                .map_err(poll_diagnostic)?;
         }
         resources.device.check_is_valid().map_err(diagnostic)?;
         Ok(resources)
@@ -233,7 +285,7 @@ impl Resources {
         let bind_group = self
             .bind_group
             .try_raw(&guard)
-            .map_err(diagnostic)?
+            .map_err(resource_diagnostic)?
             .as_any()
             .downcast_ref::<hal::vulkan::BindGroup>()
             .ok_or(PreparedComputeError::UnsupportedBackend)?;
@@ -267,5 +319,69 @@ impl Resources {
             )
             .map_err(Into::into)
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::{command::CommandEncoderError, device::DeviceError, resource::CreateBufferError};
+
+    #[test]
+    fn preserves_nested_device_failures_during_preparation() {
+        for (error, expected) in [
+            (DeviceError::Lost, PreparedComputeError::DeviceLost),
+            (DeviceError::OutOfMemory, PreparedComputeError::OutOfMemory),
+        ] {
+            assert_eq!(
+                diagnostic(CreateBufferError::Device(error.clone())).reason,
+                expected
+            );
+            assert_eq!(
+                diagnostic(CommandEncoderError::Device(error.clone())).reason,
+                expected
+            );
+            assert_eq!(
+                request_diagnostic(RequestDeviceError::Device(error.clone())).reason,
+                expected
+            );
+            assert_eq!(
+                poll_diagnostic(WaitIdleError::Device(error.clone())).reason,
+                expected
+            );
+            assert_eq!(
+                request_diagnostic(RequestDeviceError::TimestampNormalizerInitFailed(
+                    TimestampNormalizerInitError::PipelineLayout(error),
+                ))
+                .reason,
+                expected
+            );
+        }
+    }
+
+    #[test]
+    fn distinguishes_validation_internal_and_wait_errors() {
+        assert_eq!(
+            diagnostic(CreateBufferError::UnalignedSize).reason,
+            PreparedComputeError::InvalidDescriptor
+        );
+        let internal = diagnostic(pipeline::CreatePipelineError::Internal {
+            stage: wgt::ShaderStages::COMPUTE,
+            message: "backend compiler failure".into(),
+        });
+        assert_eq!(internal.reason, PreparedComputeError::Unexpected);
+        assert!(internal.message.contains("backend compiler failure"));
+        assert_eq!(
+            poll_diagnostic(WaitIdleError::Timeout).reason,
+            PreparedComputeError::Timeout
+        );
+        assert_eq!(
+            poll_diagnostic(WaitIdleError::WrongSubmissionIndex(2, 1)).reason,
+            PreparedComputeError::InvalidDescriptor
+        );
+        assert_eq!(
+            request_diagnostic(RequestDeviceError::AdapterConsumed).reason,
+            PreparedComputeError::UnsupportedConfiguration
+        );
     }
 }

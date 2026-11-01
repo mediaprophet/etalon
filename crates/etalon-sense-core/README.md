@@ -1,18 +1,20 @@
-# Standalone sensing contracts: first implementation slice
+# Etalon sensing contracts
 
-This directory stages dependency-free, allocation-free Rust contracts above the
-Etalon execution APIs. It does not acquire sensors, grant authority or execute
-accelerators. No stable serialized ABI is declared by native Rust type layout.
+Portable, dependency-free Rust contracts for caller-owned sensing buffers,
+observation envelopes, uncertainty, calibration, clock mapping and policy
+composition. This library uses `no_std` and forbids unsafe code.
 
-This package is registered through the existing `crates/*` workspace glob in
-the isolated sensing worktree. The modernization chat approved isolated
-registration; the primary checkout, lockfile, accelerator APIs, compiler/HAL and
-qualification infrastructure remain under its coordination.
+The contracts do not acquire devices, grant authority or attest a source.
+Applications supply physical meaning, trusted clocks, calibration references and
+policy authorities. Native Rust type layout is not a stable serialized ABI.
 
-The implementation uses `no_std`, no dependencies and forbids unsafe code.
-Builds and tests are deferred until the ongoing cleanup is finished. The
-sources have not been compiled or validated yet.
+Use this crate directly or through the `etalon-sense` facade. Packages are
+available through Git or a local sibling checkout; they are not published to
+crates.io. Pin a tested commit for reproducible consumers.
 
-The implementation plan remains at
-`C:/github/qualiaDB/docs/plans/unified-sensing-implementation-2026-10-30.md`.
-Existing plan documents are preserved unchanged in the primary QualiaDB tree.
+- [Library guide](https://mediaprophet.github.io/etalon/getting-started.html)
+- [Contract API](https://mediaprophet.github.io/etalon/doc/etalon_sense_core/)
+- [Validation results](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml)
+
+Software validation and hardware/scientific qualification are separate.
+Unknown source, quality, time and uncertainty stay explicit.

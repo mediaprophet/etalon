@@ -6,11 +6,11 @@ kept for reference, provenance and ABI review only.
 
 ## Ring-fence
 
-- These files are **not part of Etalon**. Each one keeps its upstream license,
-  and the matching license text sits next to it in its directory.
+- These are separately licensed reference files, not Etalon-authored implementation
+  code. Each retains its upstream license and adjacent license text.
 - Etalon's license (CC-BY-NC-ND-4.0, see the repository `LICENSE`) does not
-  apply to these files. Their licenses do not extend to any other part of this
-  repository.
+  apply to these files. Reference-only aggregation does not itself relicense
+  unrelated code; linked runtimes and SDK-derived builds need a separate review.
 - No file in this directory is compiled, linked, included, generated from or
   loaded by any Etalon crate, build script or test. Etalon code that describes
   the same interfaces (for example `etalon-sense-fastrpc/src/abi.rs`) is an
@@ -37,3 +37,16 @@ Exact source URLs, upstream commits, byte lengths and SHA-256 digests are in
 
 `README.md`, `THIRD-PARTY-LICENSES.md`, `qualcomm-qaic/ABI-REVIEW.md` and the
 `provenance.json` / `service-reference-provenance.json` files.
+
+## Native runtime and target-build boundary
+
+The Rust RTL-SDR adapter loads external GPL-licensed librtlsdr in-process.
+Optional compilation, a separate Cargo workspace, or a user-supplied DLL does
+not by itself settle the licensing of a distributed combination. This inventory
+does not approve that combination for a CC-only product release. Native runtime
+permissions and distribution obligations require a specific disposition.
+
+The authored DSP C shim is not compiled by the current Cargo packages. A later
+platform image build includes the selected SDK's remote.h; that header and its
+notices must be accounted for in the target distribution. Do not replace
+upstream notices with the project license.

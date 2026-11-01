@@ -1,6 +1,6 @@
 //! Explicit, caller-selected native GPU execution for bounded sensing kernels.
 //!
-//! This crate accepts an existing Etalon device and queue. It does not discover
+//! The ordinary provider accepts an existing Etalon device and queue. It does not discover
 //! devices, authorize capture, attest a provider, qualify hardware, or fall back
 //! to CPU execution. Readback is blocking with a bounded poll timeout and is
 //! available only on native Etalon backends; WebGPU cannot wait synchronously.
@@ -13,6 +13,10 @@
 //! transient command allocations are outside that buffer-only budget. Buffers
 //! retain samples and powers until overwritten or destroyed; secure erasure is
 //! not guaranteed.
+//!
+//! The [`prepared`] module instead prepares a private Vulkan lane on a selected
+//! adapter. Its fixed resources avoid ordinary per-run command recording, but
+//! its live descriptor remains `ColdUnbounded` pending target qualification.
 #![forbid(unsafe_code)]
 #![cfg(not(target_arch = "wasm32"))]
 
@@ -21,6 +25,7 @@ pub use allocation::GpuAllocationClass;
 pub mod live;
 mod numeric;
 mod pair;
+pub mod prepared;
 use numeric::{
     checked_bytes, make_params, persistent_buffer_bytes, stage_power_values, validate_request,
 };
@@ -74,7 +79,7 @@ pub enum GpuError {
 /// Caller-selected Etalon device provider for signed-i16 I/Q power.
 ///
 /// Each call uploads only the provided bytes, runs WGSL to decode the requested
-/// byte order, apply `scale`, and compute I² + Q² in f32. Results are converted
+/// byte order, apply `scale`, and compute IÂ² + QÂ² in f32. Results are converted
 /// to f64 on readback; precision is therefore f32 and can differ from the
 /// reference CPU pipeline's f64 sum. This is blocking, bounded by `max_pairs`,
 /// and native-only. An Etalon device/ID match does not constitute GPU attestation

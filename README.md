@@ -14,6 +14,10 @@ Named after the optical Fabry-Pérot etalon—the scientific archetype of precis
 
 **Homepage:** https://mediaprophet.github.io/etalon/
 
+**Library guide:** [Getting started](https://mediaprophet.github.io/etalon/getting-started.html) | [Public API](https://mediaprophet.github.io/etalon/doc/etalon/) | [Sensing API](https://mediaprophet.github.io/etalon/doc/etalon_sense/)
+
+The documentation site follows the development branch and records its exact source revision. Pin a tested commit for reproducible consumers.
+
 > **Upstream:** Etalon is derived from [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu), which is dual-licensed under Apache-2.0 and MIT. See [Upstream & Attribution](#upstream--attribution) and [Licensing](#intellectual-property--licensing-notice).
 
 ---
@@ -37,7 +41,7 @@ Named after the optical Fabry-Pérot etalon—the scientific archetype of precis
 
 ### 4. Zero-Heap and Bounded Cognitive Integration
 
-- **Zero Allocations in Hot Paths**: Compatible with QualiaDB's Rule 0 (_Zero heap in hot paths_), allowing uniform belts, vertex/index staging buffers, and compute passes to stream directly from fixed-size memory arenas and stack arrays (`[NQuin; N]`).
+- **Caller-Owned Sensing Buffers**: Portable sensing contracts and signal primitives use explicit caller buffers. The prepared native Vulkan compute lane reuses fixed resources; ordinary queue/map APIs and vendor runtimes may allocate. Strict hot zero-allocation admission requires evidence for the selected execution path and target.
 - **Unified Native & Browser Rendering**: Directly bridges native desktop surfaces (Vulkan, DirectX 12, Metal) and browser WebGPU contexts within a single cohesive API.
 
 ---
