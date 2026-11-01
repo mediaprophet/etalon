@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="etalon-revision" content="{{REVISION}}" />
-    <title>Graphics, compute and portable execution | Etalon</title>
+    <title>EMF synthesis, sensing and compute for QualiaDB | Etalon</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -23,12 +23,14 @@
       <p class="eyebrow">
         Etalon 0.0.2 · Rust libraries for native and WebAssembly
       </p>
-      <h1>Graphics, compute<br />and application execution.</h1>
+      <h1>EMF synthesis, sensing<br />and compute for QualiaDB.</h1>
       <p class="lead">
-        A cross-platform graphics foundation, a shader compiler, and focused
-        libraries for generated kernels, semantic data, tensors, rendering,
-        workers and sensing. Build with Etalon independently or integrate it
-        into QualiaDB and other applications.
+        Etalon is building the execution foundations for QualiaDB and Webizen's
+        work with electromagnetic signals: synthesis, acquisition, signal
+        processing and accelerated computation. Version 0.0.2 supplies device
+        and observation contracts, DSP primitives, generated compute kernels and
+        visualization libraries in Rust, for native and WebAssembly
+        applications.
       </p>
       <div class="actions">
         <a class="button primary" href="getting-started.html#versions"
@@ -45,25 +47,58 @@
           >Choose a release, stable, latest or development target</a
         >.
       </p>
-      <h2>Choose the layer your application needs</h2>
+      <h2>Three connected foundations</h2>
+      <ul>
+        <li>
+          <strong>Synthesis:</strong> the intended signal- and field-generation
+          side of the library. Current foundations include Forge/Naga kernel
+          generation and EMF field/rendering contracts. Physical waveform
+          generation and transmission require further device-specific
+          implementation and qualification.
+        </li>
+        <li>
+          <strong>Sensing:</strong> acquire observations through explicit
+          device, sample, timing and calibration contracts. Radio and optical
+          data can be accompanied by acoustic measurements from microphones.
+        </li>
+        <li>
+          <strong>Compute:</strong> transform signals, operate on semantic and
+          tensor data, coordinate accelerators and render results for
+          inspection.
+        </li>
+      </ul>
+      <p>
+        Etalon provides execution and device integration; QualiaDB supplies the
+        semantic context, inference, uncertainty systems, permissions and
+        custody. These are foundations for that integration, not a completed EMF
+        inference platform or a claim that the full 10D/q42 integration is
+        qualified.
+      </p>
+      <p>
+        Developed for QualiaDB and Webizen. Use is governed by the
+        <a href="licensing.html">current interim license</a>, pending a future
+        QualiaDB/Webizen licensing framework after the underlying implementation
+        is built.
+      </p>
+      <h2>Libraries supporting the pipeline</h2>
       <div class="grid">
         <article class="card">
-          <span class="label">Graphics API</span>
-          <h3>Render and dispatch compute</h3>
+          <span class="label">WGSL Forge</span>
+          <h3>Generate and evaluate kernels</h3>
           <p>
-            Validated resources, buffers, textures and pipelines. Native Vulkan,
-            DX12, Metal and GLES; Rust/WASM access to browser WebGPU and WebGL2.
+            Typed kernel and schedule descriptions, shader emission, CPU
+            oracles, adapter-specific certification records and tuning tools.
           </p>
-          <a href="capabilities.html#graphics">Graphics APIs and tests</a>
+          <a href="capabilities.html#forge">Forge API and verification</a>
         </article>
         <article class="card">
-          <span class="label">Naga compiler</span>
-          <h3>Parse, validate and translate</h3>
+          <span class="label">Sensing and signals</span>
+          <h3>Process measurements explicitly</h3>
           <p>
-            Shader-language frontends, a shared intermediate representation and
-            target writers for WGSL, SPIR-V, GLSL, HLSL and MSL workflows.
+            Sample, clock, calibration and uncertainty contracts; DSP primitives
+            and separately selected CPU, GPU and device providers.
           </p>
-          <a href="capabilities.html#compiler">Compiler and shader evidence</a>
+          <a href="capabilities.html#sensing">Sensing APIs and signal tests</a>
         </article>
         <article class="card">
           <span class="label">Prepared native compute</span>
@@ -77,24 +112,6 @@
           >
         </article>
         <article class="card">
-          <span class="label">WGSL Forge</span>
-          <h3>Generate and evaluate kernels</h3>
-          <p>
-            Typed kernel and schedule descriptions, shader emission, CPU
-            oracles, adapter-specific certification records and tuning tools.
-          </p>
-          <a href="capabilities.html#forge">Forge API and verification</a>
-        </article>
-        <article class="card">
-          <span class="label">NQuin data</span>
-          <h3>Filter and sort semantic records</h3>
-          <p>
-            48-byte wire records with explicit alignment and parity. CPU
-            reference operations and GPU filtering and stable radix sorting.
-          </p>
-          <a href="capabilities.html#data">NQuin APIs and GPU cases</a>
-        </article>
-        <article class="card">
           <span class="label">Tensor operations</span>
           <h3>Compose inference building blocks</h3>
           <p>
@@ -106,13 +123,13 @@
           >
         </article>
         <article class="card">
-          <span class="label">Application rendering</span>
-          <h3>Build spatial views and interfaces</h3>
+          <span class="label">NQuin data</span>
+          <h3>Filter and sort semantic records</h3>
           <p>
-            Volumetric and EMF pipelines, HUD layout and hit testing, plus
-            explicit camera and manifold projection data contracts.
+            48-byte wire records with explicit alignment and parity. CPU
+            reference operations and GPU filtering and stable radix sorting.
           </p>
-          <a href="capabilities.html#rendering">Renderer APIs and coverage</a>
+          <a href="capabilities.html#data">NQuin APIs and GPU cases</a>
         </article>
         <article class="card">
           <span class="label">Agents and workers</span>
@@ -126,13 +143,31 @@
           >
         </article>
         <article class="card">
-          <span class="label">Sensing and signals</span>
-          <h3>Process measurements explicitly</h3>
+          <span class="label">Application rendering</span>
+          <h3>Build spatial views and interfaces</h3>
           <p>
-            Sample, clock, calibration and uncertainty contracts; DSP primitives
-            and separately selected CPU, GPU and device providers.
+            Volumetric and EMF pipelines, HUD layout and hit testing, plus
+            explicit camera and manifold projection data contracts.
           </p>
-          <a href="capabilities.html#sensing">Sensing APIs and signal tests</a>
+          <a href="capabilities.html#rendering">Renderer APIs and coverage</a>
+        </article>
+        <article class="card">
+          <span class="label">Naga compiler</span>
+          <h3>Parse, validate and translate</h3>
+          <p>
+            Shader-language frontends, a shared intermediate representation and
+            target writers for WGSL, SPIR-V, GLSL, HLSL and MSL workflows.
+          </p>
+          <a href="capabilities.html#compiler">Compiler and shader evidence</a>
+        </article>
+        <article class="card">
+          <span class="label">Graphics API</span>
+          <h3>Render and dispatch compute</h3>
+          <p>
+            Validated resources, buffers, textures and pipelines. Native Vulkan,
+            DX12, Metal and GLES; Rust/WASM access to browser WebGPU and WebGL2.
+          </p>
+          <a href="capabilities.html#graphics">Graphics APIs and tests</a>
         </article>
       </div>
       <h2>Run the implementation on your device</h2>

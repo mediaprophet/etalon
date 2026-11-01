@@ -1,5 +1,9 @@
 # Change Log
 
+## 0.0.2 documentation maintenance
+
+- Describe Etalon as foundations for EMF synthesis, sensing and compute designed specifically for QualiaDB; retain source-backed capability and qualification boundaries. No package version or library code changes.
+
 ## 0.0.2 release publication
 
 - Publish the final 0.0.2 snapshot as `v0.0.2-release`, preserving the historical prerelease tag. Stable/latest and the 0.0.2 maintenance line identify qualified releases; further development remains on dev.

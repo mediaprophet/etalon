@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="etalon-revision" content="{{REVISION}}" />
-    <title>Capabilities and changes from wgpu | Etalon</title>
+    <title>EMF foundations, APIs and evidence | Etalon</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
@@ -21,11 +21,13 @@
     </header>
     <main id="main">
       <p class="eyebrow">Etalon 0.0.2 · APIs, execution paths and evidence</p>
-      <h1>The library, layer by layer.</h1>
+      <h1>Foundations for EMF synthesis,<br />sensing and compute.</h1>
       <p class="lead">
-        Start with the graphics API or select a focused library. Each layer has
-        an explicit contract and its own evidence: shader validation,
-        deterministic CPU checks, native GPU tests or actual browser execution.
+        Designed to support QualiaDB and Webizen, Etalon connects device
+        observations, signal processing and generated compute programs with
+        accelerated execution and visualization. The layers below document the
+        implemented building blocks in 0.0.2 and the evidence available for
+        each.
       </p>
       <div class="actions">
         <a class="button primary" href="getting-started.html#versions"
@@ -38,6 +40,28 @@
           >Inspect CI results</a
         >
       </div>
+      <h2>Direction and implemented foundations</h2>
+      <p>
+        EMF synthesis, sensing and compute are the library's intended scope.
+        Current synthesis support generates shader and compute programs through
+        Forge and Naga; it does not establish physical waveform generation or
+        radio transmission. Sensing contracts and signal transforms carry
+        observations into computation, while graphics and rendering help inspect
+        the results. Microphone inputs provide complementary acoustic data.
+      </p>
+      <p>
+        Etalon owns execution and device integration. QualiaDB supplies semantic
+        context, inference, uncertainty representation, permissions and custody.
+        The APIs below support that integration without claiming that the full
+        QualiaDB 10D/q42 pipeline is complete. Signal processing alone
+        establishes neither identity nor physiological measurements.
+      </p>
+      <p>
+        Use is governed by the
+        <a href="licensing.html">current interim license</a>. A future
+        QualiaDB/Webizen licensing framework depends on first building the
+        underlying implementation; these pages grant no additional permissions.
+      </p>
       <h2 id="library-map">Library map</h2>
       <div class="table-wrap">
         <table>
@@ -49,49 +73,58 @@
             </tr>
           </thead>
           <tbody>
-            <tr id="graphics">
+            <tr id="forge">
               <td>
-                <strong>Graphics and compute</strong><br /><code>etalon</code>
+                <strong>Kernel generation</strong><br /><code
+                  >etalon-wgsl-forge</code
+                >
               </td>
               <td>
-                Safe resource creation, command encoding, render/compute
-                pipelines, queue submission, buffers, textures and surfaces
-                across native and browser backends.
+                Typed kernel/buffer IR, schedules and workgroups; WGSL, HLSL,
+                MSL and CUDA emitters; CPU oracles, validation, adapter-specific
+                cache records and tuning utilities.
               </td>
               <td>
-                <a href="doc/etalon/index.html">Graphics API</a> ·
+                <a href="doc/etalon_wgsl_forge/index.html">Forge API</a> ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/examples/features"
-                  >Feature examples</a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-wgsl-forge/src/tests.rs"
+                  >Emission tests</a
                 >
                 ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/tests/tests/etalon-gpu"
-                  >GPU regressions</a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-wgsl-forge/src/certify/comparison_tests.rs"
+                  >Oracle comparisons</a
                 >
                 ·
-                <a
-                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/tests/tests/etalon-validation"
-                  >Validation tests</a
+                <a href="testing.html"
+                  >Runnable deterministic-generation case</a
                 >
               </td>
             </tr>
-            <tr id="compiler">
-              <td><strong>Shader compiler</strong><br /><code>naga</code></td>
+            <tr id="sensing">
               <td>
-                Parse shading languages into a common IR, validate modules, then
-                generate target shader code. Frontends and writers are selected
-                by features.
+                <strong>Sensing and signal processing</strong><br /><code
+                  >etalon-sense</code
+                ><br /><code>etalon-signal</code>
               </td>
               <td>
+                Samples, clocks, calibration, uncertainty and observation
+                contracts; caller-buffered FFT, filters, correlation, IQ, audio
+                and vision primitives; explicitly selected CPU/GPU and device
+                providers.
+              </td>
+              <td>
+                <a href="doc/etalon_sense/index.html">Sensing API</a> ·
+                <a href="doc/etalon_signal/index.html">Signal API</a> ·
+                <a href="getting-started.html#sensing">Provider guide</a> ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/naga/src/lib.rs"
-                  >Compiler API and translation example</a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-signal/src/fft_tests.rs"
+                  >FFT tests</a
                 >
                 ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/naga/tests"
-                  >Snapshots, validation and error tests</a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-browser-demo/src/domain_signal.rs"
+                  >Browser IQ-power GPU case</a
                 >
               </td>
             </tr>
@@ -127,55 +160,6 @@
                 >
               </td>
             </tr>
-            <tr id="forge">
-              <td>
-                <strong>Kernel generation</strong><br /><code
-                  >etalon-wgsl-forge</code
-                >
-              </td>
-              <td>
-                Typed kernel/buffer IR, schedules and workgroups; WGSL, HLSL,
-                MSL and CUDA emitters; CPU oracles, validation, adapter-specific
-                cache records and tuning utilities.
-              </td>
-              <td>
-                <a href="doc/etalon_wgsl_forge/index.html">Forge API</a> ·
-                <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-wgsl-forge/src/tests.rs"
-                  >Emission tests</a
-                >
-                ·
-                <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-wgsl-forge/src/certify/comparison_tests.rs"
-                  >Oracle comparisons</a
-                >
-                ·
-                <a href="testing.html"
-                  >Runnable deterministic-generation case</a
-                >
-              </td>
-            </tr>
-            <tr id="data">
-              <td>
-                <strong>Semantic records</strong><br /><code>etalon-nquin</code>
-              </td>
-              <td>
-                A 48-byte, 16-byte-aligned wire record with parity checks, CPU
-                filtering/sorting and GPU field sieves and stable radix sorting.
-              </td>
-              <td>
-                <a href="doc/etalon_nquin/index.html">NQuin API</a> ·
-                <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-nquin/src/radix/gpu_tests.rs"
-                  >GPU radix tests</a
-                >
-                ·
-                <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-browser-demo/src/domain_nquin.rs"
-                  >Browser CPU/GPU comparison cases</a
-                >
-              </td>
-            </tr>
             <tr id="tensors">
               <td>
                 <strong>Tensor building blocks</strong><br /><code
@@ -200,28 +184,25 @@
                 >
               </td>
             </tr>
-            <tr id="rendering">
+            <tr id="data">
               <td>
-                <strong>Application rendering</strong><br /><code
-                  >etalon-render</code
-                >
+                <strong>Semantic records</strong><br /><code>etalon-nquin</code>
               </td>
               <td>
-                Volumetric and EMF pipelines, HUD layout and hit testing, and
-                camera/manifold projection POD contracts for application
-                integration.
+                A 48-byte, 16-byte-aligned wire record with parity checks, CPU
+                filtering/sorting and GPU field sieves and stable radix sorting.
               </td>
               <td>
-                <a href="doc/etalon_render/index.html">Rendering API</a> ·
+                <a href="doc/etalon_nquin/index.html">NQuin API</a> ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/crates/etalon-render/src"
-                  >Pipeline and layout source</a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-nquin/src/radix/gpu_tests.rs"
+                  >GPU radix tests</a
                 >
                 ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-browser-demo/src/render.rs"
-                  >Foundational triangle/readback test</a
-                >. That test does not qualify the complete volumetric/HUD stack.
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-browser-demo/src/domain_nquin.rs"
+                  >Browser CPU/GPU comparison cases</a
+                >
               </td>
             </tr>
             <tr id="coordination">
@@ -250,30 +231,73 @@
                 >
               </td>
             </tr>
-            <tr id="sensing">
+            <tr id="rendering">
               <td>
-                <strong>Sensing and signal processing</strong><br /><code
-                  >etalon-sense</code
-                ><br /><code>etalon-signal</code>
+                <strong>Application rendering</strong><br /><code
+                  >etalon-render</code
+                >
               </td>
               <td>
-                Samples, clocks, calibration, uncertainty and observation
-                contracts; caller-buffered FFT, filters, correlation, IQ, audio
-                and vision primitives; explicitly selected CPU/GPU and device
-                providers.
+                Volumetric and EMF pipelines, HUD layout and hit testing, and
+                camera/manifold projection POD contracts for application
+                integration.
               </td>
               <td>
-                <a href="doc/etalon_sense/index.html">Sensing API</a> ·
-                <a href="doc/etalon_signal/index.html">Signal API</a> ·
-                <a href="getting-started.html#sensing">Provider guide</a> ·
+                <a href="doc/etalon_render/index.html">Rendering API</a> ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-signal/src/fft_tests.rs"
-                  >FFT tests</a
+                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/crates/etalon-render/src"
+                  >Pipeline and layout source</a
                 >
                 ·
                 <a
-                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-browser-demo/src/domain_signal.rs"
-                  >Browser IQ-power GPU case</a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/crates/etalon-browser-demo/src/render.rs"
+                  >Foundational triangle/readback test</a
+                >. That test does not qualify the complete volumetric/HUD stack.
+              </td>
+            </tr>
+            <tr id="compiler">
+              <td><strong>Shader compiler</strong><br /><code>naga</code></td>
+              <td>
+                Parse shading languages into a common IR, validate modules, then
+                generate target shader code. Frontends and writers are selected
+                by features.
+              </td>
+              <td>
+                <a
+                  href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/naga/src/lib.rs"
+                  >Compiler API and translation example</a
+                >
+                ·
+                <a
+                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/naga/tests"
+                  >Snapshots, validation and error tests</a
+                >
+              </td>
+            </tr>
+            <tr id="graphics">
+              <td>
+                <strong>Graphics and compute</strong><br /><code>etalon</code>
+              </td>
+              <td>
+                Safe resource creation, command encoding, render/compute
+                pipelines, queue submission, buffers, textures and surfaces
+                across native and browser backends.
+              </td>
+              <td>
+                <a href="doc/etalon/index.html">Graphics API</a> ·
+                <a
+                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/examples/features"
+                  >Feature examples</a
+                >
+                ·
+                <a
+                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/tests/tests/etalon-gpu"
+                  >GPU regressions</a
+                >
+                ·
+                <a
+                  href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/tests/tests/etalon-validation"
+                  >Validation tests</a
                 >
               </td>
             </tr>
