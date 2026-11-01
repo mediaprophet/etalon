@@ -12,7 +12,7 @@ crate-type = ["cdylib", "rlib"]
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 log = { workspace = true }
-etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl", "webgpu"] }
+etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl", "webgpu", "webgl"] }
 wasm-bindgen = { workspace = true, features = ["std"] }
 wasm-bindgen-futures = { workspace = true, features = ["std"] }
 web-sys = { workspace = true, features = ["OffscreenCanvas"] }

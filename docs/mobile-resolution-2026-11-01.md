@@ -108,3 +108,9 @@ The workspace's inherited Etalon dependency now selects WebGPU for browser consu
 Windows BLE, WASAPI, PC/SC and camera provider facade dependencies are target-specific. Host filesystem I/O and agent CUDA/OS memory interop are native-only. Native APIs retain their existing feature behavior. Portable Wi-Fi timestamp metadata, Windows-sensor observation/compass contracts, accelerator reports, and the safe sensing/DSP contracts remain available across targets; their actual OS acquisition code was already internally gated. GPU sensing keeps a portable asynchronous IQ-power path, with native synchronous/prepared interfaces gated separately. The facade does not provide database authorization or infer device ownership.
 
 The expanded browser suite adds an explicit sensing GPU case for IQ-power outputs and async readback lifecycle. Native-driver discovery, OS sensor acquisition and vendor SDK execution remain separate from this browser shader coverage.
+
+## WebGL2 rendering fallback
+
+The first-party WASM suite enables Etalon's existing `webgl` backend and requests a separate GL adapter associated with a bounded offscreen canvas when WebGPU acquisition reports `adapter-unavailable`. The fallback executes the same WGSL triangle, reads back 16 KiB of pixels, checks every pixel's allowed colors and six positions, and exports its own versioned result. It polls mapping callbacks without blocking the browser and bounds readback to five seconds, then destroys the device and releases its private context.
+
+A WebGL2 render pass does not change the 21-case WebGPU qualification or provide compute shaders. NQuin, tensor and sensing compute workloads still require their supported compute backend; this change does not emulate them through fragment shaders or label CPU execution as GPU execution. The two portable WASM CPU cases retain their separate results. No browser protection settings are changed.

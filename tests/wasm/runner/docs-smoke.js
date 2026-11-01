@@ -40,6 +40,12 @@ if (mode === "software-webgpu")
     "--use-webgpu-adapter=swiftshader",
     "--use-gpu-in-tests",
   );
+if (mode === "adapter-null")
+  browserArgs.push(
+    "--use-gl=angle",
+    "--use-angle=swiftshader",
+    "--enable-unsafe-swiftshader",
+  );
 const context = await chromium.launchPersistentContext(args["--profile"], {
   executablePath: args["--chrome"],
   headless: true,
@@ -223,6 +229,34 @@ try {
     throw new Error(
       "Synthetic unavailable/rejected adapter was incorrectly qualified",
     );
+  if (mode === "adapter-null") {
+    const fallback = report.webgl_fallback;
+    if (
+      fallback?.status !== "pass" ||
+      fallback.backend !== "WebGL2" ||
+      fallback.source_revision !== report.source_revision ||
+      fallback.render_readback !== true ||
+      fallback.compute_supported !== false ||
+      fallback.image_bytes !== 16384 ||
+      Object.hasOwn(fallback, "image_rgba") ||
+      completion.etalonWebglFallback !== "pass" ||
+      completion.etalonQualification !== "failed"
+    )
+      throw new Error(
+        `WebGL2 fallback did not independently verify rendering after WebGPU null: ${JSON.stringify(fallback)}`,
+      );
+    const caption = await page.locator("#render-caption").textContent();
+    if (!caption.includes("WebGL2"))
+      throw new Error("Fallback image is missing its actual backend label");
+    process.stderr.write(
+      "WebGL2 Rust/WASM render/readback passed; WebGPU remains failed.\n",
+    );
+  } else if (
+    mode === "adapter-rejected" &&
+    (report.webgl_fallback || completion.etalonWebglFallback !== "not_run")
+  ) {
+    throw new Error("Adapter rejection was hidden by an automatic fallback");
+  }
   process.stderr.write(
     `Overall qualification: ${completion.etalonQualification}\n`,
   );
@@ -314,7 +348,7 @@ try {
         throw new Error("GPU case discarded the browser rejection message");
     }
     process.stderr.write(
-      `Synthetic adapter boundary verified: ${mode}; no GPU execution claimed\n`,
+      `Synthetic WebGPU adapter boundary verified: ${mode}; no WebGPU execution claimed\n`,
     );
   }
   if (mode === "software-webgpu") {
