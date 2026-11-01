@@ -14,7 +14,7 @@
 
 const WG: u32 = 64u;
 const MAX_BLOCK: u32 = 1024u;
-const NEG_INF: f32 = -3.4028235e38;
+const NEG_INF: f32 = bitcast<f32>(0xFF7FFFFFu);
 
 struct Params {
     n: u32,           // total number of logits

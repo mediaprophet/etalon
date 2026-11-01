@@ -1470,6 +1470,7 @@ dependencies = [
  "etalon-types",
  "hashbrown 0.17.1",
  "log",
+ "naga",
  "thiserror 2.0.21",
 ]
 

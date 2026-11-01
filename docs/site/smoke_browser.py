@@ -94,7 +94,7 @@ def run(site):
                     ]
                     result = subprocess.run(command, capture_output=True, timeout=110)
                     if result.returncode:
-                        raise ValueError("headless Chrome failed: " + result.stderr[-2000:].decode("utf-8", "replace"))
+                        raise ValueError("headless Chrome failed: " + result.stderr[-16000:].decode("utf-8", "replace"))
                     if len(result.stdout) > MAX_DOM_BYTES:
                         raise ValueError("browser DOM budget exceeded")
                     profile_size = sum(p.stat().st_size for p in profile.rglob("*") if p.is_file())
