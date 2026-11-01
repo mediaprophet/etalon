@@ -218,6 +218,38 @@
         <a href="https://storage.spec.whatwg.org/">WHATWG Storage Standard</a>
         defines these quota, permission and persistence semantics.
       </p>
+      <h2 id="browser-devices">
+        Browser Bluetooth, cameras and network metadata
+      </h2>
+      <p>
+        The device page connects to a user-selected BLE peripheral by service
+        UUID and operates one selected GATT characteristic through Rust/WASM:
+        explicit reads, writes of up to 512 bytes, notifications and disconnect.
+        The browser chooser and permissions determine access. Notification
+        retention is bounded to 32 entries. This is GATT access, not
+        unrestricted radio discovery or MAC-address collection; see the
+        <a href="https://webbluetoothcg.github.io/web-bluetooth/"
+          >Web Bluetooth specification</a
+        >.
+      </p>
+      <p>
+        Network evidence reports browser-exposed online state, connection type
+        and effective bandwidth/latency estimates when available. Effective
+        connection labels describe estimated performance, not proof of a
+        cellular radio generation. It cannot enumerate Wi-Fi networks, SSIDs or
+        MAC addresses. The
+        <a href="https://wicg.github.io/netinfo/">Network Information API</a>
+        defines these metadata fields; support varies by browser.
+      </p>
+      <p>
+        Camera access is explicitly started with audio disabled. The page can
+        list exposed cameras, select a device or facing preference, and ingest a
+        bounded video frame in Rust/WASM. A camera label or ordinary video
+        stream does not establish infrared sensitivity or calibrated thermal
+        measurements. These browser device operations retain their permission
+        and capability requirements in both tabs and installed app windows.
+        <a href="testing.html#radio-heading">Try device access</a>.
+      </p>
       <h2 id="native">Native execution and resource coordination</h2>
       <p>
         <code>etalon-agent</code> exposes accelerator/capability state, buffer

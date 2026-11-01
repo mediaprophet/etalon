@@ -18,6 +18,8 @@
     <script type="module" src="adapter-diagnostic.js"></script>
     <script type="module" src="app-install.js"></script>
     <script type="module" src="app-storage.js"></script>
+    <script type="module" src="browser-radio.js"></script>
+    <script type="module" src="browser-camera.js"></script>
   </head>
   <body data-etalon-qualification="not_run">
     <a class="skip" href="#main">Skip to content</a>
@@ -198,6 +200,163 @@
           No image yet. Pixels will be displayed only after the render/readback
           check passes.
         </p>
+      </section>
+      <section aria-labelledby="radio-heading">
+        <h2 id="radio-heading">Bluetooth sensor and network access</h2>
+        <p>
+          Choose a BLE device by its advertised service, then read or write the
+          selected GATT characteristic through Rust/WASM. Device selection,
+          writes and notification subscriptions require your explicit action.
+          Nothing is uploaded or saved automatically.
+        </p>
+        <label for="ble-service">BLE service UUID</label>
+        <input
+          id="ble-service"
+          type="text"
+          maxlength="36"
+          placeholder="180d or a canonical UUID"
+          autocomplete="off"
+          spellcheck="false"
+          disabled
+        />
+        <label for="ble-characteristic">Characteristic UUID</label>
+        <input
+          id="ble-characteristic"
+          type="text"
+          maxlength="36"
+          placeholder="2a37 or a canonical UUID"
+          autocomplete="off"
+          spellcheck="false"
+          disabled
+        />
+        <div class="actions">
+          <button type="button" class="button" id="ble-connect" disabled>
+            Choose device and connect
+          </button>
+          <button type="button" class="button" id="ble-read" disabled>
+            Read characteristic
+          </button>
+          <button type="button" class="button" id="ble-disconnect" disabled>
+            Cancel / disconnect
+          </button>
+        </div>
+        <label for="ble-write-hex"
+          >Bytes to write (hexadecimal; maximum 512 bytes)</label
+        >
+        <textarea
+          id="ble-write-hex"
+          rows="3"
+          maxlength="1535"
+          placeholder="01 02 ff"
+          autocomplete="off"
+          spellcheck="false"
+          disabled
+        ></textarea>
+        <div class="actions">
+          <button type="button" class="button" id="ble-write" disabled>
+            Write these bytes
+          </button>
+          <button
+            type="button"
+            class="button"
+            id="ble-start-notifications"
+            disabled
+          >
+            Start notifications
+          </button>
+          <button
+            type="button"
+            class="button"
+            id="ble-stop-notifications"
+            disabled
+          >
+            Stop notifications
+          </button>
+          <button type="button" class="button" id="refresh-radio">
+            Refresh radio capabilities
+          </button>
+        </div>
+        <p id="radio-status" role="status" aria-live="polite">
+          Loading Rust/WASM radio support…
+        </p>
+        <p class="small">
+          Notifications retain at most 32 entries and display locally. Network
+          information is limited to metadata the browser exposes; it does not
+          provide Wi-Fi scans, SSIDs or MAC addresses. Installation does not
+          bypass browser permissions.
+          <a href="capabilities.html#browser-devices"
+            >Browser device capabilities</a
+          >.
+        </p>
+        <details>
+          <summary>Radio and network capability evidence</summary>
+          <pre id="radio-capabilities"></pre>
+        </details>
+        <details>
+          <summary>Latest Bluetooth operation</summary>
+          <pre id="radio-receipt"></pre>
+        </details>
+        <details>
+          <summary>Recent notification data</summary>
+          <pre id="ble-notifications"></pre>
+        </details>
+      </section>
+      <section aria-labelledby="camera-heading">
+        <h2 id="camera-heading">Camera frame ingestion</h2>
+        <p>
+          Starting a camera explicitly requests browser permission. Audio is
+          disabled. Ingest one frame, bounded to 640 × 480 RGBA, into Rust/WASM
+          when you choose; no frames are uploaded or saved automatically.
+        </p>
+        <button type="button" class="button" id="camera-enumerate">
+          List exposed cameras
+        </button>
+        <label for="camera-device">Camera exposed by this browser</label>
+        <select id="camera-device">
+          <option value="">Browser default</option>
+        </select>
+        <label for="camera-facing">Camera facing preference</label>
+        <select id="camera-facing">
+          <option value="">No facing preference</option>
+          <option value="user">Front/user</option>
+          <option value="environment">Rear/environment</option>
+        </select>
+        <div class="actions">
+          <button type="button" class="button" id="camera-start">
+            Start selected camera
+          </button>
+          <button type="button" class="button" id="camera-stop" disabled>
+            Stop camera
+          </button>
+          <button type="button" class="button" id="camera-capture" disabled>
+            Ingest one frame in Rust
+          </button>
+        </div>
+        <p id="camera-status" role="status" aria-live="polite">
+          Camera not started.
+        </p>
+        <video
+          id="camera-video"
+          autoplay
+          muted
+          playsinline
+          width="640"
+          height="480"
+        ></video>
+        <canvas id="camera-canvas" width="640" height="480" hidden></canvas>
+        <p class="small">
+          Select any camera the browser exposes. Infrared capability remains
+          unknown: the standard camera API does not establish IR or calibrated
+          thermal measurements from a device label or an ordinary video frame.
+        </p>
+        <details>
+          <summary>Camera capability evidence</summary>
+          <pre id="camera-capabilities"></pre>
+        </details>
+        <details>
+          <summary>Rust frame ingestion receipt</summary>
+          <pre id="camera-frame-report"></pre>
+        </details>
       </section>
       <section aria-labelledby="storage-heading">
         <h2 id="storage-heading">Keep reports on this device</h2>

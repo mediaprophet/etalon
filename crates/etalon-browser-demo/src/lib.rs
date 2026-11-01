@@ -71,3 +71,18 @@ pub use app_storage::{
     delete_local_report, list_local_reports, load_local_report, request_storage_persistence,
     save_local_report, storage_capabilities,
 };
+
+#[cfg(target_arch = "wasm32")]
+mod browser_radio;
+#[cfg(target_arch = "wasm32")]
+pub use browser_radio::{radio_capabilities, BrowserBluetooth};
+#[cfg(all(test, not(target_arch = "wasm32")))]
+#[path = "browser_radio/value.rs"]
+mod radio_value_tests;
+
+#[cfg(target_arch = "wasm32")]
+mod browser_camera;
+#[cfg(target_arch = "wasm32")]
+pub use browser_camera::{
+    camera_capabilities, camera_ingest_rgba, camera_start, camera_stop, camera_stream,
+};

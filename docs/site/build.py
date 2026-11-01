@@ -20,6 +20,7 @@ ASSETS = (
     "index.html", "getting-started.html", "licensing.html", "capabilities.html",
     "testing.html", "browser-tests.js", "adapter-diagnostic.js", "styles.css",
     "app-install.js", "app-environment.js", "app-storage.js", "wasm-runtime.js", "service-worker.js",
+    "browser-radio.js", "browser-camera.js",
     "manifest.webmanifest", "app-icon.svg",
 )
 BINARY_ASSETS = ("app-icon-192.png", "app-icon-512.png")
