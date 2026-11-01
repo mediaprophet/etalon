@@ -14,12 +14,7 @@
       http-equiv="Content-Security-Policy"
       content="default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; style-src 'self'; connect-src 'self'; img-src 'self' blob:; object-src 'none'; base-uri 'self'"
     />
-    <script type="module" src="browser-tests.js"></script>
-    <script type="module" src="adapter-diagnostic.js"></script>
-    <script type="module" src="app-install.js"></script>
-    <script type="module" src="app-storage.js"></script>
-    <script type="module" src="browser-radio.js"></script>
-    <script type="module" src="browser-camera.js"></script>
+    <script defer src="app-bootstrap.js"></script>
   </head>
   <body data-etalon-qualification="not_run">
     <a class="skip" href="#main">Skip to content</a>
@@ -48,6 +43,33 @@
         Vulkan, DX12, Metal, DSP/NPU or sensor hardware.
         <a href="capabilities.html#coverage">Coverage explained</a>.
       </p>
+      <section aria-labelledby="app-startup-heading">
+        <h2 id="app-startup-heading">App startup</h2>
+        <p id="app-startup-status" role="status" aria-live="polite">
+          Loading app scripts. Controls remain disabled until their handlers are
+          ready. If this message remains, reload the page or inspect browser
+          network errors.
+        </p>
+        <noscript
+          >JavaScript is required to load the Rust/WASM app. No tests have
+          run.</noscript
+        >
+        <button type="button" class="button" id="reload-app" disabled>
+          Reload app
+        </button>
+        <button
+          type="button"
+          class="button"
+          id="download-startup-report"
+          disabled
+        >
+          Download startup receipt
+        </button>
+        <details>
+          <summary>Startup module evidence</summary>
+          <pre id="app-startup-report"></pre>
+        </details>
+      </section>
       <section aria-labelledby="app-install-heading">
         <h2 id="app-install-heading">Install the WASM test app</h2>
         <p>
@@ -90,7 +112,12 @@
           workloads or mark WebGPU qualification as passed.
         </p>
         <div class="actions">
-          <button type="button" class="button" id="run-adapter-diagnostic">
+          <button
+            type="button"
+            class="button"
+            id="run-adapter-diagnostic"
+            disabled
+          >
             Run adapter diagnostic
           </button>
           <button
@@ -108,7 +135,7 @@
         <pre id="adapter-diagnostic-report"></pre>
       </section>
       <label for="feature-level">WebGPU feature level requested</label>
-      <select id="feature-level">
+      <select id="feature-level" disabled>
         <option value="auto">
           Automatic: Core, then Compatibility if unavailable
         </option>
@@ -121,7 +148,7 @@
         physical mobile GPU or that an older browser honored the option.
       </p>
       <div class="actions">
-        <button type="button" class="button primary" id="run-tests">
+        <button type="button" class="button primary" id="run-tests" disabled>
           Run tests on this device</button
         ><button type="button" class="button" id="download-report" disabled>
           Download local JSON report
@@ -142,7 +169,7 @@
         this device.
       </p>
       <p id="test-progress" role="status" aria-live="polite">
-        Ready. No tests have run.
+        Interface is loading. No tests have run.
       </p>
       <p class="small">
         No telemetry or automatic upload. Running requests a browser GPU adapter
@@ -272,7 +299,7 @@
           >
             Stop notifications
           </button>
-          <button type="button" class="button" id="refresh-radio">
+          <button type="button" class="button" id="refresh-radio" disabled>
             Refresh radio capabilities
           </button>
         </div>
@@ -308,7 +335,7 @@
           disabled. Ingest one frame, bounded to 640 × 480 RGBA, into Rust/WASM
           when you choose; no frames are uploaded or saved automatically.
         </p>
-        <button type="button" class="button" id="camera-enumerate">
+        <button type="button" class="button" id="camera-enumerate" disabled>
           List exposed cameras
         </button>
         <label for="camera-device">Camera exposed by this browser</label>
@@ -322,7 +349,7 @@
           <option value="environment">Rear/environment</option>
         </select>
         <div class="actions">
-          <button type="button" class="button" id="camera-start">
+          <button type="button" class="button" id="camera-start" disabled>
             Start selected camera
           </button>
           <button type="button" class="button" id="camera-stop" disabled>
@@ -375,10 +402,20 @@
           <button type="button" class="button" id="save-local-report" disabled>
             Save current report locally
           </button>
-          <button type="button" class="button" id="refresh-local-reports">
+          <button
+            type="button"
+            class="button"
+            id="refresh-local-reports"
+            disabled
+          >
             Refresh saved reports
           </button>
-          <button type="button" class="button" id="request-persistence">
+          <button
+            type="button"
+            class="button"
+            id="request-persistence"
+            disabled
+          >
             Request persistent storage
           </button>
         </div>

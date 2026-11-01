@@ -29,12 +29,7 @@ async function boundedWait(promise, ms) {
 }
 
 runButton.addEventListener("click", async () => {
-  if (
-    active ||
-    suiteButton.disabled ||
-    document.body.dataset.etalonState === "running"
-  )
-    return;
+  if (active || document.body.dataset.etalonState === "running") return;
   active = true;
   runButton.disabled = true;
   suiteButton.disabled = true;
@@ -121,7 +116,8 @@ runButton.addEventListener("click", async () => {
   document.body.dataset.etalonDiagnostic = "complete";
   active = false;
   runButton.disabled = failedToComplete;
-  suiteButton.disabled = failedToComplete;
+  suiteButton.disabled =
+    failedToComplete || document.body.dataset.etalonReady !== "true";
 });
 
 downloadButton.addEventListener("click", () => {
@@ -134,3 +130,6 @@ downloadButton.addEventListener("click", () => {
 window.addEventListener("pagehide", () => {
   if (reportUrl) URL.revokeObjectURL(reportUrl);
 });
+
+runButton.disabled =
+  document.body.dataset.etalonComponentDiagnostic === "failed";

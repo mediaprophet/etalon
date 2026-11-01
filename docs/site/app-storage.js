@@ -23,6 +23,7 @@ function selectedReceipt() {
 }
 
 function updateButtons() {
+  if (document.body.dataset.etalonComponentStorage === "failed") return;
   saveButton.disabled = busy || !supported || !selectedReceipt();
   refreshButton.disabled = busy || !wasm;
   persistenceButton.disabled = busy || !wasm || !persistenceAvailable;
@@ -151,6 +152,7 @@ for (const id of ["qualification-report", "adapter-diagnostic-report"]) {
 }
 
 async function initialize() {
+  if (document.body.dataset.etalonComponentStorage === "failed") return;
   updateButtons();
   try {
     const module = await loadRuntime();

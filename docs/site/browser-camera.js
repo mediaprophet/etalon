@@ -27,6 +27,7 @@ function parse(encoded) {
 }
 
 function controls() {
+  if (document.body.dataset.etalonComponentCamera === "failed") return;
   startButton.disabled = state !== "idle";
   listButton.disabled = state !== "idle";
   stopButton.disabled = state === "idle" || state === "listing";

@@ -18,7 +18,7 @@ MAX_FILES = 50_000
 MAX_BROWSER_BYTES = 32 * 1024 * 1024
 ASSETS = (
     "index.html", "getting-started.html", "licensing.html", "capabilities.html",
-    "testing.html", "browser-tests.js", "adapter-diagnostic.js", "styles.css",
+    "testing.html", "app-bootstrap.js", "browser-tests.js", "adapter-diagnostic.js", "styles.css",
     "app-install.js", "app-environment.js", "app-storage.js", "wasm-runtime.js", "service-worker.js",
     "browser-radio.js", "browser-camera.js",
     "manifest.webmanifest", "app-icon.svg",
