@@ -11,20 +11,43 @@
     <header>
       <nav aria-label="Main navigation">
         <a class="brand" href="index.html">etalon</a
-        ><a href="getting-started.html" aria-current="page">Get started</a
-        ><a href="doc/etalon/index.html">API reference</a
-        ><a href="licensing.html">Licensing</a
-        ><a href="https://github.com/mediaprophet/etalon">GitHub</a>
+        ><a href="capabilities.html">Capabilities</a
+        ><a href="testing.html">Try the tests</a
+        ><a href="getting-started.html">Use the library</a
+        ><a href="doc/etalon/index.html">API</a
+        ><a href="licensing.html">Licensing</a>
       </nav>
     </header>
     <main id="main" class="content">
       <p class="eyebrow">Library guide</p>
-      <h1>Start from your data.</h1>
+      <h1>Choose the library you need.</h1>
       <p class="lead">
-        The sensing libraries can process caller-owned samples without opening a
-        device or starting a service.
+        Start with graphics and compute, or a focused module. The sensing
+        libraries can process caller-owned samples without opening a device or
+        starting a service.
       </p>
-      <h2>1. Add the portable facade</h2>
+      <h2>Graphics and compute</h2>
+      <p>
+        Use <code>etalon</code> for the native/browser graphics API, or choose a
+        focused extension. Packages are consumed through Git; pin a tested full
+        commit for release.
+      </p>
+      <pre><code>[dependencies]
+etalon = { git = "https://github.com/mediaprophet/etalon.git", branch = "dev" }
+pollster = "1.0"</code></pre>
+      <p>
+        Request an adapter and device through the same Rust API on supported
+        backends. For runnable graphics, compute and validation checks,
+        <a href="testing.html">test this browser</a>. The
+        <a href="capabilities.html">capability guide</a> covers Forge, semantic
+        data, tensors, rendering and execution coordination.
+      </p>
+      <p>
+        Etalon's fork packages and upstream crates.io wgpu/Naga packages are
+        distinct; their types are not automatically interchangeable. Select
+        matching Etalon packages in a consuming project.
+      </p>
+      <h2 id="sensing">Sensing: add the portable facade</h2>
       <p>
         Use Rust 1.96.1 for the repository's current toolchain. For initial
         development:

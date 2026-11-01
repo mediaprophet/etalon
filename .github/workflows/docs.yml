@@ -32,7 +32,7 @@ jobs:
           persist-credentials: false
 
       - name: Install documentation toolchain
-        run: rustup toolchain install ${{ env.REPO_MSRV }} --no-self-update --profile=minimal
+        run: rustup toolchain install ${{ env.REPO_MSRV }} --no-self-update --profile=minimal --target wasm32-unknown-unknown
 
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
@@ -42,12 +42,40 @@ jobs:
           save-if: ${{ github.ref == 'refs/heads/dev' }}
 
       - name: Validate site assembler
-        run: python3 -m unittest discover -s docs/site -p test_build.py
+        run: python3 -m unittest discover -s docs/site -p "test_*.py"
+
+      - name: Read exact wasm-bindgen version from Cargo.lock
+        id: bindgen-version
+        shell: bash
+        run: |
+          python3 - <<'PYVERSION' >> "$GITHUB_OUTPUT"
+          import pathlib, re, tomllib
+          lock = tomllib.loads(pathlib.Path("Cargo.lock").read_text())
+          versions = {p["version"] for p in lock["package"] if p["name"] == "wasm-bindgen"}
+          if len(versions) != 1 or not re.fullmatch(r"[0-9]+\.[0-9]+\.[0-9]+", next(iter(versions))):
+              raise SystemExit("Cargo.lock must pin exactly one wasm-bindgen release")
+          print("version=" + versions.pop())
+          PYVERSION
+
+      - name: Install matching wasm-bindgen CLI
+        run: cargo +${{ env.REPO_MSRV }} install wasm-bindgen-cli --locked --version "${{ steps.bindgen-version.outputs.version }}"
+
+      - name: Build first-party browser library tests
+        shell: bash
+        env:
+          ETALON_DEMO_REVISION: ${{ github.sha }}
+        run: |
+          cargo +${{ env.REPO_MSRV }} build --locked -p etalon-browser-demo --target wasm32-unknown-unknown --release
+          wasm-bindgen --target web --no-typescript \
+            --out-dir "${{ runner.temp }}/etalon-browser-assets" --out-name etalon_browser_demo \
+            target/wasm32-unknown-unknown/release/etalon_browser_demo.wasm
 
       - name: Build public library documentation
         run: |
           cargo +${{ env.REPO_MSRV }} doc --locked --no-deps --lib \
-            -p etalon -p etalon-sense -p etalon-sense-core \
+            -p etalon -p etalon-wgsl-forge -p etalon-nquin -p etalon-tensor \
+            -p etalon-render -p etalon-wasm -p etalon-agent \
+            -p etalon-sense -p etalon-sense-core \
             -p etalon-sense-runtime -p etalon-signal -p etalon-sense-cpu \
             -p etalon-sense-sdr -p etalon-sense-host -p etalon-sense-nfc \
             -p etalon-sense-camera -p etalon-sense-gpu \
@@ -56,7 +84,11 @@ jobs:
       - name: Assemble and validate site
         run: |
           python3 docs/site/build.py --rustdoc target/doc \
+            --browser-assets "${{ runner.temp }}/etalon-browser-assets" \
             --output "${{ runner.temp }}/etalon-pages" --revision "$GITHUB_SHA"
+
+      - name: Execute assembled browser tests in headless Chrome
+        run: python3 docs/site/smoke_browser.py --site "${{ runner.temp }}/etalon-pages"
 
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4

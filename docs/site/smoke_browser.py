@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+"""Execute the assembled first-party WASM page in local headless Chrome."""
+
+import argparse
+from functools import partial
+from html.parser import HTMLParser
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+import threading
+
+MAX_DOM_BYTES = 2 * 1024 * 1024
+MAX_PROFILE_BYTES = 64 * 1024 * 1024
+
+
+class TerminalState(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.state = {}
+
+    def handle_starttag(self, tag, attrs):
+        if tag == "body":
+            self.state = dict(attrs)
+
+
+def check_result(document):
+    parser = TerminalState()
+    parser.feed(document)
+    state = parser.state
+    if state.get("data-etalon-state") != "complete":
+        raise ValueError("browser tests never reached the terminal completion marker")
+    counts = {}
+    for name in ("passed", "failed", "unsupported"):
+        value = state.get("data-etalon-" + name, "")
+        if not value.isascii() or not value.isdecimal():
+            raise ValueError("browser completion counters are missing or invalid")
+        counts[name] = int(value)
+    if counts["passed"] < 2 or counts["failed"] != 0:
+        raise ValueError("WASM tests failed or did not execute: " + json.dumps(counts) + "; cases=" + state.get("data-etalon-errors", "")[:4000])
+    return counts
+
+
+class LocalHandler(SimpleHTTPRequestHandler):
+    def log_message(self, format, *args):
+        pass
+
+
+def run(site):
+    site = site.resolve(strict=True)
+    if not (site / "testing.html").is_file():
+        raise ValueError("assembled browser test page is missing")
+    chrome = os.environ.get("CHROME_BIN") or next(
+        (path for name in ("google-chrome", "google-chrome-stable", "chromium", "chromium-browser")
+         if (path := shutil.which(name))), None
+    )
+    if not chrome:
+        raise ValueError("headless Chrome is required for real WASM browser qualification")
+    handler = partial(LocalHandler, directory=str(site))
+    with ThreadingHTTPServer(("127.0.0.1", 0), handler) as server:
+        worker = threading.Thread(target=server.serve_forever, daemon=True)
+        worker.start()
+        try:
+            for width, height in ((1280, 900), (412, 915)):
+                with tempfile.TemporaryDirectory(prefix="etalon-browser-smoke-") as scratch:
+                    profile = Path(scratch) / "profile"
+                    command = [
+                        chrome, "--headless", "--no-sandbox", "--no-first-run",
+                        "--no-default-browser-check", "--disable-background-networking",
+                        "--disable-component-update", "--disable-extensions", "--disable-sync",
+                        "--disable-dev-shm-usage", "--disk-cache-size=1048576",
+                        "--media-cache-size=1048576", "--virtual-time-budget=30000",
+                        "--timeout=40000", "--dump-dom", "--force-device-scale-factor=1",
+                        f"--window-size={width},{height}", f"--user-data-dir={profile}",
+                        f"http://127.0.0.1:{server.server_port}/testing.html?autorun=1",
+                    ]
+                    result = subprocess.run(command, capture_output=True, timeout=50)
+                    if result.returncode:
+                        raise ValueError("headless Chrome failed: " + result.stderr[-2000:].decode("utf-8", "replace"))
+                    if len(result.stdout) > MAX_DOM_BYTES:
+                        raise ValueError("browser DOM budget exceeded")
+                    profile_size = sum(p.stat().st_size for p in profile.rglob("*") if p.is_file())
+                    if profile_size > MAX_PROFILE_BYTES:
+                        raise ValueError("browser profile budget exceeded")
+                    counts = check_result(result.stdout.decode("utf-8"))
+                    print(json.dumps({"requested_window": [width, height], **counts}))
+        finally:
+            server.shutdown()
+            worker.join(timeout=5)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--site", required=True, type=Path)
+    arguments = parser.parse_args()
+    try:
+        run(arguments.site)
+    except (OSError, ValueError, subprocess.SubprocessError) as error:
+        parser.exit(1, f"Assembled browser qualification failed: {error}\n")
+
+
+if __name__ == "__main__":
+    main()
