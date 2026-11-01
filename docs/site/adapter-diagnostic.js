@@ -1,3 +1,6 @@
+import { loadRuntime } from "./wasm-runtime.js";
+import { appEnvironment } from "./app-environment.js";
+
 const runButton = document.querySelector("#run-adapter-diagnostic");
 const downloadButton = document.querySelector("#download-adapter-diagnostic");
 const output = document.querySelector("#adapter-diagnostic-report");
@@ -44,19 +47,7 @@ runButton.addEventListener("click", async () => {
   let failedToComplete = false;
   const started = new Date().toISOString();
   try {
-    const wasm = await boundedWait(
-      import("./browser/etalon_browser_demo.js?rev=" + revision),
-      15000,
-    );
-    await boundedWait(
-      wasm.default({
-        module_or_path: new URL(
-          "./browser/etalon_browser_demo_bg.wasm?rev=" + revision,
-          import.meta.url,
-        ),
-      }),
-      15000,
-    );
+    const wasm = await boundedWait(loadRuntime(), 15000);
     report = JSON.parse(
       await boundedWait(wasm.adapter_diagnostic_errors(), 15000),
     );
@@ -65,9 +56,20 @@ runButton.addEventListener("click", async () => {
     report.started_at = started;
     report.finished_at = new Date().toISOString();
     report.environment = {
+      app: appEnvironment(),
       secure_context: window.isSecureContext,
       browser: navigator.userAgent,
     };
+    try {
+      report.environment.storage = JSON.parse(
+        await boundedWait(wasm.storage_capabilities(), 5000),
+      );
+    } catch (error) {
+      report.environment.storage = {
+        status: "unavailable",
+        message: String(error).slice(0, 512),
+      };
+    }
     try {
       report.environment.browser_details = JSON.parse(
         await boundedWait(wasm.browser_environment_json(), 5000),
@@ -92,6 +94,11 @@ runButton.addEventListener("click", async () => {
       finished_at: new Date().toISOString(),
       gpu_execution_tested: false,
       automatic_upload: false,
+      environment: {
+        app: appEnvironment(),
+        secure_context: window.isSecureContext,
+        browser: navigator.userAgent,
+      },
       errors: [
         {
           test_id: "diagnostic-runner",

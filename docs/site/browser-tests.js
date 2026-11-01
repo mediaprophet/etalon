@@ -1,3 +1,6 @@
+import { loadRuntime } from "./wasm-runtime.js";
+import { appEnvironment } from "./app-environment.js";
+
 const start = document.querySelector("#run-tests");
 const download = document.querySelector("#download-report");
 const progress = document.querySelector("#test-progress");
@@ -248,6 +251,7 @@ async function run() {
     source_revision: revision,
     started_at: new Date().toISOString(),
     context: {
+      app: appEnvironment(),
       secure_context: window.isSecureContext,
       webgpu_exposed: Boolean(navigator.gpu),
       browser: navigator.userAgent,
@@ -265,20 +269,18 @@ async function run() {
   let catalog = [];
   try {
     progress.textContent = "Loading the Etalon Rust/WASM build…";
-    module = await deadline(
-      import("./browser/etalon_browser_demo.js?rev=" + revision),
-      30000,
-    );
-    await deadline(
-      module.default({
-        module_or_path: new URL(
-          "./browser/etalon_browser_demo_bg.wasm?rev=" + revision,
-          import.meta.url,
-        ),
-      }),
-      30000,
-    );
+    module = await deadline(loadRuntime(), 30000);
     report.debug_logging_enabled = module.configure_debug_logging();
+    try {
+      report.context.storage = parse(
+        await deadline(module.storage_capabilities(), 5000),
+      );
+    } catch (error) {
+      report.context.storage = {
+        status: "unavailable",
+        message: String(error).slice(0, 512),
+      };
+    }
     try {
       report.context.browser_details = parse(
         await deadline(module.browser_environment_json(), 5000),

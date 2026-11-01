@@ -1,5 +1,7 @@
 """Offline checks for site assembly, links and non-destructive failure."""
 import importlib.util
+import hashlib
+import json
 from pathlib import Path
 import tempfile
 import unittest
@@ -41,6 +43,24 @@ class SiteAssemblyTests(unittest.TestCase):
             b"\0asm\x01\0\0\0",
         )
         BUILDER.validate_links(self.output)
+
+    def test_offline_manifest_is_revision_bound_and_hashes_actual_assets(self):
+        BUILDER.build(self.rustdoc, self.output, REVISION, self.browser)
+        manifest = json.loads((self.output / "offline-assets.json").read_text())
+        self.assertEqual(manifest["revision"], REVISION)
+        self.assertLessEqual(len(manifest["assets"]), 160)
+        for asset in manifest["assets"]:
+            actual = (self.output / asset["path"]).read_bytes()
+            self.assertEqual(asset["bytes"], len(actual))
+            self.assertEqual(asset["sha256"], hashlib.sha256(actual).hexdigest())
+        names = {asset["path"] for asset in manifest["assets"]}
+        self.assertIn("browser/etalon_browser_demo_bg.wasm", names)
+        self.assertIn("manifest.webmanifest", names)
+        self.assertNotIn("service-worker.js", names)
+        app = json.loads((self.output / "manifest.webmanifest").read_text())
+        self.assertEqual(app["display"], "standalone")
+        for icon in app["icons"]:
+            self.assertTrue((self.output / icon["src"]).is_file())
 
     def test_existing_artifact_is_never_replaced(self):
         self.output.mkdir()
