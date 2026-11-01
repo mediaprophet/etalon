@@ -93,6 +93,15 @@ jobs:
       - name: Execute assembled Rust/WASM tests with actual WebGPU
         run: python3 docs/site/smoke_browser.py --site "${{ runner.temp }}/etalon-pages"
 
+      - name: Retain failed browser build for local reproduction
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: browser-reproduction-${{ github.sha }}
+          path: ${{ runner.temp }}/etalon-browser-assets
+          retention-days: 3
+          if-no-files-found: ignore
+
       - name: Upload GitHub Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:

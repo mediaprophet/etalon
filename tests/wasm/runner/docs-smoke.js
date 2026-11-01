@@ -54,11 +54,27 @@ try {
   if (mode === "software-webgpu") {
     await page.addInitScript(() => {
       window.__etalonDeviceDestruction = [];
+      window.__etalonDeviceLoss = [];
+      const requestDevice = GPUAdapter.prototype.requestDevice;
+      GPUAdapter.prototype.requestDevice = async function (...args) {
+        const device = await requestDevice.apply(this, args);
+        device.lost.then((info) => {
+          if (window.__etalonDeviceLoss.length < 8)
+            window.__etalonDeviceLoss.push({
+              reason: info.reason,
+              message: info.message,
+              stage: document.querySelector("#test-progress")?.textContent,
+            });
+        });
+        return device;
+      };
       const original = GPUDevice.prototype.destroy;
       GPUDevice.prototype.destroy = function (...args) {
         if (window.__etalonDeviceDestruction.length < 4)
           window.__etalonDeviceDestruction.push(
-            String(new Error("device.destroy").stack).slice(0, 3000),
+            String(document.querySelector("#test-progress")?.textContent) +
+              "\n" +
+              String(new Error("device.destroy").stack).slice(0, 3000),
           );
         return original.apply(this, args);
       };
@@ -113,9 +129,10 @@ try {
     completion.etalonUnsupported === "0" &&
     completion.etalonNotRun === "0";
   if (!allPassed && mode === "software-webgpu") {
-    const destruction = await page.evaluate(
-      () => window.__etalonDeviceDestruction,
-    );
+    const destruction = await page.evaluate(() => ({
+      calls: window.__etalonDeviceDestruction,
+      losses: window.__etalonDeviceLoss,
+    }));
     process.stderr.write(
       `Device destruction calls: ${JSON.stringify(destruction)}\n`,
     );
