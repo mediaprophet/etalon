@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add dependency-free `etalon-resources` classified byte reservations with caller-supplied budget snapshots, checked concurrent admission and lifetime-bound release. The accounting library does not select devices or set application policy.
 - Add dependency-free migration evidence validation and numerical comparison in `etalon-qualification`. Validation checks declarations against frozen expectations; it does not authenticate hardware execution or approve runtime cutover.
 - Add `etalon-inference-contract` with explicit developer, fixture and host-verified governed session metadata, candidate binding and fail-closed control transitions. Model execution, real Webizen integration, publication and numerical restoration remain embedding responsibilities.
 

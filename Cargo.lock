@@ -1329,6 +1329,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "etalon-resources"
+version = "0.0.2"
+
+[[package]]
 name = "etalon-sense"
 version = "0.0.2"
 dependencies = [

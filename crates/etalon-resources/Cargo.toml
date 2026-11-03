@@ -1,0 +1,13 @@
+[package]
+name = "etalon-resources"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Portable bounded resource accounting independent of GPU providers"
+
+[lints]
+workspace = true

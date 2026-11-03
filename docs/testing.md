@@ -632,6 +632,30 @@ Final route receipts are `swarm-routing-auto.log`, `swarm-routing-cuda.log`,
 `swarm-routing-intel-required.log`.
 These local artifacts are not committed or CTS evidence.
 
+### Portable reservation accounting migration
+
+`etalon-resources` supplies dependency-free, `no_std` classified byte accounting.
+The caller supplies global/partition capacity and recorded-usage snapshots;
+application policy and hardware completion remain outside this library. A guard
+must live until the corresponding resource may safely release its reservation.
+Separate total/class observations are not an atomic multi-counter snapshot.
+
+On 3 November 2026, seven unit tests and nine independently authored integration
+tests passed in both debug and optimised builds. The independent cases cover
+concurrent fixed-budget admission, exact class totals, overflow, invalid classes,
+shrinking budgets, zero-byte requests, unwind cleanup and measured zero heap
+allocations across successful/refused admissions and release. The package passed
+Clippy with warnings denied and `wasm32-unknown-unknown` compilation. These checks
+qualify scalar accounting; they do not establish GPU execution or Qualia caller
+adoption.
+
+```text
+cargo test --locked --offline -p etalon-resources
+cargo test --locked --offline -p etalon-resources --release
+cargo clippy --locked --offline -p etalon-resources --all-targets -- -D warnings
+cargo check --locked --offline -p etalon-resources --target wasm32-unknown-unknown
+```
+
 ### Prepared allocation checks
 
 The prepared native compute API has separate reuse/validation regressions and an
