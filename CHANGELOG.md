@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add fixed-capacity residency accounting with deterministic LRU eviction. Failed resize preserves existing state, aggregate overflow triggers admission checks, and maximum-valued ticks remain eligible for eviction. Existing pin and explicit-release behavior is preserved; physical resource retirement remains the caller's responsibility.
 - Add caller-buffered P64 planning and writing for prepared borrowed tensor payloads, with explicit output/scratch budgets and the existing GGUF, raw-tensor and vision layout profiles. Structural refusal preserves caller buffers; format interpretation and streaming transforms remain separate.
 - Add `etalon-model` with P64 v4 layouts and an allocation-free borrowed reader, explicit integrity modes, bounded views and contextual errors. Preserve raw unknown metadata and padding; environment policy, semantic interpretation, compilation and consumer adapters remain outside this initial reader.
 - Add dependency-free `etalon-resources` classified byte reservations with caller-supplied budget snapshots, checked concurrent admission and lifetime-bound release. The accounting library does not select devices or set application policy.

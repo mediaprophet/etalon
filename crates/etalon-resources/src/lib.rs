@@ -3,6 +3,7 @@
 #![forbid(unsafe_code)]
 
 pub mod reservation;
+pub mod residency;
 
 pub use reservation::{AdmissionLimits, Reservation, ReservationError, ReservationPool};
 

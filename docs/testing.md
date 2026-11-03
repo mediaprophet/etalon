@@ -656,6 +656,23 @@ cargo clippy --locked --offline -p etalon-resources --all-targets -- -D warnings
 cargo check --locked --offline -p etalon-resources --target wasm32-unknown-unknown
 ```
 
+### Fixed-capacity residency accounting
+
+`etalon-resources::residency` holds caller-owned inline slot metadata and performs
+no device operations. Six authored and seven independent tests cover all-state
+preservation after refused resize, checked aggregate overflow, maximum and tied
+LRU ticks, exact errors, zero slots/bytes and measured zero allocation with a
+positive control. Same-size readmission only promotes pinning; resized readmission
+uses the supplied pin value. Explicit release/cancellation can remove pinned
+slots; pinning protects against automatic eviction.
+On 3 November 2026, all 29 resources tests (16 reservation and 13 residency)
+passed in debug and release; Clippy with warnings denied and WASM compilation
+also passed.
+
+These tests qualify metadata accounting. They do not prove physical GPU resource
+retirement, synchronization or Qualia caller adoption. Run the same resources
+package test, release, Clippy and WASM checks listed above.
+
 ### Borrowed P64 reader migration
 
 The initial `etalon-model` library preserves P64 v4 layout constants and records,
