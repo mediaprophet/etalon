@@ -11,6 +11,15 @@ description = "Reusable inference storage and budget mechanics"
 
 [features]
 default = []
+gguf-cpu = ["dep:etalon-model", "etalon-model/ggml"]
 
 [dependencies]
 etalon-inference-kernel = { version = "0.0.2", path = "../etalon-inference-kernel" }
+etalon-model = { version = "0.0.2", path = "../etalon-model", optional = true }
+
+[dev-dependencies]
+sha2 = "0.10"
+
+[[example]]
+name = "dense_gguf_developer"
+required-features = ["gguf-cpu"]

@@ -856,3 +856,21 @@ acceptance. All 36 package tests pass in debug/release, including six independen
 transaction groups, plus five negative ownership probes with a positive control.
 Strict Clippy and WASM compilation pass. Host state, real Sentinel/controller
 integration and device-specific restoration remain separate acceptance gates.
+
+### Standalone CPU developer inference
+
+See [standalone developer inference](standalone-inference-developer.md) for the
+explicit mode, restricted GGUF profile and byte-budget boundary. The optional
+feature passes 44 package tests in debug/release in aggregate, including six
+independent groups, strict all-target Clippy and WASM library compilation.
+Six CLI refusal cases verify that invalid mode/input/budgets do not execute.
+The real-model run matches 35 complete numerical-state snapshots and 16 token
+and logit-bit outputs against the retained original implementation trace.
+This establishes native scalar developer execution; normal governance, browser
+SIMD, GPU/NPU and performance uplift remain separate qualification scopes.
+
+The 512-line `cpu_gguf_independent.rs` has an ownership-reviewed test-fixture
+exception: its original numeric expectations, bounded synthetic GGUF writer and
+six related challenge groups remain together for independent audit. It contains
+no production lifecycle; new runtime behavior belongs in the focused library
+modules rather than this fixture.

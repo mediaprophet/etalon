@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add optional borrowed GGUF CPU bindings and an explicitly selected standalone developer runner with bounded pretokenized input, caller-owned workspace, numerical transactions and reproducible state digests. Preserve native scalar arithmetic; normal Webizen token acceptance remains a separate host integration requirement.
+
 - Add a caller-buffered tentative dense CPU step with checked full-workspace undo, exclusive pending ownership and bit-exact restoration on abort/error/drop/unwind. Actual Sentinel approval and host sampler/grammar/publication state remain required integration responsibilities; numerical commit is not permission.
 
 - Add optional portable GGML row codecs and Q4 conversion to `etalon-model`, preserving the original dtype/layout/arithmetic and low-level input preconditions. The default model crate remains dependency-free/no_std; the codec feature uses std and optional half/bytemuck dependencies.
