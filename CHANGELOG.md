@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add caller-buffered P64 planning and writing for prepared borrowed tensor payloads, with explicit output/scratch budgets and the existing GGUF, raw-tensor and vision layout profiles. Structural refusal preserves caller buffers; format interpretation and streaming transforms remain separate.
 - Add `etalon-model` with P64 v4 layouts and an allocation-free borrowed reader, explicit integrity modes, bounded views and contextual errors. Preserve raw unknown metadata and padding; environment policy, semantic interpretation, compilation and consumer adapters remain outside this initial reader.
 - Add dependency-free `etalon-resources` classified byte reservations with caller-supplied budget snapshots, checked concurrent admission and lifetime-bound release. The accounting library does not select devices or set application policy.
 - Add dependency-free migration evidence validation and numerical comparison in `etalon-qualification`. Validation checks declarations against frozen expectations; it does not authenticate hardware execution or approve runtime cutover.

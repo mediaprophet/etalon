@@ -689,6 +689,32 @@ meaning are not certified by successful parsing. The schedule accessor adds
 explicit bounds, alignment and metadata-containment checks. Environment-based
 integrity selection and semantic/GGUF adapters remain Qualia responsibilities.
 
+### Prepared-payload P64 writer migration
+
+`etalon-model::p64::build` plans into caller-owned entry scratch and writes into
+caller-owned output, with explicit byte budgets. It preserves three distinct
+legacy layouts: GGUF layer packing and final 64-byte padding, raw-tensor page
+alignment without final padding, and vision final page padding. The API accepts
+already prepared borrowed payloads; it does not sort tensors, interpret semantic
+metadata, convert weights or provide streaming transformation callbacks.
+
+Five writer unit tests and seven independent tests cover full-file equality with
+nine actual legacy outputs, checked arithmetic and 32-bit offset limits, capacity
+and byte budgets, unchanged caller buffers on refusal, opaque metadata, and
+zero-allocation planning/writing with an allocator positive control. The golden
+profiles are F32 verbatim at page sizes 256, 512 and 4096 bytes; other numerical
+conversion and FFN rewrite profiles are not qualified by these fixtures.
+On 3 November 2026, all 27 model tests (15 existing reader and 12 new writer
+tests) passed in debug and release, with Clippy warnings denied and WASM
+compilation also passing.
+The reproducible helper in `crates/etalon-model/tests/support/` checks immutable
+Qualia source provenance and all nine SHA-256 hashes before retaining output.
+It uses a separately supplied Qualia checkout; Etalon has no Qualia dependency.
+
+Run the same package test, release, Clippy and WASM commands listed above. Actual
+Qualia compiler/transcoder delegation and bounded streaming transforms have
+separate adoption gates.
+
 ### Prepared allocation checks
 
 The prepared native compute API has separate reuse/validation regressions and an

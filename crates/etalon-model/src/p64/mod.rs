@@ -5,6 +5,7 @@
 //! Raw bytes remain authoritative, including unknown fields and padding.
 //! Environment policy, GGUF synthesis and semantic manifold checks belong to callers.
 
+pub mod build;
 pub mod integrity;
 pub mod layout;
 mod reader;
