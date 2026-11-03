@@ -7,6 +7,8 @@
 #![no_std]
 #![forbid(unsafe_code)]
 
+pub mod artifact;
+
 mod control;
 mod mode;
 mod session;

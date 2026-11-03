@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a separate allocation-free artifact event contract with explicit developer and host-verified governed modes, byte/event budgets and one-use accepted records. Preserve token APIs; actual authority, immutable byte backing, lineage and delivery remain host responsibilities.
+
 - Add backend ownership checks for native device/queue pairs and a checked shared pair for compute/render integration. Unknown and WebGPU ownership remain explicitly unverifiable; existing lane construction is preserved.
 
 - Add optional borrowed GGUF CPU bindings and an explicitly selected standalone developer runner with bounded pretokenized input, caller-owned workspace, numerical transactions and reproducible state digests. Preserve native scalar arithmetic; normal Webizen token acceptance remains a separate host integration requirement.
