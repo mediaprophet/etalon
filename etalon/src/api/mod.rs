@@ -34,6 +34,7 @@ mod common_pipeline;
 mod compute_pass;
 mod compute_pipeline;
 mod device;
+mod device_queue;
 mod external_texture;
 mod instance;
 mod pipeline_cache;

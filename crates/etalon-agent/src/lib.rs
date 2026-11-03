@@ -9,6 +9,7 @@
 pub mod accelerator;
 pub mod capability;
 pub mod compute_lane;
+pub mod device_queue;
 #[cfg(all(feature = "cuda", not(target_family = "wasm")))]
 pub use etalon_cuda as cuda;
 #[cfg(not(target_family = "wasm"))]
@@ -26,6 +27,7 @@ pub use etalon_sense as sensing;
 
 pub use capability::{AgentError, CapabilityState, SiliconCapability};
 pub use compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
+pub use device_queue::{DeviceQueueError, SharedDeviceQueue};
 #[cfg(not(target_family = "wasm"))]
 pub use cuda_lane::{
     CudaComputeLane, CudaDriverApi, CudaPreparedPlan, CudaSubmission, PinBackend, PinnedRegion,
