@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `etalon-inference` budget and KV-page ownership mechanics, with the existing reference-count, copy-on-write metadata, prefix registry and radix behavior. Semantic prefix identity derivation, device copies, scheduling and governance remain host responsibilities.
+
 - Add dependency-free `etalon-inference-kernel` with the existing dense/Q4_K scalar operators, caller workspace contracts, paged attention reference and CUDA source templates. Preserve numerical behavior and existing API limitations; this additive library does not yet replace consumers or qualify device execution.
 
 - Add detailed P64 planning errors identifying the failing field, tensor and checked operation. Existing planning APIs preserve their error categories, validation order, output bytes and refusal behavior.

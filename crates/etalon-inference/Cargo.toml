@@ -1,0 +1,16 @@
+[package]
+name = "etalon-inference"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Reusable inference storage and budget mechanics"
+
+[features]
+default = []
+
+[dependencies]
+etalon-inference-kernel = { version = "0.0.2", path = "../etalon-inference-kernel" }

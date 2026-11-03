@@ -1275,6 +1275,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "etalon-inference"
+version = "0.0.2"
+dependencies = [
+ "etalon-inference-kernel",
+]
+
+[[package]]
 name = "etalon-inference-contract"
 version = "0.0.2"
 

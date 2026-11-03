@@ -825,3 +825,10 @@ See [numerical inference kernel qualification](inference-kernel.md) for the
 independent original/candidate checks, caller contracts and retained limitations.
 The additive library passed 25 tests in debug and release, strict Clippy and WASM
 compilation. Embedded CUDA source identity does not establish device execution.
+
+### Inference storage mechanics
+
+See [inference storage qualification](inference-storage.md) for the old/new
+operation-sequence checks and retained caller requirements. All 26 tests pass
+in debug/release, strict Clippy and WASM compilation pass. Reference-count
+metadata behavior is separate from physical KV copies or model-state rollback.
