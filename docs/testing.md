@@ -826,6 +826,13 @@ independent original/candidate checks, caller contracts and retained limitations
 The additive library passed 25 tests in debug and release, strict Clippy and WASM
 compilation. Embedded CUDA source identity does not establish device execution.
 
+The subsequent dense CPU execution packet passed all 36 package tests in both
+profiles, including six independent dense tests, plus six reference-generator
+tests. Full F32 synthetic-model traces match the original implementation; the
+separate original native codec baseline does not qualify a new codec adapter.
+See the same qualification document for regeneration commands and the remaining
+WASM SIMD, pretrained-model and consumer-adoption gates.
+
 ### Inference storage mechanics
 
 See [inference storage qualification](inference-storage.md) for the old/new

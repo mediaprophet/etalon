@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add dense CPU transformer execution to `etalon-inference-kernel`, with caller-owned KV/workspace, checked byte budgets and primitive tensor-kernel adapters. Preserve forward-operation and partial-failure order; tokenizer, model policy, governance and state rollback remain host responsibilities.
+
 - Add `etalon-inference` budget and KV-page ownership mechanics, with the existing reference-count, copy-on-write metadata, prefix registry and radix behavior. Semantic prefix identity derivation, device copies, scheduling and governance remain host responsibilities.
 
 - Add dependency-free `etalon-inference-kernel` with the existing dense/Q4_K scalar operators, caller workspace contracts, paged attention reference and CUDA source templates. Preserve numerical behavior and existing API limitations; this additive library does not yet replace consumers or qualify device execution.

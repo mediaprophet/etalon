@@ -58,3 +58,71 @@ workspace and output tails, refusal behavior, nonfinite inputs, CUDA source byte
 and positive-controlled zero allocation. Strict Clippy and WASM compilation pass.
 The initial strict Clippy attempt reported only inherited style findings; the
 scoped annotations described above were independently reviewed.
+
+## Dense CPU transformer execution
+
+`dense_cpu` executes embedding, RMS normalization, interleaved RoPE, grouped-query
+causal attention, KV updates, gated FFN, residuals and output projection. A
+`TensorKernels` adapter supplies row decoding and matrix-vector operations;
+the library owns the forward computation. `DensePlan` borrows tensor bindings,
+checks dimensions and computes workspace requirements. `ingest_token` executes
+prefill without output projection; `run_token` also produces logits and selects
+the lowest-index finite maximum.
+
+The caller supplies all thirteen execution buffers and the position. Admission
+charges their full supplied capacities against an explicit byte budget, then
+passes only used slices to kernels. The budget excludes model weights, bindings
+and adapter-owned storage. Allocation behavior and codec correctness of an
+arbitrary adapter require their own qualification.
+
+Missing-tensor checks, numerical operation order and partial-failure behavior
+follow the original dense CPU path. A failed step can leave KV and scratch
+modified. `reset_kv` clears only used KV storage; it does not restore a prior
+step, reset a sampler or authorize publication. Tokenization, architecture
+admission, environment policy and governance stay outside this module. Native
+MoE and recurrent execution are separate paths and have no dense fallback here.
+
+### Dense qualification
+
+On 3 November 2026, all 36 package tests passed in debug and release (72
+executions), including five new unit tests and six independent dense tests.
+Strict Clippy, formatting and WASM compilation passed. The independent tests
+compare 42 states containing 83 f32 values each against actual original Qualia
+forward code at `07018bb8dbb123f105a91609532b9b564e54a2af`, with bit-identical
+debug and optimized traces. The two-layer F32 fixture covers prefill, decode,
+reset, logits, every workspace, partial KV failures, invalid shapes, nonfinite
+values and output rows differing from configured vocabulary. Additional checks
+cover all thirteen buffer shortages, spare capacity, callback failures and
+positive-controlled zero allocation of the library plus the fixture adapter.
+
+A separate local baseline exercised the original thirteen native codec
+row-decode/GEMV routes, truncated rows and direct native Q8 processing, and
+confirmed dtype 158 remains unsupported in that CPU path. Those codec results
+are distinct from the full F32 engine traces: they do not qualify a new
+quantized-model adapter or actual WASM SIMD execution. Pretrained full-prompt
+execution, GPU execution, Qualia engine adoption and physical rollback remain
+separate gates. No throughput improvement is claimed.
+
+Run the package commands above and the retained helper checks:
+
+```sh
+python crates/etalon-inference-kernel/tests/support/regenerate_dense_cpu_golden.py verify
+python -B crates/etalon-inference-kernel/tests/support/test_regenerate_dense_cpu_golden.py
+```
+
+The six helper tests cover provenance/output validation, exclusive promotion
+and cleanup on failure or interruption. To regenerate the reference into a new
+file, use:
+
+```sh
+python crates/etalon-inference-kernel/tests/support/regenerate_dense_cpu_golden.py generate --qualia-root <Qualia-Git-checkout> --dependencies <Qualia>/target/debug/deps --output <new-file> --optimized
+```
+
+The helper reads SHA-checked Git objects at the frozen revision, independently
+of the checkout's current files. It requires cached Rust 1.96.1 libraries for
+serde, serde_json, bytemuck, half and memmap2; it performs no Cargo build,
+network access or model download. Only cold construction bypasses the original
+1000-token vocabulary floor for the tiny fixture. Actual forward/math/codecs
+remain original. Source extraction has a two-MiB budget; the 32-MiB compiled
+scratch check limits retention after compilation, not compiler peak memory.
+Temporary scratch is cleaned and an existing destination is never overwritten.
