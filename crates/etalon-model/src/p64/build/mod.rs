@@ -1,16 +1,32 @@
-//! Caller-buffered P64 planning and writing for already prepared borrowed payloads.
+//! Caller-buffered P64 planning, prepared-payload writing and sized streaming.
 //!
-//! No sorting, role inference, dtype conversion or semantic manifold construction is
-//! performed. Streaming transform callbacks and specialized FFN rewrite profiles are
-//! outside this interface. Structural refusals leave caller buffers unchanged.
+//! Borrowed writers copy prepared payloads; sized streams invoke caller conversion
+//! callbacks and support the legacy FFN layout with raw schedule bytes. Sorting,
+//! numerical transformations, semantic manifold construction and atomic filesystem
+//! publication remain caller responsibilities. Planning refusals preserve scratch;
+//! streaming failures may modify scratch and leave an incomplete external sink.
 
 mod descriptors;
+mod layout;
+mod metadata;
 mod plan;
+mod source;
+mod stream;
+mod stream_error;
 mod write;
 
 pub use descriptors::{BuildBudget, BuildError, BuildInput, BuildProfile, TensorDescriptor};
-pub use plan::{plan_into, BuildPlan};
+pub use layout::{LayoutInput, LayoutProfile, TensorLayout};
+pub use plan::{plan_into, plan_layout_into, BuildPlan, LayoutPlan};
+pub use source::{
+    ByteSink, PayloadSink, PayloadSource, PayloadWorkspace, PayloadWriteRefusal, StreamScratch,
+    WorkspaceRequirements,
+};
+pub use stream::stream_into;
+pub use stream_error::{StreamFailure, StreamFailureKind, StreamPhase, StreamReport};
 pub use write::write_into;
 
+#[cfg(test)]
+mod stream_tests;
 #[cfg(test)]
 mod tests;

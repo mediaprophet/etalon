@@ -26,9 +26,31 @@ const TABLE: [u32; 256] = table();
 
 /// CRC-32C (Castagnoli, reflected), with the standard initial and final XOR.
 pub fn crc32c(bytes: &[u8]) -> u32 {
-    let mut crc = u32::MAX;
-    for &byte in bytes {
-        crc = TABLE[((crc ^ u32::from(byte)) & 255) as usize] ^ (crc >> 8);
+    let mut state = Crc32c::new();
+    state.update(bytes);
+    state.finish()
+}
+
+/// Incremental unkeyed CRC-32C; checksum agreement is not authentication.
+#[derive(Clone, Copy, Debug)]
+pub struct Crc32c(u32);
+
+impl Default for Crc32c {
+    fn default() -> Self {
+        Self::new()
     }
-    !crc
+}
+
+impl Crc32c {
+    pub const fn new() -> Self {
+        Self(u32::MAX)
+    }
+    pub fn update(&mut self, bytes: &[u8]) {
+        for &byte in bytes {
+            self.0 = TABLE[((self.0 ^ u32::from(byte)) & 255) as usize] ^ (self.0 >> 8);
+        }
+    }
+    pub const fn finish(self) -> u32 {
+        !self.0
+    }
 }

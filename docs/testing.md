@@ -732,6 +732,33 @@ Run the same package test, release, Clippy and WASM commands listed above. Actua
 Qualia compiler/transcoder delegation and bounded streaming transforms have
 separate adoption gates.
 
+### Sized P64 planning and payload streaming
+
+The sized planner shares the prepared-payload writer's layout implementation and
+can plan large tensors without resident payload bytes. Its separate `FfnLegacy`
+profile preserves the historical page-aligned FFN payloads and raw schedule
+bytes. `stream_into` freezes requirements before emission, charges used entry,
+requirement and checksum prefixes plus full supplied byte/f32 workspace capacities, checks exact lengths and
+CRC replay across two payload passes, and latches ignored write refusals.
+Arbitrary sink failures are explicitly incomplete; confirmed byte counts include
+only successful calls, since a failing sink may have partially written its chunk.
+
+On 3 November 2026, all 41 model tests passed in debug and release, including
+11 independent streaming tests. Clippy with warnings denied and WASM compilation
+passed. Coverage includes all nine earlier goldens, a 3,648-byte actual legacy
+FFN ternary golden, nonzero raw schedules, one-GiB metadata-only planning,
+zero-allocation measurements, insufficient budgets, short/oversized payloads,
+ignored refusals, changed replay, source/sink failures, cancellation and unwind.
+The regeneration helper checks the frozen Qualia source and golden SHA-256.
+These fixtures do not establish Q4/AWQ numerical conversion parity.
+
+Streaming standard GGUF schedule generation scans tensors per layer and emits
+metadata twice, taking O(layers × tensors) work without extra schedule storage.
+The existing borrowed writer retains its linear schedule path. Measure that
+tradeoff before adopting streaming in a compiler; no throughput uplift is claimed.
+Atomic filesystem publication and actual Qualia compiler/transcoder delegation
+remain separately qualified adapters. Run the model package commands above.
+
 ### Prepared allocation checks
 
 The prepared native compute API has separate reuse/validation regressions and an
