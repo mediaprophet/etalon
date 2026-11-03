@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add existing MoE routing, NVFP4 row/GEMV and convolution/GatedDeltaNet primitives to `etalon-inference-kernel`, preserving numerical order, caller-buffer contracts and documented compatibility limits. Full Qwen/MoE model execution and Qualia consumer adoption remain separate qualification gates.
+
 - Add `etalon-model-io` for retained local-NTFS Windows model byte leases and ordered full-content bundle identities, with explicit byte limits and unsupported-platform errors. Keep portable model parsing unsafe-forbidden; consumer admission, remote backing, device-state binding and loader adoption remain separate.
 
 - Add a separate allocation-free artifact event contract with explicit developer and host-verified governed modes, byte/event budgets and one-use accepted records. Preserve token APIs; actual authority, immutable byte backing, lineage and delivery remain host responsibilities.

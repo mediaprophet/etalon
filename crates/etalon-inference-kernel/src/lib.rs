@@ -3,6 +3,7 @@
 
 // Retain the frozen source and API during ownership migration; only inherited style lints.
 pub mod dense_cpu;
+pub mod moe;
 #[allow(
     clippy::manual_is_multiple_of,
     clippy::collapsible_if,
@@ -12,3 +13,4 @@ pub mod dense_cpu;
 pub mod operators;
 #[allow(clippy::manual_is_multiple_of)]
 pub mod paged_attention;
+pub mod recurrent;

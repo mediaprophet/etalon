@@ -126,3 +126,54 @@ network access or model download. Only cold construction bypasses the original
 remain original. Source extraction has a two-MiB budget; the 32-MiB compiled
 scratch check limits retention after compilation, not compiler peak memory.
 Temporary scratch is cleaned and an existing destination is never overwritten.
+
+## Routed experts, NVFP4 and recurrent primitives
+
+`moe::routing`, `moe::nvfp4` and `recurrent::gated_deltanet` preserve the existing
+Qualia numerical primitives. They use caller-owned output and state buffers and
+do not require a database, policy identity or model file. They are separate from
+model architecture preparation, complete MoE layers, streamed Qwen execution,
+expert residency and normal Webizen-controlled token acceptance.
+
+The routing module preserves top-k insertion/tie order, the selected-logit
+softmax or nonnegative linear normalization, and weighted expert accumulation.
+`MoeRoutingConfig::qwen3_6_35b` retains its existing configured 256-expert/top-eight
+profile; the generic selector's stack capacity is 16. This profile name does not
+certify a particular checkpoint. The NVFP4 module retains its nibble ordering,
+FP8 conversion and block/global scale arithmetic, including signed zero and the
+existing special-value mapping. It does not select a GPU or use native FP4
+tensor cores.
+
+The recurrent module preserves channel-major four-tap convolution history and
+the existing matrix recurrence and output accumulation order. Despite the older
+function documentation allowing per-head gates, the implementation uses only
+the first alpha and beta values, or 1.0 for empty slices. This extraction keeps
+that behavior; it does not silently change trained-model math.
+
+These low-level compatibility functions retain existing input limitations:
+nonempty routing with `k = 0` panics, expert indices beyond `u16` wrap, and some
+dimension products are unchecked. Expert combination can zero or partially
+update its output before returning a later dimension error; zero-weight experts
+are skipped. Callers must validate their prepared shapes and routing capacity.
+Checked entrypoints and correctness changes require separate validation rather
+than changing these semantics during ownership migration.
+
+Qualification of these primitives does not establish full Qwen, FTW, hybrid or
+streamed-model compatibility, complete numerical rollback, or GPU/NPU execution.
+Those families retain separate model, state, backend and caller gates.
+
+The package passes 59 tests in both debug and release, including ten retained
+primitive tests and thirteen independent hand-vector/allocation tests. Strict
+all-target Clippy, package formatting and WASM library compilation pass. The
+unchanged indexed arithmetic and public parameter lists retain narrowly scoped
+style-lint allowances; no arithmetic was rewritten to satisfy Clippy.
+
+A separate same-target original-versus-Cargo-library harness passes sixteen
+tests in each profile: ten original tests and six differential groups. It checks
+every FP8 byte and packed nibble pair with six global-scale cases, routing
+capacities/ties/nonfinite values and refusals, matrix/row output tails, and
+sixteen-step convolution and recurrence with full caller-state comparison.
+Float values are compared by bits, including signed zero and NaNs. The private
+optimized harness initially omitted the workspace's thin-LTO setting and failed
+to link; matching that setting fixed the harness without changing the library.
+No throughput improvement or unexecuted model/backend support is claimed.
