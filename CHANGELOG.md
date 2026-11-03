@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Explain the ecosystem-wide interim licensing approach shared with QualiaDB and other constituent projects, linking to the developing licensing and rights fabric without changing current licence terms.
 - Record the exact wgpu 30.0.0 source snapshot forked under MIT to begin Etalon development, distinguishing inherited foundations, subsequent improvements, and new Etalon libraries.
 - Add shared Forge routing between portable shader output and CUDA-C, with explicit CUDA preference, device matching, fallback reasons, and native CUDA-C-to-PTX compilation.
 - Add owned native CUDA execution with checked FP32 affine, tensor matrix-vector, and IQ-power operations, plus explicitly unsafe supplied-PTX execution. Preserve unsupported errors for the legacy raw-pointer CUDA lane instead of reporting fabricated completion.

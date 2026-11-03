@@ -8,6 +8,12 @@
 
 ---
 
+## Current ecosystem licensing context
+
+Etalon, QualiaDB and other constituent projects share an interim licensing approach while the intended licensing and rights fabric and its supporting ecosystem capabilities are developed. See [Licensing and rights fabric: purpose, development status and interim licensing](https://mediaprophet.github.io/license/) for the current rationale and development status. Each project's own licence notice identifies its applicable terms and covered material; Etalon-specific work currently uses CC BY-NC-ND 4.0.
+
+This architectural plan records proposed mechanisms, not evidence of an operational rights fabric or an adopted future licence. Its descriptions of future permissions and enforcement must be reconciled with the developing framework before adoption. Readiness for a defined use and an authorised decision for identified material are required; compensation-based transitions also require full satisfaction of their defined agreed obligations. Neither implementation maturity nor payment alone changes a licence. Current release licences and component notices continue to govern their respective material.
+
 ## 1. Context & Fiduciary Principles
 
 Standard open-source licenses (MIT, Apache-2.0, BSD) were designed for an era when software was primarily executed by human developers and small tools. In the era of autonomous AI swarms, trillion-parameter model training, and massive corporate aggregation, passive text licenses fail: large commercial actors routinely ingest, strip provenance from, and monetize open-source systems without contributing back or fairly compensating the human creators.
@@ -18,7 +24,7 @@ In the **Etalon**, **QualiaDB**, and **Aether** ecosystem, intellectual property
 
 ## 2. The Dual-Stage Licensing Architecture
 
-The ecosystem operates under a deliberate, two-stage licensing progression:
+The following diagram records the original two-stage proposal. The current ecosystem licensing context above governs how its proposed transition should be read:
 
 ```
 ┌────────────────────────────────────────────────────────┐
@@ -52,9 +58,9 @@ This strict baseline protects the core technology during its formative developme
 
 ### Stage 2: Target Model — The MediaProphet Permissive Commons
 
-Once the ecosystem is sufficiently functional, it will transition to the [MediaProphet License](https://github.com/mediaprophet/license).
+The [licensing and rights fabric project](https://mediaprophet.github.io/license/) develops the intended framework. Any adoption requires an authorised decision after the relevant readiness and obligation conditions are met; the permissions below remain proposals and do not establish a licence grant.
 
-This model establishes an **ontologically defined rights framework**:
+This plan proposes an **ontologically defined rights framework**:
 
 - **Verified Individual Persons**: Granted unencumbered, royalty-free, permissive commons access for personal, academic, humanitarian, and collaborative use.
 - **Corporate & Commercial Entities**: Required to obtain commercial utilization licenses with fair payment ledgers cleared via W3C Web Payments and WebID identity attestation.

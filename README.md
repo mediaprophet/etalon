@@ -19,7 +19,9 @@ Work to create Etalon began from that starting point on 20 October 2026. Etalon 
 
 Etalon-specific work is licensed under **CC BY-NC-ND 4.0**, as set out in [`LICENSE`](LICENSE) and [`LICENSE-QUALIA`](LICENSE-QUALIA). The MIT reference identifies the terms of the original source snapshot and does not relicense Etalon's subsequent work.
 
-The current Etalon-specific CC BY-NC-ND 4.0 licence is an interim arrangement while the underlying code is built. The intended QualiaDB/Webizen licensing framework will be defined through separate work that depends on that implementation. The current licence and component notices govern use in the meantime; this documentation update does not change them.
+Etalon, QualiaDB and other constituent projects in the ecosystem being developed share an interim licensing approach while the intended licensing and rights fabric and its supporting systems are developed. Each project's own licence notice identifies its applicable variant, version and covered material; Etalon-specific work currently uses CC BY-NC-ND 4.0. See [Licensing and rights fabric: purpose, development status and interim licensing](https://mediaprophet.github.io/license/) for the shared rationale and development status.
+
+The intended framework supports cooperative work, contributor compensation and accountable licence transitions. Adoption depends on the required semantic and logic tooling, rights safeguards, contribution and settlement systems, and governance being ready for the defined use. A future transition requires an authorised decision for identified material; a compensation-based transition also requires full satisfaction of its defined agreed obligations. This statement of intent does not amend the licence attached to an existing release. Current project licences and third-party component notices continue to govern their respective material.
 
 **Homepage:** https://mediaprophet.github.io/etalon/
 
