@@ -1,6 +1,6 @@
 # Naga
 
-The shader translation library for the needs of [etalon](https://github.com/mediaprophet/etalon). Derived from upstream [naga](https://github.com/gfx-rs/wgpu/tree/trunk/naga), part of [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu).
+The shader translation library maintained for [Etalon](https://github.com/mediaprophet/etalon). Its starting source was [Naga at wgpu revision `e084b66aab767940ff1236604d194c9e1c2844b0`](https://github.com/gfx-rs/wgpu/tree/e084b66aab767940ff1236604d194c9e1c2844b0/naga), whose workspace declared version `30.0.0`. That snapshot was forked under its MIT licence before Etalon development began. This library includes subsequent Etalon changes; see the [project origin and attribution](../README.md#upstream--attribution).
 
 ## Supported end-points
 

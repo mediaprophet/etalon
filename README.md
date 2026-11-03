@@ -4,7 +4,6 @@
 
 [![CI](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml/badge.svg)](https://github.com/mediaprophet/etalon/actions/workflows/ci.yml)
 [![License: CC BY-NC-ND 4.0](https://img.shields.io/badge/License-CC_BY--NC--ND_4.0-lightgrey.svg)](LICENSE)
-[![Upstream: wgpu (MIT / Apache-2.0)](<https://img.shields.io/badge/Upstream-gfx--rs%2Fwgpu_(MIT_%2F_Apache--2.0)-informational.svg>)](https://github.com/gfx-rs/wgpu)
 [![Ecosystem: QualiaDB](https://img.shields.io/badge/Ecosystem-QualiaDB-blue.svg)](https://github.com/mediaprophet/qualiaDB)
 [![Platform: Vulkan_|_Metal_|_DX12_|_WebGPU](https://img.shields.io/badge/Backends-Vulkan_%7C_Metal_%7C_DX12_%7C_WebGPU-orange.svg)](#architecture--workspace-structure)
 
@@ -14,19 +13,23 @@ Etalon supplies Rust execution, accelerator and device-facing building blocks. Q
 
 Version 0.0.2 provides foundations for this direction. Implemented synthesis-related building blocks include deterministic shader/kernel generation and rendering; these do not establish a general waveform generator, physical RF transmitter or complete EMF simulation/inference system. Qualification is specific to the API, backend and device exercised.
 
-Named after the optical Fabry-Pérot etalon, the library builds on [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu) 30 and Naga, retaining their graphics, validation and shader-compiler foundation and upstream attribution.
+Named after the optical Fabry-Pérot etalon, Etalon is an independent project founded and maintained by Timothy Charles Holborn ([mediaprophet](https://github.com/mediaprophet)). Its development began with an MIT-licensed fork of a wgpu source snapshot declaring version `30.0.0`, at revision [`e084b66aab767940ff1236604d194c9e1c2844b0`](https://github.com/gfx-rs/wgpu/tree/e084b66aab767940ff1236604d194c9e1c2844b0). That snapshot supplied some graphics, validation and shader-compiler foundations, including Naga.
+
+Work to create Etalon began from that starting point on 20 October 2026. Etalon development combines substantial improvements to inherited functions with new libraries and systems for sensing, signal processing, generated compute kernels, tensor operations, semantic data and QualiaDB/Webizen integration. The wgpu reference identifies the origin of part of the codebase; Etalon's identity and scope are defined by its own development.
+
+Etalon-specific work is licensed under **CC BY-NC-ND 4.0**, as set out in [`LICENSE`](LICENSE) and [`LICENSE-QUALIA`](LICENSE-QUALIA). The MIT reference identifies the terms of the original source snapshot and does not relicense Etalon's subsequent work.
 
 The current Etalon-specific CC BY-NC-ND 4.0 licence is an interim arrangement while the underlying code is built. The intended QualiaDB/Webizen licensing framework will be defined through separate work that depends on that implementation. The current licence and component notices govern use in the meantime; this documentation update does not change them.
 
 **Homepage:** https://mediaprophet.github.io/etalon/
 
-**Capabilities:** [Etalon extensions and wgpu changes](https://mediaprophet.github.io/etalon/capabilities.html) | [Run the browser tests](https://mediaprophet.github.io/etalon/testing.html)
+**Capabilities:** [Etalon libraries and inherited-code improvements](https://mediaprophet.github.io/etalon/capabilities.html) | [Run the browser tests](https://mediaprophet.github.io/etalon/testing.html)
 
 **Library guide:** [Getting started](https://mediaprophet.github.io/etalon/getting-started.html) | [Public API](https://mediaprophet.github.io/etalon/doc/etalon/) | [Sensing API](https://mediaprophet.github.io/etalon/doc/etalon_sense/)
 
 The documentation site publishes the qualified `stable` release and records its exact source revision. Future development stays on `dev`; pin a release tag or full commit for reproducible consumers.
 
-> **Upstream:** Etalon is derived from [gfx-rs/wgpu](https://github.com/gfx-rs/wgpu), which is dual-licensed under Apache-2.0 and MIT. See [Upstream & Attribution](#upstream--attribution) and [Licensing](#intellectual-property--licensing-notice).
+> **Project authorship and source history:** Etalon development and maintenance are independent of wgpu. Credits for inherited foundations describe their original authorship. See [Upstream & Attribution](#upstream--attribution) and [Licensing](#intellectual-property--licensing-notice).
 
 ---
 
@@ -173,12 +176,16 @@ Contributor documentation, including where tests live, is in [`docs/`](docs/) (s
 
 ## Upstream & Attribution
 
-Etalon is a fork of **[wgpu](https://github.com/gfx-rs/wgpu)**, the cross-platform, safe, pure-Rust graphics API developed by the gfx-rs developers and contributors. This includes its shader translator **naga**. Upstream wgpu is dual-licensed under:
+**Etalon founder and maintainer:** Timothy Charles Holborn ([mediaprophet](https://github.com/mediaprophet)). Etalon-specific contributions are distinct from the history of its inherited foundations. Contribution to wgpu before the separation does not, by itself, establish participation in the independent Etalon project.
+
+The starting source was **[wgpu revision `e084b66aab767940ff1236604d194c9e1c2844b0`](https://github.com/gfx-rs/wgpu/tree/e084b66aab767940ff1236604d194c9e1c2844b0)**, whose workspace declared version **`30.0.0`**. It was forked under the MIT licence before the changes that began creating Etalon. The first Etalon development commit is [`bcfb954f`](https://github.com/mediaprophet/etalon/commit/bcfb954fbc2f35b28c1cd2ea6777311769c16b0c), dated 20 October 2026. The full source revision identifies the exact starting snapshot rather than assuming equivalence with a release tag.
+
+The gfx-rs developers and contributors are credited for inherited wgpu/Naga material. Etalon's subsequent improvements to that material and its new libraries have their own development history. The starting snapshot offered the MIT or Apache-2.0 licence; both original texts are preserved:
 
 - [Apache License 2.0](upstream-licenses/LICENSE-APACHE)
 - [MIT License](upstream-licenses/LICENSE-MIT)
 
-Material that originates from upstream wgpu remains available under those terms. The upstream copyright and license notices are preserved in [`upstream-licenses/`](upstream-licenses/). [`CHANGELOG.md`](CHANGELOG.md) records Etalon changes only. For pre-fork history, see the [upstream wgpu changelog](https://github.com/gfx-rs/wgpu/blob/trunk/CHANGELOG.md).
+Material that originates from upstream wgpu remains available under those terms. The upstream copyright and license notices are preserved in [`upstream-licenses/`](upstream-licenses/). [`CHANGELOG.md`](CHANGELOG.md) records Etalon changes only. For pre-fork history, see the [wgpu changelog at the starting snapshot](https://github.com/gfx-rs/wgpu/blob/e084b66aab767940ff1236604d194c9e1c2844b0/CHANGELOG.md).
 
 ---
 

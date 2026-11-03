@@ -39,6 +39,16 @@
       </p>
       <h2>Project-specific work</h2>
       <p>
+        Etalon is an independent project founded and maintained by Timothy
+        Charles Holborn. Development began on 20 October 2026 from a fork of a
+        specific wgpu source snapshot. Subsequent work includes both improvements
+        to inherited functions and new libraries and systems outside the
+        original wgpu codebase. These Etalon contributions have their own
+        authorship and development history and are governed by Etalon's
+        CC BY-NC-ND 4.0 licence. The MIT source reference does not relicense
+        Etalon-specific work.
+      </p>
+      <p>
         See the repository's
         <a
           href="https://github.com/mediaprophet/etalon/blob/{{REVISION}}/LICENSE"
@@ -53,8 +63,13 @@
       </p>
       <h2>Inherited graphics implementation</h2>
       <p>
-        Etalon is a fork of wgpu. Inherited wgpu/Naga material remains available
-        under its MIT/Apache-2.0 terms. The repository preserves the
+        The starting snapshot declared wgpu version <code>30.0.0</code> at
+        <a
+          href="https://github.com/gfx-rs/wgpu/tree/e084b66aab767940ff1236604d194c9e1c2844b0"
+          >revision <code>e084b66aab76</code></a
+        >, and was forked under its MIT licence. Some graphics, validation and
+        shader-compiler foundations, including Naga, originated there. The
+        snapshot offered MIT or Apache-2.0 terms; the repository preserves both
         <a
           href="https://github.com/mediaprophet/etalon/tree/{{REVISION}}/upstream-licenses"
           >upstream texts and attribution</a

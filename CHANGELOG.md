@@ -48,7 +48,7 @@ Bottom level categories:
 - Hal
 -->
 
-This changelog covers Etalon only. Etalon was forked from [wgpu](https://github.com/gfx-rs/wgpu) 30. For the history of changes made before the fork, see the [upstream wgpu changelog](https://github.com/gfx-rs/wgpu/blob/trunk/CHANGELOG.md).
+This changelog covers Etalon development: improvements to inherited functions and new Etalon libraries and systems. The starting source was an MIT-licensed fork of [wgpu revision `e084b66aab767940ff1236604d194c9e1c2844b0`](https://github.com/gfx-rs/wgpu/tree/e084b66aab767940ff1236604d194c9e1c2844b0), whose workspace declared version `30.0.0`, before Etalon work began on 20 October 2026. For earlier history, see the [wgpu changelog at that snapshot](https://github.com/gfx-rs/wgpu/blob/e084b66aab767940ff1236604d194c9e1c2844b0/CHANGELOG.md).
 
 ## 0.0.2 — continuing development; mobile qualification failed
 
