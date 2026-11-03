@@ -10,6 +10,7 @@ mod descriptors;
 mod layout;
 mod metadata;
 mod plan;
+mod plan_error;
 mod source;
 mod stream;
 mod stream_error;
@@ -17,7 +18,11 @@ mod write;
 
 pub use descriptors::{BuildBudget, BuildError, BuildInput, BuildProfile, TensorDescriptor};
 pub use layout::{LayoutInput, LayoutProfile, TensorLayout};
-pub use plan::{plan_into, plan_layout_into, BuildPlan, LayoutPlan};
+pub use plan::{
+    plan_into, plan_into_detailed, plan_layout_into, plan_layout_into_detailed, BuildPlan,
+    LayoutPlan,
+};
+pub use plan_error::{PlanError, PlanErrorContext, PlanField, PlanOperation};
 pub use source::{
     ByteSink, PayloadSink, PayloadSource, PayloadWorkspace, PayloadWriteRefusal, StreamScratch,
     WorkspaceRequirements,
@@ -26,6 +31,8 @@ pub use stream::stream_into;
 pub use stream_error::{StreamFailure, StreamFailureKind, StreamPhase, StreamReport};
 pub use write::write_into;
 
+#[cfg(test)]
+mod plan_error_tests;
 #[cfg(test)]
 mod stream_tests;
 #[cfg(test)]

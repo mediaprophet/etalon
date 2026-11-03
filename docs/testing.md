@@ -759,6 +759,27 @@ tradeoff before adopting streaming in a compiler; no throughput uplift is claime
 Atomic filesystem publication and actual Qualia compiler/transcoder delegation
 remain separately qualified adapters. Run the model package commands above.
 
+### Detailed P64 planning diagnostics
+
+`plan_into_detailed` and `plan_layout_into_detailed`, exported from
+`etalon-model::p64::build`, return `PlanError` with the existing `BuildError`
+kind and a `PlanErrorContext`. Context identifies the field, optional tensor
+index and operation: validation, addition, multiplication, alignment or offset
+conversion. Both new APIs use the same canonical planner. Existing `plan_into`
+and `plan_layout_into` return the unchanged error kind and retain validation
+order, checked arithmetic, exact bytes and untouched scratch on refusal.
+
+On 3 November 2026, all 62 model tests passed in debug and release, including
+four new unit tests and four independent diagnostic tests. Clippy with warnings
+denied and WASM compilation passed. Coverage includes existing prepared and
+streaming goldens, original error-category projection, distinct virtual blob
+size/start/final-size failures, refusal transactionality and positive-controlled
+zero allocation. Run the model package commands above.
+
+Detailed context enables consumer-specific diagnostics; it does not establish
+universal legacy compiler error precedence when several inputs are invalid.
+Qualia compiler adoption and its error mapping remain separately qualified.
+
 ### Bounded neutral GGUF traversal
 
 `etalon-model::gguf` provides complete metadata validation and a separate

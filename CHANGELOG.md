@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Add detailed P64 planning errors identifying the failing field, tensor and checked operation. Existing planning APIs preserve their error categories, validation order, output bytes and refusal behavior.
 - Add allocation-free GGUF metadata traversal with explicit byte/work/depth limits, nonrecursive arrays, version/alignment policies, borrowed raw tensor fields and full 64-bit name hashes. Complete parsing and a sticky-error successful-prefix cursor remain separate from caller tokenizer and model interpretation.
 - Add sized P64 layout planning and bounded two-pass payload streaming, including the legacy FFN layout. Enforce frozen workspace requirements, exact byte counts and CRC replay consistency; typed failures explicitly report incomplete output. Numerical conversion and atomic file publication remain caller responsibilities.
 - Add fixed-capacity residency accounting with deterministic LRU eviction. Failed resize preserves existing state, aggregate overflow triggers admission checks, and maximum-valued ticks remain eligible for eviction. Existing pin and explicit-release behavior is preserved; physical resource retirement remains the caller's responsibility.
