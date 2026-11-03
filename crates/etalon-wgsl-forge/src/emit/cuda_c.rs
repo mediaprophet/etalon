@@ -135,17 +135,29 @@ fn emit_ffn(source: &mut String) -> Result<(), ForgeError> {
         source,
         r#"struct FfnParams {{ unsigned input_size; unsigned hidden_size; unsigned output_size; unsigned _pad; }};
 extern "C" __global__ void fused_ffn(const float* input, const float* w1, const float* w2, float* output, FfnParams params) {{
+    __shared__ float hidden[1024];
+    unsigned tid = threadIdx.x;
     unsigned o = blockIdx.x * blockDim.x + threadIdx.x;
-    if (o >= params.output_size) return;
     float acc = 0.0f;
-    for (unsigned h = 0; h < params.hidden_size; h++) {{
-        float hv = 0.0f;
-        unsigned w1_row = h * params.input_size;
-        for (unsigned i = 0; i < params.input_size; i++) hv += w1[w1_row + i] * input[i];
-        float g = 0.5f * hv * (1.0f + tanhf(0.7978845608f * (hv + 0.044715f * hv * hv * hv)));
-        acc += w2[o * params.hidden_size + h] * g;
+    // Inactive output lanes still supply hidden values and join both barriers.
+    for (unsigned base = 0; base < params.hidden_size;) {{
+        unsigned count = min(blockDim.x, params.hidden_size - base);
+        if (tid < count) {{
+            float hv = 0.0f;
+            unsigned w1_row = (base + tid) * params.input_size;
+            for (unsigned i = 0; i < params.input_size; i++) hv += w1[w1_row + i] * input[i];
+            hidden[tid] = 0.5f * hv * (1.0f + tanhf(0.7978845608f * (hv + 0.044715f * hv * hv * hv)));
+        }}
+        __syncthreads();
+        if (o < params.output_size) {{
+            for (unsigned h = 0; h < count; h++) {{
+                acc += w2[o * params.hidden_size + base + h] * hidden[h];
+            }}
+        }}
+        __syncthreads();
+        base += count;
     }}
-    output[o] = acc;
+    if (o < params.output_size) output[o] = acc;
 }}"#
     )
     .map_err(|e| ForgeError::Emission(e.to_string()))

@@ -117,3 +117,40 @@ fn cuda_resident_tensor_kernels_match_cpu_and_reuse_weights() {
         assert!(output.iter().all(|&value| value == 0.0));
     }
 }
+
+#[test]
+#[ignore = "requires nvcc and NVIDIA hardware; select ordinal with ETALON_CUDA_DEVICE"]
+fn cuda_fused_ffn_hidden_tiles_match_cpu() {
+    let ordinal = std::env::var("ETALON_CUDA_DEVICE")
+        .map(|value| {
+            value
+                .parse::<i32>()
+                .expect("CUDA ordinal must be an integer")
+        })
+        .unwrap_or(0);
+    let executor = CudaTensorExecutor::new(CudaContext::new(ordinal).unwrap()).unwrap();
+    for (hidden_size, output_size) in [
+        (257, 1),
+        (255, 255),
+        (256, 256),
+        (257, 257),
+        (513, 257),
+        (1025, 513),
+    ] {
+        let w1 = values(hidden_size * 11, 2);
+        let w2 = values(output_size * hidden_size, 9);
+        let mut prepared = executor
+            .prepare_fused_ffn(&w1, &w2, 11, hidden_size, output_size)
+            .unwrap();
+        for seed in [1, 7, 19] {
+            let input = values(11, seed);
+            let hidden: Vec<f32> = gemv_reference(&w1, &input)
+                .into_iter()
+                .map(|x| 0.5 * x * (1.0 + (0.797_884_6 * (x + 0.044_715 * x * x * x)).tanh()))
+                .collect();
+            let mut output = vec![f32::NAN; output_size];
+            prepared.execute(&input, &mut output).unwrap();
+            assert_close(&output, &gemv_reference(&w2, &hidden));
+        }
+    }
+}

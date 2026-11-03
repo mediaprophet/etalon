@@ -315,6 +315,26 @@ Visual Studio developer shell, or set `NVCC_CCBIN` to the supported compiler's
 directory. The compiler helper uses `CUDA_PATH/bin/nvcc`, then `PATH`, and retains
 failure diagnostics. No driver or toolkit is downloaded by the library.
 
+CUDA Toolkit 13.4.3 installs under `v13.4`; its NVCC component reports 13.4.92.
+Existing shells can retain an older `CUDA_PATH` after an upgrade. Open a new
+developer shell or explicitly select the installed toolkit before qualification:
+
+```powershell
+$env:CUDA_PATH = 'C:\Program Files\NVIDIA GPU Computing Toolkit\CUDA\v13.4'
+& "$env:CUDA_PATH\bin\nvcc.exe" --version
+nvidia-smi
+```
+
+The [CUDA release notes](https://docs.nvidia.com/cuda/cuda-toolkit-release-notes/)
+identify R615 as the corresponding driver branch for CUDA 13.4. The locally
+qualified combination uses driver 616.92; toolkit installation and driver
+installation are separate. Nsight is optional profiling tooling and is not a
+dependency of Etalon's compilation, execution or correctness tests.
+
+After a driver upgrade, run GPU regressions through `cargo xtask test` so the
+test harness regenerates `.gpuconfig`. Direct `cargo nextest run` with an older
+inventory can reject the updated adapter before executing a workload.
+
 ```powershell
 $env:ETALON_CUDA_DEVICE = '0'
 $env:ETALON_ADAPTER_NAME = 'NVIDIA'
@@ -372,6 +392,145 @@ logical bytes. It reports `ColdBoundedBuffers` and rejects `HotZeroHeap`; this
 budget excludes driver/module allocations. The caller's `DeviceId` is a routing
 declaration, not hardware attestation. Native Vulkan `PreparedIqPower` now emits
 WGSL from the same Forge `IqPowerI16` specification, during preparation only.
+
+### CUDA profiling
+
+The native tensor example checks every measured output against a CPU reference.
+It prepares resident weights, warms up five times, then reports the median and
+minimum duration of synchronous execution, including input upload and output
+readback. Compilation, allocation, weight upload and CPU checking are outside
+the measured interval. These are end-to-end call timings, not kernel-only timings.
+
+```powershell
+cargo build -p etalon-tensor --features cuda --example cuda_profile
+target/debug/examples/cuda_profile.exe all 100
+target/debug/examples/cuda_profile.exe ffn 100
+```
+
+Workloads are `gemv`, `gemm`, `ffn`, `ffn-tail`, and `ffn-small`, or `all`.
+The optional second argument is a positive repetition count; the device is
+selected through `ETALON_CUDA_DEVICE`, defaulting to ordinal zero. Use identical
+build profiles, inputs, device and repetition counts when comparing changes.
+
+On x64 Windows, select Nsight's x64 executable: Nsight Compute installs under
+`target/windows-desktop-win7-x64/ncu.exe`, and Nsight Systems under
+`target-windows-x64/nsys.exe`. The bundled `target-windows-armv8` executable
+does not run on this platform. Set
+`NV_COMPUTE_PROFILER_DISABLE_STOCK_FILE_DEPLOYMENT=1` if Nsight Compute cannot
+deploy sections into Documents; it then uses the installation's sections.
+See the [Nsight Compute CLI documentation](https://docs.nvidia.com/nsight-compute/NsightComputeCli/index.html).
+
+`ERR_NVGPUCTRPERM` is a separate driver permission error. Follow
+[NVIDIA's performance-counter instructions](https://developer.nvidia.com/ERR_NVGPUCTRPERM)
+and verify access with an actual capture. A successful workload exit does not
+mean counter collection succeeded. Nsight Systems can disable CPU sampling and
+context-switch tracing with `--sample=none --cpuctxsw=none`; inspect the report
+for actual CUDA kernel records before treating it as a successful GPU trace.
+
+### CUDA FFN optimization qualification on 3 November 2026
+
+On the RTX A2000 12GB with driver 616.92 and CUDA Toolkit 13.4.3, Forge's
+CUDA fused-FFN emitter now shares hidden activations within each block. Each
+thread computes one hidden row per tile; all threads participate in both
+barriers, including lanes with no output. Tile advancement is bounded by the
+remaining hidden rows. The existing entry-point ABI, safe tensor shape checks,
+FP32 dot-product order and sequential output accumulation are retained.
+
+The profiling example was built in the Rust dev profile. Three paired runs used
+100 measured calls per workload after five warm-ups, with order reversed in the
+middle pair. The table shows the median of the three run medians, in milliseconds,
+including input upload, launch, synchronization and readback:
+
+| Workload (input × hidden × output for FFN) | Before |  After | Observation                            |
+| ------------------------------------------ | -----: | -----: | -------------------------------------- |
+| FFN 256 × 512 × 512                        | 6.3480 | 0.6545 | 9.70× faster                           |
+| FFN 127 × 267 × 263                        | 1.5224 | 0.4634 | 3.29× faster                           |
+| FFN 11 × 13 × 263                          | 0.3691 | 0.4072 | No demonstrated end-to-end improvement |
+| GEMV 512 × 256, unchanged control          | 1.4092 | 1.2508 | Timing variation                       |
+| GEMM 64 × 128 × 64, unchanged control      | 0.4144 | 0.4446 | Timing variation                       |
+
+All measured outputs matched CPU references. These are local microbenchmarks,
+not whole-model inference results or evidence for automatic CUDA/Vulkan routing.
+The raw paired logs are `target/nsight/timing-{1,2,3}-{baseline,optimized}.log`.
+
+Nsight Systems 2026.3.2 successfully captured the actual emitted CUDA kernels
+using a temporary harness that compiled PTX before profiler launch. Across 25
+launches, median kernel duration changed from **8.101817 ms to 0.229891 ms** for
+256 × 512 × 512, and **10.912 µs to 3.328 µs** for 11 × 13 × 263. This separate
+harness used different deterministic inputs and a release-built host; its
+kernel-only results must not be substituted for the end-to-end table. Reports
+are `target/nsight/ffn-{baseline,optimized}.nsys-rep` and
+`target/nsight/ffn-small-{baseline,optimized}.nsys-rep`, with corresponding
+`*-stats.log` summaries. Each harness run checked its outputs against a CPU
+reference. Nsight Compute 2026.3.1 still returned `ERR_NVGPUCTRPERM`, including
+after the user enabled counter access and after a run outside the sandbox;
+no occupancy, throughput-counter or other Nsight Compute metrics were collected.
+
+Direct Nsight Systems launches that included runtime NVCC compilation failed:
+one reported truncated-header compiler errors and another failed with
+`cuModuleGetFunction` error 500. The same workloads ran successfully without
+instrumentation. Loading the precompiled Forge PTX avoided those failures and
+produced verified kernel traces. The initial profiling example also had a Rust
+environment-parsing compilation error, corrected before measurements.
+
+All **18 targeted CUDA tests passed**, including the new hidden-tile cases
+(hidden sizes 255, 256, 257, 513 and 1025, partial outputs and repeated inputs).
+Compute Sanitizer `memcheck`, `racecheck` and `synccheck` reported zero errors
+or hazards for both 256 × 512 × 512 and 11 × 257 × 1, the latter requiring
+inactive output lanes to supply hidden activations. Logs are
+`target/nsight/cuda-tests.log`, `target/nsight/ffn-{memcheck,racecheck,synccheck}.log`
+and `target/nsight/ffn-tail-{memcheck,racecheck,synccheck}.log`. All-target,
+all-feature Clippy with warnings denied passed for the tensor and Forge crates.
+
+The final full `cargo xtask test` passed **3,897 tests, zero failed, 46 skipped**
+in 587.380 seconds with normal concurrency and all enumerated adapters. The new
+ignored CUDA hardware test was included in the separate 18-test qualification.
+The full suite used Vulkan validation layer 1.4.363.1 and CI's pinned 1.4.357.0
+shader tools; generated shader content matched the committed snapshots.
+Native compilation without the CUDA feature and WebAssembly compilation with
+all features also passed for the profiling example. Full-run and lint logs are
+`target/nsight/full-suite.log` and `target/nsight/clippy.log`. Harness pass counts
+include unsupported cases and are not WebGPU CTS coverage.
+
+### CUDA 13.4.3 upgrade qualification on 3 November 2026
+
+The upgraded local configuration is CUDA Toolkit 13.4.3 (NVCC 13.4.92), NVIDIA
+driver 616.92, RTX A2000 12GB at compute capability 8.6, MSVC 14.44, Rust 1.96.1,
+and Vulkan validation layer 1.4.363.1. Toolkit selection was explicit through
+`CUDA_PATH`; the existing process environment still referred to 13.3 after the
+installer updated the machine environment.
+
+All **17 targeted CUDA checks passed**, including owned buffers and context
+restoration, supplied kernels, resident tensor operations, signed-IQ processing,
+and valid/invalid NVCC input. No CUDA Driver API or generated CUDA-C changes were
+needed for this toolkit version.
+
+An initial Vulkan run passed 26 checks and failed 16 before workload execution
+because `.gpuconfig` still described driver 610.47. Regenerating the inventory
+through `cargo xtask test` produced **40 passes and two real failures**: sparse
+multiview clears and draws modified inactive layers on NVIDIA driver 616.92.
+The existing RTX A2000 workaround now also matches that exact driver version
+(`2_585_198_592`), preserving the prior 610.47 match. Neighbouring versions,
+other devices and other driver implementations remain excluded.
+
+The corrected run passed **43 regression checks**, including both failing
+multiview cases, descriptor/runtime-array bounds, planar textures and prepared
+Vulkan allocation/IQ qualifications. A negative-test driver identifier unavailable
+in the pinned Vulkan bindings initially prevented compilation; the corrected
+fixture uses an available non-NVIDIA identifier. Logs are retained locally as
+`target/cuda-13.4-qualification.log`, `target/cuda-13.4-vulkan-regressions.log`,
+`target/cuda-13.4-vulkan-refreshed.log`, `target/cuda-13.4-vulkan-fixed.log`, and
+`target/cuda-13.4-vulkan-fixed-recheck.log`. Harness pass counts include unsupported
+cases and are not counts of successful hardware workloads or CTS coverage.
+
+The final full `cargo xtask test` passed **3,897 tests, zero failed, 45 skipped**
+in 616.127 seconds with normal concurrency and all enumerated adapters. HAL
+Clippy with all targets/features and warnings denied, Rust formatting, spelling,
+and documentation formatting also passed. Full-run and lint logs are
+`target/cuda-13.4-full-suite.log` and `target/cuda-13.4-clippy.log`.
+SPIRV-Cross from SDK 1.4.363.1 added a conservative-depth extension declaration
+to one generated GLSL snapshot. Re-running the same SPIR-V through CI's pinned
+1.4.357.0 tool reproduced the committed output; that baseline was retained.
 
 ### NVIDIA review on 3 November 2026
 

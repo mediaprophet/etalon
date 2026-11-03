@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reuse hidden activations within CUDA fused-FFN blocks, preserving FP32 accumulation order and checked tensor shapes; add a CPU-checked profiling example and hidden-tile boundary qualification.
+- Extend the RTX A2000 Vulkan sparse-multiview clear workaround to the reproduced driver 616.92 issue during CUDA Toolkit 13.4.3 qualification.
 - Explain the ecosystem-wide interim licensing approach shared with QualiaDB and other constituent projects, linking to the developing licensing and rights fabric without changing current licence terms.
 - Record the exact wgpu 30.0.0 source snapshot forked under MIT to begin Etalon development, distinguishing inherited foundations, subsequent improvements, and new Etalon libraries.
 - Add shared Forge routing between portable shader output and CUDA-C, with explicit CUDA preference, device matching, fallback reasons, and native CUDA-C-to-PTX compilation.

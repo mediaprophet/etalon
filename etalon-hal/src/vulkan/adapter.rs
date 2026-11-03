@@ -3619,7 +3619,7 @@ fn needs_explicit_multiview_clear(
 ) -> bool {
     vendor == crate::auxil::db::nvidia::VENDOR
         && device == 0x2571
-        && version == 2_559_295_488
+        && matches!(version, 2_559_295_488 | 2_585_198_592)
         && driver == Some(vk::DriverId::NVIDIA_PROPRIETARY)
 }
 
@@ -3839,38 +3839,36 @@ mod multiview_resolve_tests {
     }
 
     #[test]
-    fn sparse_clear_workaround_matches_only_reproduced_nvidia_driver() {
+    fn sparse_clear_workaround_matches_only_reproduced_nvidia_drivers() {
         let driver = Some(vk::DriverId::NVIDIA_PROPRIETARY);
-        assert!(needs_explicit_multiview_clear(
-            0x10de,
-            0x2571,
-            2_559_295_488,
-            driver
-        ));
-        assert!(!needs_explicit_multiview_clear(
-            0x10de,
-            0x2571,
-            2_559_295_489,
-            driver
-        ));
-        assert!(!needs_explicit_multiview_clear(
-            0x10de,
-            0x2570,
-            2_559_295_488,
-            driver
-        ));
-        assert!(!needs_explicit_multiview_clear(
-            0x8086,
-            0x2571,
-            2_559_295_488,
-            driver
-        ));
-        assert!(!needs_explicit_multiview_clear(
-            0x10de,
-            0x2571,
-            2_559_295_488,
-            None
-        ));
+        for version in [2_559_295_488, 2_585_198_592] {
+            assert!(needs_explicit_multiview_clear(
+                0x10de, 0x2571, version, driver
+            ));
+            for other_version in [version - 1, version + 1] {
+                assert!(!needs_explicit_multiview_clear(
+                    0x10de,
+                    0x2571,
+                    other_version,
+                    driver
+                ));
+            }
+            assert!(!needs_explicit_multiview_clear(
+                0x10de, 0x2570, version, driver
+            ));
+            assert!(!needs_explicit_multiview_clear(
+                0x8086, 0x2571, version, driver
+            ));
+            assert!(!needs_explicit_multiview_clear(
+                0x10de, 0x2571, version, None
+            ));
+            assert!(!needs_explicit_multiview_clear(
+                0x10de,
+                0x2571,
+                version,
+                Some(vk::DriverId::AMD_PROPRIETARY)
+            ));
+        }
     }
 }
 
