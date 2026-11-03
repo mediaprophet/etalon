@@ -656,6 +656,39 @@ cargo clippy --locked --offline -p etalon-resources --all-targets -- -D warnings
 cargo check --locked --offline -p etalon-resources --target wasm32-unknown-unknown
 ```
 
+### Borrowed P64 reader migration
+
+The initial `etalon-model` library preserves P64 v4 layout constants and records,
+and exposes a borrowed `P64View` with explicit Full, Metadata or Structure
+integrity. Parsing and bounded views allocate no heap, including malformed-input
+errors. Raw container bytes preserve unknown metadata and padding; legacy
+hyperparameter read/write methods still normalize their reserved eight bytes.
+CRC-32C is an unkeyed integrity check, not authentication.
+
+On 3 November 2026, eight unit and seven independent tests passed in debug and
+optimised builds. Independent tests include allocator-positive-control checks,
+corruption and range refusal, all integrity modes, unknown tensor metadata,
+raw names/tokenizer/manifold bytes, and bounded schedule access. Against frozen
+actual Qualia reader/layout/CRC source, 47 hand-authored cases produced matching
+acceptance for all three modes (141 decisions) and 63 complete tensor-entry
+comparisons, with matching headers, hyperparameters and tokenizer bytes, in both
+profiles. Unused semantic/GGUF boundaries in that isolated legacy fixture panic
+if reached and are not qualified by it. Clippy and WASM compilation also passed.
+
+```text
+cargo test --locked --offline -p etalon-model
+cargo test --locked --offline -p etalon-model --release
+cargo clippy --locked --offline -p etalon-model --all-targets -- -D warnings
+cargo check --locked --offline -p etalon-model --target wasm32-unknown-unknown
+```
+
+This packet does not migrate the compiler/transcoder or Qualia callers and does
+not establish browser execution. It preserves the existing parser's scope:
+schedule contents, alternate-blob validity, dtype/shape products and manifold
+meaning are not certified by successful parsing. The schedule accessor adds
+explicit bounds, alignment and metadata-containment checks. Environment-based
+integrity selection and semantic/GGUF adapters remain Qualia responsibilities.
+
 ### Prepared allocation checks
 
 The prepared native compute API has separate reuse/validation regressions and an

@@ -1,0 +1,13 @@
+[package]
+name = "etalon-model"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Borrowed model container layouts and explicit integrity validation"
+
+[lints]
+workspace = true
