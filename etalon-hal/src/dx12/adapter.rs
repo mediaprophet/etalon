@@ -35,8 +35,8 @@ fn supports_non_uniform_storage_texture_arrays(
     driver_version: Option<[u16; 4]>,
 ) -> bool {
     // These exact adapter/driver pairs return zero for dynamic storage texture array loads.
-    !needs_intel_2141_shader_workarounds(vendor, device, driver_version)
-        && !(vendor == 0x8086 && device == 0x1912 && driver_version == Some([31, 0, 101, 2111]))
+    !(needs_intel_2141_shader_workarounds(vendor, device, driver_version)
+        || vendor == 0x8086 && device == 0x1912 && driver_version == Some([31, 0, 101, 2111]))
 }
 
 fn needs_intel_2141_shader_workarounds(
