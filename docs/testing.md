@@ -804,6 +804,64 @@ rank projection, version defaults, hardcoded alignment, model interpretation and
 filesystem ownership remain separate adapters. Run the model package commands
 above; no Qualia dependency is introduced.
 
+### Bounded GPT-2/SmolLM tokenizer
+
+`etalon-model::tokenizer` is an additive safe, no_std implementation over strict
+GGUF metadata. The opaque plan borrows immutable source strings and caller-owned
+vocabulary, merge and special-token tables. Encoding uses a separate caller-owned
+workspace and output; capacity budgets charge complete supplied slices and work
+budgets cover unsuccessful searches as well as successful operations. A late
+error can leave uncommitted partial scratch/output, which callers must discard.
+Raw token decoding preserves exact bytes, including empty pieces and incomplete
+UTF-8, and conservatively requires capacity for the original vocabulary string.
+
+Hosts bind `TOKENIZER_SEMANTICS_VERSION` (currently `1`) with the complete model
+identity, tokenizer profile, exact prompt, BOS settings and explicit stop policy.
+`encode_raw_into` adds nothing; `encode_prompt_into` only applies the declared BOS
+rule. Neither method renders a chat template. EOS metadata does not reproduce the
+legacy heuristic stop set. Qwen35 and other pretokenizer profiles are unsupported
+by this first API; existing Qualia tokenizer and SIMD APIs are unchanged.
+
+Version 1 preserves raw-piece lookup before GPT-2 byte encoding, encoded-word
+lookup, last-ID duplicate vocabulary selection, longest-first/first-ID special
+selection, first-rank duplicate merges and first-position merge ties. It uses
+the legacy safe scalar scanner consistently, including vertical-tab whitespace.
+This deliberately differs from some runtime-selected legacy SIMD edge cases;
+it is not a claim of universal legacy encoder parity. In one synthetic vocabulary,
+vertical tab followed by a space changes IDs from `[11, 32]` to `[274]` while
+retaining the same decoded bytes.
+
+The retained SmolLM2 vocabulary lacks 21 individual GPT-2 byte symbols. Rejecting
+all incomplete alphabets would reject that model, so preparation accepts them.
+Encoding instead returns `MissingByteSymbol(actual_byte)` only when an actual
+final fallback cannot resolve a symbol. Valid raw/encoded whole-token and merged
+symbol shortcuts remain available. This is an explicit safety difference from
+legacy silent input loss, not a successful truncated result.
+
+Independent actual-old-source comparison on 4 November 2026 found exact raw
+decoding for all 49,152 retained model entries and 275 synthetic pieces. Of 180
+real-model encoding cases, 174 matched token IDs and six received the stricter
+control-byte refusal. Synthetic comparisons produced 34 exact cases and 12
+documented vertical-tab changes. These are bounded tokenizer corpus results,
+not model-execution, SIMD-performance or governed-inference qualification.
+The initial author package gate passed 68 tests in each debug/release profile,
+strict Clippy and no_std WASM compilation. Positive-controlled measurement also
+covered actual model preparation, seven prompt encodes, raw decoding and refusal
+without internal allocation. Final independent qualification passed **76 tests
+in each debug/release profile**, retaining all 68 author-gate tests and adding
+eight independent groups. Strict all-target/all-feature Clippy, formatting and
+default no_std WASM compilation pass. One positive and five negative actual-
+library compile probes check workspace reuse, private entry construction and
+source/table lifetime boundaries. All 16 frozen source/manifest paths match.
+
+The final differential also runs an actually optimized library, reproducing the
+same exact pieces and documented encoding differences. In that single bounded
+SmolLM2 run, metadata parsing, table allocation and preparation took 62.673 ms;
+the longest measured encode among the 180 cases took 0.896 ms. These establish
+usability for the exercised inputs, not a comparative speedup, concurrency
+guarantee or performance promise. The independent retained model's complete
+SHA-256 was recomputed before the original-library oracle run.
+
 ### Prepared allocation checks
 
 The prepared native compute API has separate reuse/validation regressions and an

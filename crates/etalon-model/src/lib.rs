@@ -3,7 +3,8 @@
 
 extern crate alloc;
 
-pub mod gguf;
 #[cfg(feature = "ggml")]
 pub mod ggml;
+pub mod gguf;
 pub mod p64;
+pub mod tokenizer;
