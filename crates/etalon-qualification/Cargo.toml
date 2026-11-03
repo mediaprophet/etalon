@@ -1,0 +1,13 @@
+[package]
+name = "etalon-qualification"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Declared migration evidence validation and numerical comparison"
+
+[lints]
+workspace = true

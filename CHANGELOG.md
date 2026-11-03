@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Add dependency-free migration evidence validation and numerical comparison in `etalon-qualification`. Validation checks declarations against frozen expectations; it does not authenticate hardware execution or approve runtime cutover.
+- Add `etalon-inference-contract` with explicit developer, fixture and host-verified governed session metadata, candidate binding and fail-closed control transitions. Model execution, real Webizen integration, publication and numerical restoration remain embedding responsibilities.
+
 - Reuse hidden activations within CUDA fused-FFN blocks, preserving FP32 accumulation order and checked tensor shapes; add a CPU-checked profiling example and hidden-tile boundary qualification.
 - Extend the RTX A2000 Vulkan sparse-multiview clear workaround to the reproduced driver 616.92 issue during CUDA Toolkit 13.4.3 qualification.
 - Explain the ecosystem-wide interim licensing approach shared with QualiaDB and other constituent projects, linking to the developing licensing and rights fabric without changing current licence terms.

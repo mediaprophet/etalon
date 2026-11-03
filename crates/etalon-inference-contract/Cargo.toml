@@ -1,0 +1,13 @@
+[package]
+name = "etalon-inference-contract"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Portable explicit inference session and decision contracts"
+
+[lints]
+workspace = true
