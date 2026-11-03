@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add Qwen vector, group-normalization and Hyper-Connection arithmetic to `etalon-inference-kernel`, preserving caller buffers, refusal order and distinct floating-point associations. Model preparation and complete streamed execution remain separate from these helpers.
+
 - Add existing MoE routing, NVFP4 row/GEMV and convolution/GatedDeltaNet primitives to `etalon-inference-kernel`, preserving numerical order, caller-buffer contracts and documented compatibility limits. Full Qwen/MoE model execution and Qualia consumer adoption remain separate qualification gates.
 
 - Add `etalon-model-io` for retained local-NTFS Windows model byte leases and ordered full-content bundle identities, with explicit byte limits and unsupported-platform errors. Keep portable model parsing unsafe-forbidden; consumer admission, remote backing, device-state binding and loader adoption remain separate.

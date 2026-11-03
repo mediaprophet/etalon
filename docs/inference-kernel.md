@@ -177,3 +177,27 @@ Float values are compared by bits, including signed zero and NaNs. The private
 optimized harness initially omitted the workspace's thin-LTO setting and failed
 to link; matching that setting fixed the harness without changing the library.
 No throughput improvement or unexecuted model/backend support is claimed.
+
+## Qwen vector and Hyper-Connection arithmetic
+
+`qwen::numerics` and `qwen::hyper_connection` provide the existing seven
+caller-buffered vector, RMS normalization, stream-mixing and update-injection
+functions. Their shared `QwenNumericError`, buffer/epsilon refusal order,
+checked stream geometry, zero-shape behavior, pre-folded gamma and factor-two
+injection arithmetic are preserved. Projection weights, model metadata and
+streamed layer composition remain outside these helpers.
+
+The in-place and out-of-place group normalization functions intentionally retain
+their different multiplication associations. For `[0.3, 4.0]`, gamma
+`[0.1, 1.0]` and epsilon `1e-6`, their first-element bits are respectively
+`0x3c2d4ab8` and `0x3c2d4ab7`, matching the original functions. They must not be
+collapsed into one implementation solely because the formulas look equivalent.
+
+With these helpers, all 76 package tests pass in debug and release. This includes
+nine additional independent numeric challenge groups and five allocation
+controls. A separate original-versus-actual-Cargo-library harness passes eight
+tests per profile, including three retained original tests, and was independently
+rerun. Strict all-target Clippy, formatting and WASM library compilation pass.
+The original arithmetic bodies are unchanged after line-ending normalization.
+These results cover the helpers, not model parsing, complete streamed Qwen
+execution, GPU/NPU dispatch, state rollback or Webizen acceptance.

@@ -13,4 +13,5 @@ pub mod moe;
 pub mod operators;
 #[allow(clippy::manual_is_multiple_of)]
 pub mod paged_attention;
+pub mod qwen;
 pub mod recurrent;
