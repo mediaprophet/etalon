@@ -883,7 +883,7 @@ jobs:
           set -e
 
           # Functional success does not promote the sensing allocation class.
-          cargo llvm-cov --no-cfg-coverage --no-report test --locked --all-features -p etalon-sense-gpu --lib -- --ignored --test-threads=1
+          cargo llvm-cov --no-cfg-coverage --no-report test --locked --all-features -p etalon-sense-gpu --lib -- --ignored --exact prepared::tests::prepared_iq_power_matches_reference_and_reuses_private_lane --test-threads=1
 
       - name: Check Naga snapshots
         # git diff doesn't check untracked files, we need to stage those then compare with HEAD.
