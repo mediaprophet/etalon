@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add a caller-buffered tentative dense CPU step with checked full-workspace undo, exclusive pending ownership and bit-exact restoration on abort/error/drop/unwind. Actual Sentinel approval and host sampler/grammar/publication state remain required integration responsibilities; numerical commit is not permission.
+
 - Add optional portable GGML row codecs and Q4 conversion to `etalon-model`, preserving the original dtype/layout/arithmetic and low-level input preconditions. The default model crate remains dependency-free/no_std; the codec feature uses std and optional half/bytemuck dependencies.
 
 - Add dense CPU transformer execution to `etalon-inference-kernel`, with caller-owned KV/workspace, checked byte budgets and primitive tensor-kernel adapters. Preserve forward-operation and partial-failure order; tokenizer, model policy, governance and state rollback remain host responsibilities.

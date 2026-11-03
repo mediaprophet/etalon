@@ -847,3 +847,12 @@ feature, preserved dtype/layout contracts and original input preconditions.
 Default container checks remain separate from codec-enabled tests. Native tests,
 strict Clippy and default/feature-enabled WASM compilation are required; browser
 execution, consumer adoption and governed token acceptance are separate gates.
+
+### Tentative dense execution
+
+See [dense numerical transactions](inference-transactions.md) for caller-owned
+undo and the mandatory distinction between numerical restoration and Webizen
+acceptance. All 36 package tests pass in debug/release, including six independent
+transaction groups, plus five negative ownership probes with a positive control.
+Strict Clippy and WASM compilation pass. Host state, real Sentinel/controller
+integration and device-specific restoration remain separate acceptance gates.

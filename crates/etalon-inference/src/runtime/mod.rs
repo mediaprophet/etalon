@@ -4,3 +4,4 @@
 pub mod budget;
 #[allow(clippy::explicit_counter_loop, clippy::op_ref)]
 pub mod kv;
+pub mod dense_transaction;
