@@ -101,6 +101,7 @@ static NON_UNIFORM_STORAGE_TEXTURE_ARRAY_REQUIRES_FEATURE: GpuTestConfiguration 
     GpuTestConfiguration::new()
         .parameters(
             TestParameters::default()
+                .remove_instance_flags(InstanceFlags::STRICT_WEBGPU_COMPLIANCE)
                 .features(
                     Features::TEXTURE_BINDING_ARRAY
                         | Features::STORAGE_RESOURCE_BINDING_ARRAY
@@ -112,6 +113,30 @@ static NON_UNIFORM_STORAGE_TEXTURE_ARRAY_REQUIRES_FEATURE: GpuTestConfiguration 
                 }),
         )
         .run_async(|ctx| async move {
+            if !ctx
+                .adapter
+                .features()
+                .contains(Features::STORAGE_TEXTURE_ARRAY_NON_UNIFORM_INDEXING)
+            {
+                let error = ctx
+                    .adapter
+                    .request_device(&DeviceDescriptor {
+                        required_features: ctx.device.features()
+                            | Features::STORAGE_TEXTURE_ARRAY_NON_UNIFORM_INDEXING,
+                        ..Default::default()
+                    })
+                    .await
+                    .unwrap_err();
+                let message = error.to_string();
+                assert!(
+                    message.contains("Unsupported features were requested"),
+                    "{message}"
+                );
+                assert!(
+                    message.contains("STORAGE_TEXTURE_ARRAY_NON_UNIFORM_INDEXING"),
+                    "{message}"
+                );
+            }
             assert!(!ctx
                 .device
                 .features()
@@ -278,6 +303,15 @@ async fn binding_array_storage_textures(
             immediate_size: 0,
         });
 
+    let mut static_load =
+        String::from("\nfn static_load(index: u32) -> vec4f {\n switch index {\n");
+    for index in 0..16 {
+        static_load.push_str(&format!(
+            "case {index}u: {{ return textureLoad(textures[{index}], vec2u(0)); }}\n"
+        ));
+    }
+    static_load.push_str("default: { return vec4f(0.0); }\n }\n}\n");
+    let mut failed_phases = Vec::new();
     for (phase, color_load, expected) in [
         (
             "constant_store",
@@ -288,6 +322,16 @@ async fn binding_array_storage_textures(
             "uniform_load",
             "textureLoad(textures[0], vec2u(0))",
             image.pixels().next().unwrap().0.repeat(16),
+        ),
+        (
+            "constant_last_load",
+            "textureLoad(textures[15], vec2u(0))",
+            image.pixels().next_back().unwrap().0.repeat(16),
+        ),
+        (
+            "static_switch_load",
+            "static_load(index)",
+            image.as_raw().clone(),
         ),
         (
             "varying_load",
@@ -305,7 +349,12 @@ async fn binding_array_storage_textures(
                 .collect(),
         ),
     ] {
-        if !non_uniform && phase.contains("varying_load") {
+        if !non_uniform
+            && !matches!(
+                phase,
+                "constant_store" | "uniform_load" | "constant_last_load" | "static_switch_load"
+            )
+        {
             continue;
         }
         println!("storage array compute oracle: {phase}");
@@ -332,7 +381,10 @@ async fn binding_array_storage_textures(
                 );
             }
         }
-        let source = shader.replace("textureLoad(textures[index], vec2u(0))", color_load);
+        let mut source = shader.replace("textureLoad(textures[index], vec2u(0))", color_load);
+        if phase == "static_switch_load" {
+            source.push_str(&static_load);
+        }
         let module = ctx.device.create_shader_module(ShaderModuleDescriptor {
             label: Some(phase),
             source: ShaderSource::Wgsl(source.into()),
@@ -366,8 +418,25 @@ async fn binding_array_storage_textures(
 
         ctx.queue.submit(Some(encoder.finish()));
 
-        readback_buffers
-            .assert_buffer_contents(&ctx, &expected)
-            .await;
+        let actual = readback_buffers.retrieve(&ctx, TextureAspect::All).await;
+        let passed = actual.all() == expected;
+        println!(
+            "storage array phase {phase}: {}",
+            if passed { "PASS" } else { "FAIL" }
+        );
+        if !passed {
+            let first_mismatch = actual
+                .all()
+                .iter()
+                .zip(&expected)
+                .enumerate()
+                .find(|(_, (actual, expected))| actual != expected);
+            println!("storage array phase {phase}: first mismatch={first_mismatch:?}, actual bytes={}, expected bytes={}", actual.all().len(), expected.len());
+            failed_phases.push(phase);
+        }
     }
+    assert!(
+        failed_phases.is_empty(),
+        "storage array phases failed: {failed_phases:?}"
+    );
 }

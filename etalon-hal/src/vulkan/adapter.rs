@@ -2416,6 +2416,15 @@ impl super::Instance {
                 phd_capabilities.is_driver(vk::DriverId::MESA_LLVMPIPE),
             );
             workarounds.set(
+                super::Workarounds::MULTIVIEW_CLEAR_INACTIVE_LAYERS,
+                needs_explicit_multiview_clear(
+                    phd_capabilities.properties.vendor_id,
+                    phd_capabilities.properties.device_id,
+                    phd_capabilities.properties.driver_version,
+                    phd_capabilities.driver.map(|driver| driver.driver_id),
+                ),
+            );
+            workarounds.set(
                 super::Workarounds::MULTIVIEW_RESOLVE_INACTIVE_LAYERS,
                 phd_capabilities.is_driver(vk::DriverId::MESA_LLVMPIPE),
             );
@@ -3265,6 +3274,27 @@ impl crate::Adapter for super::Adapter {
             Tfc::COLOR_ATTACHMENT,
             features.contains(vk::FormatFeatureFlags::COLOR_ATTACHMENT),
         );
+        if format.is_multi_planar_format() {
+            let info = planar_render_image_format_info(vk_format);
+            let renderable = unsafe {
+                self.instance
+                    .raw
+                    .get_physical_device_image_format_properties(
+                        self.raw,
+                        info.format,
+                        info.ty,
+                        info.tiling,
+                        info.usage,
+                        info.flags,
+                    )
+            }
+            .is_ok_and(|properties| {
+                properties
+                    .sample_counts
+                    .contains(vk::SampleCountFlags::TYPE_1)
+            });
+            flags.set(Tfc::COLOR_ATTACHMENT, renderable);
+        }
         flags.set(
             Tfc::COLOR_ATTACHMENT_BLEND,
             features.contains(vk::FormatFeatureFlags::COLOR_ATTACHMENT_BLEND),
@@ -3339,6 +3369,16 @@ impl crate::Adapter for super::Adapter {
             sample_flags.contains(vk::SampleCountFlags::TYPE_16),
         );
 
+        if format.is_multi_planar_format() {
+            flags.remove(
+                Tfc::MULTISAMPLE_X2
+                    | Tfc::MULTISAMPLE_X4
+                    | Tfc::MULTISAMPLE_X8
+                    | Tfc::MULTISAMPLE_X16
+                    | Tfc::MULTISAMPLE_RESOLVE,
+            );
+        }
+
         flags
     }
 
@@ -3391,6 +3431,18 @@ impl crate::Adapter for super::Adapter {
     fn get_ordered_texture_usages(&self) -> wgt::TextureUses {
         wgt::TextureUses::INCLUSIVE
     }
+}
+
+fn planar_render_image_format_info(
+    format: vk::Format,
+) -> vk::PhysicalDeviceImageFormatInfo2<'static> {
+    vk::PhysicalDeviceImageFormatInfo2::default()
+        .format(format)
+        .ty(vk::ImageType::TYPE_2D)
+        .tiling(vk::ImageTiling::OPTIMAL)
+        // Initialization can add TRANSFER_DST even to render-only textures.
+        .usage(vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_DST)
+        .flags(vk::ImageCreateFlags::MUTABLE_FORMAT | vk::ImageCreateFlags::EXTENDED_USAGE)
 }
 
 fn is_format_16bit_norm_supported(instance: &ash::Instance, phd: vk::PhysicalDevice) -> bool {
@@ -3546,7 +3598,7 @@ fn supports_bgra8unorm_storage(
     }
 }
 
-// This device/driver renders both MSAA views but implicitly resolves only view zero.
+// These device/driver pairs implicitly resolve only view zero.
 fn needs_per_layer_multiview_resolve(
     vendor: u32,
     device: u32,
@@ -3554,9 +3606,21 @@ fn needs_per_layer_multiview_resolve(
     driver: Option<vk::DriverId>,
 ) -> bool {
     vendor == crate::auxil::db::intel::VENDOR
-        && device == 0x5917
-        && version == ((101 << 14) | 2141)
+        && ((device == 0x5917 && version == ((101 << 14) | 2141))
+            || (device == 0x1912 && version == ((101 << 14) | 2111)))
         && driver == Some(vk::DriverId::INTEL_PROPRIETARY_WINDOWS)
+}
+
+fn needs_explicit_multiview_clear(
+    vendor: u32,
+    device: u32,
+    version: u32,
+    driver: Option<vk::DriverId>,
+) -> bool {
+    vendor == crate::auxil::db::nvidia::VENDOR
+        && device == 0x2571
+        && version == 2_559_295_488
+        && driver == Some(vk::DriverId::NVIDIA_PROPRIETARY)
 }
 
 // For https://github.com/mediaprophet/etalon/issues/4599
@@ -3711,7 +3775,7 @@ fn query_cooperative_matrix_properties(
 
 #[cfg(test)]
 mod multiview_resolve_tests {
-    use super::needs_per_layer_multiview_resolve;
+    use super::{needs_explicit_multiview_clear, needs_per_layer_multiview_resolve};
     use ash::vk;
 
     #[test]
@@ -3742,5 +3806,97 @@ mod multiview_resolve_tests {
             version,
             Some(vk::DriverId::INTEL_OPEN_SOURCE_MESA)
         ));
+    }
+
+    #[test]
+    fn hd530_workaround_matches_only_reproduced_windows_driver() {
+        let version = (101 << 14) | 2111;
+        let driver = Some(vk::DriverId::INTEL_PROPRIETARY_WINDOWS);
+        assert!(needs_per_layer_multiview_resolve(
+            0x8086, 0x1912, version, driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086,
+            0x1912,
+            version + 1,
+            driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086, 0x1916, version, driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x10de, 0x1912, version, driver
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086, 0x1912, version, None
+        ));
+        assert!(!needs_per_layer_multiview_resolve(
+            0x8086,
+            0x1912,
+            version,
+            Some(vk::DriverId::INTEL_OPEN_SOURCE_MESA),
+        ));
+    }
+
+    #[test]
+    fn sparse_clear_workaround_matches_only_reproduced_nvidia_driver() {
+        let driver = Some(vk::DriverId::NVIDIA_PROPRIETARY);
+        assert!(needs_explicit_multiview_clear(
+            0x10de,
+            0x2571,
+            2_559_295_488,
+            driver
+        ));
+        assert!(!needs_explicit_multiview_clear(
+            0x10de,
+            0x2571,
+            2_559_295_489,
+            driver
+        ));
+        assert!(!needs_explicit_multiview_clear(
+            0x10de,
+            0x2570,
+            2_559_295_488,
+            driver
+        ));
+        assert!(!needs_explicit_multiview_clear(
+            0x8086,
+            0x2571,
+            2_559_295_488,
+            driver
+        ));
+        assert!(!needs_explicit_multiview_clear(
+            0x10de,
+            0x2571,
+            2_559_295_488,
+            None
+        ));
+    }
+}
+
+#[cfg(test)]
+mod planar_image_format_tests {
+    use super::planar_render_image_format_info;
+    use ash::vk;
+
+    #[test]
+    fn render_query_includes_initialization_and_plane_view_requirements() {
+        for format in [
+            vk::Format::G8_B8R8_2PLANE_420_UNORM,
+            vk::Format::G10X6_B10X6R10X6_2PLANE_420_UNORM_3PACK16,
+        ] {
+            let info = planar_render_image_format_info(format);
+            assert_eq!(info.format, format);
+            assert_eq!(info.ty, vk::ImageType::TYPE_2D);
+            assert_eq!(info.tiling, vk::ImageTiling::OPTIMAL);
+            assert_eq!(
+                info.usage,
+                vk::ImageUsageFlags::COLOR_ATTACHMENT | vk::ImageUsageFlags::TRANSFER_DST,
+            );
+            assert_eq!(
+                info.flags,
+                vk::ImageCreateFlags::MUTABLE_FORMAT | vk::ImageCreateFlags::EXTENDED_USAGE,
+            );
+        }
     }
 }

@@ -236,7 +236,11 @@ impl crate::Adapter for Context {
         &self,
         format: wgt::TextureFormat,
     ) -> crate::TextureFormatCapabilities {
-        crate::TextureFormatCapabilities::empty()
+        if format.is_multi_planar_format() {
+            crate::TextureFormatCapabilities::COLOR_ATTACHMENT
+        } else {
+            crate::TextureFormatCapabilities::empty()
+        }
     }
 
     unsafe fn surface_capabilities(&self, surface: &Context) -> Option<crate::SurfaceCapabilities> {

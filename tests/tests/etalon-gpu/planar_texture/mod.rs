@@ -1,7 +1,7 @@
 //! Tests for nv12 texture creation and sampling.
 
 use etalon_test::{
-    apply, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters, TestingContext,
+    apply, fail, gpu_test, GpuTestConfiguration, GpuTestInitializer, TestParameters, TestingContext,
 };
 
 pub fn all_tests(tests: &mut Vec<GpuTestInitializer>) {
@@ -320,7 +320,7 @@ static NV12_TEXTURE_RENDERING: GpuTestConfiguration = GpuTestConfiguration::new(
             height: 128,
             depth_or_array_layers: 1,
         };
-        let tex = ctx.device.create_texture(&etalon::TextureDescriptor {
+        let descriptor = etalon::TextureDescriptor {
             label: None,
             dimension: etalon::TextureDimension::D2,
             size,
@@ -329,7 +329,21 @@ static NV12_TEXTURE_RENDERING: GpuTestConfiguration = GpuTestConfiguration::new(
             mip_level_count: 1,
             sample_count: 1,
             view_formats: &[],
-        });
+        };
+        if !ctx
+            .adapter
+            .get_texture_format_features(etalon::TextureFormat::NV12)
+            .allowed_usages
+            .contains(etalon::TextureUsages::RENDER_ATTACHMENT)
+        {
+            fail(
+                &ctx.device,
+                || ctx.device.create_texture(&descriptor),
+                Some("RENDER_ATTACHMENT"),
+            );
+            return;
+        }
+        let tex = ctx.device.create_texture(&descriptor);
         let y_view = tex.create_view(&etalon::TextureViewDescriptor {
             format: Some(etalon::TextureFormat::R8Unorm),
             aspect: etalon::TextureAspect::Plane0,

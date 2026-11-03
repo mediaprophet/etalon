@@ -1,6 +1,8 @@
 //! Prepared tensor execution, unified forward arena, and fused attention.
 
 pub mod attention;
+#[cfg(all(feature = "cuda", not(target_family = "wasm")))]
+pub mod cuda;
 pub mod cuda_mega;
 pub mod dml_lane;
 pub mod forward_arena;

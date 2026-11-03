@@ -567,6 +567,8 @@ bitflags::bitflags!(
         const MULTIVIEW_DISCARD_STORE = 0x10;
         /// Resolve only selected views instead of Lavapipe's contiguous layer range.
         const MULTIVIEW_RESOLVE_INACTIVE_LAYERS = 0x20;
+        /// Use explicit clears to preserve inactive views on affected NVIDIA drivers.
+        const MULTIVIEW_CLEAR_INACTIVE_LAYERS = 0x40;
     }
 );
 

@@ -169,6 +169,33 @@ fn cuda_c_emits_real_kernels_and_routes_m1_to_dp4a_gemv() {
 }
 
 #[test]
+fn ptx_shader_target_requires_compilation() {
+    let spec = BuiltinKernel::AffineF32.spec();
+    let schedule = Schedule::default();
+    let error = emit_shader(&spec, schedule, "ptx".parse().unwrap()).unwrap_err();
+    assert!(matches!(error, crate::ForgeError::Emission(message) if message.contains("PTX")));
+    for target in [TargetBackend::CudaC, TargetBackend::Cuda] {
+        assert!(emit_shader(&spec, schedule, target)
+            .unwrap()
+            .source
+            .contains("__global__"));
+    }
+}
+
+#[test]
+fn ptx_kernel_target_requires_compilation() {
+    let op = Op::Gemv { tc: false };
+    let schedule = Schedule::default();
+    let error = emit_kernel(&op, &schedule, TargetBackend::Ptx).unwrap_err();
+    assert!(matches!(error, crate::ForgeError::Emission(message) if message.contains("PTX")));
+    for target in [TargetBackend::CudaC, TargetBackend::Cuda] {
+        assert!(emit_kernel(&op, &schedule, target)
+            .unwrap()
+            .contains("__global__"));
+    }
+}
+
+#[test]
 fn msl_emits_real_metal_kernels_and_simdgroup_matrix() {
     let sched = Schedule {
         tile: TileConfig::new(32, 64, 64),

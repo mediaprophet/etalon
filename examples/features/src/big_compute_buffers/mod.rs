@@ -9,7 +9,7 @@ use std::num::{NonZeroU32, NonZeroU64};
 
 // These are set by the minimum required defaults for webgpu.
 const MAX_BUFFER_SIZE: u64 = 1 << 27; // 134_217_728 // 134MB
-const MAX_DISPATCH_SIZE: u32 = (1 << 16) - 1;
+const ELEMENTS_PER_WORKGROUP: usize = 256 * 256;
 
 pub async fn execute_gpu(numbers: &[f32]) -> Vec<f32> {
     let instance = etalon::Instance::default();
@@ -58,7 +58,7 @@ pub async fn execute_gpu_inner(
         cpass.set_pipeline(&compute_pipeline);
         cpass.set_bind_group(0, Some(&bind_group), &[]);
 
-        cpass.dispatch_workgroups(MAX_DISPATCH_SIZE.min(numbers.len() as u32), 1, 1);
+        cpass.dispatch_workgroups(numbers.len().div_ceil(ELEMENTS_PER_WORKGROUP) as u32, 1, 1);
     }
 
     for (storage_buffer, staging_buffer) in storage_buffers.iter().zip(staging_buffers.iter()) {

@@ -1,0 +1,19 @@
+[package]
+name = "etalon-cuda"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish.workspace = true
+description = "Owned native CUDA execution for Etalon Forge kernels"
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+libloading.workspace = true
+bytemuck.workspace = true
+etalon-wgsl-forge = { workspace = true, features = ["cuda"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
+etalon = { workspace = true }
+pollster.workspace = true

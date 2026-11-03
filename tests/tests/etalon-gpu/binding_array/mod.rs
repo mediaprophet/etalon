@@ -1,4 +1,5 @@
 mod buffers;
+mod runtime_buffer_bounds;
 mod sampled_textures;
 mod samplers;
 mod storage_textures;
@@ -6,6 +7,7 @@ mod tlas;
 
 pub fn all_tests(tests: &mut Vec<etalon_test::GpuTestInitializer>) {
     buffers::all_tests(tests);
+    runtime_buffer_bounds::all_tests(tests);
     sampled_textures::all_tests(tests);
     samplers::all_tests(tests);
     storage_textures::all_tests(tests);

@@ -12,6 +12,8 @@ use crate::ir::{
 #[serde(rename_all = "kebab-case")]
 pub enum BuiltinKernel {
     AffineF32,
+    IqPowerF32,
+    IqPowerI16,
     FusedFfn,
     P64Project,
     TopK,
@@ -23,8 +25,10 @@ pub enum BuiltinKernel {
 }
 
 impl BuiltinKernel {
-    pub const ALL: [Self; 9] = [
+    pub const ALL: [Self; 11] = [
         Self::AffineF32,
+        Self::IqPowerF32,
+        Self::IqPowerI16,
         Self::FusedFfn,
         Self::P64Project,
         Self::TopK,
@@ -38,6 +42,8 @@ impl BuiltinKernel {
     pub const fn name(self) -> &'static str {
         match self {
             Self::AffineF32 => "affine-f32",
+            Self::IqPowerF32 => "iq-power-f32",
+            Self::IqPowerI16 => "iq-power-i16",
             Self::FusedFfn => "fused-ffn",
             Self::P64Project => "p64-project",
             Self::TopK => "topk",
@@ -55,6 +61,64 @@ impl BuiltinKernel {
 
     pub fn spec(self) -> KernelSpec {
         match self {
+            Self::IqPowerI16 => KernelSpec {
+                id: self.name().to_string(),
+                semantic_version: 1,
+                entry_point: "iq_power_i16".to_string(),
+                description:
+                    "Decode packed signed-i16 IQ, scale in f32, and sum squared components"
+                        .to_string(),
+                buffers: vec![
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::Scalar(ScalarType::U32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        2,
+                        "params",
+                        BufferElement::IqPowerI16Params,
+                        BufferAccess::Uniform,
+                    ),
+                ],
+                ops: Vec::new(),
+                shared_memory: Vec::new(),
+            },
+            Self::IqPowerF32 => KernelSpec {
+                id: self.name().to_string(),
+                semantic_version: 1,
+                entry_point: "iq_power_f32".to_string(),
+                description: "out[i] = input[2*i]^2 + input[2*i+1]^2".to_string(),
+                buffers: vec![
+                    buf(
+                        0,
+                        "input",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageRead,
+                    ),
+                    buf(
+                        1,
+                        "output",
+                        BufferElement::Scalar(ScalarType::F32),
+                        BufferAccess::StorageReadWrite,
+                    ),
+                    buf(
+                        2,
+                        "params",
+                        BufferElement::IqPowerParams,
+                        BufferAccess::Uniform,
+                    ),
+                ],
+                ops: Vec::new(),
+                shared_memory: Vec::new(),
+            },
             Self::AffineF32 => KernelSpec {
                 id: self.name().to_string(),
                 semantic_version: 1,
@@ -416,6 +480,8 @@ impl FromStr for BuiltinKernel {
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value.trim().to_ascii_lowercase().as_str() {
             "affine-f32" | "affine_f32" | "affine" => Ok(Self::AffineF32),
+            "iq-power-f32" | "iq_power_f32" => Ok(Self::IqPowerF32),
+            "iq-power-i16" | "iq_power_i16" => Ok(Self::IqPowerI16),
             "fused-ffn" | "fused_ffn" | "ffn" => Ok(Self::FusedFfn),
             "p64-project" | "p64_project" | "p64" => Ok(Self::P64Project),
             "topk" | "top-k" | "top_k" => Ok(Self::TopK),
@@ -430,7 +496,36 @@ impl FromStr for BuiltinKernel {
 }
 
 pub(crate) fn validate_builtin_shape(spec: &KernelSpec) -> Result<(), ForgeError> {
-    if spec.id == BuiltinKernel::AffineF32.name() || spec.id == BuiltinKernel::TopK.name() {
+    if spec.id == BuiltinKernel::IqPowerI16.name() {
+        return check_bindings(
+            &spec.id,
+            &spec.buffers,
+            &[
+                (
+                    "input",
+                    0,
+                    BufferElement::Scalar(ScalarType::U32),
+                    BufferAccess::StorageRead,
+                ),
+                (
+                    "output",
+                    1,
+                    BufferElement::Scalar(ScalarType::F32),
+                    BufferAccess::StorageReadWrite,
+                ),
+                (
+                    "params",
+                    2,
+                    BufferElement::IqPowerI16Params,
+                    BufferAccess::Uniform,
+                ),
+            ],
+        );
+    }
+    if spec.id == BuiltinKernel::AffineF32.name()
+        || spec.id == BuiltinKernel::TopK.name()
+        || spec.id == BuiltinKernel::IqPowerF32.name()
+    {
         let expected = [
             (
                 "input",
@@ -447,7 +542,11 @@ pub(crate) fn validate_builtin_shape(spec: &KernelSpec) -> Result<(), ForgeError
             (
                 "params",
                 2,
-                BufferElement::AffineParams,
+                if spec.id == BuiltinKernel::IqPowerF32.name() {
+                    BufferElement::IqPowerParams
+                } else {
+                    BufferElement::AffineParams
+                },
                 BufferAccess::Uniform,
             ),
         ];

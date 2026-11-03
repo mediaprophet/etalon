@@ -15,6 +15,7 @@ std = []
 wgsl = []
 naga-validate = ["dep:naga", "naga/wgsl-in"]
 dxc = []
+cuda = []
 
 [dependencies]
 naga = { workspace = true, optional = true, features = ["wgsl-in"] }

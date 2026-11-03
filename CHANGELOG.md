@@ -1,5 +1,22 @@
 # Change Log
 
+## Unreleased
+
+- Record the exact wgpu 30.0.0 source snapshot forked under MIT to begin Etalon development, distinguishing inherited foundations, subsequent improvements, and new Etalon libraries.
+- Add shared Forge routing between portable shader output and CUDA-C, with explicit CUDA preference, device matching, fallback reasons, and native CUDA-C-to-PTX compilation.
+- Add owned native CUDA execution with checked FP32 affine, tensor matrix-vector, and IQ-power operations, plus explicitly unsafe supplied-PTX execution. Preserve unsupported errors for the legacy raw-pointer CUDA lane instead of reporting fabricated completion.
+- Add resident CUDA GEMV, GEMM and fused-FFN execution, plus reusable supplied-kernel dispatch with declared argument types and buffer sizes.
+- Add reusable CUDA signed-i16 IQ processing with endian/scale validation and bounded provider admission. Native prepared Vulkan IQ uses the same Forge kernel specification.
+- Allow Vulkan allocations to use compatible heaps within budget when the preferred CPU-visible device-memory heap is exhausted.
+- Avoid excessive WGSL parser stack use for nested expressions and templates while preserving the existing recursion limit.
+- Correct SPIR-V bounds checking for runtime arrays inside buffer binding arrays, including guarded descriptor access when reading buffer lengths.
+- Preserve inactive Vulkan multiview layers on the reproduced NVIDIA and Intel device/driver combinations.
+- Validate planar texture rendering against parent-image support before native resource creation; reject unsupported dimensions, mip counts, multisampling, and transient planar attachments.
+- Stop advertising nonuniform storage-texture arrays on Intel HD 530 with DX12 driver 31.0.101.2111, where dynamic loads return incorrect results. Uniform storage arrays remain supported.
+- Add the shared IQ-power kernel to WGSL, CUDA-C, HLSL, and MSL emission. PTX output requires an explicit compute capability through `emit_shader_ptx`.
+- Honor `ETALON_ADAPTER_NAME` and print adapter/driver identity in standalone prepared-compute qualification tests.
+- Select the available DX12 compiler automatically in the GPU test harness instead of requiring a compiled-in static DXC.
+
 ## 0.0.2 documentation maintenance
 
 - Describe Etalon as foundations for EMF synthesis, sensing and compute designed specifically for QualiaDB; retain source-backed capability and qualification boundaries. No package version or library code changes.

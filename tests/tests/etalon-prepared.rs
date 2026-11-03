@@ -69,9 +69,13 @@ fn prepared_compute_allocator_qualification() {
         flags: etalon::InstanceFlags::empty(),
         ..etalon::InstanceDescriptor::new_without_display_handle()
     });
-    let adapter =
-        pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions::default()))
-            .unwrap();
+    let adapter = pollster::block_on(etalon::util::initialize_adapter_from_env_or_default(
+        &instance, None,
+    ))
+    .unwrap();
+    let info = adapter.get_info();
+    assert_eq!(info.backend, etalon::Backend::Vulkan);
+    eprintln!("Prepared allocator qualification adapter: {info:#?}");
     let desc = etalon::PreparedComputeDescriptor {
         shader: r"
             @group(0) @binding(0) var<storage, read> input: array<u32>;

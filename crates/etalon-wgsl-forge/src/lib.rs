@@ -7,6 +7,7 @@ pub mod certify;
 pub mod emit;
 pub mod ir;
 pub mod ir_builtins;
+pub mod routing;
 pub mod schedule;
 
 #[cfg(test)]
@@ -24,6 +25,8 @@ pub use certify::{
     certify_kernel, compare_f32, gemv_cpu, matmul_cpu, validate_native, validate_wgsl,
     ComparisonReport, OracleTolerance, ValidationReport,
 };
+#[cfg(all(feature = "cuda", not(target_family = "wasm")))]
+pub use emit::{compile_cuda_to_ptx, emit_shader_ptx};
 pub use emit::{
     compile_hlsl_to_spirv, compile_hlsl_to_spirv_cached, dxc_cache_key, emit_cuda_c,
     emit_cuda_kernel, emit_hlsl, emit_hlsl_wave_kernel, emit_kernel, emit_msl, emit_msl_kernel,
@@ -37,6 +40,10 @@ pub use ir::{
     TensorViewDesc,
 };
 pub use ir_builtins::BuiltinKernel;
+pub use routing::{
+    emit_routed_shader, CudaRouteSupport, CudaUnavailableReason, RouteCapabilities,
+    RoutePreference, RouteReason, RoutedShader,
+};
 pub use schedule::{AdapterConstraints, Schedule, ScheduleSpace, TileConfig, WorkgroupSize};
 
 pub const FORGE_SCHEMA_VERSION: &str = "0.0.1-etalon";

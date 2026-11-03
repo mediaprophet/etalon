@@ -39,7 +39,11 @@ fn malformed_requests_are_rejected_without_device_access() {
 
 #[test]
 fn prepared_shader_matches_uniform_contract_and_validates() {
-    let module = naga::front::wgsl::parse_str(setup::SHADER).unwrap();
+    let shader = setup::shader().unwrap();
+    assert_eq!(shader.kernel_id, "iq-power-i16");
+    let module = naga::front::wgsl::parse_str(&shader.source).unwrap();
+    assert_eq!(module.entry_points[0].name, "iq_power_i16");
+    assert_eq!(module.entry_points[0].workgroup_size, [64, 1, 1]);
     naga::valid::Validator::new(
         naga::valid::ValidationFlags::all(),
         naga::valid::Capabilities::empty(),
@@ -57,6 +61,22 @@ fn prepared_shader_matches_uniform_contract_and_validates() {
         .unwrap()
         .1;
     assert_eq!(uniform.space, naga::AddressSpace::Uniform);
+    let naga::TypeInner::Struct { members, span } = &module.types[uniform.ty].inner else {
+        panic!("IQ parameters must be a uniform struct");
+    };
+    assert_eq!(*span, 16);
+    assert_eq!(
+        members
+            .iter()
+            .map(|member| (member.name.as_deref(), member.offset))
+            .collect::<Vec<_>>(),
+        vec![
+            (Some("scale"), 0),
+            (Some("big_endian"), 4),
+            (Some("count"), 8),
+            (Some("padding"), 12)
+        ]
+    );
 }
 
 struct Permit;
@@ -82,9 +102,13 @@ fn prepared_iq_power_matches_reference_and_reuses_private_lane() {
         flags: etalon::InstanceFlags::empty(),
         ..etalon::InstanceDescriptor::new_without_display_handle()
     });
-    let adapter =
-        pollster::block_on(instance.request_adapter(&etalon::RequestAdapterOptions::default()))
-            .unwrap();
+    let adapter = pollster::block_on(etalon::util::initialize_adapter_from_env_or_default(
+        &instance, None,
+    ))
+    .unwrap();
+    let info = adapter.get_info();
+    assert_eq!(info.backend, etalon::Backend::Vulkan);
+    eprintln!("Prepared IQ power qualification adapter: {info:#?}");
     let mut gate = Permit;
     let mut provider = PreparedIqPower::new(
         &adapter,

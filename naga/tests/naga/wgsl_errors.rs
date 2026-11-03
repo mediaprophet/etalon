@@ -1061,6 +1061,51 @@ fn recursion_depth_template() {
     );
 }
 
+#[test]
+fn recursion_limits_on_two_megabyte_stack() {
+    std::thread::Builder::new()
+        .stack_size(2 * 1024 * 1024)
+        .spawn(|| {
+            let mixed = format!(
+                "fn main() {{ let value = {}1{}; }}",
+                "1 || 1 && 1 | 1 ^ 1 & 1 == 1 <= 1 << 1 + 1 * (".repeat(300),
+                ")".repeat(300),
+            );
+            for input in [
+                include_str!("deep-expression.wgsl"),
+                include_str!("deep-template.wgsl"),
+                mixed.as_str(),
+            ] {
+                let error = naga::front::wgsl::parse_str(input).unwrap_err();
+                assert!(error
+                    .emit_to_string(input)
+                    .contains("Parser recursion limit exceeded"));
+            }
+        })
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+#[test]
+fn binary_expression_precedence_and_associativity() {
+    check_success(
+        r"
+        const_assert 3 + 4 * 5 == 23;
+        const_assert 20 / 2 / 2 == 5;
+        const_assert 20 - 4 - 3 == 13;
+        const_assert ((1u << 2u + 1u) == 8u);
+        const_assert ((64u >> 1u >> 2u) == 8u);
+        const_assert ((1u | 2u ^ 3u & 1u) == 3u);
+        const_assert ((false || true && false) == false);
+        const_assert 3 < 4 && 4 >= 4 && 5 != 6;
+        alias Nested = array<array<u32, (2 + 3 * 4)>, 2>;
+        alias NestedUnparenthesized = array<array<u32, 1 + 2>, 2 * 3>;
+        alias NestedShift = array<array<u32, 1u << 2u>, 1 + 2>;
+        ",
+    );
+}
+
 /// Check the result of validating a WGSL program against a pattern.
 ///
 /// Unless you are generating code programmatically, the

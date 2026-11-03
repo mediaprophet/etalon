@@ -3,6 +3,14 @@ use core::num::NonZeroU32;
 use arrayvec::ArrayVec;
 use ash::vk;
 
+pub(super) fn needs_explicit_multiview_clear(
+    mask: Option<NonZeroU32>,
+    workarounds: super::Workarounds,
+) -> bool {
+    workarounds.contains(super::Workarounds::MULTIVIEW_CLEAR_INACTIVE_LAYERS)
+        && mask.is_some_and(|mask| mask.get().count_ones() != 32 - mask.get().leading_zeros())
+}
+
 pub(super) fn needs_per_layer_resolve(mask: NonZeroU32, workarounds: super::Workarounds) -> bool {
     (mask.get() > 1 && workarounds.contains(super::Workarounds::MULTIVIEW_RESOLVE_LAYER_ZERO))
         || (mask.get().count_ones() != 32 - mask.get().leading_zeros()
@@ -175,9 +183,32 @@ impl super::CommandEncoder {
 
 #[cfg(test)]
 mod tests {
-    use super::{color_attachment_ops, needs_per_layer_resolve};
+    use super::{color_attachment_ops, needs_explicit_multiview_clear, needs_per_layer_resolve};
     use crate::{vulkan::Workarounds, AttachmentOps};
     use core::num::NonZeroU32;
+
+    #[test]
+    fn explicit_clears_apply_only_to_sparse_multiview_on_affected_driver() {
+        let affected = Workarounds::MULTIVIEW_CLEAR_INACTIVE_LAYERS;
+        for mask in [
+            None,
+            NonZeroU32::new(1),
+            NonZeroU32::new(3),
+            NonZeroU32::new(u32::MAX),
+        ] {
+            assert!(!needs_explicit_multiview_clear(mask, affected));
+        }
+        for mask in [2, 9, 1 << 31] {
+            assert!(needs_explicit_multiview_clear(
+                NonZeroU32::new(mask),
+                affected
+            ));
+            assert!(!needs_explicit_multiview_clear(
+                NonZeroU32::new(mask),
+                Workarounds::empty()
+            ));
+        }
+    }
 
     #[test]
     fn sparse_resolve_leaves_contiguous_and_unguarded_views_on_native_path() {

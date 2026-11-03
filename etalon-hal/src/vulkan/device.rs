@@ -297,6 +297,42 @@ impl MemoryProperties {
         let count = self.base.memory_heap_count as usize;
         &self.heap_usage[0..count]
     }
+
+    fn memory_types_within_budget(
+        &self,
+        location: gpu_allocator::MemoryLocation,
+        requirements: &vk::MemoryRequirements,
+        threshold: u8,
+    ) -> u32 {
+        use gpu_allocator::MemoryLocation;
+
+        let required_flags = match location {
+            MemoryLocation::GpuOnly => vk::MemoryPropertyFlags::DEVICE_LOCAL,
+            MemoryLocation::CpuToGpu | MemoryLocation::GpuToCpu => {
+                vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT
+            }
+            MemoryLocation::Unknown => vk::MemoryPropertyFlags::empty(),
+        };
+
+        self.types().iter().enumerate().fold(0, |allowed, (i, ty)| {
+            let bit = 1 << i;
+            let heap = ty.heap_index as usize;
+            let within_budget = self.heap_usage()[heap]
+                .checked_add(requirements.size)
+                .is_some_and(|usage| {
+                    u128::from(usage)
+                        < u128::from(self.heap_budget()[heap] / 100) * u128::from(threshold)
+                });
+            if requirements.memory_type_bits & bit != 0
+                && ty.property_flags.contains(required_flags)
+                && within_budget
+            {
+                allowed | bit
+            } else {
+                allowed
+            }
+        })
+    }
 }
 
 impl super::Device {
@@ -917,15 +953,41 @@ impl super::Device {
         })
     }
 
-    /// Predict whether a proposed allocation will result in an OOM condition.
-    ///
-    /// If so, returns `Err(crate::DeviceError::OutOfMemory)`. If not, returns
-    /// `Ok(())`.
-    ///
-    /// The prediction quality depends on accurately selecting the heap that
-    /// [`gpu_allocator`] will use for the allocation, and is subject to
-    /// deteriorate if the logic in [`gpu_allocator`] changes.
-    fn error_if_would_oom_on_resource_allocation(
+    fn restrict_memory_types_to_budget(
+        &self,
+        location: gpu_allocator::MemoryLocation,
+        requirements: &mut vk::MemoryRequirements,
+    ) -> Result<(), crate::DeviceError> {
+        requirements.memory_type_bits &= self.valid_ash_memory_types;
+        let Some(threshold) = self
+            .shared
+            .instance
+            .memory_budget_thresholds
+            .for_resource_creation
+        else {
+            return Ok(());
+        };
+        let Some(memory_properties) = self.get_memory_properties() else {
+            return Ok(());
+        };
+
+        // Keep allocator preference and fallback choices inside the checked budgets.
+        let allowed =
+            memory_properties.memory_types_within_budget(location, requirements, threshold);
+        if allowed == 0 {
+            log::warn!(
+                "No compatible memory type is within budget for {requirements:?}; heap usage {:?}, budgets {:?}",
+                memory_properties.heap_usage(),
+                memory_properties.heap_budget(),
+            );
+            return Err(crate::DeviceError::OutOfMemory);
+        }
+        requirements.memory_type_bits = allowed;
+        Ok(())
+    }
+
+    /// Estimate the budget for driver-managed query pool memory, whose heap we cannot select.
+    fn error_if_would_oom_on_query_pool_allocation(
         &self,
         location: gpu_allocator::MemoryLocation,
         requirements: &vk::MemoryRequirements,
@@ -991,7 +1053,12 @@ impl super::Device {
             let i = ty.heap_index as usize;
             let heap_usage = memory_properties.heap_usage()[i];
             let heap_budget = memory_properties.heap_budget()[i];
-            if heap_usage + requirements.size < heap_budget / 100 * threshold as u64 {
+            if heap_usage
+                .checked_add(requirements.size)
+                .is_some_and(|usage| {
+                    u128::from(usage) < u128::from(heap_budget / 100) * u128::from(threshold)
+                })
+            {
                 Ok(())
             } else {
                 log::warn!(
@@ -1040,7 +1107,7 @@ impl crate::Device for super::Device {
             (false, false) => gpu_allocator::MemoryLocation::GpuOnly,
         };
 
-        self.error_if_would_oom_on_resource_allocation(location, &requirements)
+        self.restrict_memory_types_to_budget(location, &mut requirements)
             .inspect_err(|_| {
                 unsafe { self.shared.raw.destroy_buffer(raw, None) };
             })?;
@@ -1063,11 +1130,7 @@ impl crate::Device for super::Device {
                 super::MemoryPool::from_memory_flags(desc.memory_flags),
                 &gpu_allocator::vulkan::AllocationCreateDesc {
                     name,
-                    requirements: vk::MemoryRequirements {
-                        memory_type_bits: requirements.memory_type_bits
-                            & self.valid_ash_memory_types,
-                        ..requirements
-                    },
+                    requirements,
                     location,
                     linear: true, // Buffers are always linear
                     allocation_scheme: gpu_allocator::vulkan::AllocationScheme::GpuAllocatorManaged,
@@ -1211,11 +1274,11 @@ impl crate::Device for super::Device {
         &self,
         desc: &crate::TextureDescriptor,
     ) -> Result<super::Texture, crate::DeviceError> {
-        let image = self.create_image_without_memory(desc, None)?;
+        let mut image = self.create_image_without_memory(desc, None)?;
 
-        self.error_if_would_oom_on_resource_allocation(
+        self.restrict_memory_types_to_budget(
             gpu_allocator::MemoryLocation::GpuOnly,
-            &image.requirements,
+            &mut image.requirements,
         )
         .inspect_err(|_| {
             unsafe { self.shared.raw.destroy_image(image.raw, None) };
@@ -1229,11 +1292,7 @@ impl crate::Device for super::Device {
                 super::MemoryPool::from_memory_flags(desc.memory_flags),
                 &gpu_allocator::vulkan::AllocationCreateDesc {
                     name,
-                    requirements: vk::MemoryRequirements {
-                        memory_type_bits: image.requirements.memory_type_bits
-                            & self.valid_ash_memory_types,
-                        ..image.requirements
-                    },
+                    requirements: image.requirements,
                     location: gpu_allocator::MemoryLocation::GpuOnly,
                     linear: false,
                     allocation_scheme: gpu_allocator::vulkan::AllocationScheme::GpuAllocatorManaged,
@@ -2649,7 +2708,7 @@ impl crate::Device for super::Device {
         // queries on an AMD W6800 with driver version 32.0.12030.9. The
         // size and allocation policy may vary; this is an approximate
         // check only.
-        self.error_if_would_oom_on_resource_allocation(
+        self.error_if_would_oom_on_query_pool_allocation(
             gpu_allocator::MemoryLocation::GpuToCpu,
             &vk::MemoryRequirements {
                 size: desc.count as u64 * 256,
@@ -2993,11 +3052,11 @@ impl crate::Device for super::Device {
                 .create_buffer(&vk_buffer_info, None)
                 .map_err(super::map_host_device_oom_and_ioca_err)?;
 
-            let requirements = self.shared.raw.get_buffer_memory_requirements(raw_buffer);
+            let mut requirements = self.shared.raw.get_buffer_memory_requirements(raw_buffer);
 
-            self.error_if_would_oom_on_resource_allocation(
+            self.restrict_memory_types_to_budget(
                 gpu_allocator::MemoryLocation::GpuOnly,
-                &requirements,
+                &mut requirements,
             )
             .inspect_err(|_| {
                 self.shared.raw.destroy_buffer(raw_buffer, None);
@@ -3265,4 +3324,198 @@ impl super::DeviceShared {
 struct ImageWithoutMemory {
     raw: vk::Image,
     requirements: vk::MemoryRequirements,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::MemoryProperties;
+    use ash::vk;
+    use gpu_allocator::MemoryLocation;
+
+    fn memory_properties() -> MemoryProperties {
+        let host = vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT;
+        let device = vk::MemoryPropertyFlags::DEVICE_LOCAL;
+        let mut base = vk::PhysicalDeviceMemoryProperties {
+            memory_type_count: 4,
+            memory_heap_count: 3,
+            ..Default::default()
+        };
+        base.memory_types[..4].copy_from_slice(&[
+            vk::MemoryType {
+                property_flags: host,
+                heap_index: 0,
+            },
+            vk::MemoryType {
+                property_flags: device,
+                heap_index: 1,
+            },
+            vk::MemoryType {
+                property_flags: host | device,
+                heap_index: 2,
+            },
+            vk::MemoryType {
+                property_flags: host | vk::MemoryPropertyFlags::HOST_CACHED,
+                heap_index: 0,
+            },
+        ]);
+        MemoryProperties {
+            base,
+            heap_budget: [2048, 4096, 256].into_iter().collect(),
+            heap_usage: [100, 200, 240].into_iter().collect(),
+        }
+    }
+
+    fn requirements(bits: u32) -> vk::MemoryRequirements {
+        vk::MemoryRequirements {
+            size: 128,
+            alignment: 256,
+            memory_type_bits: bits,
+        }
+    }
+
+    #[test]
+    fn memory_budget_excludes_full_bar_heap_and_keeps_host_fallback() {
+        let props = memory_properties();
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(15), 100),
+            0b1001
+        );
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::GpuToCpu, &requirements(15), 100),
+            0b1001
+        );
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::GpuOnly, &requirements(15), 100),
+            0b0010
+        );
+    }
+
+    #[test]
+    fn memory_budget_nvidia_bar_pressure_keeps_system_memory_types() {
+        let mut props = memory_properties();
+        let host = vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT;
+        let device = vk::MemoryPropertyFlags::DEVICE_LOCAL;
+        props.base.memory_type_count = 6;
+        props.base.memory_types[..6].copy_from_slice(&[
+            vk::MemoryType {
+                property_flags: vk::MemoryPropertyFlags::empty(),
+                heap_index: 1,
+            },
+            vk::MemoryType {
+                property_flags: device,
+                heap_index: 0,
+            },
+            vk::MemoryType {
+                property_flags: device,
+                heap_index: 0,
+            },
+            vk::MemoryType {
+                property_flags: host,
+                heap_index: 1,
+            },
+            vk::MemoryType {
+                property_flags: host | vk::MemoryPropertyFlags::HOST_CACHED,
+                heap_index: 1,
+            },
+            vk::MemoryType {
+                property_flags: host | device,
+                heap_index: 2,
+            },
+        ]);
+        props.heap_usage = [0, 0, 143 * 1024 * 1024].into_iter().collect();
+        props.heap_budget = [
+            10 * 1024 * 1024 * 1024,
+            31 * 1024 * 1024 * 1024,
+            80 * 1024 * 1024,
+        ]
+        .into_iter()
+        .collect();
+        let request = vk::MemoryRequirements {
+            size: 128 * 1024 * 1024,
+            alignment: 256,
+            memory_type_bits: 59,
+        };
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &request, 100),
+            (1 << 3) | (1 << 4)
+        );
+    }
+
+    #[test]
+    fn memory_budget_retains_preferred_and_fallback_heaps_when_available() {
+        let mut props = memory_properties();
+        props.heap_usage[2] = 0;
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(15), 100),
+            0b1101
+        );
+    }
+
+    #[test]
+    fn memory_budget_does_not_restore_excluded_memory_types() {
+        let props = memory_properties();
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(0b0110), 100),
+            0
+        );
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::GpuOnly, &requirements(0b1001), 100),
+            0
+        );
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::Unknown, &requirements(0), 100),
+            0
+        );
+    }
+
+    #[test]
+    fn memory_budget_rejects_noncoherent_host_fallback() {
+        let mut props = memory_properties();
+        props.base.memory_types[0].property_flags = vk::MemoryPropertyFlags::HOST_VISIBLE;
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(0b0101), 100),
+            0
+        );
+    }
+
+    #[test]
+    fn memory_budget_rejects_all_types_on_exhausted_heaps() {
+        let mut props = memory_properties();
+        props.heap_usage = props.heap_budget.clone();
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::Unknown, &requirements(15), 100),
+            0
+        );
+    }
+
+    #[test]
+    fn memory_budget_preserves_strict_threshold_boundary() {
+        let mut props = memory_properties();
+        props.heap_budget[0] = 1024;
+        props.heap_usage[0] = 671;
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(1), 80),
+            1
+        );
+        props.heap_usage[0] = 672;
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(1), 80),
+            0
+        );
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(1), 0),
+            0
+        );
+    }
+
+    #[test]
+    fn memory_budget_rejects_usage_overflow() {
+        let mut props = memory_properties();
+        props.heap_usage[0] = u64::MAX - 63;
+        props.heap_budget[0] = u64::MAX;
+        assert_eq!(
+            props.memory_types_within_budget(MemoryLocation::CpuToGpu, &requirements(1), 100),
+            0
+        );
+    }
 }

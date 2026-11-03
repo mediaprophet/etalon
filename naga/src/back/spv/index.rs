@@ -49,6 +49,181 @@ pub(super) enum BoundsCheckResult {
     },
 }
 
+#[cfg(all(test, feature = "wgsl-in"))]
+mod tests {
+    use crate::{
+        back::spv,
+        proc::{BoundsCheckPolicies, BoundsCheckPolicy},
+    };
+    use alloc::vec::Vec;
+
+    fn instructions(words: &[u32]) -> Vec<&[u32]> {
+        let mut remaining = &words[5..];
+        let mut instructions = Vec::new();
+        while !remaining.is_empty() {
+            let count = (remaining[0] >> 16) as usize;
+            assert!(count != 0 && count <= remaining.len());
+            let (instruction, rest) = remaining.split_at(count);
+            instructions.push(instruction);
+            remaining = rest;
+        }
+        instructions
+    }
+
+    fn is_op(instruction: &[u32], op: spirv::Op) -> bool {
+        instruction[0] & 0xffff == op as u32
+    }
+
+    #[test]
+    fn binding_array_runtime_bounds_use_buffer_length_and_guard_metadata() {
+        for binding_size in [", 8", ""] {
+            for policy in [
+                BoundsCheckPolicy::Restrict,
+                BoundsCheckPolicy::ReadZeroSkipWrite,
+            ] {
+                let source = alloc::format!(
+                    r"
+                    enable etalon_binding_array;
+                    struct Data {{ inner: array<u32> }}
+                    @group(0) @binding(0)
+                    var<storage, read_write> buffers: binding_array<Data{binding_size}>;
+                    @compute @workgroup_size(1)
+                    fn main(@builtin(global_invocation_id) id: vec3u) {{
+                        let descriptor = id.x + 8u;
+                        let element = id.y + 16u;
+                        buffers[descriptor].inner[element] = buffers[descriptor].inner[element] + 1u;
+                    }}
+                "
+                );
+                let module = crate::front::wgsl::parse_str(&source).unwrap();
+                let info = crate::valid::Validator::new(
+                    crate::valid::ValidationFlags::all(),
+                    crate::valid::Capabilities::all(),
+                )
+                .validate(&module)
+                .unwrap();
+                let mut options = spv::Options {
+                    bounds_check_policies: BoundsCheckPolicies {
+                        buffer: policy,
+                        binding_array: policy,
+                        ..Default::default()
+                    },
+                    ..Default::default()
+                };
+                options.binding_map.insert(
+                    crate::ResourceBinding {
+                        group: 0,
+                        binding: 0,
+                    },
+                    spv::BindingInfo {
+                        descriptor_set: 0,
+                        binding: 0,
+                        binding_array_size: Some(8),
+                        ..Default::default()
+                    },
+                );
+                let words = spv::write_vec(&module, &info, &options, None).unwrap();
+                let instructions = instructions(&words);
+                let lengths: Vec<_> = instructions
+                    .iter()
+                    .copied()
+                    .filter(|inst| is_op(inst, spirv::Op::ArrayLength))
+                    .collect();
+                assert!(
+                    !lengths.is_empty(),
+                    "inner arrays require OpArrayLength, not descriptor count"
+                );
+                for length in lengths {
+                    let pointer = instructions
+                        .iter()
+                        .copied()
+                        .find(|inst| is_op(inst, spirv::Op::AccessChain) && inst[2] == length[3])
+                        .unwrap();
+                    assert!(instructions
+                        .iter()
+                        .any(|inst| is_op(inst, spirv::Op::Decorate)
+                            && inst[1] == pointer[2]
+                            && inst[2] == spirv::Decoration::NonUniform as u32));
+                    match policy {
+                        BoundsCheckPolicy::Restrict => {
+                            let clamp = instructions
+                                .iter()
+                                .copied()
+                                .find(|inst| {
+                                    is_op(inst, spirv::Op::ExtInst) && inst[2] == pointer[4]
+                                })
+                                .unwrap();
+                            assert_eq!(clamp[4], spirv::GlslStd450Op::UMin as u32);
+                            assert!(instructions.iter().any(|inst| is_op(
+                                inst,
+                                spirv::Op::Constant
+                            ) && inst[2] == clamp[6]
+                                && inst[3] == 7));
+                            let max = instructions
+                                .iter()
+                                .copied()
+                                .find(|inst| is_op(inst, spirv::Op::ISub) && inst[3] == length[2])
+                                .unwrap();
+                            assert!(instructions.iter().any(|inst| is_op(
+                                inst,
+                                spirv::Op::ExtInst
+                            ) && inst[4]
+                                == spirv::GlslStd450Op::UMin as u32
+                                && inst[6] == max[2]));
+                        }
+                        BoundsCheckPolicy::ReadZeroSkipWrite => {
+                            let pointer_position = instructions
+                                .iter()
+                                .position(|inst| inst.as_ptr() == pointer.as_ptr())
+                                .unwrap();
+                            let label = instructions[..pointer_position]
+                                .iter()
+                                .rev()
+                                .find(|inst| is_op(inst, spirv::Op::Label))
+                                .unwrap()[1];
+                            let branch = instructions
+                                .iter()
+                                .copied()
+                                .find(|inst| {
+                                    is_op(inst, spirv::Op::BranchConditional) && inst[2] == label
+                                })
+                                .unwrap();
+                            let check = instructions
+                                .iter()
+                                .copied()
+                                .find(|inst| {
+                                    is_op(inst, spirv::Op::ULessThan) && inst[2] == branch[1]
+                                })
+                                .unwrap();
+                            assert_eq!(check[3], pointer[4]);
+                            assert!(instructions.iter().any(|inst| is_op(
+                                inst,
+                                spirv::Op::Constant
+                            ) && inst[2] == check[4]
+                                && inst[3] == 8));
+                            let merged = instructions
+                                .iter()
+                                .copied()
+                                .find(|inst| {
+                                    is_op(inst, spirv::Op::Phi)
+                                        && inst[3..]
+                                            .chunks_exact(2)
+                                            .any(|pair| pair[0] == length[2])
+                                })
+                                .unwrap();
+                            assert!(instructions
+                                .iter()
+                                .any(|inst| is_op(inst, spirv::Op::ULessThan)
+                                    && inst[4] == merged[2]));
+                        }
+                        BoundsCheckPolicy::Unchecked => unreachable!(),
+                    }
+                }
+            }
+        }
+    }
+}
+
 /// A value that we either know at translation time, or need to compute at runtime.
 #[derive(Copy, Clone)]
 pub(super) enum MaybeKnown<T> {
@@ -92,7 +267,7 @@ impl BlockContext<'_> {
         block: &mut Block,
     ) -> Result<Word, Error> {
         // The index into the binding array, if any.
-        let binding_array_index_id: Option<Word>;
+        let binding_array_index: Option<(Handle<crate::Expression>, GuardedIndex)>;
 
         // The handle to the Naga IR global we're referring to.
         let global_handle: Handle<crate::GlobalVariable>;
@@ -118,8 +293,8 @@ impl BlockContext<'_> {
                         // binding array holding structs whose last members are
                         // runtime-sized arrays.
                         crate::Expression::GlobalVariable(handle) => {
-                            let index_id = self.get_index_constant(index_outer);
-                            binding_array_index_id = Some(index_id);
+                            binding_array_index =
+                                Some((base_outer, GuardedIndex::Known(index_outer)));
                             global_handle = handle;
                             opt_last_member_index = Some(index);
                         }
@@ -137,8 +312,8 @@ impl BlockContext<'_> {
                         // binding array holding structs whose last members are
                         // runtime-sized arrays.
                         crate::Expression::GlobalVariable(handle) => {
-                            let index_id = self.cached[index_outer];
-                            binding_array_index_id = Some(index_id);
+                            binding_array_index =
+                                Some((base_outer, GuardedIndex::Expression(index_outer)));
                             global_handle = handle;
                             opt_last_member_index = Some(index);
                         }
@@ -153,7 +328,7 @@ impl BlockContext<'_> {
                         // `GlobalVariable`. Since binding arrays can only contain
                         // structs, this must be referring to the last member of a
                         // struct that is a runtime-sized array.
-                        binding_array_index_id = None;
+                        binding_array_index = None;
                         global_handle = handle;
                         opt_last_member_index = Some(index);
                     }
@@ -167,7 +342,7 @@ impl BlockContext<'_> {
             crate::Expression::GlobalVariable(handle) => {
                 // A direct reference to a global variable. This must hold the
                 // runtime-sized array directly.
-                binding_array_index_id = None;
+                binding_array_index = None;
                 global_handle = handle;
                 opt_last_member_index = None;
             }
@@ -181,10 +356,7 @@ impl BlockContext<'_> {
         // ensures that whoever relaxes the validator will get an error message from
         // us, not just bogus SPIR-V.
         let global = &self.ir_module.global_variables[global_handle];
-        match (
-            &self.ir_module.types[global.ty].inner,
-            binding_array_index_id,
-        ) {
+        match (&self.ir_module.types[global.ty].inner, binding_array_index) {
             (&crate::TypeInner::BindingArray { .. }, Some(_)) => {}
             (_, None) => {}
             _ => {
@@ -220,6 +392,34 @@ impl BlockContext<'_> {
             }
         };
 
+        let (binding_array_index_id, condition, non_uniform) = match binding_array_index {
+            Some((base, index)) => {
+                let non_uniform = match index {
+                    GuardedIndex::Expression(index) => {
+                        self.fun_info[index].uniformity.non_uniform_result.is_some()
+                    }
+                    GuardedIndex::Known(_) => false,
+                };
+                match self.write_bounds_check(base, index, block)? {
+                    BoundsCheckResult::KnownInBounds(index) => {
+                        (Some(self.get_index_constant(index)), None, non_uniform)
+                    }
+                    BoundsCheckResult::Computed(index) => (Some(index), None, non_uniform),
+                    BoundsCheckResult::Conditional {
+                        condition_id,
+                        index_id,
+                    } => (Some(index_id), Some(condition_id), non_uniform),
+                }
+            }
+            None => (None, None, false),
+        };
+        let u32_type_id = self.writer.get_u32_type_id();
+        let mut selection = Selection::start(block, u32_type_id);
+        if let Some(condition) = condition {
+            let zero = self.writer.get_constant_null(u32_type_id);
+            selection.if_true(self, condition, zero);
+        }
+        let block = selection.block();
         let structure_id = match binding_array_index_id {
             // We are indexing inside a binding array, generate the access op.
             Some(index_id) => {
@@ -238,24 +438,37 @@ impl BlockContext<'_> {
                     gvar_id,
                     &[index_id],
                 ));
+                if non_uniform {
+                    self.writer
+                        .decorate_non_uniform_binding_array_access(structure_id)?;
+                }
                 structure_id
             }
             None => gvar_id,
         };
         let length_id = self.gen_id();
         block.body.push(Instruction::array_length(
-            self.writer.get_u32_type_id(),
+            u32_type_id,
             length_id,
             structure_id,
             last_member_index,
         ));
 
-        Ok(length_id)
+        Ok(selection.finish(self, length_id))
     }
 
     /// If `sequence` refers to an unbounded binding array global, return its
     /// layout size from the SPIR-V binding map.
     fn binding_array_layout_size(&self, sequence: Handle<crate::Expression>) -> Option<u32> {
+        let sequence_ty = self.fun_info[sequence].ty.inner_with(&self.ir_module.types);
+        let sequence_ty = match *sequence_ty {
+            crate::TypeInner::Pointer { base, .. } => &self.ir_module.types[base].inner,
+            _ => sequence_ty,
+        };
+        // A buffer's runtime array must use its own length, not its descriptor array's length.
+        if !matches!(sequence_ty, crate::TypeInner::BindingArray { .. }) {
+            return None;
+        }
         let global_handle = match self.ir_function.expressions[sequence] {
             crate::Expression::GlobalVariable(handle) => handle,
             _ => self.ir_function.originating_global(sequence)?,

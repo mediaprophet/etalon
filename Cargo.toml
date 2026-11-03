@@ -107,6 +107,7 @@ etalon-sync = { version = "0.0.2", path = "./etalon-sync", default-features = fa
 etalon-test = { version = "0.0.2", path = "./tests" }
 etalon-types = { version = "0.0.2", path = "./etalon-types", default-features = false }
 etalon-agent = { version = "0.0.2", path = "./crates/etalon-agent", default-features = false }
+etalon-cuda = { version = "0.0.2", path = "./crates/etalon-cuda" }
 etalon-wgsl-forge = { version = "0.0.2", path = "./crates/etalon-wgsl-forge", default-features = false }
 etalon-nquin = { version = "0.0.2", path = "./crates/etalon-nquin", default-features = false }
 etalon-tensor = { version = "0.0.2", path = "./crates/etalon-tensor", default-features = false }

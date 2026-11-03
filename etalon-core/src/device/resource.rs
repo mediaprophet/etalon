@@ -1897,6 +1897,8 @@ impl Device {
             return Err(CreateTextureError::InvalidUsage(desc.usage));
         }
 
+        validate_planar_texture_descriptor(desc)?;
+
         conv::check_texture_dimension_size(
             desc.dimension,
             desc.size,
@@ -1994,14 +1996,7 @@ impl Device {
         }
 
         {
-            let (mut width_multiple, mut height_multiple) = desc.format.size_multiple_requirement();
-
-            if desc.format.is_multi_planar_format() {
-                // Multi-planar formats (NV12, P010) enforce alignment multiples across all mip levels
-                // so that chroma-subsampled planes maintain integer texel extents and valid pitch alignments.
-                width_multiple <<= desc.mip_level_count.saturating_sub(1);
-                height_multiple <<= desc.mip_level_count.saturating_sub(1);
-            }
+            let (width_multiple, height_multiple) = desc.format.size_multiple_requirement();
 
             if !desc.size.width.is_multiple_of(width_multiple) {
                 return Err(CreateTextureError::InvalidDimension(
@@ -2128,7 +2123,11 @@ impl Device {
                     planes_usages &= format_features.allowed_usages;
                 }
 
-                desc.usage - planes_usages
+                let parent_usages = self
+                    .adapter
+                    .get_texture_format_features(desc.format)
+                    .allowed_usages;
+                desc.usage - planar_allowed_usages(planes_usages, parent_usages)
             }
             None => desc.usage - format_features.allowed_usages,
         };
@@ -5780,6 +5779,131 @@ impl Device {
 crate::impl_resource_type!(Device);
 crate::impl_labeled!(Device);
 crate::impl_storage_item!(Device);
+
+fn planar_allowed_usages(
+    planes: wgt::TextureUsages,
+    parent: wgt::TextureUsages,
+) -> wgt::TextureUsages {
+    let attachments =
+        wgt::TextureUsages::RENDER_ATTACHMENT | wgt::TextureUsages::TRANSIENT_ATTACHMENT;
+    planes - (attachments - parent) - wgt::TextureUsages::TRANSIENT_ATTACHMENT
+}
+
+fn validate_planar_texture_descriptor(
+    desc: &resource::TextureDescriptor,
+) -> Result<(), resource::CreateTextureError> {
+    use resource::CreateTextureError as E;
+    if !desc.format.is_multi_planar_format() {
+        return Ok(());
+    }
+    if desc.dimension != wgt::TextureDimension::D2 {
+        return Err(E::InvalidDimensionUsages(desc.usage, desc.dimension));
+    }
+    if desc.mip_level_count != 1 {
+        return Err(E::InvalidMipLevelCount {
+            requested: desc.mip_level_count,
+            maximum: 1,
+        });
+    }
+    if desc.sample_count != 1 {
+        return Err(E::InvalidSampleCount(
+            desc.sample_count,
+            desc.format,
+            alloc::vec![1],
+            alloc::vec![1],
+        ));
+    }
+    if desc
+        .usage
+        .contains(wgt::TextureUsages::TRANSIENT_ATTACHMENT)
+    {
+        return Err(E::InvalidFormatUsages(
+            wgt::TextureUsages::TRANSIENT_ATTACHMENT,
+            desc.format,
+            false,
+        ));
+    }
+    Ok(())
+}
+
+#[cfg(test)]
+mod planar_usage_tests {
+    use super::{planar_allowed_usages, validate_planar_texture_descriptor};
+    use crate::resource::{CreateTextureError as E, TextureDescriptor};
+    use wgt::TextureUsages as U;
+
+    #[test]
+    fn renderable_planes_do_not_make_the_parent_renderable() {
+        let planes = U::TEXTURE_BINDING | U::COPY_DST | U::RENDER_ATTACHMENT;
+        assert_eq!(
+            planar_allowed_usages(planes, U::TEXTURE_BINDING | U::COPY_DST),
+            U::TEXTURE_BINDING | U::COPY_DST,
+        );
+        assert_eq!(planar_allowed_usages(planes, planes), planes);
+        assert_eq!(
+            planar_allowed_usages(U::TEXTURE_BINDING, planes),
+            U::TEXTURE_BINDING,
+        );
+        assert!(!planar_allowed_usages(U::all(), U::TEXTURE_BINDING)
+            .intersects(U::RENDER_ATTACHMENT | U::TRANSIENT_ATTACHMENT));
+        assert!(!planar_allowed_usages(U::all(), U::all()).contains(U::TRANSIENT_ATTACHMENT));
+    }
+
+    #[test]
+    fn planar_descriptors_reject_unsupported_shapes_and_transient_usage() {
+        for format in [wgt::TextureFormat::NV12, wgt::TextureFormat::P010] {
+            let valid = TextureDescriptor {
+                label: None,
+                size: wgt::Extent3d {
+                    width: 256,
+                    height: 128,
+                    depth_or_array_layers: 1,
+                },
+                mip_level_count: 1,
+                sample_count: 1,
+                dimension: wgt::TextureDimension::D2,
+                format,
+                usage: U::TEXTURE_BINDING,
+                view_formats: alloc::vec::Vec::new(),
+            };
+            assert!(validate_planar_texture_descriptor(&valid).is_ok());
+            for dimension in [wgt::TextureDimension::D1, wgt::TextureDimension::D3] {
+                assert!(matches!(
+                    validate_planar_texture_descriptor(&TextureDescriptor {
+                        dimension,
+                        ..valid.clone()
+                    }),
+                    Err(E::InvalidDimensionUsages(_, _))
+                ));
+            }
+            for mip_level_count in [0, 2, 8] {
+                assert!(matches!(
+                    validate_planar_texture_descriptor(&TextureDescriptor {
+                        mip_level_count,
+                        ..valid.clone()
+                    }),
+                    Err(E::InvalidMipLevelCount { maximum: 1, .. })
+                ));
+            }
+            for sample_count in [0, 2, 4, 8, 16] {
+                assert!(matches!(
+                    validate_planar_texture_descriptor(&TextureDescriptor {
+                        sample_count,
+                        ..valid.clone()
+                    }),
+                    Err(E::InvalidSampleCount(_, _, _, _))
+                ));
+            }
+            assert!(matches!(
+                validate_planar_texture_descriptor(&TextureDescriptor {
+                    usage: U::RENDER_ATTACHMENT | U::TRANSIENT_ATTACHMENT,
+                    ..valid
+                }),
+                Err(E::InvalidFormatUsages(U::TRANSIENT_ATTACHMENT, _, _))
+            ));
+        }
+    }
+}
 
 #[cfg(all(test, feature = "noop"))]
 mod mapping_error_tests {

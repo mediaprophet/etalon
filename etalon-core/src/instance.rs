@@ -1175,8 +1175,13 @@ impl Adapter {
             ),
         );
         allowed_usages.set(
-            wgt::TextureUsages::RENDER_ATTACHMENT | wgt::TextureUsages::TRANSIENT_ATTACHMENT,
+            wgt::TextureUsages::RENDER_ATTACHMENT,
             caps.intersects(Tfc::COLOR_ATTACHMENT | Tfc::DEPTH_STENCIL_ATTACHMENT),
+        );
+        allowed_usages.set(
+            wgt::TextureUsages::TRANSIENT_ATTACHMENT,
+            !format.is_multi_planar_format()
+                && allowed_usages.contains(wgt::TextureUsages::RENDER_ATTACHMENT),
         );
         allowed_usages.set(
             wgt::TextureUsages::STORAGE_ATOMIC,
@@ -1233,6 +1238,16 @@ impl Adapter {
             wgt::TextureFormatFeatureFlags::MULTISAMPLE_RESOLVE,
             caps.contains(Tfc::MULTISAMPLE_RESOLVE),
         );
+
+        if format.is_multi_planar_format() {
+            flags.remove(
+                wgt::TextureFormatFeatureFlags::MULTISAMPLE_X2
+                    | wgt::TextureFormatFeatureFlags::MULTISAMPLE_X4
+                    | wgt::TextureFormatFeatureFlags::MULTISAMPLE_X8
+                    | wgt::TextureFormatFeatureFlags::MULTISAMPLE_X16
+                    | wgt::TextureFormatFeatureFlags::MULTISAMPLE_RESOLVE,
+            );
+        }
 
         wgt::TextureFormatFeatures {
             allowed_usages,

@@ -1,6 +1,8 @@
 use super::*;
 use etalon_test::{apply, gpu_test, GpuTestConfiguration, TestParameters};
 
+const TEST_INPUT: &[f32] = &[0.0; (1 << 27) / std::mem::size_of::<f32>() * 8];
+
 #[apply(gpu_test!)]
 pub static TWO_BUFFERS: GpuTestConfiguration = GpuTestConfiguration::new()
     .parameters(
@@ -26,19 +28,29 @@ pub static TWO_BUFFERS: GpuTestConfiguration = GpuTestConfiguration::new()
                     .panic("assertion failed: produced"),
             ),
     )
-    .run_async(|ctx| {
-        // The test environment's GPU reports 134MB as the max storage buffer size.https://github.com/mediaprophet/etalon/actions/runs/11001397782/job/30546188996#step:12:1096
-        const SIZE: usize = (1 << 27) / std::mem::size_of::<f32>() * 8;
-        // 2 Buffers worth, of 0.0s.
-        let input = &[0.0; SIZE];
-
-        async move { assert_execute_gpu(&ctx.device, &ctx.queue, input).await }
-    });
+    .run_async(|ctx| async move { assert_execute_gpu(&ctx.device, &ctx.queue, TEST_INPUT).await });
 
 async fn assert_execute_gpu(device: &etalon::Device, queue: &etalon::Queue, input: &[f32]) {
     let expected_len = input.len();
     let produced = execute_gpu_inner(device, queue, input).await;
 
+    assert_produced(&produced, expected_len);
+}
+
+fn assert_produced(produced: &[f32], expected_len: usize) {
     assert_eq!(produced.len(), expected_len);
-    assert!(produced.into_iter().all(|v| v == 1.0));
+    if let Some((index, value)) = produced
+        .iter()
+        .enumerate()
+        .find(|(_, value)| **value != 1.0)
+    {
+        let elements_per_buffer = MAX_BUFFER_SIZE as usize / std::mem::size_of::<f32>();
+        panic!(
+            "assertion failed: produced values must all equal 1.0; first mismatch at element {index} \
+             (buffer {}, offset {}): {value:?}, bits {:#010x}",
+            index / elements_per_buffer,
+            index % elements_per_buffer,
+            value.to_bits(),
+        );
+    }
 }

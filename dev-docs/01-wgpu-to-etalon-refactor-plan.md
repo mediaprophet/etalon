@@ -20,7 +20,7 @@ Retaining `wgpu` crate names, directory paths, and macro prefixes creates archit
 
 1. **Total Namespace Clarity**: Eliminate every vestige of `wgpu` across crate names, internal paths, symbol prefixes, and configuration flags.
 2. **Directory & Workspace Structural Alignment**: Transition workspace folders (`wgpu/`, `wgpu-core/`, `wgpu-hal/`, etc.) into `etalon/`, `etalon-core/`, `etalon-hal/`, etc.
-3. **Zero-Breakage Compatibility Shim**: Provide a lightweight `compat/wgpu` facade that re-exports `etalon`, ensuring external ecosystems (like [Aether](https://github.com/mediaprophet/rust-app-framework), [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), and existing Qualia tools) can migrate at their own pace without cascading build failures.
+3. **Zero-Breakage Compatibility Shim**: Provide a lightweight `compat/wgpu` facade that re-exports `etalon`, ensuring external ecosystems (like [Aether](https://github.com/mediaprophet/Aether), [Webizen OS-Shell](https://github.com/WebizenAI/webizen-os-shell), and existing Qualia tools) can migrate at their own pace without cascading build failures.
 4. **Preserved Upstream Ingestion Capability**: Maintain clean boundary mapping to ensure that critical driver fixes from upstream `gfx-rs/wgpu` can be translated and backported cleanly.
 
 ---

@@ -963,6 +963,7 @@ version = "0.0.2"
 dependencies = [
  "bytemuck",
  "etalon",
+ "etalon-cuda",
  "etalon-hal",
  "etalon-sense",
  "etalon-types",
@@ -1127,6 +1128,17 @@ dependencies = [
  "hashbrown 0.17.1",
  "naga-types",
  "serde",
+]
+
+[[package]]
+name = "etalon-cuda"
+version = "0.0.2"
+dependencies = [
+ "bytemuck",
+ "etalon",
+ "etalon-wgsl-forge",
+ "libloading",
+ "pollster",
 ]
 
 [[package]]
@@ -1378,8 +1390,10 @@ name = "etalon-sense-gpu"
 version = "0.0.2"
 dependencies = [
  "etalon",
+ "etalon-cuda",
  "etalon-sense-core",
  "etalon-signal",
+ "etalon-wgsl-forge",
  "js-sys",
  "naga",
  "pollster",
@@ -1471,7 +1485,9 @@ dependencies = [
  "bytemuck",
  "etalon",
  "etalon-agent",
+ "etalon-cuda",
  "etalon-types",
+ "etalon-wgsl-forge",
  "hashbrown 0.17.1",
  "log",
  "naga",

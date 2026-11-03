@@ -1,10 +1,9 @@
-//! CUDA / CUgraph execution lane with dynamic CUDA Driver FFI and host-pinned DMA registration.
+//! CUDA driver discovery and host-pinned memory registration. Kernel execution is unsupported.
 
 use super::capability::{AgentError, CapabilityState};
 use super::compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId};
 use core::ffi::c_void;
-use core::sync::atomic::{AtomicU64, Ordering};
-use std::sync::{Arc, OnceLock};
+use std::sync::OnceLock;
 
 const CUDA_SUCCESS: i32 = 0;
 const CU_MEMHOSTREGISTER_DEVICEMAP: u32 = 0x02;
@@ -202,7 +201,7 @@ fn os_page_unlock(ptr: *mut u8, size_bytes: usize) -> bool {
     }
 }
 
-/// A prepared PTX or CUBIN kernel plan for CUDA execution.
+/// CUDA kernel metadata. Preparing executable PTX or CUBIN modules is not implemented.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CudaPreparedPlan {
     pub kernel_name: String,
@@ -211,7 +210,7 @@ pub struct CudaPreparedPlan {
     pub shared_mem_bytes: u32,
 }
 
-/// A submission unit for raw CUDA stream dispatch.
+/// CUDA submission metadata. Kernel dispatch is not implemented.
 #[derive(Clone, Debug, PartialEq)]
 pub struct CudaSubmission {
     pub stream_id: u32,
@@ -219,19 +218,15 @@ pub struct CudaSubmission {
     pub grid_override: Option<[u32; 3]>,
 }
 
-/// Compute lane executing captured CUDA graphs or raw PTX modules.
+/// CUDA driver and host-pinning support with unsupported compute execution.
 pub struct CudaComputeLane {
     capability: CapabilityState,
-    queue: QueueId,
-    active_plan: Option<CudaPreparedPlan>,
-    submitted_counter: u64,
-    completed_counter: Arc<AtomicU64>,
     driver: Option<&'static CudaDriverApi>,
     pinned_regions: Vec<PinnedRegion>,
 }
 
 impl CudaComputeLane {
-    pub fn new(queue: QueueId, is_cuda_available: bool) -> Self {
+    pub fn new(_queue: QueueId, is_cuda_available: bool) -> Self {
         let driver = if is_cuda_available {
             CudaDriverApi::probe()
         } else {
@@ -247,22 +242,14 @@ impl CudaComputeLane {
 
         Self {
             capability,
-            queue,
-            active_plan: None,
-            submitted_counter: 0,
-            completed_counter: Arc::new(AtomicU64::new(0)),
             driver,
             pinned_regions: Vec::new(),
         }
     }
 
-    pub fn with_capability(queue: QueueId, capability: CapabilityState) -> Self {
+    pub fn with_capability(_queue: QueueId, capability: CapabilityState) -> Self {
         Self {
             capability,
-            queue,
-            active_plan: None,
-            submitted_counter: 0,
-            completed_counter: Arc::new(AtomicU64::new(0)),
             driver: if capability != CapabilityState::Unavailable {
                 CudaDriverApi::probe()
             } else {
@@ -272,6 +259,7 @@ impl CudaComputeLane {
         }
     }
 
+    /// Driver and host-pinning status; this does not establish compute execution support.
     #[inline]
     pub const fn capability(&self) -> CapabilityState {
         self.capability
@@ -392,78 +380,59 @@ impl ComputeLane for CudaComputeLane {
     type Submission = CudaSubmission;
 
     fn state(&self) -> CapabilityState {
-        self.capability
+        CapabilityState::Unsupported
     }
 
-    fn prepare(&mut self, plan: &Self::PreparedPlan) -> Result<(), Self::Error> {
-        if self.capability == CapabilityState::Unavailable {
-            return Err("CUDA is unsupported or unavailable on this active silicon adapter");
-        }
-        self.active_plan = Some(plan.clone());
-        if self.capability < CapabilityState::Prepared {
-            self.capability = CapabilityState::Prepared;
-        }
-        Ok(())
+    fn prepare(&mut self, _plan: &Self::PreparedPlan) -> Result<(), Self::Error> {
+        Err("CUDA kernel preparation is not implemented")
     }
 
     fn submit(
         &mut self,
-        submission: Self::Submission,
+        _submission: Self::Submission,
     ) -> Result<PerQueueCompletionToken, Self::Error> {
-        let _plan = self
-            .active_plan
-            .as_ref()
-            .ok_or("No active prepared plan in CudaComputeLane")?;
-        if self.capability < CapabilityState::Prepared {
-            return Err("CudaComputeLane is not prepared for execution");
-        }
-
-        for &ptr in &submission.device_ptrs {
-            if ptr == 0 {
-                return Err("Null device pointer encountered in CUDA submission");
-            }
-            if !ptr.is_multiple_of(16) {
-                return Err("Unaligned device pointer (< 16B) encountered in CUDA submission");
-            }
-        }
-
-        if let Some(driver) = self.driver {
-            if driver.ensure_current_context() {
-                let status = unsafe { (driver.cu_stream_synchronize)(core::ptr::null_mut()) };
-                if status != CUDA_SUCCESS {
-                    return Err("CUDA stream synchronization failed during submission");
-                }
-                self.capability = CapabilityState::Verified;
-            } else if self.capability != CapabilityState::Verified {
-                return Err("Failed to bind primary CUDA context for submission");
-            }
-        } else if self.capability != CapabilityState::Verified {
-            return Err("CUDA driver backend is not verified; refusing unverified submission");
-        }
-
-        self.submitted_counter += 1;
-        let fence = self.submitted_counter;
-        self.completed_counter.fetch_max(fence, Ordering::Release);
-        Ok(PerQueueCompletionToken::new(self.queue, fence))
+        Err("CUDA kernel submission is not implemented")
     }
 
-    fn poll_completion(&self, token: PerQueueCompletionToken) -> bool {
-        if token.queue != self.queue || self.capability != CapabilityState::Verified {
-            return false;
-        }
-        if let Some(driver) = self.driver {
-            let status = unsafe { (driver.cu_stream_query)(core::ptr::null_mut()) };
-            if status != CUDA_SUCCESS {
-                return false;
-            }
-        }
-        self.completed_counter.load(Ordering::Acquire) >= token.fence_value
+    fn poll_completion(&self, _token: PerQueueCompletionToken) -> bool {
+        false
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn compute_execution_rejects_caller_asserted_capabilities() {
+        let plan = CudaPreparedPlan {
+            kernel_name: "not_loaded".into(),
+            block_dims: [1, 1, 1],
+            default_grid_dims: [1, 1, 1],
+            shared_mem_bytes: 0,
+        };
+        for capability in [
+            CapabilityState::Unsupported,
+            CapabilityState::Detected,
+            CapabilityState::Compilable,
+            CapabilityState::Prepared,
+            CapabilityState::Verified,
+        ] {
+            let mut lane = CudaComputeLane::with_capability(QueueId(7), capability);
+            assert_eq!(lane.state(), CapabilityState::Unsupported);
+            assert!(lane.prepare(&plan).is_err());
+            assert!(lane
+                .submit(CudaSubmission {
+                    stream_id: 9,
+                    device_ptrs: vec![16],
+                    grid_override: Some([2, 1, 1]),
+                })
+                .is_err());
+            assert_eq!(lane.state(), CapabilityState::Unsupported);
+            assert!(!lane.poll_completion(PerQueueCompletionToken::new(QueueId(7), 0)));
+            assert!(!lane.poll_completion(PerQueueCompletionToken::new(QueueId(7), 1)));
+        }
+    }
 
     #[test]
     fn register_host_pinned_rejects_null_and_unaligned_pointers() {
@@ -507,6 +476,7 @@ mod tests {
             .register_host_pinned(ptr, core::mem::size_of_val(&buf))
             .unwrap();
         assert!(state >= CapabilityState::Prepared);
+        assert_eq!(lane.state(), CapabilityState::Unsupported);
         assert_eq!(lane.pinned_regions().len(), 1);
         lane.unregister_host_pinned(ptr).unwrap();
         assert!(lane.pinned_regions().is_empty());

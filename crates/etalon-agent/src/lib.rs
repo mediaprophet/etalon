@@ -1,13 +1,16 @@
 //! Silicon steward, capability state machine, and safe resource lease manager.
 //!
 //! Provides the coordination layer between cold memory-mapping / kernel preparation
-//! and zero-heap hot-path hardware submission across Vulkan, DX12, Metal, and CUDA.
+//! and hardware submission across Etalon backends. The `cuda` feature exposes owned
+//! CUDA execution of shared Forge kernels; the legacy raw-pointer lane cannot execute kernels.
 //! CUDA and OS memory interop are native-only. Accelerator reports and portable
 //! compute, lease and slab contracts remain available on WebAssembly.
 
 pub mod accelerator;
 pub mod capability;
 pub mod compute_lane;
+#[cfg(all(feature = "cuda", not(target_family = "wasm")))]
+pub use etalon_cuda as cuda;
 #[cfg(not(target_family = "wasm"))]
 pub mod cuda_lane;
 pub mod hal_lane;

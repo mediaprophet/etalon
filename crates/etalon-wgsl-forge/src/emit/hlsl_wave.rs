@@ -77,6 +77,14 @@ fn emit_kernel_body(
     schedule: Schedule,
 ) -> Result<(), ForgeError> {
     match kernel.id.as_str() {
+        "iq-power-f32" | "iq-power-i16" => {
+            return super::iq_power::emit_iq_power(
+                source,
+                kernel,
+                schedule,
+                super::TargetBackend::Hlsl,
+            )
+        }
         "topk" => return emit_topk_wave_hlsl(source, kernel, schedule),
         "fused-ffn" => return emit_fused_ffn_wave_hlsl(source, kernel, schedule),
         "p64-project" => return emit_p64_hlsl(source, kernel, schedule),

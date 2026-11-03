@@ -13,6 +13,8 @@ pub fn all_tests(vec: &mut Vec<GpuTestInitializer>) {
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE);
     vec.push(DRAW_MULTIVIEW_MULTISAMPLE_LAYER_RANGE_DISCARD);
     vec.push(DRAW_MULTIVIEW_PRESERVES_INACTIVE_LAYERS);
+    vec.push(DRAW_MULTIVIEW_LOAD_PRESERVES_INACTIVE_LAYERS);
+    vec.push(CLEAR_MULTIVIEW_PRESERVES_INACTIVE_LAYERS);
     vec.push(DRAW_MULTIVIEW_PIPELINE_ORDER);
     vec.push(DRAW_MULTIVIEW_PIPELINE_ORDER_MIXED_IO);
 }
@@ -185,11 +187,77 @@ static DRAW_MULTIVIEW_PRESERVES_INACTIVE_LAYERS: GpuTestConfiguration = GpuTestC
         }
     });
 
+#[apply(gpu_test!)]
+static DRAW_MULTIVIEW_LOAD_PRESERVES_INACTIVE_LAYERS: GpuTestConfiguration =
+    GpuTestConfiguration::new()
+        .parameters(
+            TestParameters::default()
+                .features(Features::MULTIVIEW | Features::SELECTIVE_MULTIVIEW)
+                .limits(Limits {
+                    max_multiview_view_count: 4,
+                    ..Limits::defaults()
+                }),
+        )
+        .run_async(|ctx| async move {
+            run_test_with_range(
+                &ctx,
+                0b1001,
+                1,
+                1,
+                etalon::StoreOp::Store,
+                RenderOptions {
+                    prefill: Some(0.625),
+                    load_existing: true,
+                    ..Default::default()
+                },
+            )
+            .await;
+        });
+
+#[apply(gpu_test!)]
+static CLEAR_MULTIVIEW_PRESERVES_INACTIVE_LAYERS: GpuTestConfiguration =
+    GpuTestConfiguration::new()
+        .parameters(
+            TestParameters::default()
+                .features(
+                    Features::MULTIVIEW
+                        | Features::SELECTIVE_MULTIVIEW
+                        | Features::MULTISAMPLE_ARRAY,
+                )
+                .limits(Limits {
+                    max_multiview_view_count: 4,
+                    ..Limits::defaults()
+                }),
+        )
+        .run_async(|ctx| async move {
+            for (samples, color_slot) in [(1, 0), (1, 2), (4, 0), (4, 2)] {
+                run_test_with_range(
+                    &ctx,
+                    0b1001,
+                    samples,
+                    1,
+                    etalon::StoreOp::Store,
+                    RenderOptions {
+                        prefill: Some(0.625),
+                        active_clear: 0.25,
+                        skip_draw: true,
+                        color_slot,
+                        ..Default::default()
+                    },
+                )
+                .await;
+            }
+        });
+
 #[derive(Default)]
 struct RenderOptions<'a> {
     shader_label: Option<&'a str>,
     shader_source: Option<&'a str>,
     prefill: Option<f64>,
+    load_existing: bool,
+    active_clear: f64,
+    skip_draw: bool,
+    color_slot: usize,
 }
 
 async fn run_test_with_range(
@@ -242,7 +310,7 @@ async fn run_test_with_range(
     };
 
     const TEXTURE_SIZE: u32 = 256;
-    let pipeline = ctx.device.create_render_pipeline(&pipeline_desc);
+    let pipeline = (!options.skip_draw).then(|| ctx.device.create_render_pipeline(&pipeline_desc));
 
     let texture_desc = etalon::TextureDescriptor {
         label: None,
@@ -327,24 +395,40 @@ async fn run_test_with_range(
         }
     }
     {
+        let color_attachments: Vec<_> = (0..=options.color_slot)
+            .map(|slot| {
+                (slot == options.color_slot).then_some(etalon::RenderPassColorAttachment {
+                    view: &entire_texture_view,
+                    depth_slice: None,
+                    resolve_target: resolve_texture_view.as_ref(),
+                    ops: etalon::Operations {
+                        load: if options.load_existing {
+                            etalon::LoadOp::Load
+                        } else {
+                            etalon::LoadOp::Clear(etalon::Color {
+                                r: options.active_clear,
+                                g: options.active_clear,
+                                b: options.active_clear,
+                                a: options.active_clear,
+                            })
+                        },
+                        store,
+                    },
+                })
+            })
+            .collect();
         let mut rpass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: None,
-            color_attachments: &[Some(etalon::RenderPassColorAttachment {
-                view: &entire_texture_view,
-                depth_slice: None,
-                resolve_target: resolve_texture_view.as_ref(),
-                ops: etalon::Operations {
-                    load: etalon::LoadOp::Clear(etalon::Color::TRANSPARENT),
-                    store,
-                },
-            })],
+            color_attachments: &color_attachments,
             depth_stencil_attachment: None,
             timestamp_writes: None,
             occlusion_query_set: None,
             multiview_mask: NonZero::new(layer_mask),
         });
-        rpass.set_pipeline(&pipeline);
-        rpass.draw(0..6, 0..1);
+        if let Some(pipeline) = &pipeline {
+            rpass.set_pipeline(pipeline);
+            rpass.draw(0..6, 0..1);
+        }
     }
     encoder.copy_texture_to_buffer(
         etalon::TexelCopyTextureInfo {
@@ -385,7 +469,11 @@ async fn run_test_with_range(
             .filter(|&view| view < num_layers as usize);
         let target_value = if let Some(view) = view.filter(|&view| (layer_mask & (1 << view)) != 0)
         {
-            (32 + 64 * view) as u8
+            if options.skip_draw {
+                (options.active_clear * 255.0) as u8
+            } else {
+                (32 + 64 * view) as u8
+            }
         } else {
             (clear_color * 255.0) as u8
         };
@@ -394,6 +482,10 @@ async fn run_test_with_range(
             .iter()
             .copied()
             .find(|b| b.abs_diff(target_value) > 1);
-        assert_eq!(failed_value, None, "Expected {target_value}");
+        assert_eq!(
+            failed_value, None,
+            "Expected {target_value}, layer {layer}, samples {sample_count}, color slot {}",
+            options.color_slot
+        );
     }
 }

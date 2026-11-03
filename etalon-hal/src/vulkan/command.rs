@@ -828,6 +828,12 @@ impl crate::CommandEncoder for super::CommandEncoder {
         self.multiview_resolves.clear();
         let mut vk_clear_values =
             ArrayVec::<vk::ClearValue, { super::MAX_TOTAL_ATTACHMENTS }>::new();
+        let mut explicit_clears =
+            ArrayVec::<vk::ClearAttachment, { crate::MAX_COLOR_ATTACHMENTS }>::new();
+        let explicit_multiview_clear = super::resolve::needs_explicit_multiview_clear(
+            desc.multiview_mask,
+            self.device.workarounds,
+        );
         let mut rp_key = super::RenderPassKey {
             colors: ArrayVec::default(),
             depth_stencil: None,
@@ -843,7 +849,7 @@ impl crate::CommandEncoder for super::CommandEncoder {
             extent: desc.extent,
         };
 
-        for cat in desc.color_attachments {
+        for (color_index, cat) in desc.color_attachments.iter().enumerate() {
             if let Some(cat) = cat.as_ref() {
                 let color_view = if cat.target.view.dimension == wgt::TextureViewDimension::D3 {
                     let key = super::TempTextureViewKey {
@@ -858,14 +864,25 @@ impl crate::CommandEncoder for super::CommandEncoder {
                     cat.target.view.identified_raw_view()
                 };
 
-                vk_clear_values.push(vk::ClearValue {
+                let clear_value = vk::ClearValue {
                     color: unsafe { cat.make_vk_clear_color() },
-                });
+                };
+                vk_clear_values.push(clear_value);
                 let mut color_ops = super::resolve::color_attachment_ops(
                     cat.ops,
                     desc.multiview_mask,
                     self.device.workarounds,
                 );
+                if explicit_multiview_clear && color_ops.contains(crate::AttachmentOps::LOAD_CLEAR)
+                {
+                    color_ops.remove(crate::AttachmentOps::LOAD_CLEAR);
+                    color_ops.insert(crate::AttachmentOps::LOAD);
+                    explicit_clears.push(vk::ClearAttachment {
+                        aspect_mask: vk::ImageAspectFlags::COLOR,
+                        color_attachment: color_index as u32,
+                        clear_value,
+                    });
+                }
                 let mut fallback_resolve = false;
                 if let (Some(mask), Some(resolve)) = (desc.multiview_mask, &cat.resolve_target) {
                     if super::resolve::needs_per_layer_resolve(mask, self.device.workarounds) {
@@ -889,7 +906,11 @@ impl crate::CommandEncoder for super::CommandEncoder {
                         .filter(|_| !fallback_resolve)
                         .map(|target| {
                             target.make_attachment_key(
-                                crate::AttachmentOps::LOAD_CLEAR | crate::AttachmentOps::STORE,
+                                (if explicit_multiview_clear {
+                                    crate::AttachmentOps::LOAD
+                                } else {
+                                    crate::AttachmentOps::LOAD_CLEAR
+                                }) | crate::AttachmentOps::STORE,
                             )
                         }),
                 };
@@ -969,6 +990,17 @@ impl crate::CommandEncoder for super::CommandEncoder {
                 &vk_info,
                 vk::SubpassContents::INLINE,
             );
+            if !explicit_clears.is_empty() {
+                self.device.raw.cmd_clear_attachments(
+                    self.active,
+                    &explicit_clears,
+                    &[vk::ClearRect {
+                        rect: render_area,
+                        base_array_layer: 0,
+                        layer_count: 1,
+                    }],
+                );
+            }
             // Beginning a multiview subpass invalidates non-render-pass state.
             self.device
                 .raw

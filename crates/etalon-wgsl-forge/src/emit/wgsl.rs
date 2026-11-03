@@ -77,6 +77,14 @@ fn emit_kernel_body(
     schedule: Schedule,
 ) -> Result<(), ForgeError> {
     match kernel.id.as_str() {
+        "iq-power-f32" | "iq-power-i16" => {
+            return super::iq_power::emit_iq_power(
+                source,
+                kernel,
+                schedule,
+                super::TargetBackend::Wgsl,
+            )
+        }
         "topk" => return emit_topk_wgsl(source, kernel, schedule),
         "fused-ffn" => return emit_ffn_wgsl(source, kernel, schedule),
         "p64-project" => return emit_p64_wgsl(source, kernel, schedule),
@@ -122,6 +130,8 @@ fn emit_kernel_body(
             BufferElement::Scalar(ScalarType::I32) => "array<i32>",
             BufferElement::Scalar(ScalarType::U64Words) => "array<vec2<u32>>",
             BufferElement::AffineParams => "AffineParams",
+            BufferElement::IqPowerParams => "IqPowerParams",
+            BufferElement::IqPowerI16Params => "IqPowerI16Params",
             BufferElement::P64Words64 => "array<P64Words64>",
             BufferElement::AccelerationStructure => unreachable!("handled above"),
         };

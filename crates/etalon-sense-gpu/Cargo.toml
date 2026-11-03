@@ -9,6 +9,7 @@ description = "Explicit Etalon GPU execution for bounded sensing operations"
 
 [features]
 default = []
+cuda = ["dep:etalon-cuda"]
 vulkan = ["etalon/vulkan"]
 dx12 = ["etalon/dx12"]
 metal = ["etalon/metal"]
@@ -24,6 +25,12 @@ etalon-sense-core = { path = "../etalon-sense-core" }
 etalon = { path = "../../etalon", default-features = false, features = ["std", "wgsl", "webgpu"] }
 wasm-bindgen = { workspace = true, features = ["std"] }
 js-sys = { workspace = true, features = ["std"] }
+
+[target.'cfg(not(target_family = "wasm"))'.dependencies]
+etalon-cuda = { workspace = true, optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+etalon-wgsl-forge = { workspace = true, default-features = false }
 
 [dev-dependencies]
 naga = { workspace = true, features = ["wgsl-in"] }

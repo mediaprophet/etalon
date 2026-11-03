@@ -25,6 +25,7 @@ camera-windows-unqualified = ["camera-windows", "etalon-sense-camera-windows/unq
 camera-windows-unqualified-copy = ["camera-windows-unqualified", "etalon-sense-camera-windows/unqualified-frame-copy"]
 gpu = ["dep:etalon-sense-gpu"]
 gpu-vulkan = ["gpu", "etalon-sense-gpu/vulkan"]
+gpu-cuda = ["gpu", "etalon-sense-gpu/cuda"]
 gpu-dx12 = ["gpu", "etalon-sense-gpu/dx12"]
 gpu-metal = ["gpu", "etalon-sense-gpu/metal"]
 gpu-gles = ["gpu", "etalon-sense-gpu/gles"]

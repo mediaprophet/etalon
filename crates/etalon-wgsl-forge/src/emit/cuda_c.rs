@@ -1,4 +1,4 @@
-//! CUDA-C and PTX emission routing `M <= 4` to DP4A/scalar GEMV and `M >= 8` to WMMA.
+//! CUDA-C emission routing `M <= 4` to DP4A/scalar GEMV and `M >= 8` to WMMA.
 
 use std::fmt::Write;
 
@@ -33,6 +33,12 @@ pub fn emit_cuda_c(kernel: &KernelSpec, schedule: Schedule) -> Result<GeneratedS
 
     let wg = schedule.effective_workgroup_size();
     match kernel.id.as_str() {
+        "iq-power-f32" | "iq-power-i16" => super::iq_power::emit_iq_power(
+            &mut source,
+            kernel,
+            schedule,
+            super::TargetBackend::CudaC,
+        )?,
         "affine-f32" => emit_affine(&mut source)?,
         "fused-ffn" => emit_ffn(&mut source)?,
         "topk" => emit_topk(&mut source, wg)?,

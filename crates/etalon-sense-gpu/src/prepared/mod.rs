@@ -46,6 +46,7 @@ pub enum PreparePowerError {
     BudgetExceeded,
     InvalidIdentity,
     PolicyDenied,
+    Emission(etalon_wgsl_forge::ForgeError),
     Backend(etalon::PrepareComputeError),
 }
 

@@ -12,7 +12,7 @@ description = "Silicon steward, capability state machine, and safe resource leas
 [features]
 default = ["std"]
 std = []
-cuda = []
+cuda = ["dep:etalon-cuda"]
 sensing = ["dep:etalon-sense"]
 sensing-host = ["sensing", "etalon-sense/host"]
 sensing-wasapi = ["sensing", "etalon-sense/wasapi"]
@@ -33,6 +33,7 @@ sensing-camera-windows-unqualified-copy = [
 ]
 sensing-gpu = ["sensing", "etalon-sense/gpu"]
 sensing-gpu-vulkan = ["sensing-gpu", "etalon-sense/gpu-vulkan"]
+sensing-gpu-cuda = ["sensing-gpu", "etalon-sense/gpu-cuda"]
 sensing-gpu-dx12 = ["sensing-gpu", "etalon-sense/gpu-dx12"]
 sensing-gpu-metal = ["sensing-gpu", "etalon-sense/gpu-metal"]
 sensing-gpu-gles = ["sensing-gpu", "etalon-sense/gpu-gles"]
@@ -53,6 +54,7 @@ windows = { workspace = true, features = [
 ] }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+etalon-cuda = { workspace = true, optional = true }
 etalon-hal = { workspace = true, optional = true }
 
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]

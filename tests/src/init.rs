@@ -49,7 +49,7 @@ pub fn initialize_instance(backends: etalon::Backends, params: &TestParameters) 
     let dx12_shader_compiler = if params.force_fxc {
         etalon::Dx12Compiler::Fxc
     } else {
-        etalon::Dx12Compiler::from_env().unwrap_or(etalon::Dx12Compiler::StaticDxc)
+        etalon::Dx12Compiler::from_env().unwrap_or_default()
     };
     assert!(
         params

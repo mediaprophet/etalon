@@ -83,26 +83,6 @@ struct ExpressionContext<'input, 'temp, 'out> {
 }
 
 impl<'a> ExpressionContext<'a, '_, '_> {
-    fn parse_binary_op(
-        &mut self,
-        lexer: &mut Lexer<'a>,
-        classifier: impl Fn(Token<'a>) -> Option<crate::BinaryOperator>,
-        mut parser: impl FnMut(&mut Lexer<'a>, &mut Self) -> Result<'a, Handle<ast::Expression<'a>>>,
-    ) -> Result<'a, Handle<ast::Expression<'a>>> {
-        let start = lexer.start_byte_offset();
-        let mut accumulator = parser(lexer, self)?;
-        while let Some(op) = classifier(lexer.peek().0) {
-            let _ = lexer.next();
-            let left = accumulator;
-            let right = parser(lexer, self)?;
-            accumulator = self.expressions.append(
-                ast::Expression::Binary { op, left, right },
-                lexer.span_from(start),
-            );
-        }
-        Ok(accumulator)
-    }
-
     fn declare_local(&mut self, name: ast::Ident<'a>) -> Result<'a, Handle<ast::Local>> {
         let handle = self.locals.append(ast::Local, name.span);
         if let Some(old) = self.local_table.add(name.name, handle) {
@@ -698,97 +678,76 @@ impl Parser {
         Ok(singular_expr)
     }
 
-    fn equality_expression<'a>(
+    fn binary_expression<'a>(
         &mut self,
         lexer: &mut Lexer<'a>,
         context: &mut ExpressionContext<'a, '_, '_>,
     ) -> Result<'a, Handle<ast::Expression<'a>>> {
-        // equality_expression
-        context.parse_binary_op(
-            lexer,
-            |token| match token {
-                Token::LogicalOperation('=') => Some(crate::BinaryOperator::Equal),
-                Token::LogicalOperation('!') => Some(crate::BinaryOperator::NotEqual),
-                _ => None,
-            },
-            // relational_expression
-            |lexer, context| {
-                let enclosing = self.race_rules(Rule::GenericExpr, Rule::EnclosedExpr);
-                context.parse_binary_op(
-                    lexer,
-                    match enclosing {
-                        Some(Rule::GenericExpr) => |token| match token {
-                            Token::LogicalOperation('<') => Some(crate::BinaryOperator::LessEqual),
-                            _ => None,
-                        },
-                        _ => |token| match token {
-                            Token::Paren('<') => Some(crate::BinaryOperator::Less),
-                            Token::Paren('>') => Some(crate::BinaryOperator::Greater),
-                            Token::LogicalOperation('<') => Some(crate::BinaryOperator::LessEqual),
-                            Token::LogicalOperation('>') => {
-                                Some(crate::BinaryOperator::GreaterEqual)
-                            }
-                            _ => None,
-                        },
+        let mut start = lexer.start_byte_offset();
+        let mut operand = self.unary_expression(lexer, context)?;
+        // Pending operators have strictly increasing precedence, at most ten levels.
+        let mut pending = Vec::<(
+            crate::BinaryOperator,
+            u8,
+            Handle<ast::Expression<'a>>,
+            usize,
+        )>::new();
+        let generic =
+            self.race_rules(Rule::GenericExpr, Rule::EnclosedExpr) == Some(Rule::GenericExpr);
+        loop {
+            use crate::BinaryOperator as B;
+            let (op, precedence) = match lexer.peek().0 {
+                Token::LogicalOperation('|') => (B::LogicalOr, 1),
+                Token::LogicalOperation('&') => (B::LogicalAnd, 2),
+                Token::Operation('|') => (B::InclusiveOr, 3),
+                Token::Operation('^') => (B::ExclusiveOr, 4),
+                Token::Operation('&') => (B::And, 5),
+                Token::LogicalOperation('=') => (B::Equal, 6),
+                Token::LogicalOperation('!') => (B::NotEqual, 6),
+                Token::Paren('<') if !generic => (B::Less, 7),
+                Token::Paren('>') if !generic => (B::Greater, 7),
+                Token::LogicalOperation('<') => (B::LessEqual, 7),
+                Token::LogicalOperation('>') if !generic => (B::GreaterEqual, 7),
+                Token::ShiftOperation('<') => (B::ShiftLeft, 8),
+                Token::ShiftOperation('>') if !generic => (B::ShiftRight, 8),
+                Token::Operation('+') => (B::Add, 9),
+                Token::Operation('-') => (B::Subtract, 9),
+                Token::Operation('*') => (B::Multiply, 10),
+                Token::Operation('/') => (B::Divide, 10),
+                Token::Operation('%') => (B::Modulo, 10),
+                _ => break,
+            };
+            while pending
+                .last()
+                .is_some_and(|&(_, previous, _, _)| previous >= precedence)
+            {
+                let (op, _, left, left_start) = pending.pop().unwrap();
+                operand = context.expressions.append(
+                    ast::Expression::Binary {
+                        op,
+                        left,
+                        right: operand,
                     },
-                    // shift_expression
-                    |lexer, context| {
-                        context.parse_binary_op(
-                            lexer,
-                            match enclosing {
-                                Some(Rule::GenericExpr) => |token| match token {
-                                    Token::ShiftOperation('<') => {
-                                        Some(crate::BinaryOperator::ShiftLeft)
-                                    }
-                                    _ => None,
-                                },
-                                _ => |token| match token {
-                                    Token::ShiftOperation('<') => {
-                                        Some(crate::BinaryOperator::ShiftLeft)
-                                    }
-                                    Token::ShiftOperation('>') => {
-                                        Some(crate::BinaryOperator::ShiftRight)
-                                    }
-                                    _ => None,
-                                },
-                            },
-                            // additive_expression
-                            |lexer, context| {
-                                context.parse_binary_op(
-                                    lexer,
-                                    |token| match token {
-                                        Token::Operation('+') => Some(crate::BinaryOperator::Add),
-                                        Token::Operation('-') => {
-                                            Some(crate::BinaryOperator::Subtract)
-                                        }
-                                        _ => None,
-                                    },
-                                    // multiplicative_expression
-                                    |lexer, context| {
-                                        context.parse_binary_op(
-                                            lexer,
-                                            |token| match token {
-                                                Token::Operation('*') => {
-                                                    Some(crate::BinaryOperator::Multiply)
-                                                }
-                                                Token::Operation('/') => {
-                                                    Some(crate::BinaryOperator::Divide)
-                                                }
-                                                Token::Operation('%') => {
-                                                    Some(crate::BinaryOperator::Modulo)
-                                                }
-                                                _ => None,
-                                            },
-                                            |lexer, context| self.unary_expression(lexer, context),
-                                        )
-                                    },
-                                )
-                            },
-                        )
-                    },
-                )
-            },
-        )
+                    lexer.span_from(left_start),
+                );
+                start = left_start;
+            }
+            let _ = lexer.next();
+            pending.push((op, precedence, operand, start));
+            start = lexer.start_byte_offset();
+            operand = self.unary_expression(lexer, context)?;
+        }
+        while let Some((op, _, left, start)) = pending.pop() {
+            operand = context.expressions.append(
+                ast::Expression::Binary {
+                    op,
+                    left,
+                    right: operand,
+                },
+                lexer.span_from(start),
+            );
+        }
+        Ok(operand)
     }
 
     fn expression<'a>(
@@ -798,63 +757,7 @@ impl Parser {
     ) -> Result<'a, Handle<ast::Expression<'a>>> {
         self.track_recursion(|this| {
             this.push_rule_span(Rule::GeneralExpr, lexer);
-            // logical_or_expression
-            let handle = context.parse_binary_op(
-                lexer,
-                |token| match token {
-                    Token::LogicalOperation('|') => Some(crate::BinaryOperator::LogicalOr),
-                    _ => None,
-                },
-                // logical_and_expression
-                |lexer, context| {
-                    context.parse_binary_op(
-                        lexer,
-                        |token| match token {
-                            Token::LogicalOperation('&') => Some(crate::BinaryOperator::LogicalAnd),
-                            _ => None,
-                        },
-                        // inclusive_or_expression
-                        |lexer, context| {
-                            context.parse_binary_op(
-                                lexer,
-                                |token| match token {
-                                    Token::Operation('|') => {
-                                        Some(crate::BinaryOperator::InclusiveOr)
-                                    }
-                                    _ => None,
-                                },
-                                // exclusive_or_expression
-                                |lexer, context| {
-                                    context.parse_binary_op(
-                                        lexer,
-                                        |token| match token {
-                                            Token::Operation('^') => {
-                                                Some(crate::BinaryOperator::ExclusiveOr)
-                                            }
-                                            _ => None,
-                                        },
-                                        // and_expression
-                                        |lexer, context| {
-                                            context.parse_binary_op(
-                                                lexer,
-                                                |token| match token {
-                                                    Token::Operation('&') => {
-                                                        Some(crate::BinaryOperator::And)
-                                                    }
-                                                    _ => None,
-                                                },
-                                                |lexer, context| {
-                                                    this.equality_expression(lexer, context)
-                                                },
-                                            )
-                                        },
-                                    )
-                                },
-                            )
-                        },
-                    )
-                },
-            )?;
+            let handle = this.binary_expression(lexer, context)?;
             this.pop_rule_span(lexer);
             Ok(handle)
         })

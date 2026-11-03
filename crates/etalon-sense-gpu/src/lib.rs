@@ -25,6 +25,8 @@ mod async_compute;
 #[cfg(not(target_arch = "wasm32"))]
 mod blocking;
 mod completion;
+#[cfg(all(feature = "cuda", not(target_family = "wasm")))]
+pub mod cuda;
 #[cfg(not(target_arch = "wasm32"))]
 pub mod live;
 mod numeric;

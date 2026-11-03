@@ -164,10 +164,31 @@ should include:
 The explicit allocator command is:
 
 ```text
-cargo test -p etalon-test --test etalon-prepared -- --ignored --test-threads=1
+cargo test -p etalon-test --test etalon-prepared -- --ignored --test-threads=1 --nocapture
 ```
 
-That command is a qualification instruction, not a statement that it has run or
-passed. Build/test execution and target evidence belong to the coordinated
+Both this test and the prepared IQ-power qualification test honor
+`ETALON_ADAPTER_NAME` as a case-insensitive substring of the adapter name. An
+unmatched name fails the test instead of selecting another adapter. Without
+this variable they select a default adapter. Both require Vulkan, disable
+instance diagnostic flags, and print the selected adapter and driver; the
+allocator test prints this evidence before its measured execution window.
+
+For example, select NVIDIA hardware in PowerShell and run both qualifications:
+
+```powershell
+$env:ETALON_ADAPTER_NAME = 'NVIDIA'
+cargo test -p etalon-test --test etalon-prepared -- --ignored --test-threads=1 --nocapture
+cargo test -p etalon-sense-gpu --features vulkan prepared_iq_power_matches_reference_and_reuses_private_lane -- --ignored --test-threads=1 --nocapture
+Remove-Item Env:ETALON_ADAPTER_NAME
+```
+
+Use a more specific adapter name when several devices match. Retain the printed
+adapter information with the qualification result. This selection applies to
+these standalone qualification tests; the ordinary GPU harness selects each
+adapter from `.gpuconfig` and can be narrowed with nextest test-name filters.
+
+These commands are qualification instructions, not a statement that they have
+run or passed. Build/test execution and target evidence belong to the coordinated
 release qualification record. Software Vulkan results must be identified as
 software execution, separately from physical CPU/iGPU/device qualification.

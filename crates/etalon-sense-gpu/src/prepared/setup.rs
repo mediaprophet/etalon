@@ -13,9 +13,16 @@ use etalon_sense_core::{
     quantity::SampleEncoding,
 };
 use etalon_signal::execution::DeviceId;
+use etalon_wgsl_forge::{emit_wgsl, BuiltinKernel, GeneratedShader, Schedule};
 use std::time::Duration;
 
-pub(super) const SHADER: &str = include_str!("iq_power.wgsl");
+pub(super) fn shader() -> Result<GeneratedShader, PreparePowerError> {
+    emit_wgsl(
+        &BuiltinKernel::IqPowerI16.spec(),
+        Schedule::from_1d(64, 1, 1),
+    )
+    .map_err(PreparePowerError::Emission)
+}
 
 impl<'gate> PreparedIqPower<'gate> {
     /// Prepare on the explicitly selected adapter. Requires native Vulkan,
@@ -49,10 +56,11 @@ impl<'gate> PreparedIqPower<'gate> {
         if !preparation_permitted(gate, adapter, scope, PreparedPowerStage::BeforePrepare) {
             return Err(PreparePowerError::PolicyDenied);
         }
+        let shader = shader()?;
         let lane = adapter
             .prepare_compute(&etalon::PreparedComputeDescriptor {
-                shader: SHADER,
-                entry_point: "main",
+                shader: &shader.source,
+                entry_point: "iq_power_i16",
                 input_size: (max_pairs * 4) as u64,
                 parameter_size: 16,
                 output_size: (max_pairs * 4) as u64,

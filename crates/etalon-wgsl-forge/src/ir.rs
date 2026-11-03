@@ -14,7 +14,7 @@ pub enum ForgeError {
     InvalidKernel(String),
     #[error("invalid schedule: {0}")]
     InvalidSchedule(String),
-    #[error("WGSL emission: {0}")]
+    #[error("shader emission: {0}")]
     Emission(String),
     #[error("WGSL parse: {0}")]
     WgslParse(String),
@@ -168,6 +168,8 @@ impl ScalarType {
 pub enum BufferElement {
     Scalar(ScalarType),
     AffineParams,
+    IqPowerParams,
+    IqPowerI16Params,
     P64Words64,
     AccelerationStructure,
 }
@@ -176,7 +178,7 @@ impl BufferElement {
     pub const fn size_bytes(self) -> u32 {
         match self {
             Self::Scalar(value) => value.size_bytes(),
-            Self::AffineParams => 16,
+            Self::AffineParams | Self::IqPowerParams | Self::IqPowerI16Params => 16,
             Self::P64Words64 => 64,
             Self::AccelerationStructure => 0,
         }
@@ -185,7 +187,10 @@ impl BufferElement {
     pub const fn alignment_bytes(self) -> u32 {
         match self {
             Self::Scalar(value) => value.alignment_bytes(),
-            Self::AffineParams | Self::P64Words64 => 16,
+            Self::AffineParams
+            | Self::IqPowerParams
+            | Self::IqPowerI16Params
+            | Self::P64Words64 => 16,
             Self::AccelerationStructure => 1,
         }
     }

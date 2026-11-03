@@ -12,7 +12,7 @@ description = "Prepared tensor execution, unified forward arena, and fused atten
 [features]
 default = ["std"]
 std = []
-cuda = ["dep:etalon-agent"]
+cuda = ["dep:etalon-agent", "dep:etalon-cuda", "dep:etalon-wgsl-forge"]
 
 [dependencies]
 etalon = { workspace = true }
@@ -23,6 +23,8 @@ log = { workspace = true }
 thiserror = "2.0.21"
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+etalon-cuda = { workspace = true, optional = true }
+etalon-wgsl-forge = { workspace = true, optional = true, features = ["cuda"] }
 etalon-agent = { workspace = true, optional = true }
 
 [dev-dependencies]

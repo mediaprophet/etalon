@@ -154,7 +154,7 @@ sequenceDiagram
 
 - Consolidate `crates/qualia-core-db/src/render/gpu/` and `crates/webizen-render` into `c:\github\etalon\crates\etalon-render`.
 - Implement `PortalRenderer` for high-throughput spatial 10D manifold rendering.
-- Maintain full support for native desktop windows (via [Aether](https://github.com/mediaprophet/rust-app-framework)) and browser WASM contexts.
+- Maintain full support for native desktop windows (via [Aether](https://github.com/mediaprophet/Aether)) and browser WASM contexts.
 - Integrate the EMF quantum visualizer and skeletal skinning pipelines.
 
 ### Phase 5: QualiaDB Integration & Cleanup

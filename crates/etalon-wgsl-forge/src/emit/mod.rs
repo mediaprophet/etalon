@@ -7,8 +7,11 @@ pub mod cuda_kernels;
 pub mod dxc;
 pub mod dxc_cache;
 pub mod hlsl_wave;
+mod iq_power;
 pub mod msl;
 pub mod msl_kernels;
+#[cfg(all(feature = "cuda", not(target_family = "wasm")))]
+pub mod nvcc;
 pub mod wgsl;
 pub mod wgsl_ops;
 
@@ -32,6 +35,8 @@ pub use hlsl_wave::{
     emit_hlsl_wave_kernel, emit_topk_wave_hlsl,
 };
 pub use msl::{emit_msl, emit_msl_kernel};
+#[cfg(all(feature = "cuda", not(target_family = "wasm")))]
+pub use nvcc::{compile_cuda_to_ptx, emit_shader_ptx};
 pub use wgsl::{emit_wgsl, emit_wgsl_kernel};
 
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -41,6 +46,7 @@ pub enum TargetBackend {
     Wgsl,
     Msl,
     Hlsl,
+    /// Generic emission requires an explicit architecture; use `emit_shader_ptx` on native CUDA builds.
     Ptx,
     CudaC,
     Cuda,
@@ -82,9 +88,10 @@ pub fn emit_shader(
         TargetBackend::Wgsl => emit_wgsl(kernel, schedule),
         TargetBackend::Msl => emit_msl(kernel, schedule),
         TargetBackend::Hlsl => emit_hlsl(kernel, schedule),
-        TargetBackend::CudaC | TargetBackend::Cuda | TargetBackend::Ptx => {
-            emit_cuda_c(kernel, schedule)
-        }
+        TargetBackend::CudaC | TargetBackend::Cuda => emit_cuda_c(kernel, schedule),
+        TargetBackend::Ptx => Err(ForgeError::Emission(
+            "PTX emission requires compiling CUDA-C with a CUDA compiler".to_string(),
+        )),
         TargetBackend::Spirv => Err(ForgeError::Emission(
             "SPIR-V binary emission requires runtime naga spv-out pass".to_string(),
         )),
@@ -97,9 +104,10 @@ pub fn emit_kernel(op: &Op, sched: &Schedule, target: TargetBackend) -> Result<S
         TargetBackend::Wgsl => wgsl::emit_wgsl_kernel(op, sched),
         TargetBackend::Msl => msl::emit_msl_kernel(op, sched),
         TargetBackend::Hlsl => hlsl_wave::emit_hlsl_wave_kernel(op, sched),
-        TargetBackend::Cuda | TargetBackend::CudaC | TargetBackend::Ptx => {
-            cuda_c::emit_cuda_kernel(op, sched)
-        }
+        TargetBackend::Cuda | TargetBackend::CudaC => cuda_c::emit_cuda_kernel(op, sched),
+        TargetBackend::Ptx => Err(ForgeError::Emission(
+            "PTX emission requires compiling CUDA-C with a CUDA compiler".to_string(),
+        )),
         TargetBackend::Spirv => Err(ForgeError::Emission(
             "Direct SPIR-V string emission not supported in emit_kernel".to_string(),
         )),
