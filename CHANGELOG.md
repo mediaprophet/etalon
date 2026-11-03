@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add caller-buffered Qwen PLE n-gram row selection and token history with borrowed configuration metadata. Preserve signed arithmetic, refusal order, partial output and EOS history behavior; table I/O and complete Qwen/MoE execution remain separate migration work.
+
 - Add safe, no_std GPT-2/SmolLM tokenization over borrowed GGUF metadata, with caller-owned tables/workspaces, capacity/work limits and raw-byte decoding. Expose semantics version 1 for host binding: consistent legacy scalar whitespace handling and explicit refusal of unresolved byte symbols. Existing tokenizer/SIMD APIs, chat formatting and heuristic stop policies remain unchanged.
 
 - Add explicitly requested, full-digest-verified local model snapshots with byte/read/write budgets, retained immutable leases and retryable cleanup ownership. Caller-provided readers do not imply remote coherence or authority; existing model loaders remain unchanged.

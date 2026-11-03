@@ -201,3 +201,32 @@ rerun. Strict all-target Clippy, formatting and WASM library compilation pass.
 The original arithmetic bodies are unchanged after line-ending normalization.
 These results cover the helpers, not model parsing, complete streamed Qwen
 execution, GPU/NPU dispatch, state rollback or Webizen acceptance.
+
+## Qwen PLE row selection and history
+
+`qwen::ple` owns trained n-gram row selection, fixed-capacity token history and
+in-place row sorting/deduplication. `PleNgramConfig` borrows the original fixed
+arrays; `PleNgramConfigSource` lets a host retain its owned metadata and wire
+format. Each operation projects the configuration once and uses that same view
+for row selection and EOS handling. Arbitrary host projection implementations
+must be qualified separately for allocation and failure behavior.
+
+The extraction preserves completeness and capacity refusal order, signed
+wrapping products, XOR and Euclidean remainder. A late invalid row may leave a
+written output prefix, but history advances only after successful selection.
+EOS resets the count after row selection and retains the existing stale slots.
+The original sort/dedup output tail behavior is unchanged.
+
+QM-02D qualification passes all 79 package tests in debug and release, strict
+all-target/all-feature Clippy, formatting and dependency-free WASM compilation.
+A separate frozen-source comparison passes 15 tests per profile: three original
+tests, three retained candidate tests, seven author differential groups and two
+independent challenges. These include 2,048 changing-configuration/history
+transitions, refusal recovery, projection unwind, signed arithmetic, full output
+tails, EOS boundaries and positive-controlled allocation measurement. The older
+private draft directory labelled `qm02c` is retained provenance, not the packet
+identifier.
+
+This is numerical ownership extraction. Qualia metadata/serde adapters, PLE
+table I/O, embedding gathers, residual/convolution execution, full Qwen/MoE
+sequences and governed state commit remain separate migration gates.

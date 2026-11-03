@@ -3,6 +3,7 @@
 #[allow(clippy::needless_range_loop)]
 pub mod hyper_connection;
 pub mod numerics;
+pub mod ple;
 
 pub use hyper_connection::{
     group_rms_norm_in_place, group_rms_norm_into, inject_stream_update, mix_streams_into,
