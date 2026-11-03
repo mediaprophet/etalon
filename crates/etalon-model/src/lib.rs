@@ -3,4 +3,5 @@
 
 extern crate alloc;
 
+pub mod gguf;
 pub mod p64;

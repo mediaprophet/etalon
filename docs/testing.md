@@ -759,6 +759,30 @@ tradeoff before adopting streaming in a compiler; no throughput uplift is claime
 Atomic filesystem publication and actual Qualia compiler/transcoder delegation
 remain separately qualified adapters. Run the model package commands above.
 
+### Bounded neutral GGUF traversal
+
+`etalon-model::gguf` provides complete metadata validation and a separate
+successful-prefix KV cursor with sticky failure status. It retains raw names,
+ordered/duplicate values, all tensor dimensions, dtype codes and offsets without
+payload residency. Explicit version and alignment policies, cumulative work,
+header-inclusive byte limits and a fixed nonrecursive stack bound traversal.
+Tensor-name hashing retains all 64 FNV-1a bits.
+
+On 3 November 2026, all 54 model tests passed in debug and release, including
+six authored and seven independent GGUF cases; Clippy with warnings denied and
+WASM compilation passed. Independent checks cover all 13 value types, raw-field
+retention, metadata-only input, strict and prefix behavior, depth/work/byte limits,
+truncation, extreme lengths and positive-controlled zero allocation. Against
+19 actual legacy cases, 16 acceptance decisions agree and 11 raw descriptor
+comparisons match. The strict parser intentionally rejects three malformed cases
+accepted by the legacy path: unknown value type, unknown empty-array subtype and
+incomplete string array.
+
+These differences do not qualify replacing caller behavior. Tokenizer recovery,
+rank projection, version defaults, hardcoded alignment, model interpretation and
+filesystem ownership remain separate adapters. Run the model package commands
+above; no Qualia dependency is introduced.
+
 ### Prepared allocation checks
 
 The prepared native compute API has separate reuse/validation regressions and an
