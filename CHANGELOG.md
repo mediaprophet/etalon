@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add dependency-free `etalon-inference-kernel` with the existing dense/Q4_K scalar operators, caller workspace contracts, paged attention reference and CUDA source templates. Preserve numerical behavior and existing API limitations; this additive library does not yet replace consumers or qualify device execution.
+
 - Add detailed P64 planning errors identifying the failing field, tensor and checked operation. Existing planning APIs preserve their error categories, validation order, output bytes and refusal behavior.
 - Add allocation-free GGUF metadata traversal with explicit byte/work/depth limits, nonrecursive arrays, version/alignment policies, borrowed raw tensor fields and full 64-bit name hashes. Complete parsing and a sticky-error successful-prefix cursor remain separate from caller tokenizer and model interpretation.
 - Add sized P64 layout planning and bounded two-pass payload streaming, including the legacy FFN layout. Enforce frozen workspace requirements, exact byte counts and CRC replay consistency; typed failures explicitly report incomplete output. Numerical conversion and atomic file publication remain caller responsibilities.

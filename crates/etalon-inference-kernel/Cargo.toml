@@ -1,0 +1,13 @@
+[package]
+name = "etalon-inference-kernel"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license = "MIT OR Apache-2.0"
+publish = false
+description = "Dependency-free numerical operator and paged attention contracts"
+
+[features]
+default = []

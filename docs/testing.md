@@ -818,3 +818,10 @@ the actual allocator being invoked does not guarantee that.
 To improve our coverage of memory initialization, we set `LVP_POISON_MEMORY=true` in Linux
 (Vulkan) CI. This instructs llvmpipe to fill all newly initialized memory with a non-zero
 value, so tests will reliably fail if the memory is not properly initialized.
+
+### Numerical inference kernel
+
+See [numerical inference kernel qualification](inference-kernel.md) for the
+independent original/candidate checks, caller contracts and retained limitations.
+The additive library passed 25 tests in debug and release, strict Clippy and WASM
+compilation. Embedded CUDA source identity does not establish device execution.
