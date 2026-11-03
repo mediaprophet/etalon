@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `etalon-model-io` for retained local-NTFS Windows model byte leases and ordered full-content bundle identities, with explicit byte limits and unsupported-platform errors. Keep portable model parsing unsafe-forbidden; consumer admission, remote backing, device-state binding and loader adoption remain separate.
+
 - Add a separate allocation-free artifact event contract with explicit developer and host-verified governed modes, byte/event budgets and one-use accepted records. Preserve token APIs; actual authority, immutable byte backing, lineage and delivery remain host responsibilities.
 
 - Add backend ownership checks for native device/queue pairs and a checked shared pair for compute/render integration. Unknown and WebGPU ownership remain explicitly unverifiable; existing lane construction is preserved.

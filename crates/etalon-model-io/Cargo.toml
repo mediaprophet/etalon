@@ -1,0 +1,22 @@
+[package]
+name = "etalon-model-io"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Retained immutable model byte leases with explicit platform and budget contracts"
+
+[dependencies]
+sha2.workspace = true
+
+[target.'cfg(windows)'.dependencies]
+memmap2.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+
+[lints]
+workspace = true

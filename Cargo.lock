@@ -1354,6 +1354,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "etalon-model-io"
+version = "0.0.2"
+dependencies = [
+ "memmap2",
+ "sha2",
+ "tempfile",
+]
+
+[[package]]
 name = "etalon-naga-bridge"
 version = "0.0.2"
 dependencies = [
