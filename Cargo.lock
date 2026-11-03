@@ -1308,6 +1308,10 @@ dependencies = [
 [[package]]
 name = "etalon-model"
 version = "0.0.2"
+dependencies = [
+ "bytemuck",
+ "half",
+]
 
 [[package]]
 name = "etalon-naga-bridge"

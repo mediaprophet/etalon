@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add optional portable GGML row codecs and Q4 conversion to `etalon-model`, preserving the original dtype/layout/arithmetic and low-level input preconditions. The default model crate remains dependency-free/no_std; the codec feature uses std and optional half/bytemuck dependencies.
+
 - Add dense CPU transformer execution to `etalon-inference-kernel`, with caller-owned KV/workspace, checked byte budgets and primitive tensor-kernel adapters. Preserve forward-operation and partial-failure order; tokenizer, model policy, governance and state rollback remain host responsibilities.
 
 - Add `etalon-inference` budget and KV-page ownership mechanics, with the existing reference-count, copy-on-write metadata, prefix registry and radix behavior. Semantic prefix identity derivation, device copies, scheduling and governance remain host responsibilities.

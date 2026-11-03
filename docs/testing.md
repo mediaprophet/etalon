@@ -839,3 +839,11 @@ See [inference storage qualification](inference-storage.md) for the old/new
 operation-sequence checks and retained caller requirements. All 26 tests pass
 in debug/release, strict Clippy and WASM compilation pass. Reference-count
 metadata behavior is separate from physical KV copies or model-state rollback.
+
+### Portable model codecs
+
+See [portable model codec qualification](model-codecs.md) for the optional `ggml`
+feature, preserved dtype/layout contracts and original input preconditions.
+Default container checks remain separate from codec-enabled tests. Native tests,
+strict Clippy and default/feature-enabled WASM compilation are required; browser
+execution, consumer adoption and governed token acceptance are separate gates.

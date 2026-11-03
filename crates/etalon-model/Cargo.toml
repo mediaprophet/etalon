@@ -9,5 +9,14 @@ license.workspace = true
 publish = false
 description = "Borrowed model container layouts and explicit integrity validation"
 
+[features]
+default = []
+# Preserves the original codec float operations; requires std on native and WASM.
+ggml = ["dep:half", "dep:bytemuck"]
+
+[dependencies]
+half = { workspace = true, optional = true }
+bytemuck = { workspace = true, optional = true, features = ["derive"] }
+
 [lints]
 workspace = true
