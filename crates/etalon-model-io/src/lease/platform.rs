@@ -82,6 +82,38 @@ pub(super) fn open_supported(path: &Path) -> Result<File, LeaseError> {
         .share_mode(1)
         .open(path)
         .map_err(LeaseError::Io)?;
+    validate_supported(&file)?;
+    Ok(file)
+}
+
+pub(crate) fn open_snapshot_parent(path: &Path) -> Result<File, LeaseError> {
+    let file = OpenOptions::new()
+        .read(true)
+        .share_mode(3)
+        .custom_flags(0x0200_0000) // FILE_FLAG_BACKUP_SEMANTICS for a directory handle.
+        .open(path)
+        .map_err(LeaseError::Io)?;
+    validate_supported(&file)?;
+    if !file.metadata().map_err(LeaseError::Io)?.is_dir() {
+        return Err(LeaseError::NotFile);
+    }
+    Ok(file)
+}
+
+pub(crate) fn create_snapshot_file(path: &Path) -> Result<File, LeaseError> {
+    let file = OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create_new(true)
+        .share_mode(0)
+        .open(path)
+        .map_err(LeaseError::Io)?;
+    validate_supported(&file)?;
+    Ok(file)
+}
+
+// Only the synchronous owned handles constructed in this module reach the FFI.
+fn validate_supported(file: &File) -> Result<(), LeaseError> {
     let mut device = DeviceInfo::default();
     let mut fs = AttributeInfo::default();
     let mut device_status = IoStatus {
@@ -116,8 +148,7 @@ pub(super) fn open_supported(path: &Path) -> Result<File, LeaseError> {
         )
     };
     let fs_len = completed(status, &fs_status, std::mem::size_of::<AttributeInfo>())?;
-    classify(device, device_len, &fs, fs_len)?;
-    Ok(file)
+    classify(device, device_len, &fs, fs_len)
 }
 #[cfg(test)]
 mod tests {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add explicitly requested, full-digest-verified local model snapshots with byte/read/write budgets, retained immutable leases and retryable cleanup ownership. Caller-provided readers do not imply remote coherence or authority; existing model loaders remain unchanged.
+
 - Add Qwen vector, group-normalization and Hyper-Connection arithmetic to `etalon-inference-kernel`, preserving caller buffers, refusal order and distinct floating-point associations. Model preparation and complete streamed execution remain separate from these helpers.
 
 - Add existing MoE routing, NVFP4 row/GEMV and convolution/GatedDeltaNet primitives to `etalon-inference-kernel`, preserving numerical order, caller-buffer contracts and documented compatibility limits. Full Qwen/MoE model execution and Qualia consumer adoption remain separate qualification gates.

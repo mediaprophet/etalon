@@ -15,7 +15,7 @@
 mod backing;
 mod identity;
 #[cfg(windows)]
-mod platform;
+pub(crate) mod platform;
 pub use backing::{LeaseError, LeaseIdentity, LeaseLimits, ModelLease};
 pub use identity::{bundle_digest, BundleLimits, ModelPart, ModelPartRole};
 #[cfg(test)]
