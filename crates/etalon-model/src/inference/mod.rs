@@ -2,6 +2,7 @@
 //! the GGUF tensor-info section (and the KV hyperparameter parse that precedes it),
 //! plus the per-layer tensor-name helpers and token-embedding dequant access.
 pub mod moe_routing;
+pub mod projection;
 
 /// Upper bound for the cold GGUF header read.  This includes the vocabulary
 /// metadata and tensor-info directory, never any tensor payload.  It keeps a
@@ -229,6 +230,7 @@ mod file;
 mod hyperparams;
 pub mod ftw_config;
 pub mod qwen_roles;
+pub mod qwen_attention;
 mod lookup;
 mod metadata;
 mod parse;

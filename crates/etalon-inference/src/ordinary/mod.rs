@@ -7,6 +7,7 @@ mod ffn;
 pub mod gpu_params;
 mod layer;
 pub mod moe;
+pub mod moe_projection;
 pub mod output;
 pub mod quant_support;
 pub mod qwen35;

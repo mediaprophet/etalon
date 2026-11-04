@@ -1,5 +1,9 @@
 //! Explicitly admitted Qwen3.5 linear-layer execution over caller-owned buffers.
 mod execute;
+pub mod full_attention;
+pub mod model_plan;
+pub mod model_execute;
+pub mod state;
 pub mod fixture;
 pub mod weights;
 mod workspace;

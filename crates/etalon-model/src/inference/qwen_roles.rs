@@ -107,26 +107,7 @@ pub enum Qwen35Packing {
     FusedKeyHeadGrouped,
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub struct Projection {
-    pub weight: TensorInfo,
-    pub row_scale: Option<TensorInfo>,
-}
-
-impl Projection {
-    pub fn info(&self) -> TensorInfo {
-        self.weight
-    }
-    pub fn row_scales(&self) -> Option<&TensorInfo> {
-        self.row_scale.as_ref()
-    }
-    pub fn cols(&self) -> usize {
-        self.weight.dims[0] as usize
-    }
-    pub fn rows(&self) -> usize {
-        self.weight.dims[1] as usize
-    }
-}
+pub use super::projection::Projection;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Qwen35Projections {
@@ -162,7 +143,7 @@ fn scalar_encoding(info: TensorInfo) -> bool {
     )
 }
 
-fn vector(info: TensorInfo, len: usize) -> Result<TensorInfo, Qwen35RoleError> {
+pub(super) fn vector(info: TensorInfo, len: usize) -> Result<TensorInfo, Qwen35RoleError> {
     if info.n_dims != 1 || info.dims[0] != len as u64 {
         return Err(Qwen35RoleError::Shape);
     }
@@ -172,7 +153,7 @@ fn vector(info: TensorInfo, len: usize) -> Result<TensorInfo, Qwen35RoleError> {
     Ok(info)
 }
 
-fn projection(
+pub(super) fn projection(
     weight: TensorInfo,
     row_scale: Option<TensorInfo>,
     cols: usize,
@@ -199,7 +180,7 @@ fn projection(
 }
 
 impl<H: Copy + Into<ModelHyperparams> + From<ModelHyperparams>> TensorIndex<H> {
-    fn qwen35_tensor(
+    pub(super) fn qwen35_tensor(
         &self,
         layer: u32,
         suffix: &str,
@@ -228,7 +209,7 @@ impl<H: Copy + Into<ModelHyperparams> + From<ModelHyperparams>> TensorIndex<H> {
         Ok(found)
     }
 
-    fn qwen35_projection(
+    pub(super) fn qwen35_projection(
         &self,
         layer: u32,
         stem: &str,
