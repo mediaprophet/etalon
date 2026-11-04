@@ -34,6 +34,7 @@ mod native {
             etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle());
         let adapter = block_on(instance.request_adapter(&etalon::RequestAdapterOptions::default()))
             .expect("native GPU adapter required");
+        eprintln!("lifecycle physical adapter: {:?}", adapter.get_info());
         block_on(adapter.request_device(&etalon::DeviceDescriptor::default()))
             .expect("native GPU device required")
     }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Reject known foreign device/queue leases and validate retained GPU owners before execution, mapping and completed readback. Tensor arenas now refuse reads through a different or lost device; Forge readback unmaps on errors as well as success.
+
 - Add caller-buffered mixed Qwen35 CPU execution with gated full attention, explicit partial text rotary positions, checked model-wide state planning, and a reusable generic routed/shared MoE projection executor. Independent scalar fixtures cover intermediate states, caches and logits; failed tokens invalidate the sequence and withhold outputs. Native source-owner integration and additional expert encodings remain separate work.
 
 - Preserve explicit generic MoE expert counts and selection widths through GGUF/FTW import, native P64 metadata and CPU dispatch. Admit up to 512 experts and 16 selections without silent truncation; retain legacy absent-setting behavior and byte-identical version-1 metadata. A checked version-2 metadata envelope carries routing settings.

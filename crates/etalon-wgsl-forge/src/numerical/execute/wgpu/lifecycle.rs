@@ -30,6 +30,7 @@ mod tests {
     #[ignore = "requires native GPU"]
     fn lost_owner_refuses_upload_and_readback_without_advancing_weights() {
         let mut context = WgpuComputeContext::new(4096).unwrap();
+        eprintln!("lifecycle Forge adapter: {:?}", context.adapter);
         let view = context
             .allocate_and_write(&[0; 4], 0, 0, BindingUsage::StorageReadWrite)
             .unwrap();
