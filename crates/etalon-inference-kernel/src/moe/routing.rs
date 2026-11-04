@@ -1,8 +1,7 @@
 //! MoE top-k router and gating logic (Work Package F9).
 //!
 //! Provides zero-heap top-k expert selection and routing weight normalization
-//! conforming to the Qwen3.6-35B-A3B MoE architecture (256 routed experts, top-8 selection,
-//! and shared expert pathways).
+//! for bounded generic expert counts and model-selected routing widths.
 
 /// Maximum number of routed experts per token supported on the stack.
 pub const MAX_MOE_TOPK: usize = 16;
@@ -10,6 +9,7 @@ pub const MAX_MOE_TOPK: usize = 16;
 /// Error conditions during MoE routing.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum MoeError {
+    InvalidTopK,
     /// Provided output buffers are too small for requested top-k.
     BufferTooSmall,
     /// Number of gate logits is smaller than requested top-k.
@@ -23,6 +23,7 @@ pub enum MoeError {
 impl std::fmt::Display for MoeError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
+            Self::InvalidTopK => write!(f, "MoE top-k must be nonzero"),
             Self::BufferTooSmall => write!(f, "MoE output buffer is smaller than requested top-k"),
             Self::InsufficientExperts => write!(f, "Logit count is smaller than requested top-k"),
             Self::TopKExceedsCapacity => write!(f, "Requested top-k exceeds MAX_MOE_TOPK"),
@@ -70,6 +71,9 @@ pub fn route_topk(
     out_indices: &mut [u16],
     out_weights: &mut [f32],
 ) -> Result<usize, MoeError> {
+    if k == 0 {
+        return Err(MoeError::InvalidTopK);
+    }
     if k > MAX_MOE_TOPK {
         return Err(MoeError::TopKExceedsCapacity);
     }

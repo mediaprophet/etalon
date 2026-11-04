@@ -132,6 +132,7 @@ fn native_metadata_admission_is_explicit_and_bounded() {
             n_embd: 1,
             ..ModelHyperparams::default()
         },
+        moe_routing: Default::default(),
         ple_config: None,
     };
     assert!(matches!(
@@ -143,6 +144,7 @@ fn native_metadata_admission_is_explicit_and_bounded() {
             ssm_state_size: 128,
             ..ModelHyperparams::default()
         },
+        moe_routing: Default::default(),
         ple_config: Some(Qwen4ExpPleConfig::default()),
     };
     let prepared =
@@ -182,6 +184,7 @@ fn extension_preserves_complete_metadata_and_rejects_corruption() {
             full_attention_interval: 4,
             ..ModelHyperparams::default()
         },
+        moe_routing: Default::default(),
         ple_config: Some(Qwen4ExpPleConfig {
             ngram_size: 3,
             head_offsets: [-7; 32],
@@ -208,6 +211,7 @@ fn native_extension_reopens_without_external_metadata_and_binds_unknown_hashes()
             ssm_state_size: 128,
             ..ModelHyperparams::default()
         },
+        moe_routing: Default::default(),
         ple_config: Some(Qwen4ExpPleConfig::default()),
     };
     let mut tokenizer = vec![1, 2, 3];
@@ -271,4 +275,93 @@ fn native_extension_reopens_without_external_metadata_and_binds_unknown_hashes()
         prepared.view().tensor(0).unwrap().name_bytes(),
         name.as_bytes()
     );
+}
+
+#[test]
+fn native_routing_extension_reopens_with_explicit_top6_and_top10() {
+    for k in [6, 10] {
+        let metadata = ModelMetadata {
+            hyperparams: ModelHyperparams {
+                ssm_state_size: 128,
+                ..ModelHyperparams::default()
+            },
+            moe_routing: moe_routing::MoeRoutingSettings {
+                expert_count: Some(256),
+                experts_per_token: Some(k),
+            },
+            ple_config: Some(Qwen4ExpPleConfig::default()),
+        };
+        let mut tokenizer = vec![1, 2, 3];
+        let start = tokenizer.len();
+        tokenizer.resize(start + MODEL_ROUTING_EXTENSION_BYTES, 0);
+        metadata
+            .write_extension_into(&mut tokenizer[start..])
+            .unwrap();
+        let source_hash = tensor_name_hash(b"blk.0.ssm_a");
+        let name = format!("tensor.{source_hash:016x}");
+        let tensors = [TensorDescriptor {
+            name: name.as_bytes(),
+            role_id: 999,
+            dtype: 0,
+            manifold_idx: 0,
+            rank: 1,
+            dimensions: [1, 0, 0, 0],
+            source_offset: 0,
+            source_name_hash: source_hash,
+            alt_dtype: 0,
+            precision_views_mask: 0,
+            alt_blob_offset: 0,
+            blob: &[0; 4],
+        }];
+        let mut bytes = native(0, [1, 1, 0, 0], &[0; 4]);
+        let mut scratch = [crate::p64::P64View::parse(&bytes, IntegrityMode::Full)
+            .unwrap()
+            .tensor(0)
+            .unwrap()
+            .entry()];
+        let plan = plan_into(
+            BuildInput {
+                profile: BuildProfile::GgufLayerPacked,
+                page_log2: 8,
+                flags: P64_FLAG_LITTLE_ENDIAN
+                    | P64_FLAG_LAYER_MAJOR
+                    | P64_FLAG_LAYER_PACK
+                    | P64_FLAG_LAYER_SCHEDULE,
+                header_reserved: metadata_extension_locator(&tokenizer).unwrap(),
+                hparams_bytes: &[0; 64],
+                manifold_bytes: &[0; 64],
+                tokenizer_bytes: &tokenizer,
+                tensors: &tensors,
+            },
+            &mut scratch,
+            BuildBudget {
+                output_bytes: 8192,
+                scratch_bytes: 64,
+            },
+        )
+        .unwrap();
+        bytes.resize(plan.output_len(), 0);
+        write_into(&plan, &mut bytes).unwrap();
+        let prepared =
+            PreparedP64::<ModelHyperparams>::parse(&bytes, IntegrityMode::Full, BUDGET, None)
+                .unwrap();
+        assert_eq!(prepared.index().hyperparams, metadata.hyperparams);
+        assert_eq!(prepared.index().ple_config, metadata.ple_config);
+        assert_eq!(prepared.index().moe_routing, metadata.moe_routing);
+        assert_eq!(
+            prepared
+                .index()
+                .moe_routing
+                .admit(256)
+                .unwrap()
+                .experts_per_token(),
+            k as usize
+        );
+        assert!(prepared.index().tensor_info(b"blk.0.ssm_a").is_some());
+        assert!(prepared.index().tensor_info(name.as_bytes()).is_some());
+        assert_eq!(
+            prepared.view().tensor(0).unwrap().name_bytes(),
+            name.as_bytes()
+        );
+    }
 }

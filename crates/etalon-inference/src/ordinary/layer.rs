@@ -23,6 +23,9 @@ impl<P: LayerProvider> HybridEngine<'_, P> {
             attn_ok = self.dispatch(
                 index, layer, hidden, emb_dim, &tensors, scratch_a, scratch_b,
             );
+            if !attn_ok {
+                return false;
+            }
         } else if tensors.attn_q.is_some() && tensors.attn_k.is_some() && tensors.attn_v.is_some() {
             if let Some(n) = self.host.attention(
                 index,

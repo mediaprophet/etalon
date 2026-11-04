@@ -46,8 +46,14 @@ fn routing_refusal_order_and_preserved_legacy_edges() {
     );
     assert_eq!(ids, [91; 2]);
     assert_eq!(weights, [92.0; 2]);
-    assert_eq!(route_topk(&[], 0, true, &mut ids, &mut weights), Ok(0));
-    assert!(std::panic::catch_unwind(|| route_topk(&[1.0], 0, false, &mut [], &mut [])).is_err());
+    assert_eq!(
+        route_topk(&[], 0, true, &mut ids, &mut weights),
+        Err(MoeError::InvalidTopK)
+    );
+    assert_eq!(
+        route_topk(&[1.0], 0, false, &mut [], &mut []),
+        Err(MoeError::InvalidTopK)
+    );
     // Existing u16 index projection is preserved, not endorsed as safe admission.
     let mut logits = vec![0.0; 65_537];
     logits[65_536] = 1.0;

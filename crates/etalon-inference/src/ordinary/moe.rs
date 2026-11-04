@@ -17,10 +17,26 @@ pub fn execute_moe<P: LayerProvider>(
 
     #[cfg_attr(target_arch = "wasm32", allow(unused_variables))]
     let layer_idx = tensors.layer_idx as u16;
-    let num_experts = (router_info.dims[1] as usize)
-        .min(MAX_ROUTED_EXPERTS)
-        .max(1);
-    let topk = 8usize.min(num_experts);
+    if router_info.n_dims != 2
+        || router_info.dims[0] != emb_dim as u64
+        || emb_dim == 0
+        || emb_dim > 8192
+        || scratch_a.len() < emb_dim
+        || ffn_input.len() < emb_dim
+    {
+        return false;
+    }
+    let Ok(actual_experts) = usize::try_from(router_info.dims[1]) else {
+        return false;
+    };
+    let Ok(routing) = P::moe_routing(index).admit(actual_experts) else {
+        return false;
+    };
+    let num_experts = routing.expert_count();
+    let topk = routing.experts_per_token();
+    if num_experts > MAX_ROUTED_EXPERTS {
+        return false;
+    }
 
     let mut gate_logits = [0.0f32; MAX_ROUTED_EXPERTS];
     #[cfg_attr(target_arch = "wasm32", allow(unused_mut))]

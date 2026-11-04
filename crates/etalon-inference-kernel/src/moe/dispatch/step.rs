@@ -31,6 +31,20 @@ where
         return Err(MoeDispatchError::TooManyExperts);
     }
 
+    if topk == 0 {
+        return Err(MoeDispatchError::Routing(
+            super::super::routing::MoeError::InvalidTopK,
+        ));
+    }
+    if emb_dim == 0
+        || emb_dim > 8192
+        || num_experts
+            .checked_mul(emb_dim)
+            .is_none_or(|n| n > router_weights.len())
+    {
+        return Err(MoeDispatchError::InputOrAccumulatorTooSmall);
+    }
+
     // 1. Router logits: g_e = input . W_router[e]
     let mut gate_logits = [0.0f32; MAX_ROUTED_EXPERTS];
     for e in 0..num_experts {

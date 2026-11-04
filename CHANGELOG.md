@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Preserve explicit generic MoE expert counts and selection widths through GGUF/FTW import, native P64 metadata and CPU dispatch. Admit up to 512 experts and 16 selections without silent truncation; retain legacy absent-setting behavior and byte-identical version-1 metadata. A checked version-2 metadata envelope carries routing settings.
+- Add explicit Qwen35 CPU linear-layer roles, source-byte projections and transactional recurrence with caller-selected projection packing and ordinary normalization representation. Validate external recurrent-state budgets and propagate failed hybrid layers. Full-model Qwen execution and GPU qualification remain separate integration work.
+
 - Add caller-buffered Qwen decay-before-prediction recurrence, explicit grouped/global projection unpacking, head normalization and gates. Preserve the existing recurrence API; independent two-token scalar fixtures and allocation measurements qualify the new CPU helpers. Full-model dispatch, quantized projection and local fused-packing provenance remain separate integration work.
 
 - Use the exact finite f32 minimum in the inference top-k shader so browser WebGPU accepts the initialization constant.

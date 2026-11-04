@@ -7,7 +7,7 @@ mod step;
 pub use error::MoeDispatchError;
 pub use expert::{evaluate_swiglu_expert_nvfp4, silu, ExpertWeightView};
 pub use step::dispatch_moe_step;
-pub const MAX_ROUTED_EXPERTS: usize = 256;
+pub const MAX_ROUTED_EXPERTS: usize = 512;
 pub const MAX_INTERMEDIATE_DIM: usize = 4096;
 #[cfg(test)]
 mod tests;

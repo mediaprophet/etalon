@@ -11,6 +11,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             output_norm: None,
             ple_ngram_embedding: None,
             ple_config: None,
+            moe_routing: Default::default(),
             hyperparams: ModelHyperparams::default().into(),
             max_tensor_bytes: 0,
             max_layer_tensor_bytes: 0,
@@ -30,6 +31,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
 
         let mut hyperparams = ModelHyperparams::default();
         let mut ple_config = Qwen4ExpPleConfig::default();
+        let mut moe_routing = moe_routing::MoeRoutingSettings::default();
         let mut pos = 24usize;
         for _ in 0..kv_count {
             if pos + 8 > mmap.len() {
@@ -44,6 +46,23 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             pos += klen;
             let vtype = u32::from_le_bytes(mmap[pos..pos + 4].try_into().ok()?);
             pos += 4;
+            if key.ends_with(".expert_count") || key.ends_with(".expert_used_count") {
+                if vtype != 4 {
+                    return None;
+                }
+                let value = u32::from_le_bytes(mmap.get(pos..pos + 4)?.try_into().ok()?);
+                pos += 4;
+                let field = if key.ends_with(".expert_count") {
+                    &mut moe_routing.expert_count
+                } else {
+                    &mut moe_routing.experts_per_token
+                };
+                if field.is_some_and(|old| old != value) {
+                    return None;
+                }
+                *field = Some(value);
+                continue;
+            }
             if Self::parse_ple_config_kv(key, vtype, mmap, &mut pos, &mut ple_config) {
                 continue;
             }
@@ -105,6 +124,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             hyperparams.arch_flags |= patch.arch_flags;
         }
 
+        super::moe_metadata::validate(moe_routing).ok()?;
         let mut entries = Vec::with_capacity(tensor_count.min(4096) as usize);
         let mut max_tensor_bytes = 0usize;
         let mut max_layer_tensor_bytes = 0usize;
@@ -230,6 +250,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             output_norm,
             ple_ngram_embedding,
             ple_config: ple_config.is_complete().then_some(ple_config),
+            moe_routing,
             hyperparams: hyperparams.into(),
             max_tensor_bytes,
             max_layer_tensor_bytes,
@@ -295,6 +316,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             output_norm,
             ple_ngram_embedding,
             ple_config: None,
+            moe_routing: Default::default(),
             hyperparams,
             max_tensor_bytes,
             max_layer_tensor_bytes,

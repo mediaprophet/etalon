@@ -17,7 +17,7 @@ gguf-index = ["inference-model"]
 ggml = ["dep:half", "dep:bytemuck"]
 
 [dependencies]
-serde = { workspace = true, optional = true, features = ["derive"] }
+serde = { workspace = true, optional = true, features = ["derive", "alloc"] }
 etalon-inference-kernel = { path = "../etalon-inference-kernel", optional = true }
 half = { workspace = true, optional = true }
 bytemuck = { workspace = true, optional = true, features = ["derive"] }

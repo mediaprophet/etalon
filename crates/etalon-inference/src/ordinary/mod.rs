@@ -1,14 +1,15 @@
 //! Ordinary model execution with host-owned provider and authority policy.
-pub mod cpu;
 pub mod attention;
-pub mod quant_support;
-pub mod gpu_params;
+pub mod cpu;
 pub mod expert_source;
 pub mod experts;
 mod ffn;
+pub mod gpu_params;
 mod layer;
 pub mod moe;
 pub mod output;
+pub mod quant_support;
+pub mod qwen35;
 pub mod rope;
 mod ssm_granite;
 pub mod ssm_layout;
@@ -38,6 +39,9 @@ pub enum LayerEvent {
 /// Providers retain their backend identity and must bound their own allocation and I/O.
 pub trait LayerProvider {
     type Index;
+    fn moe_routing(_index: &Self::Index) -> etalon_model::inference::moe_routing::MoeRoutingSettings {
+        etalon_model::inference::moe_routing::MoeRoutingSettings::default()
+    }
     fn hyperparams(index: &Self::Index) -> ModelHyperparams;
     fn data_start(index: &Self::Index) -> u64;
     fn tensors(index: &Self::Index, layer: u32) -> LayerTensors;
@@ -116,12 +120,28 @@ impl<P: LayerProvider> HybridEngine<'_, P> {
             return false;
         }
         let h = P::hyperparams(index);
-        let mut offset = 0;
+        let mut offset = 0usize;
         for i in 0..layer {
             let t = P::tensors(index, i);
             if t.is_hybrid_ssm_layer() {
-                offset += ssm_layout::ssm_layout_for(&t, &h, h.n_embd as usize).stride;
+                let Ok(layout) = ssm_layout::checked_ssm_layout_for(&t, &h, h.n_embd as usize)
+                else {
+                    return false;
+                };
+                let Some(next) = offset.checked_add(layout.stride) else {
+                    return false;
+                };
+                offset = next;
             }
+        }
+        let Ok(layout) = ssm_layout::checked_ssm_layout_for(tensors, &h, h.n_embd as usize) else {
+            return false;
+        };
+        if offset
+            .checked_add(layout.stride)
+            .is_none_or(|end| end > self.host.state().len())
+        {
+            return false;
         }
         if tensors.ssm_in.is_some() {
             self.dispatch_granite_ssm_layer(

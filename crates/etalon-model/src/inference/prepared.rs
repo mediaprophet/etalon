@@ -11,6 +11,7 @@ pub struct ModelPreparationBudget {
 pub struct ModelMetadata {
     pub hyperparams: ModelHyperparams,
     pub ple_config: Option<Qwen4ExpPleConfig>,
+    pub moe_routing: moe_routing::MoeRoutingSettings,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -68,6 +69,9 @@ impl<'a, H: From<ModelHyperparams>> PreparedP64<'a, H> {
             }
         }
         let metadata = stored_metadata.or(metadata);
+        if let Some(metadata) = metadata {
+            super::moe_metadata::validate(metadata.moe_routing)?;
+        }
         let (hyperparams, ple_config) = match metadata {
             Some(metadata) => {
                 if !metadata.hyperparams.matches_p64(view.hparams()) {
@@ -133,6 +137,7 @@ impl<'a, H: From<ModelHyperparams>> PreparedP64<'a, H> {
             max_layer_tensor_bytes,
         );
         index.ple_config = ple_config;
+        index.moe_routing = metadata.map(|m| m.moe_routing).unwrap_or_default();
         Ok(Self { view, index })
     }
 

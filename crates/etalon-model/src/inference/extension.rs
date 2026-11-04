@@ -8,7 +8,8 @@ const RECORD_MAGIC: &[u8; 8] = b"ETLIMD1\0";
 impl ModelMetadata {
     pub fn needs_extension(&self) -> bool {
         let hp = self.hyperparams;
-        hp.ssm_conv_kernel != 0
+        self.moe_routing != Default::default()
+            || hp.ssm_conv_kernel != 0
             || hp.ssm_state_size != 0
             || hp.ssm_group_count != 0
             || hp.ssm_time_step_rank != 0
@@ -17,7 +18,10 @@ impl ModelMetadata {
             || self.ple_config.is_some()
     }
 
-    pub fn write_extension_into(&self, out: &mut [u8]) -> Result<usize, PrepareModelError> {
+    pub(super) fn write_legacy_extension_into(
+        &self,
+        out: &mut [u8],
+    ) -> Result<usize, PrepareModelError> {
         let out = out
             .get_mut(..MODEL_METADATA_EXTENSION_BYTES)
             .ok_or(PrepareModelError::BudgetExceeded)?;
@@ -123,7 +127,7 @@ impl ModelMetadata {
         Ok(cursor)
     }
 
-    pub fn read_extension(bytes: &[u8]) -> Result<Self, PrepareModelError> {
+    pub(super) fn read_legacy_extension(bytes: &[u8]) -> Result<Self, PrepareModelError> {
         if bytes.len() != MODEL_METADATA_EXTENSION_BYTES
             || bytes.get(..8) != Some(RECORD_MAGIC.as_slice())
             || bytes[8..12] != [1, 0, 0, 0]
@@ -182,6 +186,7 @@ impl ModelMetadata {
         Ok(Self {
             hyperparams,
             ple_config: (present == 1).then_some(ple),
+            moe_routing: Default::default(),
         })
     }
 }
@@ -201,6 +206,21 @@ pub fn metadata_extension_locator(tokenizer: &[u8]) -> Result<[u8; 20], PrepareM
     let mut reserved = [0; 20];
     if tokenizer.len() < MODEL_METADATA_EXTENSION_BYTES {
         return Ok(reserved);
+    }
+    if tokenizer.len() >= MODEL_ROUTING_EXTENSION_BYTES {
+        let start = tokenizer.len() - MODEL_ROUTING_EXTENSION_BYTES;
+        if tokenizer.get(start..start + 8) == Some(b"ETLMOE2\0") {
+            ModelMetadata::read_extension(&tokenizer[start..])?;
+            reserved[..8].copy_from_slice(LOCATOR_MAGIC);
+            reserved[8..12].copy_from_slice(
+                &u32::try_from(start)
+                    .map_err(|_| PrepareModelError::BudgetExceeded)?
+                    .to_le_bytes(),
+            );
+            reserved[12..16].copy_from_slice(&(MODEL_ROUTING_EXTENSION_BYTES as u32).to_le_bytes());
+            reserved[16..18].copy_from_slice(&2u16.to_le_bytes());
+            return Ok(reserved);
+        }
     }
     let start = tokenizer.len() - MODEL_METADATA_EXTENSION_BYTES;
     if tokenizer.get(start..start + 8) != Some(RECORD_MAGIC.as_slice()) {
@@ -228,7 +248,7 @@ pub(super) fn container_metadata(
         }
         return Ok(None);
     }
-    if reserved[16..20] != [1, 0, 0, 0] {
+    if !matches!(reserved[16..20], [1, 0, 0, 0] | [2, 0, 0, 0]) {
         return Err(PrepareModelError::MetadataExtension);
     }
     let start = u32::from_le_bytes(reserved[8..12].try_into().unwrap()) as usize;
@@ -240,5 +260,10 @@ pub(super) fn container_metadata(
         .tokenizer_bytes()
         .get(start..end)
         .ok_or(PrepareModelError::MetadataExtension)?;
+    if (reserved[16] == 1 && len != MODEL_METADATA_EXTENSION_BYTES)
+        || (reserved[16] == 2 && len != MODEL_ROUTING_EXTENSION_BYTES)
+    {
+        return Err(PrepareModelError::MetadataExtension);
+    }
     ModelMetadata::read_extension(record).map(Some)
 }

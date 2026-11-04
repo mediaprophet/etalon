@@ -1,6 +1,7 @@
 //! `TensorIndex` — the tensor-name-hash → info lookup table, built by walking
 //! the GGUF tensor-info section (and the KV hyperparameter parse that precedes it),
 //! plus the per-layer tensor-name helpers and token-embedding dequant access.
+pub mod moe_routing;
 
 /// Upper bound for the cold GGUF header read.  This includes the vocabulary
 /// metadata and tensor-info directory, never any tensor payload.  It keeps a
@@ -44,6 +45,7 @@ pub struct TensorIndex<H = ModelHyperparams> {
     pub ple_ngram_embedding: Option<TensorInfo>,
     /// Exact PLE n-gram row-selection contract, when this GGUF supplies one.
     pub ple_config: Option<Qwen4ExpPleConfig>,
+    pub moe_routing: moe_routing::MoeRoutingSettings,
     pub hyperparams: H,
     /// Largest tensor payload in the file (informational).
     pub max_tensor_bytes: usize,
@@ -225,6 +227,8 @@ fn tensor_layer_number(name: &str) -> Option<u32> {
 
 mod file;
 mod hyperparams;
+pub mod ftw_config;
+pub mod qwen_roles;
 mod lookup;
 mod metadata;
 mod parse;
@@ -268,3 +272,6 @@ fn synthetic_tensor_hash(name: &[u8]) -> Option<u64> {
 
 mod encoding;
 pub use encoding::WeightEncoding;
+
+mod moe_metadata;
+pub use moe_metadata::MODEL_ROUTING_EXTENSION_BYTES;

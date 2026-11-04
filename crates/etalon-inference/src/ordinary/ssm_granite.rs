@@ -105,7 +105,12 @@ impl<P: LayerProvider> HybridEngine<'_, P> {
         //    mmap borrow ends after its last use (dequantize_row_into) — NLL allows
         //    ssm_recurrent_state mutable borrow to start in the same block afterwards.
         {
-            let layout = SsmLayerStateLayout::new(inner_dim, MAX_SSM_STATE, MAX_SSM_HEAD, 1);
+            let Ok(layout) = checked_ssm_layout_for(tensors, &h, n_embd) else {
+                return false;
+            };
+            if layout.conv_len != CONV_HISTORY_DEPTH * inner_dim {
+                return false;
+            }
             let avail = self.host.state().len().saturating_sub(state_offset);
             if avail < layout.stride {
                 return false;
@@ -122,24 +127,32 @@ impl<P: LayerProvider> HybridEngine<'_, P> {
                             return false;
                         }
                     };
-                let _ = etalon_model::ggml::dequantize_row_into(
+                if etalon_model::ggml::dequantize_row_into(
                     conv_raw,
                     ssm_conv1d_info.ggml_type,
                     inner_dim * 4,
                     &mut conv_w[..inner_dim * 4],
-                );
+                )
+                .is_err()
+                {
+                    return false;
+                }
             } // mmap and conv_raw dropped here
             let mut conv_inp = [0f32; MAX_SSM_INNER];
             conv_inp[..inner_dim].copy_from_slice(&scratch_a[..inner_dim]);
             let layer_state =
                 &mut self.host.state_mut()[state_offset..state_offset + layout.stride];
             let (conv_region, _) = layer_state.split_at_mut(layout.conv_len);
-            let _ = step_causal_conv1d(
+            if step_causal_conv1d(
                 conv_region,
                 &conv_w[..inner_dim * 4],
                 &conv_inp[..inner_dim],
                 &mut scratch_b[..inner_dim],
-            );
+            )
+            .is_err()
+            {
+                return false;
+            }
         }
 
         // 4. dt_bias softplus gate.
