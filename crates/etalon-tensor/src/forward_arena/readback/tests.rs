@@ -158,3 +158,78 @@ mod native {
         assert_eq!(calls.get(), 1);
     }
 }
+
+#[cfg(not(target_arch = "wasm32"))]
+mod device_lifecycle {
+    use super::*;
+
+    fn block_on<T>(future: impl std::future::Future<Output = T>) -> T {
+        struct WakeThread;
+        impl std::task::Wake for WakeThread {
+            fn wake(self: Arc<Self>) {}
+        }
+        let waker = Waker::from(Arc::new(WakeThread));
+        let mut context = Context::from_waker(&waker);
+        let mut future = std::pin::pin!(future);
+        loop {
+            if let Poll::Ready(value) = future.as_mut().poll(&mut context) {
+                return value;
+            }
+            std::thread::yield_now();
+        }
+    }
+    fn device() -> (etalon::Device, etalon::Queue) {
+        let instance =
+            etalon::Instance::new(etalon::InstanceDescriptor::new_without_display_handle());
+        let adapter = block_on(instance.request_adapter(&etalon::RequestAdapterOptions::default()))
+            .expect("native GPU adapter required");
+        block_on(adapter.request_device(&etalon::DeviceDescriptor::default()))
+            .expect("native GPU device required")
+    }
+
+    #[test]
+    #[ignore = "requires native GPU"]
+    fn wrong_device_refuses_before_mapping_and_owner_remains_reusable() {
+        let (owner, queue) = device();
+        let (other, _) = device();
+        let arena = ForwardArena::new(&owner, 1, 4, 1);
+        assert!(matches!(
+            arena.try_read_token_blocking(&other),
+            Err(TokenReadbackError::DeviceMismatch)
+        ));
+        assert!(!arena.readback_busy.load(Ordering::Acquire));
+        queue.write_buffer(&arena.readback_stage_buf, 0, &7u32.to_le_bytes());
+        let _ = queue.submit([]);
+        assert_eq!(arena.try_read_token_blocking(&owner).unwrap(), 7);
+    }
+    #[test]
+    #[ignore = "requires native GPU"]
+    fn cancelled_mapping_unmaps_and_allows_reuse() {
+        let (owner, queue) = device();
+        let arena = ForwardArena::new(&owner, 1, 4, 1);
+        let (guard, _) = arena.begin_token_map().unwrap();
+        assert!(arena.readback_busy.load(Ordering::Acquire));
+        drop(guard);
+        assert!(!arena.readback_busy.load(Ordering::Acquire));
+        owner.poll(etalon::PollType::Poll).unwrap();
+        queue.write_buffer(&arena.readback_stage_buf, 0, &9u32.to_le_bytes());
+        let _ = queue.submit([]);
+        assert_eq!(arena.try_read_token_blocking(&owner).unwrap(), 9);
+    }
+    #[test]
+    #[ignore = "requires native GPU"]
+    fn loss_after_completed_mapping_refuses_output_and_releases_mapping() {
+        let (owner, _) = device();
+        let arena = ForwardArena::new(&owner, 1, 4, 1);
+        let (guard, state) = arena.begin_token_map().unwrap();
+        owner.poll(etalon::PollType::wait_indefinitely()).unwrap();
+        assert!(state.lock().unwrap().result.take().unwrap().is_ok());
+        owner.destroy();
+        assert!(matches!(
+            arena.validate_readback_device(&owner),
+            Err(TokenReadbackError::DeviceLost)
+        ));
+        drop(guard);
+        assert!(!arena.readback_busy.load(Ordering::Acquire));
+    }
+}

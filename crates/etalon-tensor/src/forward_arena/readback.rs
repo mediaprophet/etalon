@@ -1,13 +1,17 @@
 use super::ForwardArena;
 use core::task::{Context, Poll, Waker};
 use std::sync::{
-    atomic::{AtomicBool, Ordering},
     Arc, Mutex,
+    atomic::{AtomicBool, Ordering},
 };
 use thiserror::Error;
 
 #[derive(Debug, Error)]
 pub enum TokenReadbackError {
+    #[error("readback device differs from the arena device")]
+    DeviceMismatch,
+    #[error("forward arena device is lost")]
+    DeviceLost,
     #[error("blocking token readback is unsupported on wasm32; await read_token_async instead")]
     BlockingUnsupported,
     #[error("a token readback is already in progress")]
@@ -130,9 +134,27 @@ impl Drop for MappingGuard<'_> {
 }
 
 impl ForwardArena {
+    pub(super) fn ensure_device_live(&self) -> Result<(), TokenReadbackError> {
+        #[cfg(not(target_arch = "wasm32"))]
+        self.device
+            .poll(etalon::PollType::Poll)
+            .map_err(|_| TokenReadbackError::DeviceLost)?;
+        if self.device.is_valid_state() == Some(false) {
+            return Err(TokenReadbackError::DeviceLost);
+        }
+        Ok(())
+    }
+    fn validate_readback_device(&self, device: &etalon::Device) -> Result<(), TokenReadbackError> {
+        if self.device != *device {
+            return Err(TokenReadbackError::DeviceMismatch);
+        }
+        self.ensure_device_live()
+    }
+
     fn begin_token_map(
         &self,
     ) -> Result<(MappingGuard<'_>, Arc<Mutex<Completion>>), TokenReadbackError> {
+        self.ensure_device_live()?;
         self.readback_busy
             .compare_exchange(false, true, Ordering::Acquire, Ordering::Relaxed)
             .map_err(|_| TokenReadbackError::Busy)?;
@@ -160,6 +182,7 @@ impl ForwardArena {
         &self,
         device: &etalon::Device,
     ) -> Result<u32, TokenReadbackError> {
+        self.validate_readback_device(device)?;
         let (guard, state) = self.begin_token_map()?;
         #[cfg(not(target_arch = "wasm32"))]
         {
@@ -176,6 +199,7 @@ impl ForwardArena {
             let _ = device; // Browser map Promise callbacks progress through the event loop.
             core::future::poll_fn(|cx| poll_completion(&state, cx)).await?;
         }
+        self.validate_readback_device(device)?;
         guard.token()
     }
 
@@ -194,6 +218,7 @@ impl ForwardArena {
         }
         #[cfg(not(target_arch = "wasm32"))]
         {
+            self.validate_readback_device(device)?;
             let (guard, state) = self.begin_token_map()?;
             device.poll(etalon::PollType::wait_or_timeout(
                 core::time::Duration::from_secs(5),
@@ -204,6 +229,7 @@ impl ForwardArena {
                 .result
                 .take()
                 .ok_or(TokenReadbackError::MissingCallback)??;
+            self.validate_readback_device(device)?;
             guard.token()
         }
     }

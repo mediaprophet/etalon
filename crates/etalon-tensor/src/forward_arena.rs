@@ -7,7 +7,7 @@
 mod allocation;
 mod readback;
 
-pub use allocation::{TensorArenaError, DEFAULT_FORWARD_ARENA_BUDGET};
+pub use allocation::{DEFAULT_FORWARD_ARENA_BUDGET, TensorArenaError};
 pub use readback::TokenReadbackError;
 
 /// Operational mode of the forward execution arena.
@@ -23,6 +23,7 @@ pub enum ForwardMode {
 
 /// Unified forward execution arena on an Etalon device.
 pub struct ForwardArena {
+    device: etalon::Device,
     readback_busy: std::sync::atomic::AtomicBool,
     pub max_batch: u32,
     pub hidden_dim: u32,
@@ -59,6 +60,13 @@ impl ForwardArena {
             &device.limits(),
             byte_budget,
         )?;
+        #[cfg(not(target_arch = "wasm32"))]
+        device
+            .poll(etalon::PollType::Poll)
+            .map_err(|_| TensorArenaError::DeviceLost)?;
+        if device.is_valid_state() == Some(false) {
+            return Err(TensorArenaError::DeviceLost);
+        }
         let byte_size = sizes.storage;
 
         let usage_st = etalon::BufferUsages::STORAGE
@@ -94,6 +102,7 @@ impl ForwardArena {
         });
 
         Ok(Self {
+            device: device.clone(),
             readback_busy: std::sync::atomic::AtomicBool::new(false),
             max_batch,
             hidden_dim,
@@ -158,6 +167,8 @@ impl ForwardArena {
         if size > token_src.size() || size > self.readback_stage_buf.size() {
             return Err(TensorArenaError::ReadbackBufferTooSmall);
         }
+        self.ensure_device_live()
+            .map_err(|_| TensorArenaError::DeviceLost)?;
         if size > 0 {
             encoder.copy_buffer_to_buffer(token_src, 0, &self.readback_stage_buf, 0, size);
         }

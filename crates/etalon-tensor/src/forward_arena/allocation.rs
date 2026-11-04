@@ -4,6 +4,8 @@ pub const DEFAULT_FORWARD_ARENA_BUDGET: u64 = 256 * 1024 * 1024;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Error)]
 pub enum TensorArenaError {
+    #[error("forward arena device is lost")]
+    DeviceLost,
     #[error("forward batch is outside arena capacity or speculative verification limit")]
     InvalidBatch,
     #[error("forward readback copy exceeds source or staging buffer size")]
