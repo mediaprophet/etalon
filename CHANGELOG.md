@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add caller-buffered Qwen decay-before-prediction recurrence, explicit grouped/global projection unpacking, head normalization and gates. Preserve the existing recurrence API; independent two-token scalar fixtures and allocation measurements qualify the new CPU helpers. Full-model dispatch, quantized projection and local fused-packing provenance remain separate integration work.
+
 - Use the exact finite f32 minimum in the inference top-k shader so browser WebGPU accepts the initialization constant.
 
 - Migrate reusable inference execution, native backends, attention/projection resources, model preparation and optimization tooling into Etalon. P64 is the native model format; GGUF remains an import and compatibility boundary. Generic MoE routing, expert placement/residency, streamed execution and clustered operators are independent of Qwen architecture adapters. Qualia retains application authority and Webizen acceptance policy.
