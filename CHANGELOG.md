@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Use the exact finite f32 minimum in the inference top-k shader so browser WebGPU accepts the initialization constant.
+
 - Migrate reusable inference execution, native backends, attention/projection resources, model preparation and optimization tooling into Etalon. P64 is the native model format; GGUF remains an import and compatibility boundary. Generic MoE routing, expert placement/residency, streamed execution and clustered operators are independent of Qwen architecture adapters. Qualia retains application authority and Webizen acceptance policy.
 - Add an explicit standalone developer P64 CPU lab with bounded caller workspaces and owned artifacts, real execution receipts, and benchmark/search/campaign/ablation entrypoints. Unsupported model/backend profiles and unavailable quality or telemetry remain explicit.
 - Share portable compute, rendering/readback, signal/science and isolated diagnostic worker implementations with host adapters. Add browser worker lifecycle and bidirectional shared-memory/transferable transports; copy bounded shared-memory messages into an ordinary buffer before browser `TextDecoder` use.
