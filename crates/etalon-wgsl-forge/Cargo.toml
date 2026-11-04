@@ -15,9 +15,13 @@ std = []
 wgsl = []
 naga-validate = ["dep:naga", "naga/wgsl-in"]
 dxc = []
-cuda = []
+cuda = ["dep:cudarc"]
+runtime = ["dep:wgpu", "dep:etalon-resources", "dep:pollster", "dep:half", "dep:futures-channel", "dep:naga", "naga/spv-out"]
+gpu-runtime = ["runtime"]
+gpu-native-dx12 = ["runtime", "wgpu/dx12"]
 
 [dependencies]
+etalon-signal = { path = "../etalon-signal" }
 naga = { workspace = true, optional = true, features = ["wgsl-in"] }
 blake3 = "1.5"
 bytemuck = { workspace = true, features = ["derive"] }
@@ -27,3 +31,13 @@ serde = { workspace = true, features = ["derive", "std"] }
 serde_json = { workspace = true }
 tempfile = { workspace = true }
 thiserror = "2.0.21"
+
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl", "spirv"] }
+etalon-resources = { path = "../etalon-resources", optional = true, features = ["device"] }
+pollster = { workspace = true, optional = true }
+half = { workspace = true, optional = true }
+futures-channel = { version = "0.3", optional = true }
+cudarc = { version = "0.19", optional = true, features = ["cuda-13030"] }
+
+[dev-dependencies]
+serial_test = "3.2"

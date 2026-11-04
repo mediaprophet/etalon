@@ -122,3 +122,6 @@ pub enum GgmlDequantError {
     BufferTooSmall,
     TruncatedInput,
 }
+
+/// P64 BitNet 1.58-bit whole-tensor encoding.
+pub const GGML_TYPE_TERNARY_158: u32 = 1158;

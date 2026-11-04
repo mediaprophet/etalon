@@ -27,7 +27,8 @@ pub struct TransferablePacket {
 
 impl TransferablePacket {
     pub fn new(msg_id: u64, msg_type: u32, payload: Vec<u8>) -> Self {
-        let payload_len = payload.len() as u32;
+        let payload_len =
+            u32::try_from(payload.len()).expect("transferable payload exceeds the wire ABI");
         Self {
             header: MessageHeader {
                 msg_id,
@@ -48,15 +49,23 @@ impl TransferablePacket {
 
     /// Parse a transferable byte buffer into a structured message packet.
     pub fn from_bytes(bytes: &[u8]) -> Option<Self> {
+        Self::from_bytes_with_budget(bytes, u32::MAX as usize)
+    }
+
+    pub fn from_bytes_with_budget(bytes: &[u8], payload_budget: usize) -> Option<Self> {
         if bytes.len() < 16 {
             return None;
         }
         let header_bytes: [u8; 16] = bytes[0..16].try_into().ok()?;
         let header: MessageHeader = bytemuck::cast(header_bytes);
-        if bytes.len() < 16 + (header.payload_len as usize) {
+        if header.payload_len as usize > payload_budget {
             return None;
         }
-        let payload = bytes[16..16 + (header.payload_len as usize)].to_vec();
+        let end = 16usize.checked_add(header.payload_len as usize)?;
+        if bytes.len() < end {
+            return None;
+        }
+        let payload = bytes[16..end].to_vec();
         Some(Self { header, payload })
     }
 }
@@ -79,8 +88,15 @@ impl TransferableMessageTransport {
         }
     }
 
-    pub fn track_request(&mut self, msg_id: u64) {
+    pub fn track_request(&mut self, msg_id: u64) -> bool {
+        if msg_id == 0
+            || self.pending_requests.len() >= super::worker_steward::MAX_IN_FLIGHT_REQUESTS
+            || self.pending_requests.contains(&msg_id)
+        {
+            return false;
+        }
         self.pending_requests.push(msg_id);
+        true
     }
 
     pub fn complete_request(&mut self, msg_id: u64) -> bool {

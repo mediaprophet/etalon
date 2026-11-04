@@ -1,0 +1,17 @@
+pub const SLOT: wgpu::BufferAddress = 256;
+pub const SLOTS_PER_LAYER: u64 = 15;
+pub const S_GEMM_K: u64 = 0;
+pub const S_GEMM_V: u64 = 1;
+pub const S_GEMM_Q: u64 = 2;
+pub const S_GEMM_O: u64 = 3;
+pub const S_GEMM_GATE: u64 = 4;
+pub const S_GEMM_UP: u64 = 5;
+pub const S_GEMM_DOWN: u64 = 6;
+pub const S_ATTN_KW: u64 = 7;
+pub const S_ATTN_VW: u64 = 8;
+pub const S_ATTN_Q: u64 = 9;
+pub const S_ELEM_RMS_ATTN: u64 = 10;
+pub const S_ELEM_ADD1: u64 = 11;
+pub const S_ELEM_RMS_FFN: u64 = 12;
+pub const S_ELEM_SILU: u64 = 13;
+pub const S_ELEM_ADD2: u64 = 14;

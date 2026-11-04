@@ -14,7 +14,7 @@ mod plan_error;
 mod source;
 mod stream;
 mod stream_error;
-mod write;
+pub(crate) mod write;
 
 pub use descriptors::{BuildBudget, BuildError, BuildInput, BuildProfile, TensorDescriptor};
 pub use layout::{LayoutInput, LayoutProfile, TensorLayout};

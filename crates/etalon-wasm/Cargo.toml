@@ -12,8 +12,10 @@ description = "Dual-transport worker bridge and OffscreenCanvas steward for WebA
 [features]
 default = ["std"]
 std = []
+gpu-readback = ["std", "dep:etalon"]
 
 [dependencies]
+etalon = { workspace = true, optional = true }
 etalon-types = { workspace = true }
 bytemuck = { workspace = true }
 log = { workspace = true }

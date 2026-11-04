@@ -1,0 +1,23 @@
+[package]
+name = "etalon-diagnostics"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Bounded native diagnostic workers and measurement infrastructure"
+
+[features]
+default = []
+gpu = ["dep:etalon", "dep:pollster", "dep:bytemuck"]
+
+[dependencies]
+serde = { workspace = true, features = ["derive", "std"] }
+ciborium = "0.2"
+tempfile.workspace = true
+rayon.workspace = true
+etalon = { workspace = true, optional = true }
+pollster = { workspace = true, optional = true }
+bytemuck = { workspace = true, optional = true }

@@ -13,7 +13,14 @@ pub(crate) fn emit_gemm_wgsl(
     let wg = schedule.workgroup_size.max(1);
     writeln!(
         source,
-        r#"struct GemmParams {{ m: u32, n: u32, k: u32, _pad: u32 }}
+        r#"
+struct GemmParams {{
+    m: u32,
+    n: u32,
+    k: u32,
+    _pad: u32,
+}}
+
 @group(0) @binding(0) var<storage, read> a: array<f32>;
 @group(0) @binding(1) var<storage, read> b: array<f32>;
 @group(0) @binding(2) var<storage, read_write> c: array<f32>;
@@ -35,9 +42,14 @@ fn {entry}(@builtin(global_invocation_id) gid: vec3<u32>) {{
         wg = wg,
         entry = kernel.entry_point
     )
-    .map_err(|error| ForgeError::Emission(error.to_string()))
+    .map_err(|error| ForgeError::Emission(error.to_string()))?;
+    Ok(())
 }
 
+/// Dense row-major matrix-vector product, all f32: one invocation per output ROW
+/// `i` computes `y[i] = sum_j A[i*N+j] * x[j]`. Self-contained (no shared memory);
+/// dimensions come from the uniform params block (m, n, _pad0, _pad1). The inner
+/// accumulation index is `j`.
 pub(crate) fn emit_gemv_wgsl(
     source: &mut String,
     kernel: &KernelSpec,
@@ -46,7 +58,14 @@ pub(crate) fn emit_gemv_wgsl(
     let wg = schedule.workgroup_size.max(1);
     writeln!(
         source,
-        r#"struct GemvParams {{ m: u32, n: u32, _pad0: u32, _pad1: u32 }}
+        r#"
+struct GemvParams {{
+    m: u32,
+    n: u32,
+    _pad0: u32,
+    _pad1: u32,
+}}
+
 @group(0) @binding(0) var<storage, read> a: array<f32>;
 @group(0) @binding(1) var<storage, read> x: array<f32>;
 @group(0) @binding(2) var<storage, read_write> y: array<f32>;
@@ -66,18 +85,38 @@ fn {entry}(@builtin(global_invocation_id) gid: vec3<u32>) {{
         wg = wg,
         entry = kernel.entry_point
     )
-    .map_err(|error| ForgeError::Emission(error.to_string()))
+    .map_err(|error| ForgeError::Emission(error.to_string()))?;
+    Ok(())
 }
 
+/// Forward DFT via iterative radix-2 Decimation-In-Time over ONE workgroup of
+/// `N = workgroup_size` threads (one complex element per thread; `N` a power of
+/// two). Complex data is interleaved f32: element `j` is
+/// `(input[2*j], input[2*j+1]) = (real, imag)`, so the input/output buffers hold
+/// `2*N` f32. Stage 1 is a bit-reversal load into the `s_re`/`s_im` shared arrays;
+/// then `log2(N)` butterfly stages run, each with a `workgroupBarrier()`. The same
+/// forward sign convention `exp(-2*pi*i*k/m)` as the [`crate::numerical::oracle::dft_cpu`]
+/// reference is used so GPU and CPU compute the identical transform. The shared
+/// arrays come from the IR (`kernel.shared_memory`, sized to the workgroup size)
+/// and `Op::Barrier` is the reusable IR primitive; the butterfly control flow is
+/// specialised here because it is not expressible in the scalar op set.
 pub(crate) fn emit_fft_wgsl(
     source: &mut String,
     kernel: &KernelSpec,
     schedule: Schedule,
 ) -> Result<(), ForgeError> {
     let wg = schedule.workgroup_size.max(1);
+
     writeln!(
         source,
-        "struct FftParams {{ n: u32, log2n: u32, _pad0: u32, _pad1: u32 }}"
+        r#"
+struct FftParams {{
+    n: u32,
+    log2n: u32,
+    _pad0: u32,
+    _pad1: u32,
+}}
+"#
     )
     .map_err(|error| ForgeError::Emission(error.to_string()))?;
 
@@ -99,6 +138,7 @@ pub(crate) fn emit_fft_wgsl(
         .map_err(|error| ForgeError::Emission(error.to_string()))?;
     }
 
+    writeln!(source, "").map_err(|error| ForgeError::Emission(error.to_string()))?;
     for shared in &kernel.shared_memory {
         writeln!(
             source,
@@ -110,24 +150,35 @@ pub(crate) fn emit_fft_wgsl(
         .map_err(|error| ForgeError::Emission(error.to_string()))?;
     }
 
+    // `-2*pi` as a valid WGSL f32 literal (the `f` suffix keeps it f32). The
+    // butterfly indexing and the forward twiddle `exp(-2*pi*i*k/m)` follow the
+    // certified algorithm exactly.
     writeln!(
         source,
-        r#"@compute @workgroup_size({wg})
-fn {entry}(@builtin(local_invocation_id) local_id: vec3<u32>) {{
-    let t = local_id.x;
+        r#"
+@compute @workgroup_size({wg})
+fn {entry}(
+    @builtin(local_invocation_id) local_id: vec3<u32>,
+    @builtin(global_invocation_id) global_id: vec3<u32>,
+) {{
+    let t = local_id.x;                 // thread index 0..N-1
     let n = params.n;
     let logn = params.log2n;
+    // 1. Bit-reversal load: element t goes to reverse(t).
     let rev = reverseBits(t) >> (32u - logn);
     s_re[rev] = input[2u * t];
     s_im[rev] = input[2u * t + 1u];
     workgroupBarrier();
+    // 2. log2(N) butterfly stages. Stage s: span = 1<<s, m = 2*span.
+    //    N/2 butterflies; threads 0..N/2-1 active.
     for (var s: u32 = 0u; s < logn; s = s + 1u) {{
         let span = 1u << s;
         let m = span << 1u;
         if (t < (n >> 1u)) {{
-            let k = t & (span - 1u);
-            let j = ((t >> s) << (s + 1u)) + k;
-            let jp = j + span;
+            let k = t & (span - 1u);                  // position within the butterfly group
+            let j = ((t >> s) << (s + 1u)) + k;       // lower index = (t/span)*m + k
+            let jp = j + span;                        // upper index
+            // twiddle w = exp(-2*pi*i*k/m)
             let ang = -6.28318548f * f32(k) / f32(m);
             let wr = cos(ang);
             let wi = sin(ang);
@@ -135,6 +186,7 @@ fn {entry}(@builtin(local_invocation_id) local_id: vec3<u32>) {{
             let ui = s_im[j];
             let vr = s_re[jp];
             let vi = s_im[jp];
+            // v' = v * w
             let tr = vr * wr - vi * wi;
             let ti = vr * wi + vi * wr;
             s_re[j] = ur + tr;
@@ -144,13 +196,16 @@ fn {entry}(@builtin(local_invocation_id) local_id: vec3<u32>) {{
         }}
         workgroupBarrier();
     }}
+    // 3. Store.
     output[2u * t] = s_re[t];
     output[2u * t + 1u] = s_im[t];
 }}"#,
         wg = wg,
         entry = kernel.entry_point
     )
-    .map_err(|error| ForgeError::Emission(error.to_string()))
+    .map_err(|error| ForgeError::Emission(error.to_string()))?;
+
+    Ok(())
 }
 
 pub(crate) fn emit_ops(source: &mut String, ops: &[Op], indent: &str) -> Result<(), ForgeError> {

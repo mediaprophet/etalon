@@ -10,12 +10,16 @@ publish = false
 description = "Decoupled volumetric, HUD, and EMF rendering substrate for Etalon"
 
 [features]
-default = ["std"]
+default = ["std", "gpu"]
 std = []
+gpu = ["dep:etalon", "dep:etalon-types", "dep:etalon-wasm"]
 
 [dependencies]
-etalon = { workspace = true }
-etalon-types = { workspace = true }
-bytemuck = { workspace = true }
+etalon = { workspace = true, optional = true }
+etalon-types = { workspace = true, optional = true }
+bytemuck = { workspace = true, features = ["derive"] }
 log = { workspace = true }
 thiserror = "2.0.21"
+
+etalon-wasm = { path = "../etalon-wasm", features = ["gpu-readback"], optional = true }
+

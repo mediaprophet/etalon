@@ -12,6 +12,7 @@ description = "Silicon steward, capability state machine, and safe resource leas
 [features]
 default = ["std"]
 std = []
+diagnostics = ["dep:etalon-diagnostics", "etalon-diagnostics/gpu"]
 cuda = ["dep:etalon-cuda"]
 sensing = ["dep:etalon-sense"]
 sensing-host = ["sensing", "etalon-sense/host"]
@@ -39,6 +40,7 @@ sensing-gpu-metal = ["sensing-gpu", "etalon-sense/gpu-metal"]
 sensing-gpu-gles = ["sensing-gpu", "etalon-sense/gpu-gles"]
 
 [dependencies]
+etalon-resources = { path="../etalon-resources",features=["device"] }
 etalon = { workspace = true }
 etalon-types = { workspace = true }
 etalon-sense = { path = "../etalon-sense", optional = true }
@@ -54,6 +56,7 @@ windows = { workspace = true, features = [
 ] }
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
+etalon-diagnostics = { path = "../etalon-diagnostics", optional = true }
 etalon-cuda = { workspace = true, optional = true }
 etalon-hal = { workspace = true, optional = true }
 

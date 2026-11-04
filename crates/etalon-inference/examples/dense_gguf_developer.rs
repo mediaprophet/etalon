@@ -164,9 +164,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("mode=standalone-developer backend=native-cpu governance=none pretokenized=true");
     println!("model_sha256={:x} model_bytes={} charged_buffer_and_argument_bytes={used} byte_budget={budget} kernel_stack_bytes=40960", Sha256::digest(&bytes), bytes.len());
     for (name, source) in [
-        ("config.rs", include_str!("../src/cpu_gguf/config.rs")),
-        ("bindings.rs", include_str!("../src/cpu_gguf/bindings.rs")),
-        ("kernels.rs", include_str!("../src/cpu_gguf/kernels.rs")),
+        ("config.rs", include_str!("../src/cpu_model/config.rs")),
+        ("bindings.rs", include_str!("../src/cpu_model/bindings.rs")),
+        ("kernels.rs", include_str!("../src/cpu_model/kernels.rs")),
         (
             "dense_gguf_developer.rs",
             include_str!("dense_gguf_developer.rs"),

@@ -83,7 +83,7 @@ fn write_schedule(plan: &BuildPlan<'_, '_>, bytes: &mut [u8]) {
     }
 }
 
-pub(super) fn write_entry(entry: &P64TensorEntry, bytes: &mut [u8]) {
+pub(crate) fn write_entry(entry: &P64TensorEntry, bytes: &mut [u8]) {
     put32(bytes, 0, entry.name_offset);
     put16(bytes, 4, entry.role_id);
     put16(bytes, 6, entry.dtype);

@@ -12,11 +12,19 @@ description = "Borrowed model container layouts and explicit integrity validatio
 [features]
 default = []
 # Preserves the original codec float operations; requires std on native and WASM.
+inference-model = ["ggml", "dep:serde", "dep:etalon-inference-kernel"]
+gguf-index = ["inference-model"]
 ggml = ["dep:half", "dep:bytemuck"]
 
 [dependencies]
+serde = { workspace = true, optional = true, features = ["derive"] }
+etalon-inference-kernel = { path = "../etalon-inference-kernel", optional = true }
 half = { workspace = true, optional = true }
 bytemuck = { workspace = true, optional = true, features = ["derive"] }
 
 [lints]
 workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true
+serde_json.workspace = true

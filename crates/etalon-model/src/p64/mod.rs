@@ -18,3 +18,6 @@ pub use views::{P64ManifoldRecord, P64TensorView};
 
 #[cfg(test)]
 mod tests;
+
+#[cfg(feature = "inference-model")]
+pub mod convert;

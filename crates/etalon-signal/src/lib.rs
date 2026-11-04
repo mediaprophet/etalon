@@ -16,6 +16,7 @@ pub mod fft;
 pub mod filter;
 pub mod goertzel;
 pub mod iq;
+pub mod mel;
 pub mod phase;
 pub mod pipeline;
 pub mod stats;

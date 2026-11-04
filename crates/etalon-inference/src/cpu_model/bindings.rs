@@ -4,11 +4,11 @@ use etalon_model::{ggml, gguf::TensorView};
 
 #[derive(Clone, Copy, Debug)]
 pub struct PackedTensor<'a> {
-    pub(super) bytes: &'a [u8],
-    pub(super) dtype: u32,
-    pub(super) width: usize,
-    pub(super) rows: usize,
-    pub(super) row_bytes: usize,
+    pub(crate) bytes: &'a [u8],
+    pub(crate) dtype: u32,
+    pub(crate) width: usize,
+    pub(crate) rows: usize,
+    pub(crate) row_bytes: usize,
 }
 #[derive(Clone, Copy, Debug)]
 pub struct BindingLimits {

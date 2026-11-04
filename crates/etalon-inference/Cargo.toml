@@ -11,14 +11,60 @@ description = "Reusable inference storage and budget mechanics"
 
 [features]
 default = []
-gguf-cpu = ["dep:etalon-model", "etalon-model/ggml"]
+native-directml = ["dep:windows", "dep:half", "dep:log", "dep:bytemuck"]
+native-accelerate = ["dep:half"]
+metal-lane = ["native-accelerate", "dep:log"]
+gpu-attention = ["dep:futures-channel", "dep:wgpu", "dep:bytemuck", "dep:half", "inference-model"]
+native-metal-gpu = ["metal-lane", "dep:wgpu", "native-accelerate"]
+cpu-inference = ["inference-model"]
+gguf-cpu = ["cpu-inference"]
+inference-model = ["dep:etalon-model", "etalon-model/inference-model", "dep:bytemuck", "dep:half"]
+native-weights = ["inference-model", "dep:memmap2", "dep:rayon", "dep:etalon-model-io"]
+qwen-metadata = ["inference-model"]
+qwen-native = ["qwen-metadata", "native-weights"]
+cuda = ["inference-model", "dep:etalon-wgsl-forge", "dep:etalon-resources", "dep:half", "dep:bytemuck", "dep:log", "dep:libc"]
 
 [dependencies]
 etalon-inference-kernel = { version = "0.0.2", path = "../etalon-inference-kernel" }
 etalon-model = { version = "0.0.2", path = "../etalon-model", optional = true }
 
-[dev-dependencies]
 sha2 = "0.10"
+futures-channel = { version = "0.3", optional = true }
+memmap2 = { version = "0.9", optional = true }
+rayon = { version = "1.10", optional = true }
+serde = { version = "1", features = ["derive"] }
+half = { version = "2", optional = true }
+bytemuck = { workspace = true, optional = true }
+log = { workspace = true, optional = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+etalon-model-io = { path = "../etalon-model-io", optional = true }
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl"] }
+etalon-wgsl-forge = { path = "../etalon-wgsl-forge", optional = true, features = ["runtime", "cuda"] }
+etalon-resources = { path = "../etalon-resources", optional = true, features = ["device"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+libc = { version = "0.2", optional = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl", "metal"] }
+
+[target.'cfg(windows)'.dependencies]
+windows = { version = "0.62.2", optional = true, features = [
+    "Win32_AI_MachineLearning_DirectML", "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D12", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common",
+    "Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO",
+    "Win32_System_Memory", "Win32_System_LibraryLoader", "Win32_System_Threading",
+    "Win32_Security",
+] }
+
+[dev-dependencies]
+tempfile = "3"
+serde_json = "1"
+serial_test = "3.2"
 
 [[example]]
 name = "dense_gguf_developer"

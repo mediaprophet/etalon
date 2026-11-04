@@ -11,3 +11,10 @@ description = "Portable bounded resource accounting independent of GPU providers
 
 [lints]
 workspace = true
+
+[features]
+default = []
+device = ["dep:etalon"]
+
+[dependencies]
+etalon = { workspace = true, optional = true }

@@ -2,7 +2,7 @@
 //!
 //! Enabled by the `ggml` feature, which requires std for the original float
 //! operations. Descriptor lookup, tensor ownership and semantic policy remain
-//! with the caller. Type 158 has no row decoder here. Q6_K retains the original
+//! with the caller. Whole-tensor ternary encoding has no row decoder here. Q6_K retains the original
 //! two-byte alignment precondition of its bytemuck block view.
 
 mod blocks;
@@ -52,3 +52,8 @@ pub fn dequantize_row_into(
         _ => Err(GgmlDequantError::UnsupportedType),
     }
 }
+
+#[cfg(feature = "inference-model")]
+mod descriptor;
+#[cfg(feature = "inference-model")]
+pub use descriptor::*;

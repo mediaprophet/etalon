@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Migrate reusable inference execution, native backends, attention/projection resources, model preparation and optimization tooling into Etalon. P64 is the native model format; GGUF remains an import and compatibility boundary. Generic MoE routing, expert placement/residency, streamed execution and clustered operators are independent of Qwen architecture adapters. Qualia retains application authority and Webizen acceptance policy.
+- Add an explicit standalone developer P64 CPU lab with bounded caller workspaces and owned artifacts, real execution receipts, and benchmark/search/campaign/ablation entrypoints. Unsupported model/backend profiles and unavailable quality or telemetry remain explicit.
+- Share portable compute, rendering/readback, signal/science and isolated diagnostic worker implementations with host adapters. Add browser worker lifecycle and bidirectional shared-memory/transferable transports; copy bounded shared-memory messages into an ordinary buffer before browser `TextDecoder` use.
+
 - Add caller-buffered Qwen PLE n-gram row selection and token history with borrowed configuration metadata. Preserve signed arithmetic, refusal order, partial output and EOS history behavior; table I/O and complete Qwen/MoE execution remain separate migration work.
 
 - Add safe, no_std GPT-2/SmolLM tokenization over borrowed GGUF metadata, with caller-owned tables/workspaces, capacity/work limits and raw-byte decoding. Expose semantics version 1 for host binding: consistent legacy scalar whitespace handling and explicit refusal of unresolved byte symbols. Existing tokenizer/SIMD APIs, chat formatting and heuristic stop policies remain unchanged.

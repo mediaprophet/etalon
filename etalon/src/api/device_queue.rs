@@ -1,6 +1,14 @@
 use crate::{Device, Queue};
 
 impl Device {
+    /// Current backend validity, when the native backend exposes it.
+    pub fn is_valid_state(&self) -> Option<bool> {
+        #[cfg(etalon_core)]
+        if let Some(device) = self.as_core() {
+            return Some(device.is_valid());
+        }
+        None
+    }
     /// Checks whether `queue` belongs to this device using backend ownership.
     ///
     /// Returns `None` when ownership cannot be inspected (including WebGPU and

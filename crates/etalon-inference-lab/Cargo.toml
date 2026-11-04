@@ -1,0 +1,32 @@
+[package]
+name = "etalon-inference-lab"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+[features]
+default = []
+operator-lab = ["etalon-inference/inference-model", "dep:etalon-model", "dep:etalon-inference-kernel"]
+standalone-cpu = ["etalon-inference/cpu-inference", "dep:etalon-model", "dep:etalon-inference-kernel", "dep:sha2"]
+
+[dependencies]
+etalon-model = { path = "../etalon-model", features = ["inference-model"], optional = true }
+etalon-inference-kernel = { path = "../etalon-inference-kernel", optional = true }
+sha2 = { version = "0.10", optional = true }
+serde = { workspace = true, features = ["derive", "std"] }
+serde_json.workspace = true
+log.workspace = true
+tempfile.workspace = true
+ciborium = "0.2"
+etalon-inference = { path = "../etalon-inference" }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+etalon-diagnostics = { path = "../etalon-diagnostics" }
+
+[[example]]
+name = "standalone_p64_lab"
+required-features = ["standalone-cpu"]
+
+[[example]]
+name = "operator_comparison"
+required-features = ["operator-lab"]

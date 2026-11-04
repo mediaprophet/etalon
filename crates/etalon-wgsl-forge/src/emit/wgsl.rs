@@ -344,7 +344,8 @@ fn {entry}(@builtin(global_invocation_id) gid: vec3<u32>) {{
     let rec = input[r];
     var acc = 0.0;
     for (var w: u32 = 0u; w < 16u; w = w + 1u) {{
-        acc = acc + weights[w] * f32(rec.lanes[w / 4u][w % 4u]);
+        let word = rec.lanes[w / 4u][w % 4u];
+        acc = acc + weights[w] * f32(word);
     }}
     output[r] = acc;
 }}"#,

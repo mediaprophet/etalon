@@ -227,7 +227,7 @@ version = "0.38.0+1.3.281"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0bb44936d800fea8f016d7f2311c6a4f97aebd5dc86f09906139ec848cf3a46f"
 dependencies = [
- "libloading",
+ "libloading 0.8.9",
 ]
 
 [[package]]
@@ -499,6 +499,33 @@ dependencies = [
 ]
 
 [[package]]
+name = "ciborium"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42e69ffd6f0917f5c029256a24d0161db17cea3997d185db0d35926308770f0e"
+dependencies = [
+ "ciborium-io",
+ "ciborium-ll",
+ "serde",
+]
+
+[[package]]
+name = "ciborium-io"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "05afea1e0a06c9be33d539b876f1ce3692f4afea2cb41f740e7743225ed1c757"
+
+[[package]]
+name = "ciborium-ll"
+version = "0.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "57663b653d948a338bfb3eeba9bb2fd5fcfaecb9e199e87e1eda4d9e8b240fd9"
+dependencies = [
+ "ciborium-io",
+ "half",
+]
+
+[[package]]
 name = "clap"
 version = "4.6.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -730,6 +757,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "cudarc"
+version = "0.19.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "42310153e06cf4cd532901f7096beb27504d681736a29ee90728ae4e2d93b2a8"
+dependencies = [
+ "libloading 0.9.0",
+]
+
+[[package]]
 name = "cursor-icon"
 version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -815,7 +851,7 @@ version = "0.5.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ab8ecd87370524b461f8557c119c405552c396ed91fc0a8eec68679eab26f94a"
 dependencies = [
- "libloading",
+ "libloading 0.8.9",
 ]
 
 [[package]]
@@ -1002,7 +1038,9 @@ dependencies = [
  "bytemuck",
  "etalon",
  "etalon-cuda",
+ "etalon-diagnostics",
  "etalon-hal",
+ "etalon-resources",
  "etalon-sense",
  "etalon-types",
  "log",
@@ -1175,8 +1213,21 @@ dependencies = [
  "bytemuck",
  "etalon",
  "etalon-wgsl-forge",
- "libloading",
+ "libloading 0.8.9",
  "pollster",
+]
+
+[[package]]
+name = "etalon-diagnostics"
+version = "0.0.2"
+dependencies = [
+ "bytemuck",
+ "ciborium",
+ "etalon",
+ "pollster",
+ "rayon",
+ "serde",
+ "tempfile",
 ]
 
 [[package]]
@@ -1282,7 +1333,7 @@ dependencies = [
  "js-sys",
  "khronos-egl",
  "libc",
- "libloading",
+ "libloading 0.8.9",
  "log",
  "mach-dxcompiler-rs",
  "naga",
@@ -1316,9 +1367,25 @@ dependencies = [
 name = "etalon-inference"
 version = "0.0.2"
 dependencies = [
+ "bytemuck",
+ "etalon",
  "etalon-inference-kernel",
  "etalon-model",
+ "etalon-model-io",
+ "etalon-resources",
+ "etalon-wgsl-forge",
+ "futures-channel",
+ "half",
+ "libc",
+ "log",
+ "memmap2",
+ "rayon",
+ "serde",
+ "serde_json",
+ "serial_test",
  "sha2",
+ "tempfile",
+ "windows",
 ]
 
 [[package]]
@@ -1328,6 +1395,22 @@ version = "0.0.2"
 [[package]]
 name = "etalon-inference-kernel"
 version = "0.0.2"
+
+[[package]]
+name = "etalon-inference-lab"
+version = "0.0.2"
+dependencies = [
+ "ciborium",
+ "etalon-diagnostics",
+ "etalon-inference",
+ "etalon-inference-kernel",
+ "etalon-model",
+ "log",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+]
 
 [[package]]
 name = "etalon-info"
@@ -1350,7 +1433,11 @@ name = "etalon-model"
 version = "0.0.2"
 dependencies = [
  "bytemuck",
+ "etalon-inference-kernel",
  "half",
+ "serde",
+ "serde_json",
+ "tempfile",
 ]
 
 [[package]]
@@ -1392,6 +1479,7 @@ dependencies = [
  "bytemuck",
  "etalon",
  "etalon-types",
+ "etalon-wasm",
  "log",
  "thiserror 2.0.21",
 ]
@@ -1399,6 +1487,9 @@ dependencies = [
 [[package]]
 name = "etalon-resources"
 version = "0.0.2"
+dependencies = [
+ "etalon",
+]
 
 [[package]]
 name = "etalon-sense"
@@ -1645,6 +1736,7 @@ name = "etalon-wasm"
 version = "0.0.2"
 dependencies = [
  "bytemuck",
+ "etalon",
  "etalon-types",
  "log",
  "thiserror 2.0.21",
@@ -1656,11 +1748,19 @@ version = "0.0.2"
 dependencies = [
  "blake3",
  "bytemuck",
+ "cudarc",
+ "etalon",
+ "etalon-resources",
+ "etalon-signal",
+ "futures-channel",
+ "half",
  "hashbrown 0.17.1",
  "log",
  "naga",
+ "pollster",
  "serde",
  "serde_json",
+ "serial_test",
  "tempfile",
  "thiserror 2.0.21",
 ]
@@ -1816,10 +1916,30 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "aa9a19cbb55df58761df49b23516a86d432839add4af60fc256da840f66ed35b"
 
 [[package]]
+name = "futures-channel"
+version = "0.3.34"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b1f9e3d69d39e4862ffed03ed071a76f9a13ba1d9109d355b0f0aa6b15e393c4"
+dependencies = [
+ "futures-core",
+]
+
+[[package]]
 name = "futures-core"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "92d699e522242e69e3003b94ecc1f960f3a5e015aa7c5d7486e65ad01dd94f5e"
+
+[[package]]
+name = "futures-executor"
+version = "0.3.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6754879cc9f2c66f88c6e5c35344bb0bdb0708b0352b1201815667c7eabc7458"
+dependencies = [
+ "futures-core",
+ "futures-task",
+ "futures-util",
+]
 
 [[package]]
 name = "futures-io"
@@ -1994,7 +2114,7 @@ dependencies = [
  "dispatch2",
  "glutin_egl_sys",
  "glutin_wgl_sys",
- "libloading",
+ "libloading 0.8.9",
  "objc2 0.6.5",
  "objc2-app-kit 0.3.2",
  "objc2-core-foundation",
@@ -2316,7 +2436,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6aae1df220ece3c0ada96b8153459b67eebe9ae9212258bb0134ae60416fdf76"
 dependencies = [
  "libc",
- "libloading",
+ "libloading 0.8.9",
  "pkg-config",
 ]
 
@@ -2369,6 +2489,16 @@ name = "libloading"
 version = "0.8.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d7c4b02199fee7c5d21a5ae7d8cfa79a6ef5bb2fc834d6e9058e89c825efdc55"
+dependencies = [
+ "cfg-if",
+ "windows-link",
+]
+
+[[package]]
+name = "libloading"
+version = "0.9.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "754ca22de805bb5744484a5b151a9e1a8e837d5dc232c2d7d8c2e3492edc8b60"
 dependencies = [
  "cfg-if",
  "windows-link",
@@ -3773,6 +3903,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "serial_test"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "699f4197115b8a7e7ff19c9a315a4bd6fffec26cc4626ef45ecaea389e081c6d"
+dependencies = [
+ "futures-executor",
+ "futures-util",
+ "log",
+ "once_cell",
+ "parking_lot",
+ "serial_test_derive",
+]
+
+[[package]]
+name = "serial_test_derive"
+version = "3.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "94e153fc76e1c6a068703d6d29c508a0b15c061c4b7e43da59cc097bc342673c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.119",
+]
+
+[[package]]
 name = "sha2"
 version = "0.10.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -4424,9 +4579,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-backend"
-version = "0.3.17"
+version = "0.3.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "38a91b4eaddff87b1cd1074985e3713da4af2c49742d1b356b2c01670a67a078"
+checksum = "2857dd20b54e916ec7253b3d6b4d5c4d7d4ca2c33c2e11c6c76a99bd8744755d"
 dependencies = [
  "cc",
  "downcast-rs",
@@ -4438,9 +4593,9 @@ dependencies = [
 
 [[package]]
 name = "wayland-client"
-version = "0.31.15"
+version = "0.31.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3c36a0f861ad76d0901f2800b46321410d9f73f2ea88aac0650d86c32688073"
+checksum = "645c7c96bb74690c3189b5c9cb4ca1627062bb23693a4fad9d8c3de958260144"
 dependencies = [
  "bitflags 2.13.2",
  "rustix 1.1.6",
@@ -4929,7 +5084,7 @@ dependencies = [
  "as-raw-xcb-connection",
  "gethostname",
  "libc",
- "libloading",
+ "libloading 0.8.9",
  "once_cell",
  "rustix 1.1.6",
  "x11rb-protocol",

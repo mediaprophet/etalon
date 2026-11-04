@@ -6,6 +6,7 @@ pub mod certifier;
 pub mod certify;
 pub mod emit;
 pub mod ir;
+pub mod geometry_specs;
 pub mod ir_builtins;
 pub mod routing;
 pub mod schedule;
@@ -52,3 +53,6 @@ pub const WGPU_API_VERSION: &str = "30.0.0-etalon";
 pub const NAGA_API_VERSION: &str = "30.0.0-etalon";
 pub const CUDARC_API_VERSION: &str = "0.12";
 pub const FORGE_CACHE_MAGIC: [u8; 8] = *b"ETALFORG";
+
+#[cfg(feature = "runtime")]
+pub mod numerical;
