@@ -119,6 +119,7 @@ pub struct DistributionReceipt {
 }
 
 /// Resolver managing content-addressed anchors, deltas, and KV cache rollbacks.
+#[derive(Debug)]
 pub struct DistributionResolver {
     budget_bytes: usize,
     anchors: HashMap<u64, ContentAddressedAnchor>,

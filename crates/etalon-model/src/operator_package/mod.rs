@@ -97,6 +97,7 @@ impl OperatorPackage {
 }
 
 /// Package builder to construct a companion package binary with aligned segments.
+#[derive(Debug)]
 pub struct PackageBuilder {
     manifest: OperatorPackageManifest,
     segments_payload: Vec<(u32, SegmentKind, Vec<u8>)>,

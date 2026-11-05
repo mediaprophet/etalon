@@ -2,7 +2,9 @@
 use crate::ordinary::cpu::{dequant_norm_from_raw, dequant_norm_row_into, rms_norm_inplace};
 use crate::ordinary::RMS_NORM_EPS;
 use etalon_model::inference::TensorInfo as GgufTensorInfo;
+#[allow(dead_code)]
 const MAX_HIDDEN_DIM: usize = 4096;
+#[allow(dead_code)]
 const MAX_STACK_GEMM_IN: usize = 10240;
 pub const VOCAB_CHUNK_ROWS: usize = 10240;
 #[derive(Debug, Clone, Copy, PartialEq)]

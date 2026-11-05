@@ -19,7 +19,16 @@ etalon = { workspace = true, optional = true }
 etalon-types = { workspace = true, optional = true }
 bytemuck = { workspace = true, features = ["derive"] }
 log = { workspace = true }
+naga = { workspace = true, features = ["wgsl-in", "glsl-out", "spv-out"] }
+serde = { workspace = true, features = ["derive", "std"] }
 thiserror = "2.0.21"
 
 etalon-wasm = { path = "../etalon-wasm", features = ["gpu-readback"], optional = true }
 
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+js-sys = { workspace = true }
+wasm-bindgen = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+zstd = "0.13"
+flate2 = "1.1.9"

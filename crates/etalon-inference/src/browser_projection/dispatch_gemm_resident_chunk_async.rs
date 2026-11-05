@@ -1,6 +1,6 @@
 use super::*;
 use crate::ordinary::gpu_params::GemmGpuParams;
-use etalon_model::inference::TensorInfo as GgufTensorInfo;
+
 impl<P: BrowserProjectionProvider> BrowserProjectionEngine<'_, P> {
     pub async fn dispatch_gemm_resident_chunk_async(
         &self,

@@ -1,6 +1,6 @@
 use super::*;
 use crate::ordinary::gpu_params::*;
-use etalon_model::inference::{LayerTensors, TensorInfo as GgufTensorInfo};
+use etalon_model::inference::LayerTensors;
 impl<P: PrefillProvider> PrefillEngine<'_, P> {
     pub fn encode_prefill_q_ffn_tail_fused(
         &self,

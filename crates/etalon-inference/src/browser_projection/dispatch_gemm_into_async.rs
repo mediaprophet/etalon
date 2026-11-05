@@ -1,5 +1,5 @@
 use super::*;
-use crate::ordinary::gpu_params::GemmGpuParams;
+
 use etalon_model::inference::TensorInfo as GgufTensorInfo;
 impl<P: BrowserProjectionProvider> BrowserProjectionEngine<'_, P> {
     pub async fn dispatch_gemm_into_async(
@@ -11,7 +11,7 @@ impl<P: BrowserProjectionProvider> BrowserProjectionEngine<'_, P> {
         n_in: usize,
         n_out: usize,
     ) -> bool {
-        let resources = self.host.resources();
+        let _resources = self.host.resources();
         if n_in > input.len() || n_out > out.len() {
             self.host.log(&format!(
                 "[gemm_into_async] GUARD n_in={n_in} n_out={n_out} input={} out={}",

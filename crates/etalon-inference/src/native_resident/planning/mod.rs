@@ -18,7 +18,7 @@ const MAX_HIDDEN_DIM: usize = 4096;
 const MAX_STACK_GEMM_DIM: usize = 10240;
 const PREFILL_CHUNK_SIZE: usize = 64;
 const VOCAB_CHUNK_ROWS: usize = 10240;
-use crate::native_resident::verify_arena_plan::VERIFY_BATCH_MAX;
+
 
 pub struct ResidentPlanner<'a, P> {
     pub host: &'a P,

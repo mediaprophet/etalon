@@ -1,7 +1,7 @@
 use super::resident_decode_plan::*;
 use super::resident_decode_slots::*;
 use super::{ResidentEngine, ResidentProvider};
-use crate::ordinary::{gpu_params::*, RMS_NORM_EPS};
+use crate::ordinary::gpu_params::*;
 
 impl<P: ResidentProvider> ResidentEngine<'_, P> {
     pub fn run_resident_token(

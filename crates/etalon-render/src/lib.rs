@@ -85,3 +85,19 @@ pub mod lighting;
 
 #[cfg(feature = "gpu")]
 pub mod texture_precomputed;
+
+pub mod control;
+pub mod frame_lock;
+pub mod frame_quality;
+pub mod geo_viewport;
+pub mod ibl_cubemap;
+pub mod naga_webgl2;
+pub mod shaders;
+pub mod spatial_math;
+pub mod spectral;
+pub mod surface_frames;
+pub mod texture_codec;
+pub mod ui_canvas;
+pub mod vegetation;
+pub mod water_surface;
+pub mod webizen_core;

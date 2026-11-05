@@ -1,7 +1,7 @@
 use super::prefill_arena_plan::*;
 use super::prefill_arena_slots::*;
 use super::{ResidentEngine, ResidentProvider};
-use crate::ordinary::{gpu_params::*, RMS_NORM_EPS};
+use crate::ordinary::gpu_params::*;
 
 impl<P: ResidentProvider> ResidentEngine<'_, P> {
     pub fn run_prefill_chunk(

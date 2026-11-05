@@ -1,6 +1,6 @@
 use super::*;
 use crate::ordinary::gpu_params::*;
-use etalon_model::inference::{LayerTensors, TensorInfo as GgufTensorInfo};
+
 impl<P: PrefillProvider> PrefillEngine<'_, P> {
     pub async fn dispatch_prefill_chunk_async_mc8_gpu(
         &self,

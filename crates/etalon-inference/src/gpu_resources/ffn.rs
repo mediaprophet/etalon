@@ -23,6 +23,7 @@ pub struct FfnPipelines {
 pub(super) fn build(
     device: &wgpu::Device,
     native_pipeline_cache: &Option<wgpu::PipelineCache>,
+    #[allow(unused_variables)]
     options: super::PipelineOptions,
 ) -> FfnPipelines {
     #[cfg(target_arch = "wasm32")]
