@@ -6,9 +6,6 @@
 
 use bytemuck::{Pod, Zeroable};
 
-#[cfg(feature = "gpu")]
-use etalon as wgpu;
-
 pub const IBL_ENV_CUBEMAP_SIZE: u32 = 128;
 pub const IBL_IRRADIANCE_CUBEMAP_SIZE: u32 = 32;
 pub const IBL_SPECULAR_CUBEMAP_SIZE: u32 = 128;
@@ -343,62 +340,62 @@ pub fn integrate_split_sum_brdf_zero_heap(
 /// GPU-resident cubemap IBL generator and prefiltered environment probe state.
 #[cfg(feature = "gpu")]
 pub struct IblCubemapGenerator {
-    pub pipeline: wgpu::ComputePipeline,
-    pub bind_group_layout: wgpu::BindGroupLayout,
-    pub uniform_buf: wgpu::Buffer,
-    pub env_cubemap: wgpu::Texture,
-    pub env_cubemap_view: wgpu::TextureView,
-    pub irradiance_cubemap: wgpu::Texture,
-    pub irradiance_cubemap_view: wgpu::TextureView,
-    pub specular_cubemap: wgpu::Texture,
-    pub specular_cubemap_view: wgpu::TextureView,
-    pub brdf_lut_texture: wgpu::Texture,
-    pub brdf_lut_view: wgpu::TextureView,
-    pub sampler: wgpu::Sampler,
+    pub pipeline: etalon::ComputePipeline,
+    pub bind_group_layout: etalon::BindGroupLayout,
+    pub uniform_buf: etalon::Buffer,
+    pub env_cubemap: etalon::Texture,
+    pub env_cubemap_view: etalon::TextureView,
+    pub irradiance_cubemap: etalon::Texture,
+    pub irradiance_cubemap_view: etalon::TextureView,
+    pub specular_cubemap: etalon::Texture,
+    pub specular_cubemap_view: etalon::TextureView,
+    pub brdf_lut_texture: etalon::Texture,
+    pub brdf_lut_view: etalon::TextureView,
+    pub sampler: etalon::Sampler,
 }
 
 #[cfg(feature = "gpu")]
 impl IblCubemapGenerator {
     /// Creates the GPU cubemap textures (`Rgba16Float`), views (`D2Array` / `Cube`), and convolution pipeline.
-    pub fn new(device: &wgpu::Device) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+    pub fn new(device: &etalon::Device) -> Self {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia_ibl_cubemap_convolve_wgsl"),
-            source: wgpu::ShaderSource::Wgsl(IBL_CUBEMAP_CONVOLVE_WGSL.into()),
+            source: etalon::ShaderSource::Wgsl(IBL_CUBEMAP_CONVOLVE_WGSL.into()),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: Some("qualia_ibl_cubemap_bgl"),
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::StorageTexture {
-                        access: wgpu::StorageTextureAccess::WriteOnly,
-                        format: wgpu::TextureFormat::Rgba16Float,
-                        view_dimension: wgpu::TextureViewDimension::D2Array,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::StorageTexture {
+                        access: etalon::StorageTextureAccess::WriteOnly,
+                        format: etalon::TextureFormat::Rgba16Float,
+                        view_dimension: etalon::TextureViewDimension::D2Array,
                     },
                     count: None,
                 },
             ],
         });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia_ibl_cubemap_pl"),
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
 
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: Some("qualia_ibl_cubemap_pipeline"),
             layout: Some(&pipeline_layout),
             module: &shader,
@@ -407,33 +404,33 @@ impl IblCubemapGenerator {
             cache: None,
         });
 
-        let uniform_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let uniform_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia_ibl_cubemap_uniforms"),
             size: std::mem::size_of::<IblCubemapParams>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         let create_cube = |label: &str, size: u32, mips: u32| {
-            let tex = device.create_texture(&wgpu::TextureDescriptor {
+            let tex = device.create_texture(&etalon::TextureDescriptor {
                 label: Some(label),
-                size: wgpu::Extent3d {
+                size: etalon::Extent3d {
                     width: size,
                     height: size,
                     depth_or_array_layers: 6,
                 },
                 mip_level_count: mips,
                 sample_count: 1,
-                dimension: wgpu::TextureDimension::D2,
-                format: wgpu::TextureFormat::Rgba16Float,
-                usage: wgpu::TextureUsages::TEXTURE_BINDING
-                    | wgpu::TextureUsages::STORAGE_BINDING
-                    | wgpu::TextureUsages::COPY_DST,
+                dimension: etalon::TextureDimension::D2,
+                format: etalon::TextureFormat::Rgba16Float,
+                usage: etalon::TextureUsages::TEXTURE_BINDING
+                    | etalon::TextureUsages::STORAGE_BINDING
+                    | etalon::TextureUsages::COPY_DST,
                 view_formats: &[],
             });
-            let view = tex.create_view(&wgpu::TextureViewDescriptor {
+            let view = tex.create_view(&etalon::TextureViewDescriptor {
                 label: Some(label),
-                dimension: Some(wgpu::TextureViewDimension::Cube),
+                dimension: Some(etalon::TextureViewDimension::Cube),
                 ..Default::default()
             });
             (tex, view)
@@ -452,30 +449,30 @@ impl IblCubemapGenerator {
             IBL_SPECULAR_MIP_COUNT,
         );
 
-        let brdf_lut_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let brdf_lut_texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia_ibl_brdf_lut"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width: IBL_BRDF_LUT_SIZE,
                 height: IBL_BRDF_LUT_SIZE,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba16Float,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::Rgba16Float,
+            usage: etalon::TextureUsages::TEXTURE_BINDING | etalon::TextureUsages::COPY_DST,
             view_formats: &[],
         });
-        let brdf_lut_view = brdf_lut_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let brdf_lut_view = brdf_lut_texture.create_view(&etalon::TextureViewDescriptor::default());
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("qualia_ibl_cubemap_sampler"),
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::MipmapFilterMode::Linear,
+            address_mode_u: etalon::AddressMode::ClampToEdge,
+            address_mode_v: etalon::AddressMode::ClampToEdge,
+            address_mode_w: etalon::AddressMode::ClampToEdge,
+            mag_filter: etalon::FilterMode::Linear,
+            min_filter: etalon::FilterMode::Linear,
+            mipmap_filter: etalon::MipmapFilterMode::Linear,
             ..Default::default()
         });
 
@@ -498,9 +495,9 @@ impl IblCubemapGenerator {
     /// Encodes a 6-face procedural sky + diffuse irradiance + 5-mip GGX specular convolution pass.
     pub fn dispatch_convolve(
         &self,
-        device: &wgpu::Device,
-        queue: &wgpu::Queue,
-        encoder: &mut wgpu::CommandEncoder,
+        device: &etalon::Device,
+        queue: &etalon::Queue,
+        encoder: &mut etalon::CommandEncoder,
         params: &IblCubemapParams,
     ) {
         let mut irrad_params = *params;
@@ -509,29 +506,29 @@ impl IblCubemapGenerator {
 
         let irrad_storage_view =
             self.irradiance_cubemap
-                .create_view(&wgpu::TextureViewDescriptor {
+                .create_view(&etalon::TextureViewDescriptor {
                     label: Some("qualia_ibl_irrad_storage_view"),
-                    dimension: Some(wgpu::TextureViewDimension::D2Array),
+                    dimension: Some(etalon::TextureViewDimension::D2Array),
                     base_mip_level: 0,
                     mip_level_count: Some(1),
                     ..Default::default()
                 });
-        let bg = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bg = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("qualia_ibl_irrad_bg"),
             layout: &self.bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
                     resource: self.uniform_buf.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&irrad_storage_view),
+                    resource: etalon::BindingResource::TextureView(&irrad_storage_view),
                 },
             ],
         });
 
-        let mut cpass = encoder.begin_compute_pass(&wgpu::ComputePassDescriptor {
+        let mut cpass = encoder.begin_compute_pass(&etalon::ComputePassDescriptor {
             label: Some("qualia_ibl_irradiance_convolve_pass"),
             timestamp_writes: None,
         });

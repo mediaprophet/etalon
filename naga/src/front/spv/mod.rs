@@ -40,7 +40,6 @@ use alloc::{borrow::ToOwned, string::String, vec, vec::Vec};
 use core::{convert::TryInto, mem, num::NonZeroU32};
 
 use half::f16;
-use petgraph::graphmap::GraphMap;
 
 use super::atomic_upgrade::Upgrades;
 use crate::{
@@ -650,12 +649,7 @@ pub struct Frontend<I> {
     // Graph of all function calls through the module.
     // It's used to sort the functions (as nodes) topologically,
     // so that in the IR any called function is already known.
-    function_call_graph: GraphMap<
-        spirv::Word,
-        (),
-        petgraph::Directed,
-        core::hash::BuildHasherDefault<rustc_hash::FxHasher>,
-    >,
+    function_call_graph: CallGraph,
     options: Options,
 
     /// Maps for a switch from a case target to the respective body and associated literals that
@@ -704,7 +698,7 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
             deferred_entry_points: Vec::default(),
             deferred_function_calls: Vec::default(),
             dummy_functions: Arena::new(),
-            function_call_graph: GraphMap::new(),
+            function_call_graph: CallGraph::default(),
             options: options.clone(),
             switch_cases: FastIndexMap::default(),
             gl_per_vertex_builtin_access: FastHashSet::default(),
@@ -1817,9 +1811,10 @@ impl<I: Iterator<Item = u32>> Frontend<I> {
 
         log::debug!("Patching...");
         {
-            let mut nodes = petgraph::algo::toposort(&self.function_call_graph, None)
-                .map_err(|cycle| Error::FunctionCallCycle(cycle.node_id()))?;
-            nodes.reverse(); // we need dominated first
+            let nodes = self
+                .function_call_graph
+                .toposort_callees_first()
+                .map_err(Error::FunctionCallCycle)?;
             let mut functions = module.functions.take();
             for fun_id in nodes {
                 if fun_id > !(functions.len() as u32) {
@@ -3262,6 +3257,7 @@ fn is_parent(mut child: usize, parent: usize, block_ctx: &BlockContext) -> bool 
 #[cfg(test)]
 mod test {
     use alloc::vec;
+    use super::CallGraph;
 
     #[test]
     fn parse() {
@@ -3275,5 +3271,47 @@ mod test {
             0x01, 0x00, 0x00, 0x00,
         ];
         let _ = super::parse_u8_slice(&bin, &Default::default()).unwrap();
+    }
+
+    #[test]
+    fn call_graph_leaf_before_caller_and_diamond_dag() {
+        let mut graph = CallGraph::default();
+        // Entry wrapper (!0) -> main(10) -> {mid_a(20), mid_b(30)} -> leaf(40), plus uncalled(50).
+        graph.add_node(10);
+        graph.add_node(20);
+        graph.add_node(30);
+        graph.add_node(40);
+        graph.add_node(50);
+        graph.add_call_edge(!0, 10);
+        graph.add_call_edge(10, 20);
+        graph.add_call_edge(10, 30);
+        // Duplicate call edge must be deduplicated cleanly.
+        graph.add_call_edge(10, 20);
+        graph.add_call_edge(20, 40);
+        graph.add_call_edge(30, 40);
+
+        let order = graph.toposort_callees_first().expect("DAG should sort");
+        let pos = |id: u32| order.iter().position(|&x| x == id).unwrap();
+        assert_eq!(order.len(), 6);
+        assert!(pos(40) < pos(20), "leaf must precede mid_a");
+        assert!(pos(40) < pos(30), "leaf must precede mid_b");
+        assert!(pos(20) < pos(10), "mid_a must precede main");
+        assert!(pos(30) < pos(10), "mid_b must precede main");
+        assert!(pos(10) < pos(!0), "main must precede entry wrapper");
+        assert!(order.contains(&50), "uncalled function must still be emitted");
+    }
+
+    #[test]
+    fn call_graph_detects_self_and_mutual_recursion() {
+        let mut self_rec = CallGraph::default();
+        self_rec.add_node(7);
+        self_rec.add_call_edge(7, 7);
+        assert_eq!(self_rec.toposort_callees_first(), Err(7));
+
+        let mut mutual_rec = CallGraph::default();
+        mutual_rec.add_call_edge(1, 2);
+        mutual_rec.add_call_edge(2, 3);
+        mutual_rec.add_call_edge(3, 1);
+        assert_eq!(mutual_rec.toposort_callees_first(), Err(1));
     }
 }

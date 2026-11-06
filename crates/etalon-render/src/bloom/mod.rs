@@ -1,11 +1,10 @@
 //! Persistent HDR bloom targets and exact Kawase pipeline.
-use etalon as wgpu;
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 pub const BLOOM_WGSL: &str = concat!(
     include_str!("../shaders/output_transform.wgsl"),
     include_str!("../shaders/bloom.wgsl")
 );
-const HDR_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba16Float;
+const HDR_FORMAT: etalon::TextureFormat = etalon::TextureFormat::Rgba16Float;
 const BLOOM_THRESHOLD: f32 = 1.0;
 const BLOOM_INTENSITY: f32 = 1.15;
 const BLOOM_STRENGTH: f32 = 0.85;
@@ -41,19 +40,19 @@ pub struct BloomUniformBlock {
 
 /// HDR scene target + half-res Kawase ping-pong (allocated only in `OperationalMode::Full`).
 pub struct BloomChain<R> {
-    pub hdr_texture: wgpu::Texture,
-    pub hdr_view: wgpu::TextureView,
-    pub blur_a: wgpu::Texture,
-    pub blur_a_view: wgpu::TextureView,
-    pub blur_b: wgpu::Texture,
-    pub blur_b_view: wgpu::TextureView,
-    pub dummy_view: wgpu::TextureView,
-    pub sampler: wgpu::Sampler,
-    pub uniform_buf: wgpu::Buffer,
-    pub bind_layout: wgpu::BindGroupLayout,
-    pub extract_pipeline: wgpu::RenderPipeline,
-    pub kawase_pipeline: wgpu::RenderPipeline,
-    pub composite_pipeline: wgpu::RenderPipeline,
+    pub hdr_texture: etalon::Texture,
+    pub hdr_view: etalon::TextureView,
+    pub blur_a: etalon::Texture,
+    pub blur_a_view: etalon::TextureView,
+    pub blur_b: etalon::Texture,
+    pub blur_b_view: etalon::TextureView,
+    pub dummy_view: etalon::TextureView,
+    pub sampler: etalon::Sampler,
+    pub uniform_buf: etalon::Buffer,
+    pub bind_layout: etalon::BindGroupLayout,
+    pub extract_pipeline: etalon::RenderPipeline,
+    pub kawase_pipeline: etalon::RenderPipeline,
+    pub composite_pipeline: etalon::RenderPipeline,
     pub half_width: u32,
     pub half_height: u32,
     pub exposure_scale: f32,
@@ -74,48 +73,48 @@ impl<R> BloomChain<R> {
     }
 
     /// Keep texture handles alive for resize validation / VRAM accounting.
-    pub fn texture_handles(&self) -> (&wgpu::Texture, &wgpu::Texture, &wgpu::Texture) {
+    pub fn texture_handles(&self) -> (&etalon::Texture, &etalon::Texture, &etalon::Texture) {
         (&self.hdr_texture, &self.blur_a, &self.blur_b)
     }
 }
 
 /// Probes the HDR format (`Rgba16Float` render attachment + texture binding) on both native and `wasm32` WebGPU adapters.
-pub fn probe_hdr_format(device: &wgpu::Device) -> bool {
-    let tex = device.create_texture(&wgpu::TextureDescriptor {
+pub fn probe_hdr_format(device: &etalon::Device) -> bool {
+    let tex = device.create_texture(&etalon::TextureDescriptor {
         label: Some("portal-hdr-probe"),
-        size: wgpu::Extent3d {
+        size: etalon::Extent3d {
             width: 4,
             height: 4,
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
         sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
+        dimension: etalon::TextureDimension::D2,
         format: HDR_FORMAT,
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
         view_formats: &[],
     });
-    tex.create_view(&wgpu::TextureViewDescriptor::default());
+    tex.create_view(&etalon::TextureViewDescriptor::default());
     true
 }
 
 /// HDR color-target state.
-pub fn hdr_color_target_state() -> wgpu::ColorTargetState {
-    wgpu::ColorTargetState {
+pub fn hdr_color_target_state() -> etalon::ColorTargetState {
+    etalon::ColorTargetState {
         format: HDR_FORMAT,
-        blend: Some(wgpu::BlendState {
-            color: wgpu::BlendComponent {
-                src_factor: wgpu::BlendFactor::One,
-                dst_factor: wgpu::BlendFactor::One,
-                operation: wgpu::BlendOperation::Add,
+        blend: Some(etalon::BlendState {
+            color: etalon::BlendComponent {
+                src_factor: etalon::BlendFactor::One,
+                dst_factor: etalon::BlendFactor::One,
+                operation: etalon::BlendOperation::Add,
             },
-            alpha: wgpu::BlendComponent {
-                src_factor: wgpu::BlendFactor::One,
-                dst_factor: wgpu::BlendFactor::One,
-                operation: wgpu::BlendOperation::Add,
+            alpha: etalon::BlendComponent {
+                src_factor: etalon::BlendFactor::One,
+                dst_factor: etalon::BlendFactor::One,
+                operation: etalon::BlendOperation::Add,
             },
         }),
-        write_mask: wgpu::ColorWrites::ALL,
+        write_mask: etalon::ColorWrites::ALL,
     }
 }
 
@@ -134,65 +133,65 @@ pub fn bloom_vram_bytes(width: u32, height: u32) -> Option<u64> {
 
 /// Creates a float target.
 pub fn create_float_target(
-    device: &wgpu::Device,
+    device: &etalon::Device,
     label: &str,
     width: u32,
     height: u32,
-) -> (wgpu::Texture, wgpu::TextureView) {
-    let texture = device.create_texture(&wgpu::TextureDescriptor {
+) -> (etalon::Texture, etalon::TextureView) {
+    let texture = device.create_texture(&etalon::TextureDescriptor {
         label: Some(label),
-        size: wgpu::Extent3d {
+        size: etalon::Extent3d {
             width: width.max(1),
             height: height.max(1),
             depth_or_array_layers: 1,
         },
         mip_level_count: 1,
         sample_count: 1,
-        dimension: wgpu::TextureDimension::D2,
+        dimension: etalon::TextureDimension::D2,
         format: HDR_FORMAT,
-        usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+        usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
         view_formats: &[],
     });
-    let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+    let view = texture.create_view(&etalon::TextureViewDescriptor::default());
     (texture, view)
 }
 
 /// Bloom bind layout.
-pub fn bloom_bind_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-    device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+pub fn bloom_bind_layout(device: &etalon::Device) -> etalon::BindGroupLayout {
+    device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("portal-bloom-layout"),
         entries: &[
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                visibility: etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 1,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Texture {
-                    sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                    view_dimension: wgpu::TextureViewDimension::D2,
+                visibility: etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Texture {
+                    sample_type: etalon::TextureSampleType::Float { filterable: true },
+                    view_dimension: etalon::TextureViewDimension::D2,
                     multisampled: false,
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 2,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Texture {
-                    sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                    view_dimension: wgpu::TextureViewDimension::D2,
+                visibility: etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Texture {
+                    sample_type: etalon::TextureSampleType::Float { filterable: true },
+                    view_dimension: etalon::TextureViewDimension::D2,
                     multisampled: false,
                 },
                 count: None,
             },
-            wgpu::BindGroupLayoutEntry {
+            etalon::BindGroupLayoutEntry {
                 binding: 3,
-                visibility: wgpu::ShaderStages::FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
+                visibility: etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
                     min_binding_size: std::num::NonZeroU64::new(
                         std::mem::size_of::<BloomUniformBlock>() as u64,
@@ -206,30 +205,30 @@ pub fn bloom_bind_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
 
 /// Makes a bloom bind group.
 pub fn make_bloom_bind_group(
-    device: &wgpu::Device,
-    layout: &wgpu::BindGroupLayout,
-    sampler: &wgpu::Sampler,
-    tex_a: &wgpu::TextureView,
-    tex_b: &wgpu::TextureView,
-    uniform_buf: &wgpu::Buffer,
-) -> wgpu::BindGroup {
-    device.create_bind_group(&wgpu::BindGroupDescriptor {
+    device: &etalon::Device,
+    layout: &etalon::BindGroupLayout,
+    sampler: &etalon::Sampler,
+    tex_a: &etalon::TextureView,
+    tex_b: &etalon::TextureView,
+    uniform_buf: &etalon::Buffer,
+) -> etalon::BindGroup {
+    device.create_bind_group(&etalon::BindGroupDescriptor {
         label: Some("portal-bloom-bind"),
         layout,
         entries: &[
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 0,
-                resource: wgpu::BindingResource::Sampler(sampler),
+                resource: etalon::BindingResource::Sampler(sampler),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 1,
-                resource: wgpu::BindingResource::TextureView(tex_a),
+                resource: etalon::BindingResource::TextureView(tex_a),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 2,
-                resource: wgpu::BindingResource::TextureView(tex_b),
+                resource: etalon::BindingResource::TextureView(tex_b),
             },
-            wgpu::BindGroupEntry {
+            etalon::BindGroupEntry {
                 binding: 3,
                 resource: uniform_buf.as_entire_binding(),
             },
@@ -239,10 +238,10 @@ pub fn make_bloom_bind_group(
 
 /// Creates the bloom chain.
 pub fn create_bloom_chain<R>(
-    device: &wgpu::Device,
+    device: &etalon::Device,
     width: u32,
     height: u32,
-    surface_format: wgpu::TextureFormat,
+    surface_format: etalon::TextureFormat,
     exposure_scale: f32,
     reserve: impl FnOnce(u64) -> Option<R>,
 ) -> Option<BloomChain<R>> {
@@ -257,14 +256,14 @@ pub fn create_bloom_chain<R>(
         create_float_target(device, "portal-bloom-b", half_width, half_height);
     let (dummy, dummy_view) = create_float_target(device, "portal-bloom-dummy", 1, 1);
 
-    let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+    let sampler = device.create_sampler(&etalon::SamplerDescriptor {
         label: Some("portal-bloom-sampler"),
-        mag_filter: wgpu::FilterMode::Linear,
-        min_filter: wgpu::FilterMode::Linear,
+        mag_filter: etalon::FilterMode::Linear,
+        min_filter: etalon::FilterMode::Linear,
         ..Default::default()
     });
 
-    let uniform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let uniform_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
         label: Some("portal-bloom-uniforms"),
         contents: bytemuck::bytes_of(&BloomUniformBlock {
             bloom: BloomParamsGpu {
@@ -286,95 +285,95 @@ pub fn create_bloom_chain<R>(
                 _pad2: 0.0,
             },
         }),
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
     });
 
     let bind_layout = bloom_bind_layout(device);
-    let bloom_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+    let bloom_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
         label: Some("portal-bloom"),
-        source: wgpu::ShaderSource::Wgsl(BLOOM_WGSL.into()),
+        source: etalon::ShaderSource::Wgsl(BLOOM_WGSL.into()),
     });
 
-    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+    let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
         label: Some("portal-bloom-pipeline-layout"),
         bind_group_layouts: &[Some(&bind_layout)],
         immediate_size: 0,
     });
 
-    let extract_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let extract_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
         label: Some("portal-bloom-extract"),
         layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
+        vertex: etalon::VertexState {
             module: &bloom_shader,
             entry_point: Some("extract_vs"),
             compilation_options: Default::default(),
             buffers: &[],
         },
-        fragment: Some(wgpu::FragmentState {
+        fragment: Some(etalon::FragmentState {
             module: &bloom_shader,
             entry_point: Some("extract_fs"),
             compilation_options: Default::default(),
-            targets: &[Some(wgpu::ColorTargetState {
+            targets: &[Some(etalon::ColorTargetState {
                 format: HDR_FORMAT,
                 blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
+                write_mask: etalon::ColorWrites::ALL,
             })],
         }),
-        primitive: wgpu::PrimitiveState::default(),
+        primitive: etalon::PrimitiveState::default(),
         depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
+        multisample: etalon::MultisampleState::default(),
         multiview_mask: None,
         cache: None,
     });
 
-    let kawase_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let kawase_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
         label: Some("portal-bloom-kawase"),
         layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
+        vertex: etalon::VertexState {
             module: &bloom_shader,
             entry_point: Some("kawase_vs"),
             compilation_options: Default::default(),
             buffers: &[],
         },
-        fragment: Some(wgpu::FragmentState {
+        fragment: Some(etalon::FragmentState {
             module: &bloom_shader,
             entry_point: Some("kawase_fs"),
             compilation_options: Default::default(),
-            targets: &[Some(wgpu::ColorTargetState {
+            targets: &[Some(etalon::ColorTargetState {
                 format: HDR_FORMAT,
                 blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
+                write_mask: etalon::ColorWrites::ALL,
             })],
         }),
-        primitive: wgpu::PrimitiveState::default(),
+        primitive: etalon::PrimitiveState::default(),
         depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
+        multisample: etalon::MultisampleState::default(),
         multiview_mask: None,
         cache: None,
     });
 
-    let composite_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+    let composite_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
         label: Some("portal-bloom-composite"),
         layout: Some(&pipeline_layout),
-        vertex: wgpu::VertexState {
+        vertex: etalon::VertexState {
             module: &bloom_shader,
             entry_point: Some("composite_vs"),
             compilation_options: Default::default(),
             buffers: &[],
         },
-        fragment: Some(wgpu::FragmentState {
+        fragment: Some(etalon::FragmentState {
             module: &bloom_shader,
             entry_point: Some("composite_fs"),
             compilation_options: Default::default(),
-            targets: &[Some(wgpu::ColorTargetState {
+            targets: &[Some(etalon::ColorTargetState {
                 format: surface_format,
                 blend: None,
-                write_mask: wgpu::ColorWrites::ALL,
+                write_mask: etalon::ColorWrites::ALL,
             })],
         }),
-        primitive: wgpu::PrimitiveState::default(),
+        primitive: etalon::PrimitiveState::default(),
         depth_stencil: None,
-        multisample: wgpu::MultisampleState::default(),
+        multisample: etalon::MultisampleState::default(),
         multiview_mask: None,
         cache: None,
     });
@@ -406,8 +405,8 @@ pub fn create_bloom_chain<R>(
 
 /// Writes the bloom uniform.
 pub fn write_bloom_uniform(
-    queue: &wgpu::Queue,
-    buf: &wgpu::Buffer,
+    queue: &etalon::Queue,
+    buf: &etalon::Buffer,
     offset: f32,
     exposure_scale: f32,
     surface_is_srgb: bool,

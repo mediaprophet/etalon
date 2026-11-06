@@ -9,8 +9,6 @@
 //!   64 bytes) for GPU-evaluated Voronoi micro-relief, smooth-minimum SDFs, Huxley allometry,
 //!   logarithmic spirals, and PGA motor harmonic oscillations.
 
-use etalon as wgpu;
-
 use bytemuck::{Pod, Zeroable};
 
 /// Representation kind for a `SubmeshSlice` LOD slot (`0..=4`).

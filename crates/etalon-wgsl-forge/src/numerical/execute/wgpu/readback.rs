@@ -41,6 +41,50 @@ impl WgpuComputeContext {
         self.ensure_live()?;
         Ok(output)
     }
+
+    /// Reads back a buffer as `f32` elements directly into caller-owned `out` without
+    /// allocating an intermediate `Vec<f32>`.
+    pub fn read_buffer_f32_into(
+        &self,
+        view: &BufferView,
+        out: &mut [f32],
+    ) -> Result<usize, ForgeError> {
+        self.ensure_live()?;
+        let elements = view.length_bytes / size_of::<f32>();
+        if out.len() < elements {
+            return Err(ForgeError::GpuValidation(format!(
+                "readback output slice too small: view has {elements} f32s, slice has {}",
+                out.len()
+            )));
+        }
+        let size = view.length_bytes as u64;
+        let staging = self.device.create_buffer(&wgpu::BufferDescriptor {
+            label: Some("forge-output-staging"),
+            size,
+            usage: wgpu::BufferUsages::COPY_DST | wgpu::BufferUsages::MAP_READ,
+            mapped_at_creation: false,
+        });
+        let mut encoder = self
+            .device
+            .create_command_encoder(&wgpu::CommandEncoderDescriptor {
+                label: Some("forge-output-copy"),
+            });
+        encoder.copy_buffer_to_buffer(
+            self.slab_for(view.usage),
+            view.offset as u64,
+            &staging,
+            0,
+            size,
+        );
+        self.submit_commands(encoder.finish())?;
+        let _unmap = Unmap(&staging);
+        let bytes = map_read(self, &staging)?;
+
+        out[..elements].copy_from_slice(&bytemuck::cast_slice::<u8, f32>(&bytes)[..elements]);
+        drop(bytes);
+        self.ensure_live()?;
+        Ok(elements)
+    }
 }
 
 fn map_read(

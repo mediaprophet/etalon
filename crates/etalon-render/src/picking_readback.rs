@@ -1,10 +1,9 @@
 //! Persistent bounded picking snapshot, copy recording, and asynchronous completion.
 use crate::picking::{resolve_pick, snapshot_ids, PickResult};
-use etalon as wgpu;
 use etalon_wasm::readback::{ready_worker, PendingMap, SharedWorker};
 
 pub struct PickingReadback<R> {
-    buffer: wgpu::Buffer,
+    buffer: etalon::Buffer,
     _reservation: R,
     worker: SharedWorker,
     pending: Option<(u32, u32)>,
@@ -14,7 +13,7 @@ pub struct PickingReadback<R> {
     snapshot_count: usize,
 }
 impl<R> PickingReadback<R> {
-    pub fn new(buffer: wgpu::Buffer, reservation: R, max_instances: usize) -> Self {
+    pub fn new(buffer: etalon::Buffer, reservation: R, max_instances: usize) -> Self {
         Self {
             buffer,
             _reservation: reservation,
@@ -69,26 +68,26 @@ impl<R> PickingReadback<R> {
         self.invalidate(false);
         self.worker.lock().unwrap().notify_device_lost();
     }
-    pub fn record_copy(&mut self, encoder: &mut wgpu::CommandEncoder, texture: &wgpu::Texture) {
+    pub fn record_copy(&mut self, encoder: &mut etalon::CommandEncoder, texture: &etalon::Texture) {
         let Some((x, y)) = self.pending.take() else {
             return;
         };
         encoder.copy_texture_to_buffer(
-            wgpu::TexelCopyTextureInfo {
+            etalon::TexelCopyTextureInfo {
                 texture,
                 mip_level: 0,
-                origin: wgpu::Origin3d { x, y, z: 0 },
-                aspect: wgpu::TextureAspect::All,
+                origin: etalon::Origin3d { x, y, z: 0 },
+                aspect: etalon::TextureAspect::All,
             },
-            wgpu::TexelCopyBufferInfo {
+            etalon::TexelCopyBufferInfo {
                 buffer: &self.buffer,
-                layout: wgpu::TexelCopyBufferLayout {
+                layout: etalon::TexelCopyBufferLayout {
                     offset: 0,
-                    bytes_per_row: Some(wgpu::COPY_BYTES_PER_ROW_ALIGNMENT),
+                    bytes_per_row: Some(etalon::COPY_BYTES_PER_ROW_ALIGNMENT),
                     rows_per_image: Some(1),
                 },
             },
-            wgpu::Extent3d {
+            etalon::Extent3d {
                 width: 1,
                 height: 1,
                 depth_or_array_layers: 1,
@@ -96,7 +95,7 @@ impl<R> PickingReadback<R> {
         );
         self.copied = true;
     }
-    pub fn poll(&mut self, device: &wgpu::Device) -> Option<PickResult> {
+    pub fn poll(&mut self, device: &etalon::Device) -> Option<PickResult> {
         if !self.copied {
             return None;
         }
@@ -108,7 +107,7 @@ impl<R> PickingReadback<R> {
             }
         }
         #[cfg(not(target_arch = "wasm32"))]
-        if device.poll(wgpu::PollType::wait_indefinitely()).is_err() {
+        if device.poll(etalon::PollType::wait_indefinitely()).is_err() {
             self.notify_device_lost();
             return None;
         }
@@ -142,27 +141,27 @@ impl<R> Drop for PickingReadback<R> {
 }
 
 pub fn record_pass(
-    encoder: &mut wgpu::CommandEncoder,
-    color: &wgpu::TextureView,
-    depth: &wgpu::TextureView,
-    draw: impl FnOnce(&mut wgpu::RenderPass<'_>),
+    encoder: &mut etalon::CommandEncoder,
+    color: &etalon::TextureView,
+    depth: &etalon::TextureView,
+    draw: impl FnOnce(&mut etalon::RenderPass<'_>),
 ) {
-    let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+    let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
         label: Some("portal-picking-pass"),
-        color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+        color_attachments: &[Some(etalon::RenderPassColorAttachment {
             view: color,
             depth_slice: None,
             resolve_target: None,
-            ops: wgpu::Operations {
-                load: wgpu::LoadOp::Clear(wgpu::Color::TRANSPARENT),
-                store: wgpu::StoreOp::Store,
+            ops: etalon::Operations {
+                load: etalon::LoadOp::Clear(etalon::Color::TRANSPARENT),
+                store: etalon::StoreOp::Store,
             },
         })],
-        depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+        depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
             view: depth,
-            depth_ops: Some(wgpu::Operations {
-                load: wgpu::LoadOp::Clear(1.0),
-                store: wgpu::StoreOp::Store,
+            depth_ops: Some(etalon::Operations {
+                load: etalon::LoadOp::Clear(1.0),
+                store: etalon::StoreOp::Store,
             }),
             stencil_ops: None,
         }),

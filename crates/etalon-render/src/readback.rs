@@ -1,12 +1,10 @@
 //! Native caller-buffered offscreen mapping on the embedding's shared device.
 #[cfg(not(target_arch = "wasm32"))]
-use etalon as wgpu;
-#[cfg(not(target_arch = "wasm32"))]
 pub fn read_rgba8_into(
-    device: &wgpu::Device,
-    queue: &wgpu::Queue,
-    texture: &wgpu::Texture,
-    staging: &wgpu::Buffer,
+    device: &etalon::Device,
+    queue: &etalon::Queue,
+    texture: &etalon::Texture,
+    staging: &etalon::Buffer,
     width: u32,
     height: u32,
     bytes_per_row: u32,
@@ -31,25 +29,25 @@ pub fn read_rgba8_into(
     {
         return Err("RGBA8 staging layout invalid".into());
     }
-    let mut encoder = device.create_command_encoder(&wgpu::CommandEncoderDescriptor {
+    let mut encoder = device.create_command_encoder(&etalon::CommandEncoderDescriptor {
         label: Some("qualia-render-readback-encoder"),
     });
     encoder.copy_texture_to_buffer(
-        wgpu::TexelCopyTextureInfo {
+        etalon::TexelCopyTextureInfo {
             texture,
             mip_level: 0,
-            origin: wgpu::Origin3d::ZERO,
-            aspect: wgpu::TextureAspect::All,
+            origin: etalon::Origin3d::ZERO,
+            aspect: etalon::TextureAspect::All,
         },
-        wgpu::TexelCopyBufferInfo {
+        etalon::TexelCopyBufferInfo {
             buffer: staging,
-            layout: wgpu::TexelCopyBufferLayout {
+            layout: etalon::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(bytes_per_row),
                 rows_per_image: Some(height),
             },
         },
-        wgpu::Extent3d {
+        etalon::Extent3d {
             width: width,
             height: height,
             depth_or_array_layers: 1,
@@ -67,7 +65,7 @@ pub fn read_rgba8_into(
     )
     .map_err(|error| format!("RGBA8 map admission: {error:?}"))?;
     device
-        .poll(wgpu::PollType::wait_indefinitely())
+        .poll(etalon::PollType::wait_indefinitely())
         .map_err(|error| format!("RGBA8 device poll: {error}"))?;
     if pending.try_complete() != Some(true) {
         return Err("RGBA8 map failed or completion was cancelled".into());

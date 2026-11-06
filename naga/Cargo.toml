@@ -57,7 +57,7 @@ arbitrary = [
     "half/std",
     "naga-types/arbitrary",
 ]
-spv-in = ["dep:petgraph", "petgraph/graphmap", "dep:spirv"]
+spv-in = ["dep:spirv"]
 spv-out = ["dep:spirv"]
 wgsl-in = ["dep:unicode-ident"]
 wgsl-out = []
@@ -102,7 +102,6 @@ once_cell = { workspace = true, features = ["alloc", "race"] }
 spirv = { workspace = true, optional = true }
 thiserror.workspace = true
 serde = { workspace = true, features = ["alloc", "derive"], optional = true }
-petgraph = { workspace = true, optional = true }
 pp-rs = { workspace = true, optional = true }
 unicode-ident = { workspace = true, optional = true }
 

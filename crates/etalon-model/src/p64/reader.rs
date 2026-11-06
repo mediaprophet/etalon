@@ -83,10 +83,10 @@ impl<'a> P64View<'a> {
         if header.flags & P64_FLAG_LITTLE_ENDIAN == 0 {
             return Err(P64Error::UnsupportedEndian);
         }
-        let page = header.page_size as usize;
-        if page < 256 || !page.is_power_of_two() {
+        if !header.has_valid_page_size() {
             return Err(P64Error::InvalidPageSize);
         }
+        let page = header.page_size as usize;
         let hp_start = header.hparams_offset as usize;
         let hp_end = end(hp_start, 1, 64, P64OverflowContext::HyperparameterOffset)?;
         let hp_bytes = bytes
@@ -136,7 +136,7 @@ impl<'a> P64View<'a> {
         {
             return Err(P64Error::MetadataBounds);
         }
-        if !manifold.is_multiple_of(64) {
+        if !header.is_manifold_cache_aligned() {
             return Err(P64Error::ManifoldAlignment);
         }
         if integrity != IntegrityMode::Structure
@@ -145,12 +145,9 @@ impl<'a> P64View<'a> {
             return Err(P64Error::MetadataChecksum);
         }
         let mut previous_end =
-            checksum_end
-                .checked_add(page - 1)
-                .ok_or(P64Error::ArithmeticOverflow(
-                    P64OverflowContext::BlobAlignment,
-                ))?
-                & !(page - 1);
+            checked_align_up(checksum_end, page).ok_or(P64Error::ArithmeticOverflow(
+                P64OverflowContext::BlobAlignment,
+            ))?;
         let mut previous_manifold = None;
         let layer_packed = header.flags & P64_FLAG_LAYER_PACK != 0;
         for index in 0..count {
@@ -181,7 +178,7 @@ impl<'a> P64View<'a> {
                 } else {
                     page
                 };
-            if !blob.is_multiple_of(alignment) || blob < previous_end || blob_end > bytes.len() {
+            if !entry.is_blob_aligned(alignment) || blob < previous_end || blob_end > bytes.len() {
                 return Err(P64Error::InvalidBlob(index));
             }
             if integrity == IntegrityMode::Full
@@ -237,7 +234,7 @@ impl<'a> P64View<'a> {
     }
 
     pub fn tokenizer_bytes(&self) -> &'a [u8] {
-        &self.bytes[self.header.tokenizer_offset as usize..self.header.checksum_offset as usize]
+        self.header.tokenizer_slice(self.bytes)
     }
 
     pub fn manifold_record(&self, index: u32) -> Result<P64ManifoldRecord<'a>, P64Error> {
@@ -277,7 +274,7 @@ impl<'a> P64View<'a> {
             64,
             P64OverflowContext::HyperparameterOffset,
         )?;
-        if !start.is_multiple_of(64)
+        if !is_cache_line_aligned(start)
             || start < floor
             || stop > self.header.tensor_table_offset as usize
         {
@@ -291,23 +288,7 @@ fn read_u32(bytes: &[u8], offset: usize) -> u32 {
     u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap())
 }
 
+#[inline]
 fn read_entry(bytes: &[u8]) -> P64TensorEntry {
-    let u16a = |o| u16::from_le_bytes(bytes[o..o + 2].try_into().unwrap());
-    let u32a = |o| read_u32(bytes, o);
-    let u64a = |o| u64::from_le_bytes(bytes[o..o + 8].try_into().unwrap());
-    P64TensorEntry {
-        name_offset: u32a(0),
-        role_id: u16a(4),
-        dtype: u16a(6),
-        manifold_idx: u32a(8),
-        rank: u32a(12),
-        dimensions: [u32a(16), u32a(20), u32a(24), u32a(28)],
-        blob_offset: u32a(32),
-        blob_size: u32a(36),
-        source_offset: u64a(40),
-        source_name_hash: u64a(48),
-        alt_dtype: u16a(56),
-        precision_views_mask: u16a(58),
-        alt_blob_offset: u32a(60),
-    }
+    P64TensorEntry::read_le_unchecked(bytes)
 }

@@ -112,6 +112,19 @@ etalon-wgsl-forge = { version = "0.0.2", path = "./crates/etalon-wgsl-forge", de
 etalon-nquin = { version = "0.0.2", path = "./crates/etalon-nquin", default-features = false }
 etalon-tensor = { version = "0.0.2", path = "./crates/etalon-tensor", default-features = false }
 etalon-render = { version = "0.0.2", path = "./crates/etalon-render", default-features = false }
+etalon-sim = { version = "0.0.2", path = "./crates/etalon-sim", default-features = false }
+etalon-signal = { version = "0.0.2", path = "./crates/etalon-signal", default-features = false }
+etalon-sense = { version = "0.0.2", path = "./crates/etalon-sense", default-features = false }
+etalon-sense-core = { version = "0.0.2", path = "./crates/etalon-sense-core", default-features = false }
+etalon-model = { version = "0.0.2", path = "./crates/etalon-model", default-features = false }
+etalon-model-io = { version = "0.0.2", path = "./crates/etalon-model-io", default-features = false }
+etalon-resources = { version = "0.0.2", path = "./crates/etalon-resources", default-features = false }
+etalon-diagnostics = { version = "0.0.2", path = "./crates/etalon-diagnostics", default-features = false }
+etalon-qualification = { version = "0.0.2", path = "./crates/etalon-qualification", default-features = false }
+etalon-inference = { version = "0.0.2", path = "./crates/etalon-inference", default-features = false }
+etalon-inference-contract = { version = "0.0.2", path = "./crates/etalon-inference-contract", default-features = false }
+etalon-inference-kernel = { version = "0.0.2", path = "./crates/etalon-inference-kernel", default-features = false }
+etalon-inference-lab = { version = "0.0.2", path = "./crates/etalon-inference-lab", default-features = false }
 etalon-wasm = { version = "0.0.2", path = "./crates/etalon-wasm", default-features = false }
 
 # These _cannot_ have a version specified. If it does, crates.io will look

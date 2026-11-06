@@ -10,6 +10,8 @@ pub mod gpu_sieve_topk;
 mod kernel_limits;
 pub mod kv_cache;
 pub use kernel_limits::TensorPipelineError;
+pub mod spacetime;
+pub mod topology;
 pub mod view;
 
 pub use attention::{
@@ -35,5 +37,8 @@ pub use forward_arena::{
 };
 pub use gpu_sieve_topk::{LogitMaskHeader, TopkParams, TopkReductionPipeline, TOPK_REDUCTION_WGSL};
 pub use kv_cache::{KvCacheLayout, PagedKvBlockTable};
+pub use spacetime::{
+    pack_sector_xyz, unpack_sector_xyz, HierarchicalSpacetimeCoord, SpacetimeCoord,
+};
+pub use topology::TopologyClass;
 pub use view::{QuantScheme, TensorView};
-

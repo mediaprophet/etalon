@@ -2,6 +2,8 @@
 
 use super::telemetry::CameraUniform;
 
+pub use super::camera_controllers::*;
+
 pub const CAMERA_NEAR_PLANE: f32 = 0.05;
 pub const CAMERA_FAR_PLANE: f32 = 15_000.0;
 pub const CAMERA_MIN_ZOOM: f32 = 0.05;

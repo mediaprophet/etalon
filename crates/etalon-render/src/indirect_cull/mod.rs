@@ -9,7 +9,6 @@
 //! - **Stream 2 (Surfel / Octahedral Impostor Stream)**: instance indices at `LOD3` or `Surfel`/`Impostor`
 
 use bytemuck::{Pod, Zeroable};
-use etalon as wgpu;
 
 use super::mesh_slab::{ResidentAssetEntry, SubmeshSlice};
 use crate::instance_culling::{extract_frustum_planes, FrustumPlane};

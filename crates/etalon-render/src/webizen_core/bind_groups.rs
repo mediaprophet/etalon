@@ -3,7 +3,6 @@
 //! Manages bind groups for view/projection matrices, motor buffers, and epistemic parameters.
 
 use super::buffer_alignment::RenderQuin;
-use etalon as wgpu;
 use etalon::util::DeviceExt;
 
 /// Epistemic parameters uniform buffer
@@ -17,57 +16,57 @@ pub struct EpistemicParams {
 
 /// Bind group manager for render resources
 pub struct BindGroupManager {
-    bind_group_layout: wgpu::BindGroupLayout,
-    view_projection_buffer: wgpu::Buffer,
-    motor_buffer: wgpu::Buffer,
-    epistemic_params_buffer: wgpu::Buffer,
+    bind_group_layout: etalon::BindGroupLayout,
+    view_projection_buffer: etalon::Buffer,
+    motor_buffer: etalon::Buffer,
+    epistemic_params_buffer: etalon::Buffer,
 }
 
 impl BindGroupManager {
     /// Create a new bind group manager
-    pub fn new(device: &wgpu::Device) -> Self {
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+    pub fn new(device: &etalon::Device) -> Self {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: Some("webizen-render-bind-group-layout"),
             entries: &[
                 // Binding 0: View/Projection matrix (4x4 = 16 floats = 64 bytes)
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::VERTEX,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
                 // Binding 1: Motor buffer (storage array of Motors)
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    visibility: etalon::ShaderStages::VERTEX,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: true },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
                 // Binding 2: Motor index uniform
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStages::VERTEX,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::VERTEX,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
                 // Binding 3: Epistemic parameters
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 3,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
@@ -77,26 +76,26 @@ impl BindGroupManager {
         });
 
         // View/Projection matrix buffer (4x4 = 16 floats = 64 bytes)
-        let view_projection_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let view_projection_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("webizen-view-projection-buffer"),
             size: 64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         // Motor buffer (storage buffer, initially empty)
-        let motor_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let motor_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("webizen-motor-buffer"),
             size: 1024, // Initial size, can be resized
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         // Epistemic parameters buffer (16 bytes, aligned to 16)
-        let epistemic_params_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let epistemic_params_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("webizen-epistemic-params-buffer"),
             size: 16,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -109,7 +108,7 @@ impl BindGroupManager {
     }
 
     /// Update view/projection matrix
-    pub fn update_view_projection(&self, queue: &wgpu::Queue, matrix: [[f32; 4]; 4]) {
+    pub fn update_view_projection(&self, queue: &etalon::Queue, matrix: [[f32; 4]; 4]) {
         queue.write_buffer(
             &self.view_projection_buffer,
             0,
@@ -118,7 +117,7 @@ impl BindGroupManager {
     }
 
     /// Update motor buffer with RenderQuin data
-    pub fn update_motors(&self, queue: &wgpu::Queue, quins: &[RenderQuin]) {
+    pub fn update_motors(&self, queue: &etalon::Queue, quins: &[RenderQuin]) {
         let bytes = bytemuck::cast_slice(quins);
         if bytes.len() > 1024 {
             // TODO: Resize buffer if needed
@@ -128,7 +127,7 @@ impl BindGroupManager {
     }
 
     /// Update epistemic parameters
-    pub fn update_epistemic_params(&self, queue: &wgpu::Queue, params: EpistemicParams) {
+    pub fn update_epistemic_params(&self, queue: &etalon::Queue, params: EpistemicParams) {
         queue.write_buffer(
             &self.epistemic_params_buffer,
             0,
@@ -137,36 +136,36 @@ impl BindGroupManager {
     }
 
     /// Get the bind group layout
-    pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
+    pub fn bind_group_layout(&self) -> &etalon::BindGroupLayout {
         &self.bind_group_layout
     }
 
     /// Create a bind group for rendering
-    pub fn create_bind_group(&self, device: &wgpu::Device, motor_index: u32) -> wgpu::BindGroup {
+    pub fn create_bind_group(&self, device: &etalon::Device, motor_index: u32) -> etalon::BindGroup {
         // Motor index uniform buffer
-        let motor_index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let motor_index_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("webizen-motor-index-buffer"),
             contents: bytemuck::bytes_of(&motor_index),
-            usage: wgpu::BufferUsages::UNIFORM,
+            usage: etalon::BufferUsages::UNIFORM,
         });
 
-        device.create_bind_group(&wgpu::BindGroupDescriptor {
+        device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("webizen-render-bind-group"),
             layout: &self.bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
                     resource: self.view_projection_buffer.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
                     resource: self.motor_buffer.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 2,
                     resource: motor_index_buffer.as_entire_binding(),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 3,
                     resource: self.epistemic_params_buffer.as_entire_binding(),
                 },
@@ -177,12 +176,12 @@ impl BindGroupManager {
 
 /// Pre-configured bind groups for rendering
 pub struct RenderBindGroups {
-    pub primary_bind_group: wgpu::BindGroup,
+    pub primary_bind_group: etalon::BindGroup,
 }
 
 impl RenderBindGroups {
     /// Create render bind groups from a bind group manager
-    pub fn new(manager: &BindGroupManager, device: &wgpu::Device, motor_index: u32) -> Self {
+    pub fn new(manager: &BindGroupManager, device: &etalon::Device, motor_index: u32) -> Self {
         Self {
             primary_bind_group: manager.create_bind_group(device, motor_index),
         }

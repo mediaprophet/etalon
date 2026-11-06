@@ -1,20 +1,20 @@
 //! Electromagnetic field and signal wave-propagation visualization pipeline.
 //!
 //! Provides the complete GPU rendering pipeline for drawing 2D slices of 4D EMF field grids
-//! (x * y * z * t) with 10D manifold records preserved.
+//! (x * y * z * t) with 10D manifold records and 3 Stokes polarization parameters preserved.
 
 use bytemuck::{Pod, Zeroable};
 
 /// Raw WGSL shader source for the EMF volumetric visualizer.
 pub const EMF_VOLUMETRIC_WGSL: &str = r#"// EMF 5D volumetric visualizer — renders 2D slices of the 4D EMF field grid
-// (x×y×z×t) with 10D manifold tags mapped to color.
+// (x×y×z×t) with 10D manifold tags and Stokes polarization mapped to color.
 //
 // Fragment shader samples a storage buffer containing the flat field grid
 // (indexed [t][z][y][x]) and maps:
 //   amplitude  → brightness (HDR value)
-//   phase      → hue (via σ → CIE XYZ → linear sRGB)
+//   phase      → hue (via Full-Spectrum σ → CIE XYZ / False-Color → linear sRGB)
 //   manifold.scale + attention_depth → saturation gain
-//   manifold.manifold_curvature → rim glow / contour enhancement
+//   manifold.manifold_curvature + Stokes (Q,U,V) → rim glow / polarization highlight
 //
 // @group(0) camera + slice params · @group(1) field grid storage
 
@@ -41,8 +41,8 @@ struct EmfSliceUniform {
     _pad: f32,
 };
 
-// Per-cell field data: amplitude, phase, frequency + 10D manifold coords.
-// Matches the host-side EmfFieldCell struct (48 bytes = 3 f32 + 10 f32 + 1 pad).
+// Per-cell field data: amplitude, phase, frequency + 10D manifold coords + 3 Stokes polarization params.
+// Matches the host-side EmfFieldCell struct (64 bytes = 3 f32 + 10 f32 + 3 f32).
 struct EmfFieldCell {
     amplitude: f32,
     phase: f32,
@@ -58,6 +58,10 @@ struct EmfFieldCell {
     recurrence_frequency: f32,
     density_threshold: f32,
     manifold_curvature: f32,
+    // Stokes polarization parameters (Q, U, V).
+    stokes_q: f32,
+    stokes_u: f32,
+    stokes_v: f32,
 };
 
 @group(0) @binding(0) var<uniform> params: EmfSliceUniform;
@@ -68,7 +72,7 @@ const TWO_PI: f32 = 6.283185307;
 // σ → CIE 1931 XYZ → linear sRGB (shared spectral mapping).
 fn sigma_to_cie_xyz(sigma: f32) -> vec3<f32> {
     let s = fract(sigma);
-    let lambda = 400.0 + (s * 300.0);
+    let lambda = 380.0 + (s * 370.0);
     let x1 = 1.056 * exp(-0.5 * pow((lambda - 599.8) / 43.2, 2.0));
     let x2 = 0.362 * exp(-0.5 * pow((lambda - 442.0) / 32.0, 2.0));
     let x3 = -0.065 * exp(-0.5 * pow((lambda - 501.1) / 20.4, 2.0));
@@ -89,8 +93,45 @@ fn xyz_to_linear_srgb(xyz: vec3<f32>) -> vec3<f32> {
     return max(vec3<f32>(R, G, B), vec3<f32>(0.0));
 }
 
+// Full-Spectrum False-Color Lens across 6 electromagnetic bands.
 fn sigma_to_linear_rgb(sigma: f32) -> vec3<f32> {
-    return xyz_to_linear_srgb(sigma_to_cie_xyz(sigma));
+    let band = i32(floor(sigma));
+    let s = fract(sigma);
+    if (band == 0) {
+        // Band 0 (Visible 380-750 nm): CIE 1931 XYZ analytic Gaussian fit -> linear sRGB
+        return xyz_to_linear_srgb(sigma_to_cie_xyz(s));
+    } else if (band == 1) {
+        // Band 1 (Radio/Microwave): deep crimson-to-amber false-color ramp
+        return vec3<f32>(
+            mix(0.35, 1.0, s),
+            mix(0.02, 0.55, s * s),
+            mix(0.05, 0.08, s)
+        );
+    } else if (band == 2) {
+        // Band 2 (Infrared / Thermal): blackbody ironbow ramp (indigo -> magenta -> orange -> white-hot)
+        let r = clamp(s * 1.6, 0.0, 1.0);
+        let g = clamp((s - 0.35) * 1.55, 0.0, 1.0);
+        let b = clamp(sin(s * 3.14159265) * 0.75 + max(0.0, (s - 0.75) * 4.0), 0.0, 1.0);
+        return vec3<f32>(r, g, b);
+    } else if (band == 3) {
+        // Band 3 (Ultraviolet): violet-to-electric-cyan fluorescence ramp
+        return vec3<f32>(
+            mix(0.42, 0.05, s),
+            mix(0.05, 0.92, s),
+            mix(0.75, 1.0, s)
+        );
+    } else if (band == 4) {
+        // Band 4 (X-Ray / CT attenuation): high-contrast radiographic cyan-white ramp
+        let c = pow(s, 0.85);
+        return vec3<f32>(c * 0.75, c * 0.95, clamp(c * 1.15, 0.0, 1.0));
+    } else {
+        // Band >= 5 (Gamma / Cherenkov): Cherenkov blue-violet-white radiation ramp
+        return vec3<f32>(
+            mix(0.15, 0.95, s * s),
+            mix(0.35, 0.98, s),
+            1.0
+        );
+    }
 }
 
 // Map phase (radians) to σ in [0,1) for spectral coloring.
@@ -134,6 +175,9 @@ fn sample_field_bilinear(uv: vec2<f32>) -> EmfFieldCell {
     result.recurrence_frequency = mix(mix(c00.recurrence_frequency, c10.recurrence_frequency, tx), mix(c01.recurrence_frequency, c11.recurrence_frequency, tx), ty);
     result.density_threshold = mix(mix(c00.density_threshold, c10.density_threshold, tx), mix(c01.density_threshold, c11.density_threshold, tx), ty);
     result.manifold_curvature = mix(mix(c00.manifold_curvature, c10.manifold_curvature, tx), mix(c01.manifold_curvature, c11.manifold_curvature, tx), ty);
+    result.stokes_q = mix(mix(c00.stokes_q, c10.stokes_q, tx), mix(c01.stokes_q, c11.stokes_q, tx), ty);
+    result.stokes_u = mix(mix(c00.stokes_u, c10.stokes_u, tx), mix(c01.stokes_u, c11.stokes_u, tx), ty);
+    result.stokes_v = mix(mix(c00.stokes_v, c10.stokes_v, tx), mix(c01.stokes_v, c11.stokes_v, tx), ty);
     return result;
 }
 
@@ -186,10 +230,19 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let luminance = dot(base_rgb, vec3<f32>(0.2126, 0.7152, 0.0722));
     let saturated_rgb = mix(vec3<f32>(luminance), base_rgb, saturation);
 
-    // Curvature → rim glow / contour enhancement.
+    // Degree of polarization Π = clamp(sqrt(Q² + U² + V²) / (abs(cell.amplitude) + 1e-5), 0.0, 1.0).
+    let pol_mag = sqrt(
+        cell.stokes_q * cell.stokes_q +
+        cell.stokes_u * cell.stokes_u +
+        cell.stokes_v * cell.stokes_v
+    );
+    let degree_of_polarization = clamp(pol_mag / (abs(cell.amplitude) + 1e-5), 0.0, 1.0);
+    let pol_highlight = 1.0 + 0.35 * degree_of_polarization;
+
+    // Curvature → rim glow / contour enhancement modulated by polarization.
     let curvature_glow = clamp(abs(cell.manifold_curvature) * manifold_gain, 0.0, 1.0);
     let glow_tint = sigma_to_linear_rgb(phase_to_sigma(cell.spatial_phase));
-    let rgb = saturated_rgb * brightness + glow_tint * curvature_glow * 0.3;
+    let rgb = saturated_rgb * brightness * pol_highlight + glow_tint * curvature_glow * (0.3 + 0.2 * degree_of_polarization);
 
     // Alpha: amplitude-based opacity, fades to transparent at zero amplitude.
     let alpha = clamp(brightness * 0.5 + 0.1, 0.0, 1.0);
@@ -200,7 +253,7 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
 
 /// Per-cell field data uploaded to the GPU storage buffer.
 ///
-/// Layout matches the WGSL `EmfFieldCell` struct (52 bytes = 3 field f32 + 10 manifold f32).
+/// Layout matches the WGSL `EmfFieldCell` struct (64 bytes = 3 field f32 + 10 manifold f32 + 3 Stokes f32).
 #[repr(C)]
 #[derive(Debug, Clone, Copy, Pod, Zeroable, Default, PartialEq)]
 pub struct EmfFieldCell {
@@ -218,11 +271,51 @@ pub struct EmfFieldCell {
     pub recurrence_frequency: f32,
     pub density_threshold: f32,
     pub manifold_curvature: f32,
+    // Stokes polarization parameters:
+    pub stokes_q: f32,
+    pub stokes_u: f32,
+    pub stokes_v: f32,
 }
 
 const _: () = {
-    assert!(core::mem::size_of::<EmfFieldCell>() == 52);
+    assert!(core::mem::size_of::<EmfFieldCell>() == 64);
 };
+
+impl EmfFieldCell {
+    /// Migrate a legacy 52-byte (`13 × f32`) v1 cell to the 64-byte (`16 × f32`) v2 layout,
+    /// initializing the 3 Stokes polarization parameters `(stokes_q, stokes_u, stokes_v)` to `0.0`.
+    #[inline]
+    pub const fn from_v1_13f32(v1: [f32; 13]) -> Self {
+        Self {
+            amplitude: v1[0],
+            phase: v1[1],
+            frequency: v1[2],
+            scale: v1[3],
+            attention_depth: v1[4],
+            epistemic_weight: v1[5],
+            topological_spin: v1[6],
+            temporal_decay: v1[7],
+            entropy_bias: v1[8],
+            spatial_phase: v1[9],
+            recurrence_frequency: v1[10],
+            density_threshold: v1[11],
+            manifold_curvature: v1[12],
+            stokes_q: 0.0,
+            stokes_u: 0.0,
+            stokes_v: 0.0,
+        }
+    }
+
+    /// Computes degree of polarization $\Pi \in [0, 1]$ from Stokes $(Q, U, V)$ and amplitude.
+    #[inline]
+    pub fn degree_of_polarization(&self) -> f32 {
+        let pol_mag = (self.stokes_q * self.stokes_q
+            + self.stokes_u * self.stokes_u
+            + self.stokes_v * self.stokes_v)
+            .sqrt();
+        (pol_mag / (self.amplitude.abs() + 1.0e-5)).clamp(0.0, 1.0)
+    }
+}
 
 /// Slice parameter uniform (64 bytes, std140-aligned).
 #[repr(C, align(16))]
@@ -422,5 +515,23 @@ impl EmfPipeline {
         rpass.set_bind_group(0, &self.params_bind_group, &[]);
         rpass.set_bind_group(1, field_bind_group, &[]);
         rpass.draw(0..6, 0..1);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn emf_field_cell_v2_layout_and_v1_migration() {
+        assert_eq!(core::mem::size_of::<EmfFieldCell>(), 64);
+        let v1 = [1.0, 0.5, 2.4e9, 0.8, 0.3, 0.9, 0.1, 0.05, 0.2, 0.4, 0.6, 0.7, 0.15];
+        let cell = EmfFieldCell::from_v1_13f32(v1);
+        assert_eq!(cell.amplitude, 1.0);
+        assert_eq!(cell.manifold_curvature, 0.15);
+        assert_eq!(cell.stokes_q, 0.0);
+        assert_eq!(cell.stokes_u, 0.0);
+        assert_eq!(cell.stokes_v, 0.0);
+        assert_eq!(cell.degree_of_polarization(), 0.0);
     }
 }

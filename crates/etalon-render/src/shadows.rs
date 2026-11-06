@@ -1,7 +1,6 @@
 //! Portable cascaded-sun shadow resources and bounded GPU target ownership.
 
 use crate::shadow_math::SHADOW_RESOLUTION_CANDIDATES;
-use etalon as wgpu;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
@@ -14,8 +13,8 @@ pub struct ShadowUniform {
 pub const SHADOW_CASCADE_COUNT: usize = 2;
 
 pub struct ShadowTarget<R> {
-    pub _textures: [wgpu::Texture; SHADOW_CASCADE_COUNT],
-    pub views: [wgpu::TextureView; SHADOW_CASCADE_COUNT],
+    pub _textures: [etalon::Texture; SHADOW_CASCADE_COUNT],
+    pub views: [etalon::TextureView; SHADOW_CASCADE_COUNT],
     pub _reservation: R,
     pub resolution: u32,
 }
@@ -24,7 +23,7 @@ impl<R> ShadowTarget<R> {
     /// Try quality tiers from high to low. If even the smallest allocation is refused, return
     /// `None` so the material shader uses its explicit unshadowed fallback.
     pub fn try_new(
-        device: &wgpu::Device,
+        device: &etalon::Device,
         mut reserve: impl FnMut(u64) -> Option<R>,
     ) -> Option<Self> {
         for resolution in SHADOW_RESOLUTION_CANDIDATES {
@@ -36,28 +35,28 @@ impl<R> ShadowTarget<R> {
                 continue;
             };
             let textures = std::array::from_fn(|cascade| {
-                device.create_texture(&wgpu::TextureDescriptor {
+                device.create_texture(&etalon::TextureDescriptor {
                     label: Some(if cascade == 0 {
                         "qualia-sun-shadow-near-depth"
                     } else {
                         "qualia-sun-shadow-far-depth"
                     }),
-                    size: wgpu::Extent3d {
+                    size: etalon::Extent3d {
                         width: resolution,
                         height: resolution,
                         depth_or_array_layers: 1,
                     },
                     mip_level_count: 1,
                     sample_count: 1,
-                    dimension: wgpu::TextureDimension::D2,
-                    format: wgpu::TextureFormat::Depth32Float,
-                    usage: wgpu::TextureUsages::RENDER_ATTACHMENT
-                        | wgpu::TextureUsages::TEXTURE_BINDING,
+                    dimension: etalon::TextureDimension::D2,
+                    format: etalon::TextureFormat::Depth32Float,
+                    usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                        | etalon::TextureUsages::TEXTURE_BINDING,
                     view_formats: &[],
                 })
             });
             let views = std::array::from_fn(|cascade| {
-                textures[cascade].create_view(&wgpu::TextureViewDescriptor::default())
+                textures[cascade].create_view(&etalon::TextureViewDescriptor::default())
             });
             return Some(Self {
                 _textures: textures,
@@ -71,29 +70,29 @@ impl<R> ShadowTarget<R> {
 }
 
 /// `compare_sampler`.
-pub fn compare_sampler(device: &wgpu::Device) -> wgpu::Sampler {
-    device.create_sampler(&wgpu::SamplerDescriptor {
+pub fn compare_sampler(device: &etalon::Device) -> etalon::Sampler {
+    device.create_sampler(&etalon::SamplerDescriptor {
         label: Some("qualia-sun-shadow-compare"),
-        address_mode_u: wgpu::AddressMode::ClampToEdge,
-        address_mode_v: wgpu::AddressMode::ClampToEdge,
-        address_mode_w: wgpu::AddressMode::ClampToEdge,
-        mag_filter: wgpu::FilterMode::Linear,
-        min_filter: wgpu::FilterMode::Linear,
-        mipmap_filter: wgpu::MipmapFilterMode::Nearest,
-        compare: Some(wgpu::CompareFunction::LessEqual),
+        address_mode_u: etalon::AddressMode::ClampToEdge,
+        address_mode_v: etalon::AddressMode::ClampToEdge,
+        address_mode_w: etalon::AddressMode::ClampToEdge,
+        mag_filter: etalon::FilterMode::Linear,
+        min_filter: etalon::FilterMode::Linear,
+        mipmap_filter: etalon::MipmapFilterMode::Nearest,
+        compare: Some(etalon::CompareFunction::LessEqual),
         ..Default::default()
     })
 }
 
 /// `matrix_layout`.
-pub fn matrix_layout(device: &wgpu::Device) -> wgpu::BindGroupLayout {
-    device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+pub fn matrix_layout(device: &etalon::Device) -> etalon::BindGroupLayout {
+    device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("qualia-sun-shadow-matrix-layout"),
-        entries: &[wgpu::BindGroupLayoutEntry {
+        entries: &[etalon::BindGroupLayoutEntry {
             binding: 0,
-            visibility: wgpu::ShaderStages::VERTEX,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Uniform,
+            visibility: etalon::ShaderStages::VERTEX,
+            ty: etalon::BindingType::Buffer {
+                ty: etalon::BufferBindingType::Uniform,
                 has_dynamic_offset: false,
                 min_binding_size: std::num::NonZeroU64::new(
                     std::mem::size_of::<ShadowUniform>() as u64
@@ -119,23 +118,23 @@ pub struct Csm4ShadowUniform {
 const _: [(); 288] = [(); std::mem::size_of::<Csm4ShadowUniform>()];
 
 pub fn record_cascades(
-    encoder: &mut wgpu::CommandEncoder,
-    views: &[wgpu::TextureView],
-    mut draw: impl FnMut(usize, &mut wgpu::RenderPass<'_>),
+    encoder: &mut etalon::CommandEncoder,
+    views: &[etalon::TextureView],
+    mut draw: impl FnMut(usize, &mut etalon::RenderPass<'_>),
 ) {
     for (cascade, view) in views.iter().enumerate() {
-        let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: Some(if cascade == 0 {
                 "portal-sun-shadow-near-depth-pass"
             } else {
                 "portal-sun-shadow-far-depth-pass"
             }),
             color_attachments: &[],
-            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+            depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                 view,
-                depth_ops: Some(wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(1.0),
-                    store: wgpu::StoreOp::Store,
+                depth_ops: Some(etalon::Operations {
+                    load: etalon::LoadOp::Clear(1.0),
+                    store: etalon::StoreOp::Store,
                 }),
                 stencil_ops: None,
             }),

@@ -4,7 +4,9 @@ pub mod audio_contract;
 #[cfg(feature = "gpu")]
 pub mod bind_groups;
 pub mod buffer_alignment;
+pub mod camera;
 pub mod motor_encoder;
+pub mod pixel_receipt;
 pub mod scene;
 pub mod scene_contract;
 pub mod shaders;
@@ -28,7 +30,16 @@ pub use audio_contract::{
 #[cfg(feature = "gpu")]
 pub use bind_groups::{BindGroupManager, EpistemicParams, RenderBindGroups};
 pub use buffer_alignment::{AlignedBufferF32, RenderQuin};
+pub use camera::{Camera, ScreenPoint, Vec3};
 pub use motor_encoder::{Motor, MotorEncoder};
+pub use pixel_receipt::{
+    bounded_capability_text, bounded_offscreen_extent, fnv1a64, offscreen_rgba8_bytes,
+    pixel_content_hash, pixel_receipt_from_rgba8, raw_readback_bytes, readback_layout,
+    truncate_text, PixelFormat, PixelReadback, PixelReceipt, PixelReceiptStatus,
+    WebGpuAdapterReport, WebGpuCapabilityReport, WebGpuFeatureReport, WebGpuLimitReport,
+    WebGpuRuntimeReceipt, WebGpuStatus, COPY_BYTES_PER_ROW_ALIGNMENT, MAX_CAPABILITY_TEXT_BYTES,
+    MAX_OFFSCREEN_DIMENSION, MAX_PIXEL_READBACK_BYTES,
+};
 pub use scene_contract::{
     EpistemicState, RenderScene, SceneCamera, SceneEdge, SceneFace, SceneNode, ScenePoint,
     Tensor10DProjection, TransitionState,

@@ -1,10 +1,10 @@
 use super::*;
 pub fn run_bloom_passes<R>(
-    encoder: &mut wgpu::CommandEncoder,
+    encoder: &mut etalon::CommandEncoder,
     bloom: &BloomChain<R>,
-    queue: &wgpu::Queue,
-    device: &wgpu::Device,
-    surface_view: &wgpu::TextureView,
+    queue: &etalon::Queue,
+    device: &etalon::Device,
+    surface_view: &etalon::TextureView,
     clear_color: [f64; 4],
 ) {
     let (blur_w, blur_h) = bloom.blur_extent();
@@ -29,15 +29,15 @@ pub fn run_bloom_passes<R>(
         &bloom.uniform_buf,
     );
     {
-        let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: Some("portal-bloom-extract"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: &bloom.blur_a_view,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                    store: wgpu::StoreOp::Store,
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                    store: etalon::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,
@@ -70,15 +70,15 @@ pub fn run_bloom_passes<R>(
             &bloom.uniform_buf,
         );
         {
-            let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
                 label: Some("portal-bloom-kawase"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                color_attachments: &[Some(etalon::RenderPassColorAttachment {
                     view: write,
                     depth_slice: None,
                     resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                        store: wgpu::StoreOp::Store,
+                    ops: etalon::Operations {
+                        load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                        store: etalon::StoreOp::Store,
                     },
                 })],
                 depth_stencil_attachment: None,
@@ -111,20 +111,20 @@ pub fn run_bloom_passes<R>(
         &bloom.uniform_buf,
     );
     {
-        let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: Some("portal-bloom-composite"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: surface_view,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color {
                         r: clear_color[0],
                         g: clear_color[1],
                         b: clear_color[2],
                         a: clear_color[3],
                     }),
-                    store: wgpu::StoreOp::Store,
+                    store: etalon::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,

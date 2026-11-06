@@ -1,55 +1,54 @@
-use etalon as wgpu;
 /// Active GPU compute pipeline owner for Continuous Multi-Scale Foliage LOD (`FOLIAGE_LOD_WGSL`).
 pub struct FoliageLodPipelineGpu {
-    pub pipeline: wgpu::ComputePipeline,
-    pub bind_group_layout: wgpu::BindGroupLayout,
+    pub pipeline: etalon::ComputePipeline,
+    pub bind_group_layout: etalon::BindGroupLayout,
 }
 
 impl FoliageLodPipelineGpu {
-    pub fn new(device: &wgpu::Device) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+    pub fn new(device: &etalon::Device) -> Self {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia_foliage_lod_wgsl"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/foliage_lod.wgsl").into()),
+            source: etalon::ShaderSource::Wgsl(include_str!("../shaders/foliage_lod.wgsl").into()),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: Some("qualia_foliage_lod_bgl"),
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: true },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: false },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 3,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Storage { read_only: false },
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Storage { read_only: false },
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
@@ -58,13 +57,13 @@ impl FoliageLodPipelineGpu {
             ],
         });
 
-        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia_foliage_lod_pl"),
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
 
-        let pipeline = device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+        let pipeline = device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
             label: Some("qualia_foliage_lod_pipeline"),
             layout: Some(&layout),
             module: &shader,

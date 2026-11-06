@@ -3,6 +3,7 @@
 pub mod acceptance_contract;
 pub mod ao_quality;
 pub mod atmosphere;
+pub mod disocclusion;
 pub mod environment_lighting;
 pub mod frame_graph;
 pub mod hardware_governor;
@@ -17,6 +18,7 @@ pub mod temporal_resolve;
 pub use acceptance_contract::*;
 pub use ao_quality::*;
 pub use atmosphere::*;
+pub use disocclusion::*;
 pub use frame_graph::*;
 pub use hardware_governor::*;
 pub use lighting::*;

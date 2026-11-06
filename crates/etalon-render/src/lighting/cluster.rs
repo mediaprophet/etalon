@@ -1,4 +1,3 @@
-use etalon as wgpu;
 /// 112-byte uniform block for `CLUSTER_LIGHT_WGSL` (`16 x 9 x 24 = 3456` frustum clusters).
 #[repr(C)]
 #[derive(Clone, Copy, Debug, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
@@ -16,45 +15,45 @@ const _: [(); 112] = [(); std::mem::size_of::<ClusterGridParamsGpu>()];
 
 /// Active GPU compute pipeline owner for 3D Clustered Light Culling (`CLUSTER_LIGHT_WGSL`).
 pub struct ClusterLightPipelineGpu {
-    pub build_aabbs_pipeline: wgpu::ComputePipeline,
-    pub cull_lights_pipeline: wgpu::ComputePipeline,
-    pub bind_group_layout: wgpu::BindGroupLayout,
-    pub params_buf: wgpu::Buffer,
-    pub cluster_aabbs_buf: wgpu::Buffer,
-    pub point_lights_buf: wgpu::Buffer,
-    pub cluster_light_indices_buf: wgpu::Buffer,
-    pub cluster_grid_buf: wgpu::Buffer,
+    pub build_aabbs_pipeline: etalon::ComputePipeline,
+    pub cull_lights_pipeline: etalon::ComputePipeline,
+    pub bind_group_layout: etalon::BindGroupLayout,
+    pub params_buf: etalon::Buffer,
+    pub cluster_aabbs_buf: etalon::Buffer,
+    pub point_lights_buf: etalon::Buffer,
+    pub cluster_light_indices_buf: etalon::Buffer,
+    pub cluster_grid_buf: etalon::Buffer,
 }
 
 impl ClusterLightPipelineGpu {
     pub const TOTAL_CLUSTERS: u32 = 16 * 9 * 24;
     pub const MAX_LIGHTS_PER_CLUSTER: u32 = 64;
 
-    pub fn new(device: &wgpu::Device, max_lights: u32) -> Self {
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+    pub fn new(device: &etalon::Device, max_lights: u32) -> Self {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia_cluster_light_wgsl"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/cluster_light.wgsl").into()),
+            source: etalon::ShaderSource::Wgsl(include_str!("../shaders/cluster_light.wgsl").into()),
         });
 
-        let storage_entry = |binding: u32, read_only: bool| wgpu::BindGroupLayoutEntry {
+        let storage_entry = |binding: u32, read_only: bool| etalon::BindGroupLayoutEntry {
             binding,
-            visibility: wgpu::ShaderStages::COMPUTE,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Storage { read_only },
+            visibility: etalon::ShaderStages::COMPUTE,
+            ty: etalon::BindingType::Buffer {
+                ty: etalon::BufferBindingType::Storage { read_only },
                 has_dynamic_offset: false,
                 min_binding_size: None,
             },
             count: None,
         };
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: Some("qualia_cluster_light_bgl"),
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::COMPUTE,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::COMPUTE,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: None,
                     },
@@ -67,14 +66,14 @@ impl ClusterLightPipelineGpu {
             ],
         });
 
-        let layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia_cluster_light_pl"),
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
 
         let build_aabbs_pipeline =
-            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
                 label: Some("qualia_cluster_build_aabbs"),
                 layout: Some(&layout),
                 module: &shader,
@@ -84,7 +83,7 @@ impl ClusterLightPipelineGpu {
             });
 
         let cull_lights_pipeline =
-            device.create_compute_pipeline(&wgpu::ComputePipelineDescriptor {
+            device.create_compute_pipeline(&etalon::ComputePipelineDescriptor {
                 label: Some("qualia_cluster_cull_lights"),
                 layout: Some(&layout),
                 module: &shader,
@@ -93,38 +92,38 @@ impl ClusterLightPipelineGpu {
                 cache: None,
             });
 
-        let params_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let params_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia_cluster_params_buf"),
             size: std::mem::size_of::<ClusterGridParamsGpu>() as u64,
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let cluster_aabbs_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let cluster_aabbs_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia_cluster_aabbs_buf"),
             size: u64::from(Self::TOTAL_CLUSTERS) * 32,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let point_lights_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let point_lights_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia_cluster_point_lights_buf"),
             size: u64::from(max_lights.max(16)) * 32,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let cluster_light_indices_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let cluster_light_indices_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia_cluster_light_indices_buf"),
             size: u64::from(Self::TOTAL_CLUSTERS * Self::MAX_LIGHTS_PER_CLUSTER) * 4,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
-        let cluster_grid_buf = device.create_buffer(&wgpu::BufferDescriptor {
+        let cluster_grid_buf = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia_cluster_grid_buf"),
             size: u64::from(Self::TOTAL_CLUSTERS) * 8,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 

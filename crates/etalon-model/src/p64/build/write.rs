@@ -83,22 +83,9 @@ fn write_schedule(plan: &BuildPlan<'_, '_>, bytes: &mut [u8]) {
     }
 }
 
+#[inline]
 pub(crate) fn write_entry(entry: &P64TensorEntry, bytes: &mut [u8]) {
-    put32(bytes, 0, entry.name_offset);
-    put16(bytes, 4, entry.role_id);
-    put16(bytes, 6, entry.dtype);
-    put32(bytes, 8, entry.manifold_idx);
-    put32(bytes, 12, entry.rank);
-    for (index, &dimension) in entry.dimensions.iter().enumerate() {
-        put32(bytes, 16 + index * 4, dimension);
-    }
-    put32(bytes, 32, entry.blob_offset);
-    put32(bytes, 36, entry.blob_size);
-    bytes[40..48].copy_from_slice(&entry.source_offset.to_le_bytes());
-    bytes[48..56].copy_from_slice(&entry.source_name_hash.to_le_bytes());
-    put16(bytes, 56, entry.alt_dtype);
-    put16(bytes, 58, entry.precision_views_mask);
-    put32(bytes, 60, entry.alt_blob_offset);
+    entry.write_le(bytes);
 }
 
 fn put16(bytes: &mut [u8], offset: usize, value: u16) {

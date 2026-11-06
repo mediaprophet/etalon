@@ -1,21 +1,20 @@
 //! Portable GPU material storage and fixed fourteen-binding construction.
-use etalon as wgpu;
 use std::num::NonZeroU64;
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 pub const MATERIAL_UNIFORM_STRIDE: u64 = 512;
 pub struct MaterialGpu<D> {
-    pub _uniform_buffer: wgpu::Buffer,
-    pub environment_uniform_buffer: wgpu::Buffer,
-    pub material_bind_groups: Vec<wgpu::BindGroup>,
+    pub _uniform_buffer: etalon::Buffer,
+    pub environment_uniform_buffer: etalon::Buffer,
+    pub material_bind_groups: Vec<etalon::BindGroup>,
     pub draws: Vec<D>,
     pub transparent_draw_order: Vec<usize>,
 }
 pub struct MaterialSlots<'a> {
-    pub views: [&'a wgpu::TextureView; 6],
-    pub samplers: [&'a wgpu::Sampler; 6],
+    pub views: [&'a etalon::TextureView; 6],
+    pub samplers: [&'a etalon::Sampler; 6],
 }
 impl<D> MaterialGpu<D> {
-    pub fn update_environment<E: bytemuck::Pod>(&self, queue: &wgpu::Queue, environment: &E) {
+    pub fn update_environment<E: bytemuck::Pod>(&self, queue: &etalon::Queue, environment: &E) {
         queue.write_buffer(
             &self.environment_uniform_buffer,
             0,
@@ -24,8 +23,8 @@ impl<D> MaterialGpu<D> {
     }
 }
 pub fn create<'a, U: bytemuck::Pod, E: bytemuck::Pod, D>(
-    device: &wgpu::Device,
-    layout: &wgpu::BindGroupLayout,
+    device: &etalon::Device,
+    layout: &etalon::BindGroupLayout,
     uniforms: &[U],
     environment: &E,
     draws: Vec<D>,
@@ -35,34 +34,34 @@ pub fn create<'a, U: bytemuck::Pod, E: bytemuck::Pod, D>(
     if std::mem::size_of::<U>() != MATERIAL_UNIFORM_STRIDE as usize || uniforms.is_empty() {
         return Err("Material uniform ABI mismatch".into());
     }
-    let uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let uniform_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
         label: Some("portal-mesh-material-uniforms"),
         contents: bytemuck::cast_slice(uniforms),
-        usage: wgpu::BufferUsages::UNIFORM,
+        usage: etalon::BufferUsages::UNIFORM,
     });
-    let environment_uniform_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+    let environment_uniform_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
         label: Some("portal-mesh-environment-lighting"),
         contents: bytemuck::bytes_of(environment),
-        usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+        usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
     });
     let mut material_bind_groups = Vec::with_capacity(uniforms.len());
     for index in 0..uniforms.len() {
         let slots = slots(index)?;
-        let entries: [wgpu::BindGroupEntry<'_>; 14] =
-            std::array::from_fn(|binding| wgpu::BindGroupEntry {
+        let entries: [etalon::BindGroupEntry<'_>; 14] =
+            std::array::from_fn(|binding| etalon::BindGroupEntry {
                 binding: binding as u32,
                 resource: match binding {
-                    0 => wgpu::BindingResource::Buffer(wgpu::BufferBinding {
+                    0 => etalon::BindingResource::Buffer(etalon::BufferBinding {
                         buffer: &uniform_buffer,
                         offset: 0,
                         size: NonZeroU64::new(MATERIAL_UNIFORM_STRIDE),
                     }),
-                    1..=6 => wgpu::BindingResource::TextureView(slots.views[binding - 1]),
-                    7..=12 => wgpu::BindingResource::Sampler(slots.samplers[binding - 7]),
+                    1..=6 => etalon::BindingResource::TextureView(slots.views[binding - 1]),
+                    7..=12 => etalon::BindingResource::Sampler(slots.samplers[binding - 7]),
                     _ => environment_uniform_buffer.as_entire_binding(),
                 },
             });
-        material_bind_groups.push(device.create_bind_group(&wgpu::BindGroupDescriptor {
+        material_bind_groups.push(device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("portal-mesh-material-textures-and-factors"),
             layout,
             entries: &entries,
@@ -76,48 +75,48 @@ pub fn create<'a, U: bytemuck::Pod, E: bytemuck::Pod, D>(
         transparent_draw_order,
     })
 }
-pub fn layout_entries(binding_offset: u32) -> [wgpu::BindGroupLayoutEntry; 12] {
-    std::array::from_fn(|slot| wgpu::BindGroupLayoutEntry {
+pub fn layout_entries(binding_offset: u32) -> [etalon::BindGroupLayoutEntry; 12] {
+    std::array::from_fn(|slot| etalon::BindGroupLayoutEntry {
         binding: binding_offset + slot as u32,
-        visibility: wgpu::ShaderStages::FRAGMENT,
+        visibility: etalon::ShaderStages::FRAGMENT,
         ty: if slot < 6 {
-            wgpu::BindingType::Texture {
-                sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                view_dimension: wgpu::TextureViewDimension::D2,
+            etalon::BindingType::Texture {
+                sample_type: etalon::TextureSampleType::Float { filterable: true },
+                view_dimension: etalon::TextureViewDimension::D2,
                 multisampled: false,
             }
         } else {
-            wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering)
+            etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering)
         },
         count: None,
     })
 }
-pub fn create_layout(device: &wgpu::Device, environment_bytes: u64) -> wgpu::BindGroupLayout {
+pub fn create_layout(device: &etalon::Device, environment_bytes: u64) -> etalon::BindGroupLayout {
     let texture = layout_entries(1);
-    let entries: [wgpu::BindGroupLayoutEntry; 14] = std::array::from_fn(|binding| match binding {
-        0 => wgpu::BindGroupLayoutEntry {
+    let entries: [etalon::BindGroupLayoutEntry; 14] = std::array::from_fn(|binding| match binding {
+        0 => etalon::BindGroupLayoutEntry {
             binding: 0,
-            visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Uniform,
+            visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
+            ty: etalon::BindingType::Buffer {
+                ty: etalon::BufferBindingType::Uniform,
                 has_dynamic_offset: true,
                 min_binding_size: NonZeroU64::new(MATERIAL_UNIFORM_STRIDE),
             },
             count: None,
         },
         1..=12 => texture[binding - 1].clone(),
-        _ => wgpu::BindGroupLayoutEntry {
+        _ => etalon::BindGroupLayoutEntry {
             binding: 13,
-            visibility: wgpu::ShaderStages::FRAGMENT,
-            ty: wgpu::BindingType::Buffer {
-                ty: wgpu::BufferBindingType::Uniform,
+            visibility: etalon::ShaderStages::FRAGMENT,
+            ty: etalon::BindingType::Buffer {
+                ty: etalon::BufferBindingType::Uniform,
                 has_dynamic_offset: false,
                 min_binding_size: NonZeroU64::new(environment_bytes),
             },
             count: None,
         },
     });
-    device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+    device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("portal-mesh-material-textures-layout"),
         entries: &entries,
     })

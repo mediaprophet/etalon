@@ -10,7 +10,6 @@ use crate::texture_layout::{
 };
 use crate::texture_mips::{AlphaCoverageDiagnostics, MipGenerator, TextureMipSemantic};
 use crate::texture_residency::{ResidentTexture, ResidentTextureMap, TextureAllocation};
-use etalon as wgpu;
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 struct ResidentMipWindow {
     first_mip: u32,
@@ -97,8 +96,8 @@ fn alpha_diagnostics(levels: &[&[u8]], cutoff: f32) -> AlphaCoverageDiagnostics 
 }
 
 pub struct TextureUploader<'a, R, F> {
-    pub device: &'a wgpu::Device,
-    pub queue: &'a wgpu::Queue,
+    pub device: &'a etalon::Device,
+    pub queue: &'a etalon::Queue,
     pub mip_generator: &'a MipGenerator,
     pub resident_textures: &'a mut ResidentTextureMap<R>,
     pub reserve: F,
@@ -154,39 +153,39 @@ impl<R: Send + 'static, F: FnMut(TextureAllocation, u64) -> Option<R>> TextureUp
         let upload_reservation = (self.reserve)(TextureAllocation::UploadStaging, base_bytes)
             .ok_or(TextureUploadError::UploadBudgetRefused)?;
         let format = match color_space {
-            TextureColorSpace::Srgb => wgpu::TextureFormat::Rgba8UnormSrgb,
-            TextureColorSpace::Linear => wgpu::TextureFormat::Rgba8Unorm,
+            TextureColorSpace::Srgb => etalon::TextureFormat::Rgba8UnormSrgb,
+            TextureColorSpace::Linear => etalon::TextureFormat::Rgba8Unorm,
         };
-        let texture = self.device.create_texture(&wgpu::TextureDescriptor {
+        let texture = self.device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia-resident-coarse-base-mip-texture"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
             },
             mip_level_count,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: etalon::TextureUsages::TEXTURE_BINDING
+                | etalon::TextureUsages::COPY_DST
+                | etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
         self.queue.write_texture(
-            wgpu::TexelCopyTextureInfo {
+            etalon::TexelCopyTextureInfo {
                 texture: &texture,
                 mip_level: 0,
-                origin: wgpu::Origin3d::ZERO,
-                aspect: wgpu::TextureAspect::All,
+                origin: etalon::Origin3d::ZERO,
+                aspect: etalon::TextureAspect::All,
             },
             coarse_rgba8,
-            wgpu::TexelCopyBufferLayout {
+            etalon::TexelCopyBufferLayout {
                 offset: 0,
                 bytes_per_row: Some(bytes_per_row),
                 rows_per_image: Some(height),
             },
-            wgpu::Extent3d {
+            etalon::Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
@@ -202,7 +201,7 @@ impl<R: Send + 'static, F: FnMut(TextureAllocation, u64) -> Option<R>> TextureUp
         );
         self.queue
             .on_submitted_work_done(move || drop(upload_reservation));
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let view = texture.create_view(&etalon::TextureViewDescriptor::default());
         self.resident_textures.insert(
             key,
             ResidentTexture {
@@ -289,40 +288,40 @@ impl<R: Send + 'static, F: FnMut(TextureAllocation, u64) -> Option<R>> TextureUp
             (self.reserve)(TextureAllocation::UploadStaging, window.resident_bytes)
                 .ok_or(TextureUploadError::UploadBudgetRefused)?;
         let format = match color_space {
-            TextureColorSpace::Srgb => wgpu::TextureFormat::Rgba8UnormSrgb,
-            TextureColorSpace::Linear => wgpu::TextureFormat::Rgba8Unorm,
+            TextureColorSpace::Srgb => etalon::TextureFormat::Rgba8UnormSrgb,
+            TextureColorSpace::Linear => etalon::TextureFormat::Rgba8Unorm,
         };
-        let texture = self.device.create_texture(&wgpu::TextureDescriptor {
+        let texture = self.device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia-resident-precomputed-mip-texture"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width: window.width,
                 height: window.height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: window.mip_count,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format,
-            usage: wgpu::TextureUsages::TEXTURE_BINDING | wgpu::TextureUsages::COPY_DST,
+            usage: etalon::TextureUsages::TEXTURE_BINDING | etalon::TextureUsages::COPY_DST,
             view_formats: &[],
         });
         let mut level_width = window.width;
         let mut level_height = window.height;
         for (mip_level, pixels) in levels.iter().skip(window.first_mip as usize).enumerate() {
             self.queue.write_texture(
-                wgpu::TexelCopyTextureInfo {
+                etalon::TexelCopyTextureInfo {
                     texture: &texture,
                     mip_level: mip_level as u32,
-                    origin: wgpu::Origin3d::ZERO,
-                    aspect: wgpu::TextureAspect::All,
+                    origin: etalon::Origin3d::ZERO,
+                    aspect: etalon::TextureAspect::All,
                 },
                 pixels,
-                wgpu::TexelCopyBufferLayout {
+                etalon::TexelCopyBufferLayout {
                     offset: 0,
                     bytes_per_row: Some(level_width * 4),
                     rows_per_image: Some(level_height),
                 },
-                wgpu::Extent3d {
+                etalon::Extent3d {
                     width: level_width,
                     height: level_height,
                     depth_or_array_layers: 1,
@@ -334,7 +333,7 @@ impl<R: Send + 'static, F: FnMut(TextureAllocation, u64) -> Option<R>> TextureUp
         self.queue.submit(std::iter::empty());
         self.queue
             .on_submitted_work_done(move || drop(upload_reservation));
-        let view = texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let view = texture.create_view(&etalon::TextureViewDescriptor::default());
         self.resident_textures.insert(
             key,
             ResidentTexture {

@@ -4,8 +4,6 @@
 //! single-ring kernel suitable for WebGPU/WASM. It is an indirect-light approximation, never a
 //! replacement for sun shadows. All targets are explicitly budgeted and optional.
 
-use etalon as wgpu;
-
 #[repr(C)]
 #[derive(Clone, Copy, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct AoUniform {
@@ -23,16 +21,16 @@ pub struct AoUniform {
 }
 
 pub struct AoTargets<R> {
-    _depth_texture: wgpu::Texture,
-    depth_view: wgpu::TextureView,
-    _normal_texture: wgpu::Texture,
-    normal_view: wgpu::TextureView,
-    _ao_texture: wgpu::Texture,
-    ao_view: wgpu::TextureView,
+    _depth_texture: etalon::Texture,
+    depth_view: etalon::TextureView,
+    _normal_texture: etalon::Texture,
+    normal_view: etalon::TextureView,
+    _ao_texture: etalon::Texture,
+    ao_view: etalon::TextureView,
     _reservation: R,
-    depth_prepass: wgpu::RenderPipeline,
-    ao_pipeline: wgpu::RenderPipeline,
-    ao_generate_bind: wgpu::BindGroup,
+    depth_prepass: etalon::RenderPipeline,
+    ao_pipeline: etalon::RenderPipeline,
+    ao_generate_bind: etalon::BindGroup,
     width: u32,
     height: u32,
 }
@@ -40,15 +38,15 @@ pub struct AoTargets<R> {
 impl<R> AoTargets<R> {
     /// Allocates AO/normal targets at `extent`; `Err` on device failure.
     pub fn try_new(
-        device: &wgpu::Device,
+        device: &etalon::Device,
         width: u32,
         height: u32,
-        camera_layout: &wgpu::BindGroupLayout,
-        model_layout: &wgpu::BindGroupLayout,
-        instance_layout: &wgpu::BindGroupLayout,
-        material_layout: &wgpu::BindGroupLayout,
-        _texture_layout: &wgpu::BindGroupLayout,
-        uniform_buf: &wgpu::Buffer,
+        camera_layout: &etalon::BindGroupLayout,
+        model_layout: &etalon::BindGroupLayout,
+        instance_layout: &etalon::BindGroupLayout,
+        material_layout: &etalon::BindGroupLayout,
+        _texture_layout: &etalon::BindGroupLayout,
+        uniform_buf: &etalon::Buffer,
         copy_source: bool,
         reserve: impl FnOnce(u64) -> Option<R>,
     ) -> Option<Self> {
@@ -56,60 +54,60 @@ impl<R> AoTargets<R> {
         let (width, height) = half_extent(width, height);
         let reservation = reserve(bytes)?;
 
-        let depth_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let depth_texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia-ao-depth-half"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Depth32Float,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::Depth32Float,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT,
             view_formats: &[],
         });
-        let depth_view = depth_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let normal_usage = wgpu::TextureUsages::RENDER_ATTACHMENT
-            | wgpu::TextureUsages::TEXTURE_BINDING
+        let depth_view = depth_texture.create_view(&etalon::TextureViewDescriptor::default());
+        let normal_usage = etalon::TextureUsages::RENDER_ATTACHMENT
+            | etalon::TextureUsages::TEXTURE_BINDING
             | if copy_source {
-                wgpu::TextureUsages::COPY_SRC
+                etalon::TextureUsages::COPY_SRC
             } else {
-                wgpu::TextureUsages::empty()
+                etalon::TextureUsages::empty()
             };
-        let normal_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let normal_texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia-ao-normal-log1p-ba16-v1-half"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::Rgba8Unorm,
             usage: normal_usage,
             view_formats: &[],
         });
-        let normal_view = normal_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let ao_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let normal_view = normal_texture.create_view(&etalon::TextureViewDescriptor::default());
+        let ao_texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia-ao-visibility-half"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::R8Unorm,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            dimension: etalon::TextureDimension::D2,
+            format: etalon::TextureFormat::R8Unorm,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
-        let ao_view = ao_texture.create_view(&wgpu::TextureViewDescriptor::default());
+        let ao_view = ao_texture.create_view(&etalon::TextureViewDescriptor::default());
 
-        let depth_prepass_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let depth_prepass_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia-ao-depth-normal-pipeline-layout"),
             bind_group_layouts: &[
                 Some(camera_layout),
@@ -119,50 +117,50 @@ impl<R> AoTargets<R> {
             ],
             immediate_size: 0,
         });
-        let prepass_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let prepass_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia-ao-depth-normal-wgsl"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/ao_prepass.wgsl").into()),
+            source: etalon::ShaderSource::Wgsl(include_str!("../shaders/ao_prepass.wgsl").into()),
         });
-        let position_layout = wgpu::VertexBufferLayout {
+        let position_layout = etalon::VertexBufferLayout {
             array_stride: 12,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[wgpu::VertexAttribute {
-                format: wgpu::VertexFormat::Float32x3,
+            step_mode: etalon::VertexStepMode::Vertex,
+            attributes: &[etalon::VertexAttribute {
+                format: etalon::VertexFormat::Float32x3,
                 offset: 0,
                 shader_location: 0,
             }],
         };
-        let normal_layout = wgpu::VertexBufferLayout {
+        let normal_layout = etalon::VertexBufferLayout {
             array_stride: 12,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[wgpu::VertexAttribute {
-                format: wgpu::VertexFormat::Float32x3,
+            step_mode: etalon::VertexStepMode::Vertex,
+            attributes: &[etalon::VertexAttribute {
+                format: etalon::VertexFormat::Float32x3,
                 offset: 0,
                 shader_location: 1,
             }],
         };
-        let color_layout = wgpu::VertexBufferLayout {
+        let color_layout = etalon::VertexBufferLayout {
             array_stride: 16,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[wgpu::VertexAttribute {
-                format: wgpu::VertexFormat::Float32x4,
+            step_mode: etalon::VertexStepMode::Vertex,
+            attributes: &[etalon::VertexAttribute {
+                format: etalon::VertexFormat::Float32x4,
                 offset: 0,
                 shader_location: 2,
             }],
         };
-        let uv_layout = wgpu::VertexBufferLayout {
+        let uv_layout = etalon::VertexBufferLayout {
             array_stride: 8,
-            step_mode: wgpu::VertexStepMode::Vertex,
-            attributes: &[wgpu::VertexAttribute {
-                format: wgpu::VertexFormat::Float32x2,
+            step_mode: etalon::VertexStepMode::Vertex,
+            attributes: &[etalon::VertexAttribute {
+                format: etalon::VertexFormat::Float32x2,
                 offset: 0,
                 shader_location: 3,
             }],
         };
-        let depth_prepass = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let depth_prepass = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("qualia-ao-depth-normal-prepass"),
             layout: Some(&depth_prepass_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &prepass_shader,
                 entry_point: Some("vertex_main"),
                 compilation_options: Default::default(),
@@ -173,51 +171,51 @@ impl<R> AoTargets<R> {
                     Some(uv_layout),
                 ],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &prepass_shader,
                 entry_point: Some("fragment_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::Rgba8Unorm,
+                targets: &[Some(etalon::ColorTargetState {
+                    format: etalon::TextureFormat::Rgba8Unorm,
                     blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
+                    write_mask: etalon::ColorWrites::ALL,
                 })],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::TriangleList,
                 ..Default::default()
             },
-            depth_stencil: Some(wgpu::DepthStencilState {
-                format: wgpu::TextureFormat::Depth32Float,
+            depth_stencil: Some(etalon::DepthStencilState {
+                format: etalon::TextureFormat::Depth32Float,
                 depth_write_enabled: Some(true),
-                depth_compare: Some(wgpu::CompareFunction::Less),
-                stencil: wgpu::StencilState::default(),
-                bias: wgpu::DepthBiasState::default(),
+                depth_compare: Some(etalon::CompareFunction::Less),
+                stencil: etalon::StencilState::default(),
+                bias: etalon::DepthBiasState::default(),
             }),
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
 
         let depth_normal_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 label: Some("qualia-ao-input-layout"),
                 entries: &[
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: false },
+                            view_dimension: etalon::TextureViewDimension::D2,
                             multisampled: false,
                         },
                         count: None,
                     },
-                    wgpu::BindGroupLayoutEntry {
+                    etalon::BindGroupLayoutEntry {
                         binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Buffer {
-                            ty: wgpu::BufferBindingType::Uniform,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
                             has_dynamic_offset: false,
                             min_binding_size: std::num::NonZeroU64::new(
                                 std::mem::size_of::<AoUniform>() as u64,
@@ -227,52 +225,52 @@ impl<R> AoTargets<R> {
                     },
                 ],
             });
-        let ao_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let ao_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia-ao-pipeline-layout"),
             bind_group_layouts: &[Some(&depth_normal_layout)],
             immediate_size: 0,
         });
-        let ao_shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let ao_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia-ao-generate-wgsl"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("../shaders/ao_generate.wgsl").into()),
+            source: etalon::ShaderSource::Wgsl(include_str!("../shaders/ao_generate.wgsl").into()),
         });
-        let ao_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let ao_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("qualia-ao-half-resolution"),
             layout: Some(&ao_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &ao_shader,
                 entry_point: Some("vertex_main"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &ao_shader,
                 entry_point: Some("fragment_main"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
-                    format: wgpu::TextureFormat::R8Unorm,
+                targets: &[Some(etalon::ColorTargetState {
+                    format: etalon::TextureFormat::R8Unorm,
                     blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
+                    write_mask: etalon::ColorWrites::ALL,
                 })],
             }),
-            primitive: wgpu::PrimitiveState {
-                topology: wgpu::PrimitiveTopology::TriangleList,
+            primitive: etalon::PrimitiveState {
+                topology: etalon::PrimitiveTopology::TriangleList,
                 ..Default::default()
             },
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
-        let ao_generate_bind = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let ao_generate_bind = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("qualia-ao-generate-inputs"),
             layout: &depth_normal_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&normal_view),
+                    resource: etalon::BindingResource::TextureView(&normal_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
                     resource: uniform_buf.as_entire_binding(),
                 },
@@ -297,30 +295,30 @@ impl<R> AoTargets<R> {
     /// Records the AO pass into `encoder`.
     pub fn record(
         &self,
-        encoder: &mut wgpu::CommandEncoder,
-        draw: impl FnOnce(&mut wgpu::RenderPass<'_>),
+        encoder: &mut etalon::CommandEncoder,
+        draw: impl FnOnce(&mut etalon::RenderPass<'_>),
     ) {
-        let mut prepass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut prepass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: Some("qualia-ao-depth-normal-prepass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: &self.normal_view,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color {
                         r: 0.5,
                         g: 0.5,
                         b: 0.0,
                         a: 0.0,
                     }),
-                    store: wgpu::StoreOp::Store,
+                    store: etalon::StoreOp::Store,
                 },
             })],
-            depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+            depth_stencil_attachment: Some(etalon::RenderPassDepthStencilAttachment {
                 view: &self.depth_view,
-                depth_ops: Some(wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(1.0),
-                    store: wgpu::StoreOp::Store,
+                depth_ops: Some(etalon::Operations {
+                    load: etalon::LoadOp::Clear(1.0),
+                    store: etalon::StoreOp::Store,
                 }),
                 stencil_ops: None,
             }),
@@ -331,15 +329,15 @@ impl<R> AoTargets<R> {
         prepass.set_pipeline(&self.depth_prepass);
         draw(&mut prepass);
         drop(prepass);
-        let mut ao = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+        let mut ao = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: Some("qualia-ao-evaluate-half-resolution"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: &self.ao_view,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::WHITE),
-                    store: wgpu::StoreOp::Store,
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color::WHITE),
+                    store: etalon::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,
@@ -353,11 +351,11 @@ impl<R> AoTargets<R> {
     }
 
     /// AO texture view.
-    pub fn ao_view(&self) -> &wgpu::TextureView {
+    pub fn ao_view(&self) -> &etalon::TextureView {
         &self.ao_view
     }
     /// Internal transient RG8 oct normal / BA16 AODEPTH_LOG1P_BA16 depth view.
-    pub fn normal_view(&self) -> &wgpu::TextureView {
+    pub fn normal_view(&self) -> &etalon::TextureView {
         &self.normal_view
     }
     /// Current target extent.
@@ -366,7 +364,7 @@ impl<R> AoTargets<R> {
     }
 
     /// Test-only normal texture.
-    pub fn normal_texture_for_test(&self) -> &wgpu::Texture {
+    pub fn normal_texture_for_test(&self) -> &etalon::Texture {
         &self._normal_texture
     }
 }

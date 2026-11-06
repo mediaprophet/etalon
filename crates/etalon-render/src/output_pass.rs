@@ -1,7 +1,5 @@
 //! Final scene-linear-to-SDR pass used when the HDR bloom chain is unavailable.
-
-use etalon as wgpu;
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 pub const OUTPUT_WGSL: &str = concat!(
     include_str!("shaders/output_transform.wgsl"),
     include_str!("shaders/output_composite.wgsl")
@@ -28,12 +26,12 @@ struct OutputParams {
 
 /// Budgeted scene target and final SDR transform for the portable non-bloom path.
 pub struct OutputChain<R> {
-    _scene_texture: wgpu::Texture,
-    scene_view: wgpu::TextureView,
-    _sampler: wgpu::Sampler,
-    bind_group: wgpu::BindGroup,
-    uniform_buf: wgpu::Buffer,
-    composite_pipeline: wgpu::RenderPipeline,
+    _scene_texture: etalon::Texture,
+    scene_view: etalon::TextureView,
+    _sampler: etalon::Sampler,
+    bind_group: etalon::BindGroup,
+    uniform_buf: etalon::Buffer,
+    composite_pipeline: etalon::RenderPipeline,
     width: u32,
     height: u32,
     exposure_scale: f32,
@@ -46,11 +44,11 @@ pub struct OutputChain<R> {
 impl<R> OutputChain<R> {
     /// Tries to construct.
     pub fn try_new(
-        device: &wgpu::Device,
+        device: &etalon::Device,
         width: u32,
         height: u32,
-        scene_format: wgpu::TextureFormat,
-        surface_format: wgpu::TextureFormat,
+        scene_format: etalon::TextureFormat,
+        surface_format: etalon::TextureFormat,
         exposure_scale: f32,
         hdr_scene: bool,
         white_balance_gains: [f32; 3],
@@ -62,25 +60,25 @@ impl<R> OutputChain<R> {
             output_target_vram_bytes(width, height, scene_format.block_copy_size(None)?)?;
         let reservation = reserve(reservation_bytes)?;
 
-        let scene_texture = device.create_texture(&wgpu::TextureDescriptor {
+        let scene_texture = device.create_texture(&etalon::TextureDescriptor {
             label: Some("qualia-sdr-scene-linear"),
-            size: wgpu::Extent3d {
+            size: etalon::Extent3d {
                 width,
                 height,
                 depth_or_array_layers: 1,
             },
             mip_level_count: 1,
             sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
+            dimension: etalon::TextureDimension::D2,
             format: scene_format,
-            usage: wgpu::TextureUsages::RENDER_ATTACHMENT | wgpu::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
-        let scene_view = scene_texture.create_view(&wgpu::TextureViewDescriptor::default());
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let scene_view = scene_texture.create_view(&etalon::TextureViewDescriptor::default());
+        let sampler = device.create_sampler(&etalon::SamplerDescriptor {
             label: Some("qualia-sdr-output-sampler"),
-            mag_filter: wgpu::FilterMode::Linear,
-            min_filter: wgpu::FilterMode::Linear,
+            mag_filter: etalon::FilterMode::Linear,
+            min_filter: etalon::FilterMode::Linear,
             ..Default::default()
         });
         let params = OutputParams {
@@ -94,35 +92,35 @@ impl<R> OutputChain<R> {
             white_balance_gains,
             _padding2: 0.0,
         };
-        let uniform_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+        let uniform_buf = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("qualia-sdr-output-params"),
             contents: bytemuck::bytes_of(&params),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
         });
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
             label: Some("qualia-sdr-output-layout"),
             entries: &[
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        view_dimension: wgpu::TextureViewDimension::D2,
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Texture {
+                        sample_type: etalon::TextureSampleType::Float { filterable: true },
+                        view_dimension: etalon::TextureViewDimension::D2,
                         multisampled: false,
                     },
                     count: None,
                 },
-                wgpu::BindGroupLayoutEntry {
+                etalon::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Buffer {
-                        ty: wgpu::BufferBindingType::Uniform,
+                    visibility: etalon::ShaderStages::FRAGMENT,
+                    ty: etalon::BindingType::Buffer {
+                        ty: etalon::BufferBindingType::Uniform,
                         has_dynamic_offset: false,
                         min_binding_size: std::num::NonZeroU64::new(OUTPUT_PARAMS_BYTES),
                     },
@@ -130,55 +128,55 @@ impl<R> OutputChain<R> {
                 },
             ],
         });
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("qualia-sdr-output-bind"),
             layout: &bind_group_layout,
             entries: &[
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Sampler(&sampler),
+                    resource: etalon::BindingResource::Sampler(&sampler),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 1,
-                    resource: wgpu::BindingResource::TextureView(&scene_view),
+                    resource: etalon::BindingResource::TextureView(&scene_view),
                 },
-                wgpu::BindGroupEntry {
+                etalon::BindGroupEntry {
                     binding: 2,
                     resource: uniform_buf.as_entire_binding(),
                 },
             ],
         });
-        let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
+        let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia-sdr-output"),
-            source: wgpu::ShaderSource::Wgsl(OUTPUT_WGSL.into()),
+            source: etalon::ShaderSource::Wgsl(OUTPUT_WGSL.into()),
         });
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia-sdr-output-pipeline-layout"),
             bind_group_layouts: &[Some(&bind_group_layout)],
             immediate_size: 0,
         });
-        let composite_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let composite_pipeline = device.create_render_pipeline(&etalon::RenderPipelineDescriptor {
             label: Some("qualia-sdr-output-pipeline"),
             layout: Some(&pipeline_layout),
-            vertex: wgpu::VertexState {
+            vertex: etalon::VertexState {
                 module: &shader,
                 entry_point: Some("output_vs"),
                 compilation_options: Default::default(),
                 buffers: &[],
             },
-            fragment: Some(wgpu::FragmentState {
+            fragment: Some(etalon::FragmentState {
                 module: &shader,
                 entry_point: Some("output_fs"),
                 compilation_options: Default::default(),
-                targets: &[Some(wgpu::ColorTargetState {
+                targets: &[Some(etalon::ColorTargetState {
                     format: surface_format,
                     blend: None,
-                    write_mask: wgpu::ColorWrites::ALL,
+                    write_mask: etalon::ColorWrites::ALL,
                 })],
             }),
-            primitive: wgpu::PrimitiveState::default(),
+            primitive: etalon::PrimitiveState::default(),
             depth_stencil: None,
-            multisample: wgpu::MultisampleState::default(),
+            multisample: etalon::MultisampleState::default(),
             multiview_mask: None,
             cache: None,
         });
@@ -201,7 +199,7 @@ impl<R> OutputChain<R> {
     }
 
     /// `scene_view`.
-    pub fn scene_view(&self) -> &wgpu::TextureView {
+    pub fn scene_view(&self) -> &etalon::TextureView {
         &self.scene_view
     }
 
@@ -216,7 +214,7 @@ impl<R> OutputChain<R> {
     }
 
     /// Sets exposure.
-    pub fn set_exposure(&mut self, queue: &wgpu::Queue, exposure_scale: f32) -> bool {
+    pub fn set_exposure(&mut self, queue: &etalon::Queue, exposure_scale: f32) -> bool {
         if !exposure_scale.is_finite() || exposure_scale <= 0.0 {
             return false;
         }
@@ -233,7 +231,7 @@ impl<R> OutputChain<R> {
     }
 
     /// Sets white balance.
-    pub fn set_white_balance(&mut self, queue: &wgpu::Queue, white_balance_gains: [f32; 3]) {
+    pub fn set_white_balance(&mut self, queue: &etalon::Queue, white_balance_gains: [f32; 3]) {
         self.white_balance_gains = white_balance_gains;
         let params = OutputParams {
             exposure_scale: self.exposure_scale,
@@ -246,16 +244,16 @@ impl<R> OutputChain<R> {
     }
 
     /// `composite`.
-    pub fn composite(&self, encoder: &mut wgpu::CommandEncoder, target: &wgpu::TextureView) {
-        let mut pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+    pub fn composite(&self, encoder: &mut etalon::CommandEncoder, target: &etalon::TextureView) {
+        let mut pass = encoder.begin_render_pass(&etalon::RenderPassDescriptor {
             label: Some("qualia-sdr-output"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+            color_attachments: &[Some(etalon::RenderPassColorAttachment {
                 view: target,
                 depth_slice: None,
                 resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color::BLACK),
-                    store: wgpu::StoreOp::Store,
+                ops: etalon::Operations {
+                    load: etalon::LoadOp::Clear(etalon::Color::BLACK),
+                    store: etalon::StoreOp::Store,
                 },
             })],
             depth_stencil_attachment: None,

@@ -33,8 +33,12 @@
 //!
 //! Buffers are never freed *within* a run (the slab is a bump ring), so the context capacity
 //! must hold the whole graph's tensors at once — fine for a decode block; long sequences will
-//! want buffer-lifetime reuse (a follow-on). Pipelines are still compiled per node per call;
-//! caching them across calls is a further, independent step.
+//! want buffer-lifetime reuse (a follow-on). Full-overwrite nodes allocate their `out_slab`
+//! ranges directly via `allocate_transient` without host `Vec<f32>` zero-allocation or PCIe
+//! zero-uploads, while accumulating nodes (`Reduce`) use stack-seeded zero initialization when
+//! `n <= 64`. Hot decode loops can also use [`ForgeGraphExecutor::run_into`] and
+//! [`ForgeGraphExecutor::run_resident_into`] to supply borrowed `&[&[f32]]` inputs and a
+//! caller-owned `&mut [f32]` output slice without per-token host vector allocations.
 //!
 //! # Module layout
 //!

@@ -1,12 +1,12 @@
 use super::*;
 /// Unified GPU mesh & multi-modal `.10d` asset residency arena.
 pub struct MeshSlabArenaGpu<R, P: Pod + Zeroable + Copy + Default> {
-    pub vertex_buffer: wgpu::Buffer,
-    pub index_buffer: wgpu::Buffer,
-    pub skin_attr_buffer: wgpu::Buffer,
-    pub proc_headers_buffer: wgpu::Buffer,
-    pub asset_table_buffer: wgpu::Buffer,
-    pub indirect_args_buffer: wgpu::Buffer,
+    pub vertex_buffer: etalon::Buffer,
+    pub index_buffer: etalon::Buffer,
+    pub skin_attr_buffer: etalon::Buffer,
+    pub proc_headers_buffer: etalon::Buffer,
+    pub asset_table_buffer: etalon::Buffer,
+    pub indirect_args_buffer: etalon::Buffer,
     pub vertex_allocator: SlabRangeAllocator<512>,
     pub index_allocator: SlabRangeAllocator<512>,
     pub assets: [ResidentAssetEntry; MAX_SLAB_RESIDENT_ASSETS],
@@ -41,59 +41,59 @@ impl<R, P: Pod + Zeroable + Copy + Default> MeshSlabArenaGpu<R, P> {
 
     /// Allocates the unified GPU slab buffers under `VramLedger` governance.
     pub fn try_new(
-        device: &wgpu::Device,
+        device: &etalon::Device,
         desc: MeshSlabArenaDescriptor,
         reserve: impl FnOnce(u64) -> Option<R>,
     ) -> Option<Self> {
         let total_bytes = Self::required_vram_bytes(desc)?;
         let reservation = reserve(total_bytes)?;
 
-        let vertex_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let vertex_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia-mesh-slab-vertices"),
             size: u64::from(desc.max_vertices.max(1))
                 * std::mem::size_of::<MeshSlabVertex>() as u64,
-            usage: wgpu::BufferUsages::VERTEX
-                | wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::VERTEX
+                | etalon::BufferUsages::STORAGE
+                | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let index_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let index_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia-mesh-slab-indices"),
             size: u64::from(desc.max_indices.max(1)) * std::mem::size_of::<u32>() as u64,
-            usage: wgpu::BufferUsages::INDEX
-                | wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::INDEX
+                | etalon::BufferUsages::STORAGE
+                | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let skin_attr_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let skin_attr_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia-mesh-slab-skin-attrs"),
             size: u64::from(desc.max_vertices.max(1))
                 * std::mem::size_of::<SkinAttrVertex>() as u64,
-            usage: wgpu::BufferUsages::VERTEX
-                | wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::VERTEX
+                | etalon::BufferUsages::STORAGE
+                | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let proc_headers_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let proc_headers_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia-mesh-slab-proc-headers"),
             size: u64::from(desc.max_proc_headers.max(1)) * std::mem::size_of::<P>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let asset_table_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let asset_table_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia-mesh-slab-asset-table"),
             size: u64::from(desc.max_assets.max(1))
                 * std::mem::size_of::<ResidentAssetEntry>() as u64,
-            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
+            usage: etalon::BufferUsages::STORAGE | etalon::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
-        let indirect_args_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+        let indirect_args_buffer = device.create_buffer(&etalon::BufferDescriptor {
             label: Some("qualia-mesh-slab-indirect-args"),
             size: u64::from(desc.max_indirect_commands.max(1)) * 20,
-            usage: wgpu::BufferUsages::INDIRECT
-                | wgpu::BufferUsages::STORAGE
-                | wgpu::BufferUsages::COPY_DST
-                | wgpu::BufferUsages::COPY_SRC,
+            usage: etalon::BufferUsages::INDIRECT
+                | etalon::BufferUsages::STORAGE
+                | etalon::BufferUsages::COPY_DST
+                | etalon::BufferUsages::COPY_SRC,
             mapped_at_creation: false,
         });
 
@@ -116,7 +116,7 @@ impl<R, P: Pod + Zeroable + Copy + Default> MeshSlabArenaGpu<R, P> {
     }
 
     /// Uploads a `.10d` `PROC1` header into `proc_headers_buffer` and returns its slot index.
-    pub fn register_proc_header(&mut self, queue: &wgpu::Queue, header: &P) -> Option<u16> {
+    pub fn register_proc_header(&mut self, queue: &etalon::Queue, header: &P) -> Option<u16> {
         let slot = self.proc_header_count as usize;
         if slot >= MAX_SLAB_PROC_HEADERS || slot >= self.descriptor.max_proc_headers as usize {
             return None;
@@ -136,7 +136,7 @@ impl<R, P: Pod + Zeroable + Copy + Default> MeshSlabArenaGpu<R, P> {
     /// Allocates vertex/index slab space and uploads a multi-LOD asset entry into the unified arena.
     pub fn register_mesh_lod_asset(
         &mut self,
-        queue: &wgpu::Queue,
+        queue: &etalon::Queue,
         asset_id: u32,
         vertices: &[MeshSlabVertex],
         skin_attrs: Option<&[SkinAttrVertex]>,

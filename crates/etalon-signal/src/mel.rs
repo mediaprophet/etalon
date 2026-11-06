@@ -1,5 +1,22 @@
-//! Row-major power-spectrum projection onto caller-supplied mel weights.
-use crate::SignalError;
+//! Row-major power-spectrum projection onto caller-supplied mel weights and HTK mel conversions.
+use crate::{
+    filter::{log10_f64, pow10_f64},
+    SignalError,
+};
+
+/// Convert frequency in Hz to the HTK Mel scale:
+/// $\text{mel} = 2595 \cdot \log_{10}(1 + f / 700)$.
+#[inline]
+pub fn hz_to_mel(hz: f32) -> f32 {
+    (2595.0 * log10_f64(1.0 + f64::from(hz.max(0.0)) / 700.0)) as f32
+}
+
+/// Convert HTK Mel frequency back to Hz:
+/// $f = 700 \cdot (10^{\text{mel} / 2595} - 1)$.
+#[inline]
+pub fn mel_to_hz(mel: f32) -> f32 {
+    (700.0 * (pow10_f64(f64::from(mel) / 2595.0) - 1.0)) as f32
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct MelShape {

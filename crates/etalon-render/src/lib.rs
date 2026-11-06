@@ -93,6 +93,7 @@ pub mod geo_viewport;
 pub mod ibl_cubemap;
 pub mod naga_webgl2;
 pub mod shaders;
+pub mod skeletal;
 pub mod spatial_math;
 pub mod spectral;
 pub mod surface_frames;

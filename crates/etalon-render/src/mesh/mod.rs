@@ -1,19 +1,18 @@
 //! Resident native/WASM mesh buffers uploaded on an embedding-owned device.
-use etalon as wgpu;
-use wgpu::util::DeviceExt;
+use etalon::util::DeviceExt;
 pub struct MeshBuffers<R> {
-    pub vertex_buf: wgpu::Buffer,
-    pub color_buf: wgpu::Buffer,
-    pub normal_buf: wgpu::Buffer,
-    pub tangent_buf: wgpu::Buffer,
-    pub uv_buf: wgpu::Buffer,
-    pub index_buf: wgpu::Buffer,
+    pub vertex_buf: etalon::Buffer,
+    pub color_buf: etalon::Buffer,
+    pub normal_buf: etalon::Buffer,
+    pub tangent_buf: etalon::Buffer,
+    pub uv_buf: etalon::Buffer,
+    pub index_buf: etalon::Buffer,
     pub vertex_count: u32,
     _reservation: R,
 }
 impl<R> MeshBuffers<R> {
     pub fn upload(
-        device: &wgpu::Device,
+        device: &etalon::Device,
         positions: &[[f32; 3]],
         colors: &[[f32; 4]],
         normals: &[[f32; 3]],
@@ -33,10 +32,10 @@ impl<R> MeshBuffers<R> {
             return Err("Mesh upload streams do not match the vertex/index ABI".into());
         }
         let vertex = |label, contents| {
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            device.create_buffer_init(&etalon::util::BufferInitDescriptor {
                 label: Some(label),
                 contents,
-                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+                usage: etalon::BufferUsages::VERTEX | etalon::BufferUsages::COPY_DST,
             })
         };
         Ok(Self {
@@ -45,10 +44,10 @@ impl<R> MeshBuffers<R> {
             normal_buf: vertex("portal-mesh-normals", bytemuck::cast_slice(normals)),
             tangent_buf: vertex("portal-mesh-tangents", bytemuck::cast_slice(tangents)),
             uv_buf: vertex("portal-mesh-uv0", bytemuck::cast_slice(uvs)),
-            index_buf: device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            index_buf: device.create_buffer_init(&etalon::util::BufferInitDescriptor {
                 label: Some("portal-mesh-indices"),
                 contents: bytemuck::cast_slice(indices),
-                usage: wgpu::BufferUsages::INDEX | wgpu::BufferUsages::COPY_DST,
+                usage: etalon::BufferUsages::INDEX | etalon::BufferUsages::COPY_DST,
             }),
             vertex_count,
             _reservation: reservation,

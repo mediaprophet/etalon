@@ -1,8 +1,13 @@
-//! Bounded reference complex transform with caller-supplied coefficients.
+//! Bounded reference complex transform with caller-supplied coefficients, plus
+//! zero-heap in-place radix-2 FFT/IFFT and direct DFT primitives.
 //!
-//! This is a CPU reference operation, not an FFT, acceleration backend,
-//! calibrated spectrum, or a guarantee that coefficients are DFT twiddles.
-use crate::SignalError;
+//! This is a CPU reference operation, not an acceleration backend,
+//! calibrated spectrum, or a guarantee that caller-supplied coefficients are DFT twiddles.
+use crate::{
+    fft::MAX_FFT_SAMPLES,
+    filter::sin_cos_f64,
+    SignalError,
+};
 
 /// Upper bound on the quadratic work and coefficient matrix size.
 pub const MAX_DFT_SAMPLES: usize = 1024;
@@ -85,6 +90,143 @@ fn calculate_bin(
     } else {
         (real, imag)
     }
+}
+
+/// In-place iterative Cooley-Tukey radix-2 FFT (`inverse == false`, $e^{-i 2\pi k n / N}$)
+/// or $1/N$-normalized IFFT (`inverse == true`, $\frac{1}{N} e^{+i 2\pi k n / N}$) over
+/// interleaved complex `[re, im, ...]` samples for any power-of-two $N \ge 1$.
+pub fn fft_radix2_interleaved_f32(data: &mut [f32], inverse: bool) -> Result<(), SignalError> {
+    if data.is_empty() {
+        return Err(SignalError::EmptyInput);
+    }
+    if !data.len().is_multiple_of(2) {
+        return Err(SignalError::LengthMismatch);
+    }
+    let n = data.len() / 2;
+    if !n.is_power_of_two() {
+        return Err(SignalError::InvalidParameter);
+    }
+    if n == 1 {
+        return Ok(());
+    }
+
+    // Bit-reversal permutation over complex pairs.
+    let mut j = 0usize;
+    for i in 1..n {
+        let mut bit = n >> 1;
+        while j & bit != 0 {
+            j ^= bit;
+            bit >>= 1;
+        }
+        j |= bit;
+        if i < j {
+            data.swap(2 * i, 2 * j);
+            data.swap(2 * i + 1, 2 * j + 1);
+        }
+    }
+
+    let sign = if inverse { 1.0 } else { -1.0 };
+    let mut width = 2usize;
+    while width <= n {
+        let half = width / 2;
+        let theta = sign * core::f64::consts::TAU / (width as f64);
+        for offset in 0..half {
+            let (wi, wr) = sin_cos_f64(theta * (offset as f64));
+            for base in (0..n).step_by(width) {
+                let left = 2 * (base + offset);
+                let right = 2 * (base + offset + half);
+                let lr = f64::from(data[left]);
+                let li = f64::from(data[left + 1]);
+                let rr = f64::from(data[right]);
+                let ri = f64::from(data[right + 1]);
+
+                let tr = wr * rr - wi * ri;
+                let ti = wr * ri + wi * rr;
+
+                data[left] = (lr + tr) as f32;
+                data[left + 1] = (li + ti) as f32;
+                data[right] = (lr - tr) as f32;
+                data[right + 1] = (li - ti) as f32;
+            }
+        }
+        width <<= 1;
+    }
+
+    if inverse {
+        let inv_n = 1.0 / (n as f64);
+        for v in data.iter_mut() {
+            *v = (f64::from(*v) * inv_n) as f32;
+        }
+    }
+    Ok(())
+}
+
+/// In-place iterative Cooley-Tukey radix-2 FFT (`inverse == false`, $e^{-i 2\pi k n / N}$)
+/// or $1/N$-normalized IFFT (`inverse == true`, $\frac{1}{N} e^{+i 2\pi k n / N}$) over
+/// interleaved complex `[re, im, ...]` samples with `MAX_FFT_SAMPLES` and finite validation.
+pub fn fft_radix2_in_place(interleaved: &mut [f32], inverse: bool) -> Result<usize, SignalError> {
+    if interleaved.is_empty() {
+        return Err(SignalError::EmptyInput);
+    }
+    if !interleaved.len().is_multiple_of(2) {
+        return Err(SignalError::LengthMismatch);
+    }
+    let n = interleaved.len() / 2;
+    if !n.is_power_of_two() || n > MAX_FFT_SAMPLES {
+        return Err(SignalError::InvalidParameter);
+    }
+    if interleaved.iter().any(|x| !x.is_finite()) {
+        return Err(SignalError::NonFiniteInput);
+    }
+    fft_radix2_interleaved_f32(interleaved, inverse)?;
+    if interleaved.iter().any(|x| !x.is_finite()) {
+        return Err(SignalError::NumericRange);
+    }
+    Ok(n)
+}
+
+/// Compute the forward complex DFT ($e^{-i 2\pi k j / N}$) of interleaved complex `input`
+/// into `out[..input.len()]`. Uses $O(N \log N)$ radix-2 FFT when $N$ is a power of two,
+/// and $O(N^2)$ direct evaluation in `f64` otherwise.
+pub fn dft_interleaved_into(input: &[f32], out: &mut [f32]) -> Result<usize, SignalError> {
+    if input.is_empty() {
+        return Err(SignalError::EmptyInput);
+    }
+    if !input.len().is_multiple_of(2) || out.len() < input.len() {
+        return Err(SignalError::LengthMismatch);
+    }
+    let n = input.len() / 2;
+    if input.iter().any(|x| !x.is_finite()) {
+        return Err(SignalError::NonFiniteInput);
+    }
+    if n.is_power_of_two() && n <= MAX_FFT_SAMPLES {
+        out[..input.len()].copy_from_slice(input);
+        return fft_radix2_in_place(&mut out[..input.len()], false);
+    }
+    if n > MAX_DFT_SAMPLES {
+        return Err(SignalError::InvalidParameter);
+    }
+
+    let scale_ang = -core::f64::consts::TAU / (n as f64);
+    for k in 0..n {
+        let mut re = 0.0f64;
+        let mut im = 0.0f64;
+        for j in 0..n {
+            let xr = f64::from(input[2 * j]);
+            let xi = f64::from(input[2 * j + 1]);
+            let (s, c) = sin_cos_f64(scale_ang * (k as f64) * (j as f64));
+            re += xr * c - xi * s;
+            im += xr * s + xi * c;
+        }
+        let re_f32 = re as f32;
+        let im_f32 = im as f32;
+        if !re_f32.is_finite() || !im_f32.is_finite() {
+            return Err(SignalError::NumericRange);
+        }
+        out[2 * k] = re_f32;
+        out[2 * k + 1] = im_f32;
+    }
+    Ok(n)
 }
 
 #[cfg(test)]

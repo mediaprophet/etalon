@@ -16,19 +16,49 @@ fn elems(v: &BufferView) -> usize {
     v.length_bytes / 4
 }
 
-/// Allocate a zeroed `n`-element f32 output buffer at `binding` (read_write slab).
+/// Allocate an uninitialized `n`-element f32 output buffer at `binding` (read_write slab)
+/// for kernels that completely overwrite every output element. Avoids both host `Vec<f32>`
+/// zero-allocation and redundant PCIe `queue.write_buffer` zero-uploads.
 fn alloc_out(
     ctx: &mut WgpuComputeContext,
     n: usize,
     binding: u32,
 ) -> Result<BufferView, ForgeError> {
-    let zeros = vec![0.0f32; n.max(1)];
-    ctx.allocate_and_write(
-        bytemuck::cast_slice(&zeros),
+    ctx.allocate_transient(
+        n.max(1) * core::mem::size_of::<f32>(),
         binding,
         0,
         BindingUsage::StorageReadWrite,
     )
+}
+
+/// Allocate a zero-initialized `n`-element f32 output buffer at `binding` (read_write slab)
+/// for accumulating ops (`Reduce`, `ScatterAccum`, cooperative-matrix `MatMul`). Uses a
+/// 64-element stack buffer when `n <= 64` so scalar/small reductions never touch the heap.
+fn alloc_out_zeroed(
+    ctx: &mut WgpuComputeContext,
+    n: usize,
+    binding: u32,
+) -> Result<BufferView, ForgeError> {
+    const STACK_CAP: usize = 64;
+    let count = n.max(1);
+    if count <= STACK_CAP {
+        let zeros = [0.0f32; STACK_CAP];
+        ctx.allocate_and_write(
+            bytemuck::cast_slice(&zeros[..count]),
+            binding,
+            0,
+            BindingUsage::StorageReadWrite,
+        )
+    } else {
+        let zeros = vec![0.0f32; count];
+        ctx.allocate_and_write(
+            bytemuck::cast_slice(&zeros),
+            binding,
+            0,
+            BindingUsage::StorageReadWrite,
+        )
+    }
 }
 
 /// Allocate a `u32` params buffer at `binding` with the given `usage`.
@@ -93,7 +123,7 @@ pub(super) fn prepare_node(
         OpNode::Reduce { op, .. } => {
             const WG: u32 = 256;
             let n = elems(&ins[0]);
-            let out = alloc_out(ctx, 1, 1)?;
+            let out = alloc_out_zeroed(ctx, 1, 1)?;
             let params = alloc_params(ctx, &[n as u32, 0, 0, 0], 2, BindingUsage::StorageRead)?;
             let src = reduce::reduce_wgsl(op, WG);
             let sched = Schedule {
@@ -466,7 +496,7 @@ fn prepare_matmul_coopmat(
     use crate::numerical::emit::{MATMUL_TC_TILED_ENTRY, matmul_tc_wgsl_tiled};
     let out_elems = (m as usize) * (n as usize);
     // c is the read_write slab output AND the zero-seeded accumulator (the kernel loads it).
-    let out = alloc_out(ctx, out_elems, 2)?;
+    let out = alloc_out_zeroed(ctx, out_elems, 2)?;
     // dims = [m, n, k] as a u32 storage buffer (binding 3, read slab).
     let dims = alloc_params(ctx, &[m, n, k, 0], 3, BindingUsage::StorageRead)?;
     let src = matmul_tc_wgsl_tiled();

@@ -66,6 +66,7 @@ fn raw_padding_and_nonfinite_values_are_preserved() {
     assert_eq!(view.bytes()[120..128], [17; 8]);
     let record = view.manifold_record(0).unwrap();
     assert_eq!(record.values_le()[0].to_bits(), f32::NAN.to_bits());
+    assert!(record.values_le_finite().is_none());
     assert_eq!(record.bytes()[40..], [71; 24]);
 }
 
@@ -122,4 +123,60 @@ fn structure_still_rejects_invalid_header_and_count() {
         P64View::parse(&altered, IntegrityMode::Structure).unwrap_err(),
         P64Error::ArithmeticOverflow(P64OverflowContext::ManifoldCount)
     );
+}
+
+#[test]
+fn entry_roundtrip_alignment_and_naming_helpers() {
+    assert_eq!(align_up(0, 64), 0);
+    assert_eq!(align_up(1, 64), 64);
+    assert_eq!(align_up(4096, 4096), 4096);
+    assert_eq!(checked_align_up(4097, 4096), Some(8192));
+    assert!(is_cache_line_aligned(128));
+    assert!(!is_cache_line_aligned(129));
+    assert!(is_4k_page_aligned(8192));
+    assert!(!is_4k_page_aligned(4098));
+    assert_eq!(resolve_page_log2(0), Some(14));
+    assert_eq!(resolve_page_log2(12), Some(12));
+    assert_eq!(resolve_page_log2(7), None);
+    assert_eq!(resolve_page_size(12), Some(4096));
+
+    let entry = P64TensorEntry {
+        name_offset: 12,
+        role_id: P64_ROLE_FFN_UP,
+        dtype: 1,
+        manifold_idx: 3,
+        rank: 2,
+        dimensions: [128, 512, 1, 1],
+        blob_offset: 4096,
+        blob_size: 2048,
+        source_offset: 1024,
+        source_name_hash: 0x1234_5678_9abc_def0,
+        alt_dtype: 2,
+        precision_views_mask: P64_VIEW_FLAG_F16,
+        alt_blob_offset: 8192,
+    };
+    let mut buf = [0u8; 64];
+    entry.write_le(&mut buf);
+    let decoded = P64TensorEntry::read_le(&buf).unwrap();
+    assert_eq!(decoded.name_offset, 12);
+    assert_eq!(decoded.role_id, P64_ROLE_FFN_UP);
+    assert_eq!(decoded.dimensions, [128, 512, 1, 1]);
+    assert_eq!(decoded.source_name_hash, 0x1234_5678_9abc_def0);
+    assert!(decoded.is_blob_aligned(4096));
+    assert_eq!(decoded.blob_range(), Some(4096..6144));
+
+    let mut name_buf = [0u8; 64];
+    let n = p64_tensor_name_into(P64_ROLE_FFN_UP, 3, 0, &mut name_buf).unwrap();
+    assert_eq!(&name_buf[..n], b"blk.3.ffn_up.weight");
+    assert_eq!(
+        p64_tensor_name(P64_ROLE_TOKEN_EMBD, P64_LAYER_GLOBAL, 0),
+        "token_embd.weight"
+    );
+
+    let vals = [1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0, 9.0, 10.0];
+    let mut m_buf = [0xffu8; 64];
+    P64ManifoldRecord::write_values_le(&vals, &mut m_buf);
+    let rec = P64ManifoldRecord::from_slice(&m_buf).unwrap();
+    assert_eq!(rec.values_le_finite(), Some(vals));
+    assert_eq!(rec.bytes()[40..], [0u8; 24]);
 }

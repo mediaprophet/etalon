@@ -5,7 +5,6 @@
 //! and future feature negotiation can agree on the same facts.
 //!
 //! Compiles only with `gpu-runtime` (the feature that pulls in the wgpu crate).
-use etalon as wgpu;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct GpuFeatureCaps {
@@ -22,20 +21,20 @@ pub struct GpuFeatureCaps {
 }
 
 impl GpuFeatureCaps {
-    /// Builds a caps snapshot from the adapter's `wgpu::Features`.
-    pub fn from_features(features: wgpu::Features) -> Self {
+    /// Builds a caps snapshot from the adapter's `etalon::Features`.
+    pub fn from_features(features: etalon::Features) -> Self {
         Self {
-            timestamp_query: features.contains(wgpu::Features::TIMESTAMP_QUERY),
+            timestamp_query: features.contains(etalon::Features::TIMESTAMP_QUERY),
             timestamp_query_inside_passes: features
-                .contains(wgpu::Features::TIMESTAMP_QUERY_INSIDE_PASSES),
-            pipeline_statistics_query: features.contains(wgpu::Features::PIPELINE_STATISTICS_QUERY),
-            pipeline_cache: features.contains(wgpu::Features::PIPELINE_CACHE),
-            shader_f16: features.contains(wgpu::Features::SHADER_F16),
-            shader_int64: features.contains(wgpu::Features::SHADER_INT64),
-            subgroup: features.contains(wgpu::Features::SUBGROUP),
-            subgroup_barrier: features.contains(wgpu::Features::SUBGROUP_BARRIER),
-            cooperative_matrix: features.contains(wgpu::Features::EXPERIMENTAL_COOPERATIVE_MATRIX),
-            ray_query: features.contains(wgpu::Features::EXPERIMENTAL_RAY_QUERY),
+                .contains(etalon::Features::TIMESTAMP_QUERY_INSIDE_PASSES),
+            pipeline_statistics_query: features.contains(etalon::Features::PIPELINE_STATISTICS_QUERY),
+            pipeline_cache: features.contains(etalon::Features::PIPELINE_CACHE),
+            shader_f16: features.contains(etalon::Features::SHADER_F16),
+            shader_int64: features.contains(etalon::Features::SHADER_INT64),
+            subgroup: features.contains(etalon::Features::SUBGROUP),
+            subgroup_barrier: features.contains(etalon::Features::SUBGROUP_BARRIER),
+            cooperative_matrix: features.contains(etalon::Features::EXPERIMENTAL_COOPERATIVE_MATRIX),
+            ray_query: features.contains(etalon::Features::EXPERIMENTAL_RAY_QUERY),
         }
     }
 
@@ -67,8 +66,8 @@ pub struct GpuLimitCaps {
 }
 
 impl GpuLimitCaps {
-    /// Builds a caps snapshot from `wgpu::Limits`.
-    pub fn from_limits(limits: &wgpu::Limits) -> Self {
+    /// Builds a caps snapshot from `etalon::Limits`.
+    pub fn from_limits(limits: &etalon::Limits) -> Self {
         Self {
             max_buffer_size: limits.max_buffer_size,
             max_storage_buffer_binding_size: limits.max_storage_buffer_binding_size,
@@ -83,8 +82,8 @@ impl GpuLimitCaps {
 #[derive(Debug, Clone)]
 pub struct GpuAdapterCaps {
     pub name: String,
-    pub backend: wgpu::Backend,
-    pub device_type: wgpu::DeviceType,
+    pub backend: etalon::Backend,
+    pub device_type: etalon::DeviceType,
     pub vendor: u32,
     pub device: u32,
     pub driver: String,
@@ -98,7 +97,7 @@ pub struct GpuAdapterCaps {
 
 impl GpuAdapterCaps {
     /// Collects adapter info + features + limits into a caps record.
-    pub fn from_adapter(adapter: &wgpu::Adapter) -> Self {
+    pub fn from_adapter(adapter: &etalon::Adapter) -> Self {
         let info = adapter.get_info();
         let features = adapter.features();
         let limits = {
@@ -131,19 +130,19 @@ impl GpuAdapterCaps {
     #[inline]
     /// `true` when the adapter reports an integrated GPU.
     pub fn is_integrated_gpu(&self) -> bool {
-        matches!(self.device_type, wgpu::DeviceType::IntegratedGpu)
+        matches!(self.device_type, etalon::DeviceType::IntegratedGpu)
     }
 
     #[inline]
     /// Static name of the wgpu backend (vulkan/dx12/metal/gl/…).
     pub fn backend_label(&self) -> &'static str {
         match self.backend {
-            wgpu::Backend::Noop => "noop",
-            wgpu::Backend::Vulkan => "vulkan",
-            wgpu::Backend::Metal => "metal",
-            wgpu::Backend::Dx12 => "dx12",
-            wgpu::Backend::Gl => "gl",
-            wgpu::Backend::BrowserWebGpu => "browser-webgpu",
+            etalon::Backend::Noop => "noop",
+            etalon::Backend::Vulkan => "vulkan",
+            etalon::Backend::Metal => "metal",
+            etalon::Backend::Dx12 => "dx12",
+            etalon::Backend::Gl => "gl",
+            etalon::Backend::BrowserWebGpu => "browser-webgpu",
         }
     }
 
@@ -151,11 +150,11 @@ impl GpuAdapterCaps {
     /// Static name of the adapter device type.
     pub fn device_type_label(&self) -> &'static str {
         match self.device_type {
-            wgpu::DeviceType::Other => "other",
-            wgpu::DeviceType::IntegratedGpu => "integrated",
-            wgpu::DeviceType::DiscreteGpu => "discrete",
-            wgpu::DeviceType::VirtualGpu => "virtual",
-            wgpu::DeviceType::Cpu => "cpu",
+            etalon::DeviceType::Other => "other",
+            etalon::DeviceType::IntegratedGpu => "integrated",
+            etalon::DeviceType::DiscreteGpu => "discrete",
+            etalon::DeviceType::VirtualGpu => "virtual",
+            etalon::DeviceType::Cpu => "cpu",
         }
     }
 
@@ -201,8 +200,8 @@ fn push_flag(out: &mut String, label: &str, enabled: bool) {
 /// canvas stays empty. These minimums never touch that getter. Native code
 /// still asks the adapter.
 #[cfg(target_arch = "wasm32")]
-pub fn webgpu_minimum_limits() -> wgpu::Limits {
-    wgpu::Limits {
+pub fn webgpu_minimum_limits() -> etalon::Limits {
+    etalon::Limits {
         max_texture_dimension_1d: 8192,
         max_texture_dimension_2d: 8192,
         max_texture_dimension_3d: 2048,
@@ -233,6 +232,6 @@ pub fn webgpu_minimum_limits() -> wgpu::Limits {
         max_compute_workgroup_size_y: 256,
         max_compute_workgroup_size_z: 64,
         max_compute_workgroups_per_dimension: 65535,
-        ..wgpu::Limits::downlevel_defaults()
+        ..etalon::Limits::downlevel_defaults()
     }
 }

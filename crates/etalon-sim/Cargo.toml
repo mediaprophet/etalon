@@ -1,0 +1,20 @@
+[package]
+name = "etalon-sim"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Deterministic 64 Hz physics, navigation, character kinematics, and continuum environmental simulation engine for Etalon"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+bytemuck = { workspace = true, features = ["derive"] }
+serde = { workspace = true, features = ["derive", "std"] }
+serde_json = { workspace = true }
+etalon-render = { path = "../etalon-render", default-features = false }

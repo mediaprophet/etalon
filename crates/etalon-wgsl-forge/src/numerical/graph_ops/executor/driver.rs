@@ -5,7 +5,7 @@
 use super::nodes::prepare_node;
 use crate::numerical::ForgeError;
 use crate::numerical::execute::{BindingUsage, BufferView, GraphPass, WgpuComputeContext};
-use crate::numerical::ir::graph::{ComputeGraph, NodeId};
+use crate::numerical::ir::graph::{ComputeGraph, MAX_IN, NodeId};
 
 /// Context capacity (per slab). Large enough for a decode block's tensors held at once.
 const EXEC_CAPACITY: usize = 64 << 20;
@@ -28,6 +28,9 @@ pub fn execute_graph(graph: &ComputeGraph, externals: &[Vec<f32>]) -> Result<Vec
 /// capacity back (the slab is a bump ring; buffers are not freed mid-run).
 pub struct ForgeGraphExecutor {
     ctx: WgpuComputeContext,
+    ext_views: Vec<BufferView>,
+    node_out: Vec<Option<BufferView>>,
+    passes: Vec<GraphPass>,
 }
 
 impl ForgeGraphExecutor {
@@ -48,7 +51,12 @@ impl ForgeGraphExecutor {
     /// how the forge is made to run on the SAME device that owns the resident LLM weights / KV
     /// cache instead of spinning up a second device (LLM-on-forge plan, Phase 1a).
     pub fn with_context(ctx: WgpuComputeContext) -> Self {
-        Self { ctx }
+        Self {
+            ctx,
+            ext_views: Vec::new(),
+            node_out: Vec::new(),
+            passes: Vec::new(),
+        }
     }
 
     /// Build an executor on the process-wide shared GPU device ([`etalon_resources::device_caps::shared_gpu`]),
@@ -92,16 +100,43 @@ impl ForgeGraphExecutor {
         self.ctx.clear_transient_allocations();
 
         // Upload every external into the transient READ slab (binding overwritten per consumer).
-        let mut ext_views: Vec<BufferView> = Vec::with_capacity(externals.len());
+        self.ext_views.clear();
+        self.ext_views.reserve(externals.len());
         for data in externals {
-            ext_views.push(self.ctx.allocate_and_write(
+            let view = self.ctx.allocate_and_write(
                 bytemuck::cast_slice(data),
                 0,
                 0,
                 BindingUsage::StorageRead,
-            )?);
+            )?;
+            self.ext_views.push(view);
         }
-        self.run_prepared(graph, ext_views)
+        self.run_prepared(graph)
+    }
+
+    /// Caller-buffered variant of [`Self::run`]: accepts borrowed `&[&[f32]]` external input
+    /// slices and writes the output tensor directly into `out`, returning the number of `f32`
+    /// elements written. Fails closed with [`ForgeError::GpuValidation`] if `out` is smaller than
+    /// the graph output tensor.
+    pub fn run_into(
+        &mut self,
+        graph: &ComputeGraph,
+        externals: &[&[f32]],
+        out: &mut [f32],
+    ) -> Result<usize, ForgeError> {
+        self.ctx.clear_transient_allocations();
+        self.ext_views.clear();
+        self.ext_views.reserve(externals.len());
+        for &data in externals {
+            let view = self.ctx.allocate_and_write(
+                bytemuck::cast_slice(data),
+                0,
+                0,
+                BindingUsage::StorageRead,
+            )?;
+            self.ext_views.push(view);
+        }
+        self.run_prepared_into(graph, out)
     }
 
     /// Like [`Self::run`], but external indices already uploaded into the persistent weight region
@@ -117,20 +152,52 @@ impl ForgeGraphExecutor {
         resident: &ResidentWeights,
     ) -> Result<Vec<f32>, ForgeError> {
         self.ctx.clear_transient_allocations();
-        let mut ext_views: Vec<BufferView> = Vec::with_capacity(externals.len());
+        self.ext_views.clear();
+        self.ext_views.reserve(externals.len());
         for (i, data) in externals.iter().enumerate() {
-            if let Some(view) = resident.view_for(i) {
-                ext_views.push(view);
+            let view = if let Some(view) = resident.view_for(i) {
+                view
             } else {
-                ext_views.push(self.ctx.allocate_and_write(
+                self.ctx.allocate_and_write(
                     bytemuck::cast_slice(data),
                     0,
                     0,
                     BindingUsage::StorageRead,
-                )?);
-            }
+                )?
+            };
+            self.ext_views.push(view);
         }
-        self.run_prepared(graph, ext_views)
+        self.run_prepared(graph)
+    }
+
+    /// Caller-buffered variant of [`Self::run_resident`]: accepts borrowed `&[&[f32]]` activation
+    /// slices (with `&[]` placeholders for resident weight indices) and writes the output tensor
+    /// into caller-owned `out`, returning the number of `f32` elements written. Designed for hot
+    /// decode loops so callers never allocate `Vec<Vec<f32>>` inputs or `Vec<f32>` outputs per token.
+    pub fn run_resident_into(
+        &mut self,
+        graph: &ComputeGraph,
+        externals: &[&[f32]],
+        resident: &ResidentWeights,
+        out: &mut [f32],
+    ) -> Result<usize, ForgeError> {
+        self.ctx.clear_transient_allocations();
+        self.ext_views.clear();
+        self.ext_views.reserve(externals.len());
+        for (i, &data) in externals.iter().enumerate() {
+            let view = if let Some(view) = resident.view_for(i) {
+                view
+            } else {
+                self.ctx.allocate_and_write(
+                    bytemuck::cast_slice(data),
+                    0,
+                    0,
+                    BindingUsage::StorageRead,
+                )?
+            };
+            self.ext_views.push(view);
+        }
+        self.run_prepared_into(graph, out)
     }
 
     /// Upload a set of `(external_index, data)` weights ONCE into the executor's persistent weight
@@ -156,53 +223,83 @@ impl ForgeGraphExecutor {
         self.ctx.clear_weights();
     }
 
-    /// The shared execution core: given the externals already resolved to device [`BufferView`]s
+    /// The shared execution core: given `self.ext_views` already resolved to device [`BufferView`]s
     /// (freshly uploaded and/or resident), prepare every node, record the whole graph into one
-    /// encoder, submit once, and read back the output. Both [`Self::run`] and [`Self::run_resident`]
-    /// funnel through here so the residency path and the upload path share identical scheduling.
-    fn run_prepared(
+    /// encoder, submit once, and read back the output.
+    fn run_prepared(&mut self, graph: &ComputeGraph) -> Result<Vec<f32>, ForgeError> {
+        let out_view = self.prepare_and_resolve_output(graph)?;
+        self.ctx.submit_graph(&self.passes)?;
+        self.ctx.read_buffer_f32(&out_view)
+    }
+
+    /// Shared execution core for caller-buffered [`Self::run_into`] and [`Self::run_resident_into`].
+    /// Validates `out` capacity before submitting GPU work (fail-closed), then copies the final
+    /// output tensor into `out[..elems]`.
+    fn run_prepared_into(
         &mut self,
         graph: &ComputeGraph,
-        ext_views: Vec<BufferView>,
-    ) -> Result<Vec<f32>, ForgeError> {
-        let ctx = &mut self.ctx;
+        out: &mut [f32],
+    ) -> Result<usize, ForgeError> {
+        let out_view = self.prepare_and_resolve_output(graph)?;
+        let elems = out_view.length_bytes / core::mem::size_of::<f32>();
+        if out.len() < elems {
+            return Err(ForgeError::GpuValidation(format!(
+                "caller output buffer too small: graph produces {elems} f32s, buffer has {}",
+                out.len()
+            )));
+        }
+        self.ctx.submit_graph(&self.passes)?;
+        self.ctx.read_buffer_f32_into(&out_view, out)
+    }
 
-        // Phase A — prepare every node: allocate its output + params (read/read_write slab split),
-        // compile its pipeline, build its bind group. No GPU work submitted yet. Each node's output
-        // (the read-slab hand-off copy) is threaded forward as a `BufferView`.
-        let mut passes: Vec<GraphPass> = Vec::with_capacity(graph.nodes.len());
-        let mut node_out: Vec<Option<BufferView>> = vec![None; graph.nodes.len()];
+    /// Prepare all nodes in topological order using reusable scratch storage and a stack-allocated
+    /// `[BufferView; MAX_IN]` input array per node, returning the final output [`BufferView`].
+    fn prepare_and_resolve_output(
+        &mut self,
+        graph: &ComputeGraph,
+    ) -> Result<BufferView, ForgeError> {
+        self.passes.clear();
+        self.passes.reserve(graph.nodes.len());
+        self.node_out.clear();
+        self.node_out.resize(graph.nodes.len(), None);
+
+        let dummy_view = BufferView {
+            offset: 0,
+            length_bytes: 0,
+            binding: 0,
+            group: 0,
+            usage: BindingUsage::StorageRead,
+        };
+
         for (i, node) in graph.nodes.iter().enumerate() {
-            let mut ins: Vec<BufferView> = Vec::with_capacity(node.n_in as usize);
-            for k in 0..node.n_in as usize {
-                let tr = node.ins[k].expect("declared input present");
-                let v = if tr.producer == NodeId::EXTERNAL {
-                    *ext_views
+            let n_in = node.n_in as usize;
+            let mut ins = [dummy_view; MAX_IN];
+            for (slot, maybe_tr) in ins.iter_mut().zip(node.ins.iter()).take(n_in) {
+                let tr = maybe_tr.expect("declared input present");
+                *slot = if tr.producer == NodeId::EXTERNAL {
+                    *self
+                        .ext_views
                         .get(tr.tensor.0 as usize)
                         .ok_or_else(|| ForgeError::Emission("missing external input".to_string()))?
                 } else {
-                    node_out[tr.producer.0 as usize]
+                    self.node_out[tr.producer.0 as usize]
                         .ok_or_else(|| ForgeError::Emission("input from unrun node".to_string()))?
                 };
-                ins.push(v);
             }
-            let (pass, out_view) = prepare_node(ctx, node, &ins)?;
-            node_out[i] = Some(out_view);
-            passes.push(pass);
+            let (pass, out_view) = prepare_node(&mut self.ctx, node, &ins[..n_in])?;
+            self.node_out[i] = Some(out_view);
+            self.passes.push(pass);
         }
-
-        // Phase B — record all node dispatches + GPU→GPU hand-off copies into ONE encoder and
-        // submit once for the whole graph (Option B; eliminates per-node submit latency).
-        ctx.submit_graph(&passes)?;
 
         let id = graph
             .outputs
             .last()
             .copied()
             .unwrap_or(NodeId(graph.nodes.len().saturating_sub(1) as u32));
-        let out = node_out[id.0 as usize]
-            .ok_or_else(|| ForgeError::Emission("graph has no output node".to_string()))?;
-        ctx.read_buffer_f32(&out)
+        self.node_out
+            .get(id.0 as usize)
+            .and_then(|v| *v)
+            .ok_or_else(|| ForgeError::Emission("graph has no output node".to_string()))
     }
 }
 

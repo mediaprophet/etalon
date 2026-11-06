@@ -9,6 +9,76 @@ use crate::{
 
 pub type BlockId = u32;
 
+/// Deterministic directed call graph (`caller -> callee`) backed by [`crate::FastIndexMap`].
+///
+/// Replaces `petgraph::graphmap::GraphMap` for SPIR-V function topological sorting and
+/// recursion-cycle detection without external graph dependencies or recursive stack frames.
+#[derive(Debug, Default)]
+pub(super) struct CallGraph {
+    edges: crate::FastIndexMap<spirv::Word, Vec<spirv::Word>>,
+}
+
+impl CallGraph {
+    pub(super) fn clear(&mut self) {
+        self.edges.clear();
+    }
+
+    pub(super) fn add_node(&mut self, node: spirv::Word) {
+        self.edges.entry(node).or_default();
+    }
+
+    pub(super) fn add_call_edge(&mut self, caller: spirv::Word, callee: spirv::Word) {
+        let callees = self.edges.entry(caller).or_default();
+        if !callees.contains(&callee) {
+            callees.push(callee);
+        }
+        self.edges.entry(callee).or_default();
+    }
+
+    /// Returns all registered function IDs in topological order with dominated callees first,
+    /// or `Err(cycle_node_id)` if a direct or mutual recursion cycle is present.
+    ///
+    /// Uses an explicit iterative 3-color (`0 = unvisited`, `1 = visiting/on-stack`,
+    /// `2 = visited`) post-order DFS over the deterministic [`crate::FastIndexMap`] node order.
+    pub(super) fn toposort_callees_first(&self) -> Result<Vec<spirv::Word>, spirv::Word> {
+        let n = self.edges.len();
+        let mut state = vec![0u8; n];
+        let mut order = Vec::with_capacity(n);
+        let mut stack: Vec<(usize, usize)> = Vec::new();
+
+        for start_idx in 0..n {
+            if state[start_idx] != 0 {
+                continue;
+            }
+            state[start_idx] = 1;
+            stack.push((start_idx, 0));
+
+            while let Some((node_idx, edge_idx)) = stack.last_mut() {
+                let (&node_id, callees) = self.edges.get_index(*node_idx).unwrap();
+                if *edge_idx < callees.len() {
+                    let callee_id = callees[*edge_idx];
+                    *edge_idx += 1;
+                    let callee_idx = self.edges.get_index_of(&callee_id).unwrap();
+                    match state[callee_idx] {
+                        0 => {
+                            state[callee_idx] = 1;
+                            stack.push((callee_idx, 0));
+                        }
+                        1 => return Err(callee_id),
+                        _ => {}
+                    }
+                } else {
+                    state[*node_idx] = 2;
+                    order.push(node_id);
+                    stack.pop();
+                }
+            }
+        }
+
+        Ok(order)
+    }
+}
+
 impl<I: Iterator<Item = u32>> super::Frontend<I> {
     // Registers a function call. It will generate a dummy handle to call, which
     // gets resolved after all the functions are processed.
@@ -21,7 +91,7 @@ impl<I: Iterator<Item = u32>> super::Frontend<I> {
             .dummy_functions
             .append(crate::Function::default(), Default::default());
         self.deferred_function_calls.push(to);
-        self.function_call_graph.add_edge(from, to, ());
+        self.function_call_graph.add_call_edge(from, to);
         dummy_handle
     }
 
