@@ -1,5 +1,6 @@
 [package]
 name = "etalon-sense-qnn"
+authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true

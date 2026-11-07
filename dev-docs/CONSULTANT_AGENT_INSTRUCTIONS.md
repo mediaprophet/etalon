@@ -3,7 +3,7 @@
 ## The Standard of Excellence: World-Class Silicon Architecture & SOTA Migration for Etalon
 
 > **Document ID:** `ETALON-AGENT-INST-01`  
-> **Status:** RATIFIED SOVEREIGN MANDATE  
+> **Status:** RATIFIED ARCHITECTURAL MANDATE  
 > **Author & Licensor:** Timothy Charles Holborn  
 > **Repository:** `https://github.com/mediaprophet/etalon.git`  
 > **Baseline License:** Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0)  
@@ -17,7 +17,7 @@ You are acting as an elite principal systems architect, high-performance computi
 
 ### The Core Directive: No Compromises, SOTA Only
 
-**Etalon is not an incremental refactoring project or a pedestrian wrapper.** It is engineered to be a peerless, state-of-the-art (SOTA) silicon runtime—a sovereign substrate executing at the physical limits of contemporary hardware architectures.
+**Etalon is not an incremental refactoring project or a pedestrian wrapper.** It is engineered to be a peerless, state-of-the-art (SOTA) silicon runtime—a self-directed substrate executing at the physical limits of contemporary hardware architectures.
 
 Every recommendation, architectural proposal, and code specification you provide **must embody the most superior, advanced, and mathematically optimal methods known to modern computer engineering**.
 
@@ -95,7 +95,7 @@ Every submitted review document **must** follow this 6-section schema. A starter
 
 ### Section 1: Executive Verdict & State-of-the-Art Strategic Vision
 
-[Provide an uncompromising, authoritative systems assessment. Declare clear go/no-go verdicts on migration candidates, identify architectural dead-ends, and articulate the sovereign SOTA blueprint.]
+[Provide an uncompromising, authoritative systems assessment. Declare clear go/no-go verdicts on migration candidates, identify architectural dead-ends, and articulate the self-directed SOTA blueprint.]
 
 ### Section 2: Forensic Technical Analysis & Theoretical Foundations
 

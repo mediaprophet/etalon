@@ -245,7 +245,7 @@ Instead of clamping hardware capabilities down to a "lowest common denominator" 
 > - **Compute Unit & Warp Geometry:** Exposing exact subgroup/warp sizes (e.g., 32 on your RTX A2000, 32/64 on AMD, 32 on Apple Silicon), L2 cache sizes, shared memory bank widths, and Tensor/Simdgroup matrix core dimensions.
 > - **Memory Topology:** Detecting whether the agent is operating on Discrete PCIe with Resizable BAR (where the CPU can write directly to VRAM), Discrete PCIe requiring DMA staging, or Unified Memory (Apple Mac Studio/Mini), and automatically selecting the optimal zero-copy path for .q42 pages.
 
-#### **B. Sovereign Memory & Zero-Copy Stewardship**
+#### **B. Self-Directed Memory & Zero-Copy Stewardship**
 
 As the hardware's memory agent, etalon-hal manages the physical address space:
 

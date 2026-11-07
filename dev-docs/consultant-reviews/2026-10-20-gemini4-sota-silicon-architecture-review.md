@@ -2,7 +2,7 @@
 
 - **Consultant Agent / Model:** Antigravity (Principal Systems Architect, GPU Compiler Engineer & Heterogeneous Compute Specialist)
 - **Review Date:** 2026-10-20
-- **Focus Domain(s):** Silicon Stewardship (`etalon-hal`, `etalon-agent`), Multi-Target Shader Compiler (`naga`, `etalon-wgsl-forge`), Zero-Heap Sovereign Inference (`etalon-tensor`), 48-Byte Semantic Scan (`etalon-nquin`), N-Dimensional Volumetric Rendering (`etalon-render`), and Cross-Origin WASM Worker Topology (`etalon-wasm`)
+- **Focus Domain(s):** Silicon Stewardship (`etalon-hal`, `etalon-agent`), Multi-Target Shader Compiler (`naga`, `etalon-wgsl-forge`), Zero-Heap Self-Directed Inference (`etalon-tensor`), 48-Byte Semantic Scan (`etalon-nquin`), N-Dimensional Volumetric Rendering (`etalon-render`), and Cross-Origin WASM Worker Topology (`etalon-wasm`)
 - **Target Crates:** `etalon-hal`, `etalon-core`, `etalon-types`, `naga`, `etalon`, `crates/etalon-agent`, `crates/etalon-wgsl-forge`, `crates/etalon-tensor`, `crates/etalon-nquin`, `crates/etalon-render`, `crates/etalon-wasm`
 - **Confidence & Rigor Tier:** Tier-1 Architectural Specification
 
@@ -568,7 +568,7 @@ impl EtalonSharedBridge {
 
 ### Phase 2: `crates/etalon-tensor` & `crates/etalon-nquin` Migration (Days 8–12)
 
-1. **Scaffold `crates/etalon-tensor` (Sovereign Inference Runtime):**
+1. **Scaffold `crates/etalon-tensor` (Self-Directed Inference Runtime):**
    - Migrate `gguf_bridge/*` (`resident_decode.rs`, `q8_0_vulkan.rs`, `q4_k_vulkan.rs`, `moe_wgsl.rs`, `speculative_wgsl.rs`, `verify_arena.rs`, `flash_attn_wgsl.rs`) and `inference/cuda_lane/*` (`device.rs`, `mega_pass/*`, `q4k_soa.rs`, `kernels/*`).
    - Replace the $93.75\%$-wasted `q4k_soa_wmma_gemv` (`cuda_c.rs:315`) for $M \in [1, 4]$ with the **Warp-Cooperative `DP4A` / `dot4I8Packed` `Q4_K_SOA × Q8_1` kernel**, keeping `16x16x16` / `16x8x16` WMMA/CoopMat exclusively for $M \ge 8$ prefill and speculative tree verification (`verify_arena.rs`).
 2. **Scaffold `crates/etalon-nquin` (48-Byte Semantic GPU Accelerator):**

@@ -1,5 +1,6 @@
 [package]
 name = "naga-cli"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "CLI for the naga shader translator and validator. Part of the etalon project"

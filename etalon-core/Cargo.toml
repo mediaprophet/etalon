@@ -1,5 +1,6 @@
 [package]
 name = "etalon-core"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "Core implementation logic of etalon, the cross-platform, safe, pure-rust graphics API"

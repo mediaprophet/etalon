@@ -1,5 +1,6 @@
 [package]
 name = "naga"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "Shader translator and validator. Part of the etalon project"

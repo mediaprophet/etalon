@@ -1,5 +1,6 @@
 [package]
 name = "etalon-core-remote"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "Remoting version of etalon-core for browser implementing WebGPU"

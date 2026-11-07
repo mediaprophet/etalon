@@ -1,5 +1,6 @@
 [package]
 name = "etalon-example-02-hello-window"
+authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]
 edition = "2024"
 rust-version = "1.87"
 publish = false

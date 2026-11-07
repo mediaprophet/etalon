@@ -1,5 +1,6 @@
 [package]
 name = "etalon-naga-bridge"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "Conversions between naga and etalon-types. Part of the etalon project"

@@ -2,7 +2,7 @@
 
 - **Prerequisite:** Complete [`03-PHASE2-ETALON-AGENT-FORGE-AND-NQUIN-MIGRATION.md`](./03-PHASE2-ETALON-AGENT-FORGE-AND-NQUIN-MIGRATION.md).
 - **Target Crates:** `crates/etalon-tensor`, `crates/etalon-render`, `crates/etalon-wasm`
-- **Objective:** Extract the sovereign tensor execution engine, the decoupled volumetric/HUD/signal-processing renderer, and the cross-origin/transferable WASM worker steward.
+- **Objective:** Extract the self-directed tensor execution engine, the decoupled volumetric/HUD/signal-processing renderer, and the cross-origin/transferable WASM worker steward.
 
 ---
 

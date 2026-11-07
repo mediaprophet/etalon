@@ -1,6 +1,6 @@
 # Etalon Engineering Documentation & Architectural Blueprints
 
-This directory contains the authoritative implementation plans, migration inventories, and governance architectures for the **Etalon** sovereign GPU engine.
+This directory contains the authoritative implementation plans, migration inventories, and governance architectures for the **Etalon** human-centric GPU engine.
 
 ---
 

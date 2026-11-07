@@ -234,7 +234,7 @@ pub struct SceneNodeRecord {
     pub quin_token: u64,
     /// Epistemic `q` lane selector (`0 = Collapsed Ground Truth`, `>0 = Superposition Escrow`).
     pub tensor_q: u8,
-    /// Topological `v`-band selector (`0 = Euclidean`, `1 = Cyclic`, `2 = Hyperbolic`, `3+ = SovereignClique`).
+    /// Topological `v`-band selector (`0 = Euclidean`, `1 = Cyclic`, `2 = Hyperbolic`, `3+ = SelfDirectedClique`).
     pub tensor_v: u8,
     /// Domain bifurcation `w` lane selector.
     pub tensor_w: u8,

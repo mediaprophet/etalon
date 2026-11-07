@@ -1,5 +1,6 @@
 [package]
 name = "etalon-info"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "A tool to print and process information about available etalon adapters."

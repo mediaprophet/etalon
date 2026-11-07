@@ -1,5 +1,6 @@
 [package]
 name = "etalon-hal"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "Hardware abstraction layer for etalon, the cross-platform, safe, pure-rust graphics API"

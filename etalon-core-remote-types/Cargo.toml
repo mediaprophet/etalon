@@ -1,5 +1,6 @@
 [package]
 name = "etalon-core-remote-types"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "Types for remoting version of etalon-core for browser implementing WebGPU"

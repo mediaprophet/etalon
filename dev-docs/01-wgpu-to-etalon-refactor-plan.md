@@ -12,7 +12,7 @@
 
 The purpose of this refactor is the complete, unambiguous replacement of the `wgpu` nomenclature with **`etalon`** throughout this repository.
 
-Standard `wgpu` is engineered primarily as a conservative, sandboxed WebGPU implementation designed for untrusted browser execution. In contrast, **Etalon** is engineered as a sovereign, high-throughput, silicon-level compute, graphics, and cognitive reasoning engine.
+Standard `wgpu` is engineered primarily as a conservative, sandboxed WebGPU implementation designed for untrusted browser execution. In contrast, **Etalon** is engineered as a human-agency-aligned, high-throughput, silicon-level compute, graphics, and cognitive reasoning engine.
 
 Retaining `wgpu` crate names, directory paths, and macro prefixes creates architectural confusion, invites accidental upstream collisions, and fails to communicate the radical shift toward zero-copy pointer access, hardware timeline semaphores, cooperative tensor arithmetic, and fiduciary execution enclaves.
 

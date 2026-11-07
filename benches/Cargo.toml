@@ -1,5 +1,6 @@
 [package]
 name = "etalon-benchmark"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "etalon benchmarking suite"

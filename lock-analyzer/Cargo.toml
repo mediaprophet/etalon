@@ -1,5 +1,6 @@
 [package]
 name = "lock-analyzer"
+authors.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 keywords.workspace = true

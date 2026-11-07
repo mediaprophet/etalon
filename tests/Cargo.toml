@@ -1,5 +1,6 @@
 [package]
 name = "etalon-test"
+authors.workspace = true
 version.workspace = true
 edition.workspace = true
 description = "common code for etalon tests"

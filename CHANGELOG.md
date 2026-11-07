@@ -1,6 +1,10 @@
 # Change Log
 
-## Unreleased
+## 0.0.2.1 release (QualiaDB 0.0.41 synchronization — `v0.0.2.1-release`)
+
+- Enforce canonical 5-field XOR parity (`subject ^ predicate ^ object ^ context ^ metadata`) in `etalon-nquin::NQuinWire` (`Q42-00`), aligning GPU/CPU wire validation with the Q42 v4 48-byte Super-Quin specification.
+- Complete Wave 1 & 2 domain-neutral library migration into `etalon-render`, `etalon-sim`, `etalon-signal`, `etalon-tensor`, and `etalon-wgsl-forge` (skeletal animation, 10D spatial math/scene graph, B-rep/CSG/parametric geometry, DSP/vision/radar/acoustic kernels, and Naga SPIR-V/Forge executor optimizations).
+- Harmonize explicit `authors` metadata across all workspace and standalone `Cargo.toml` manifests and align terminology with international human-rights instruments.
 
 - Reject known foreign device/queue leases and validate retained GPU owners before execution, mapping and completed readback. Tensor arenas now refuse reads through a different or lost device; Forge readback unmaps on errors as well as success.
 
