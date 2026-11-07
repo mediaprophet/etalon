@@ -130,7 +130,7 @@ pub(super) fn try_gpu_single_fence_argmax(logits: &[f32]) -> Option<u32> {
     });
     let _ = ctx.device.poll(wgpu::PollType::wait_indefinitely());
     rx.recv().ok()?.ok()?;
-    let mapped = slice.get_mapped_range();
+    let mapped = slice.get_mapped_range().ok()?;
     let token = u32::from_le_bytes([mapped[0], mapped[1], mapped[2], mapped[3]]);
     drop(mapped);
     read_buf.unmap();
