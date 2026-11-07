@@ -1749,6 +1749,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "etalon-vibe"
+version = "0.0.2"
+dependencies = [
+ "etalon-model",
+ "etalon-nquin",
+ "etalon-resources",
+ "etalon-sense-core",
+ "etalon-signal",
+ "etalon-wgsl-forge",
+ "vibescript-abi",
+]
+
+[[package]]
 name = "etalon-wasm"
 version = "0.0.2"
 dependencies = [
@@ -4464,6 +4477,11 @@ name = "version_check"
 version = "0.9.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0b928f33d975fc6ad9f86c8f283853ad26bdd5b10b7f1542aa2fa15e2289105a"
+
+[[package]]
+name = "vibescript-abi"
+version = "0.0.41"
+source = "git+https://github.com/mediaprophet/vibe-script.git?rev=c26acd2aacceffc0778b5b96b1a935e251fd5e96#c26acd2aacceffc0778b5b96b1a935e251fd5e96"
 
 [[package]]
 name = "virtue"

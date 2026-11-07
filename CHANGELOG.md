@@ -5,6 +5,7 @@
 - Enforce canonical 5-field XOR parity (`subject ^ predicate ^ object ^ context ^ metadata`) in `etalon-nquin::NQuinWire` (`Q42-00`), aligning GPU/CPU wire validation with the Q42 v4 48-byte Super-Quin specification.
 - Complete Wave 1 & 2 domain-neutral library migration into `etalon-render`, `etalon-sim`, `etalon-signal`, `etalon-tensor`, and `etalon-wgsl-forge` (skeletal animation, 10D spatial math/scene graph, B-rep/CSG/parametric geometry, DSP/vision/radar/acoustic kernels, and Naga SPIR-V/Forge executor optimizations).
 - Harmonize explicit `authors` metadata across all workspace and standalone `Cargo.toml` manifests and align terminology with international human-rights instruments.
+- Add `crates/etalon-vibe` implementing 8 zero-heap `VibeNamespaceProvider` domain suites (`gpu`, `mech`, `forge`, `render`, `signal`, `sense`, `p64`, `nquin` — 30 exported VibeScript functions with 5-field `NQuin48` ontological contracts) built on `vibescript-abi` (`0.0.41`).
 
 - Reject known foreign device/queue leases and validate retained GPU owners before execution, mapping and completed readback. Tensor arenas now refuse reads through a different or lost device; Forge readback unmaps on errors as well as success.
 

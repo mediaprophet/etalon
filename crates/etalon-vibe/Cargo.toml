@@ -1,0 +1,26 @@
+[package]
+name = "etalon-vibe"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Comprehensive zero-heap VibeScript extension provider suite for Etalon"
+
+[lints]
+workspace = true
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+vibescript-abi = { workspace = true }
+etalon-model = { workspace = true, default-features = false }
+etalon-nquin = { workspace = true, default-features = false }
+etalon-resources = { workspace = true, default-features = false }
+etalon-sense-core = { workspace = true, default-features = false }
+etalon-signal = { workspace = true, default-features = false }
+etalon-wgsl-forge = { workspace = true, default-features = false }

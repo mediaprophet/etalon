@@ -125,7 +125,9 @@ etalon-inference = { version = "0.0.2", path = "./crates/etalon-inference", defa
 etalon-inference-contract = { version = "0.0.2", path = "./crates/etalon-inference-contract", default-features = false }
 etalon-inference-kernel = { version = "0.0.2", path = "./crates/etalon-inference-kernel", default-features = false }
 etalon-inference-lab = { version = "0.0.2", path = "./crates/etalon-inference-lab", default-features = false }
+etalon-vibe = { version = "0.0.2", path = "./crates/etalon-vibe", default-features = false }
 etalon-wasm = { version = "0.0.2", path = "./crates/etalon-wasm", default-features = false }
+vibescript-abi = { version = "0.0.41", git = "https://github.com/mediaprophet/vibe-script.git", rev = "c26acd2aacceffc0778b5b96b1a935e251fd5e96", default-features = false }
 
 # These _cannot_ have a version specified. If it does, crates.io will look
 # for a version of the package on crates when we publish naga. Path dependencies
