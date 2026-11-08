@@ -17,6 +17,7 @@
 //!   soil geomechanics & excavation (`geomechanics`), and `evaluate_heliophysical_fire_weather` coupling
 
 pub mod character;
+pub mod continuum_3d;
 pub mod ecs;
 pub mod environment;
 pub mod input;
@@ -70,6 +71,7 @@ pub use atmosphere::{
 };
 pub use camera::{unproject_screen_to_ray, FlyCamera, OrbitCamera, Ray3D, SpringChaseCamera};
 pub use character::{step_character_3d, CharacterConfig, CharacterController, CharacterState};
+pub use continuum_3d::*;
 pub use coupling::{evaluate_heliophysical_fire_weather, HeliophysicalFireWeatherReport};
 pub use differential_codec::{
     DisocclusionForecaster, EntitySpatialBounds, KinematicExtrapolator,

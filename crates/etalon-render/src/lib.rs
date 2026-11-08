@@ -102,3 +102,8 @@ pub mod ui_canvas;
 pub mod vegetation;
 pub mod water_surface;
 pub mod webizen_core;
+
+pub use frame_lock::{
+    CompanionDeviceRole, CompanionSyncMessage, ConicalDomeWedge, FrameLockPacket, FrustumWedge,
+    FRAME_LOCK_MAGIC, FRAME_LOCK_VERSION,
+};
