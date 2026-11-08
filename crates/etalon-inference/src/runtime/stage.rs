@@ -98,14 +98,12 @@ impl StageTrace {
         duration_us: u32,
         auxiliary_code: u32,
     ) -> bool {
-        for slot in self.receipts[..self.len as usize].iter_mut() {
-            if let Some(receipt) = slot {
-                if receipt.stage == stage {
-                    receipt.status = status;
-                    receipt.duration_us = receipt.duration_us.saturating_add(duration_us);
-                    receipt.auxiliary_code = receipt.auxiliary_code.saturating_add(auxiliary_code);
-                    return true;
-                }
+        for receipt in self.receipts[..self.len as usize].iter_mut().flatten() {
+            if receipt.stage == stage {
+                receipt.status = status;
+                receipt.duration_us = receipt.duration_us.saturating_add(duration_us);
+                receipt.auxiliary_code = receipt.auxiliary_code.saturating_add(auxiliary_code);
+                return true;
             }
         }
         if (self.len as usize) >= STAGE_TRACE_CAPACITY {

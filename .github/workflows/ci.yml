@@ -1056,7 +1056,7 @@ jobs:
 
   fmt:
     # runtime is normally 15 seconds
-    timeout-minutes: 2
+    timeout-minutes: 10
 
     name: Format & Typos
     runs-on: ubuntu-latest

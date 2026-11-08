@@ -33,7 +33,7 @@ futures-channel = { version = "0.3", optional = true }
 memmap2 = { version = "0.9", optional = true }
 rayon = { version = "1.10", optional = true }
 serde = { version = "1", features = ["derive"] }
-half = { version = "2", optional = true }
+half = { workspace = true, optional = true }
 bytemuck = { workspace = true, optional = true }
 log = { workspace = true, optional = true }
 

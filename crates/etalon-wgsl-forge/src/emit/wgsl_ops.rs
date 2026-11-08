@@ -138,7 +138,7 @@ struct FftParams {{
         .map_err(|error| ForgeError::Emission(error.to_string()))?;
     }
 
-    writeln!(source, "").map_err(|error| ForgeError::Emission(error.to_string()))?;
+    writeln!(source).map_err(|error| ForgeError::Emission(error.to_string()))?;
     for shared in &kernel.shared_memory {
         writeln!(
             source,

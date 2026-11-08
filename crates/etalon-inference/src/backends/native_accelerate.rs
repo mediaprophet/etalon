@@ -62,10 +62,10 @@ pub fn dequantize_q4_k_tensor(q4k_bytes: &[u8], num_elements: usize) -> Vec<f32>
 // a dedicated fixed-function matrix-multiply unit that is faster than Metal
 // compute shaders for transformer-sized (4096×4096) GEMM at Q4_K bit-width.
 
-/// cblas_sgemm from Accelerate.framework.
-///
-/// Order constants (row-major / no-transpose) are passed inline; the header
-/// is not needed because the function is stable ABI across all macOS versions.
+// cblas_sgemm from Accelerate.framework.
+//
+// Order constants (row-major / no-transpose) are passed inline; the header
+// is not needed because the function is stable ABI across all macOS versions.
 #[link(name = "Accelerate", kind = "framework")]
 extern "C" {
     fn cblas_sgemm(
