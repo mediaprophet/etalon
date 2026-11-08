@@ -176,52 +176,56 @@ impl VramAndComputeGovernor {
 
         // 1. Base GPU Ring Budget based on hardware memory tier
         let base_ring_bytes: u64 = match mem_class {
-            HardwareMemoryClass::IntegratedEntry => 64 * 1024 * 1024,      // 64 MiB
-            HardwareMemoryClass::MainstreamDesktop => 256 * 1024 * 1024,   // 256 MiB
+            HardwareMemoryClass::IntegratedEntry => 64 * 1024 * 1024, // 64 MiB
+            HardwareMemoryClass::MainstreamDesktop => 256 * 1024 * 1024, // 256 MiB
             HardwareMemoryClass::EnthusiastWorkstation => 1024 * 1024 * 1024, // 1024 MiB
-            HardwareMemoryClass::EnterpriseMultiGpu => 8192 * 1024 * 1024,  // 8192 MiB
+            HardwareMemoryClass::EnterpriseMultiGpu => 8192 * 1024 * 1024, // 8192 MiB
         };
 
         // 2. Modulate based on LLM Phase and VRAM Pressure
-        let (gpu_ring_budget_bytes, max_raymarching_steps, compute_time_budget_ms, svo_voxel_radius_m) =
-            match telemetry.llm_phase {
-                LlmWorkloadPhase::ActiveDecode => {
-                    let ring = (base_ring_bytes / 2).max(64 * 1024 * 1024);
-                    let steps = match mem_class {
-                        HardwareMemoryClass::IntegratedEntry => 32,
-                        HardwareMemoryClass::MainstreamDesktop => 64,
-                        HardwareMemoryClass::EnthusiastWorkstation => 96,
-                        HardwareMemoryClass::EnterpriseMultiGpu => 128,
-                    };
-                    let compute_ms = 2.5f32;
-                    let svo_radius = 8.0f32;
-                    (ring, steps, compute_ms, svo_radius)
-                }
-                LlmWorkloadPhase::PromptProcessing => {
-                    let ring = (base_ring_bytes / 2).max(64 * 1024 * 1024);
-                    let steps = 48;
-                    let compute_ms = 1.0f32;
-                    let svo_radius = 4.0f32;
-                    (ring, steps, compute_ms, svo_radius)
-                }
-                LlmWorkloadPhase::Idle => {
-                    let ring = base_ring_bytes;
-                    let steps = match mem_class {
-                        HardwareMemoryClass::IntegratedEntry => 48,
-                        HardwareMemoryClass::MainstreamDesktop => 96,
-                        HardwareMemoryClass::EnthusiastWorkstation => 160,
-                        HardwareMemoryClass::EnterpriseMultiGpu => 256,
-                    };
-                    let compute_ms = 12.0f32;
-                    let svo_radius = match mem_class {
-                        HardwareMemoryClass::IntegratedEntry => 0.0,
-                        HardwareMemoryClass::MainstreamDesktop => 12.0,
-                        HardwareMemoryClass::EnthusiastWorkstation => 24.0,
-                        HardwareMemoryClass::EnterpriseMultiGpu => 48.0,
-                    };
-                    (ring, steps, compute_ms, svo_radius)
-                }
-            };
+        let (
+            gpu_ring_budget_bytes,
+            max_raymarching_steps,
+            compute_time_budget_ms,
+            svo_voxel_radius_m,
+        ) = match telemetry.llm_phase {
+            LlmWorkloadPhase::ActiveDecode => {
+                let ring = (base_ring_bytes / 2).max(64 * 1024 * 1024);
+                let steps = match mem_class {
+                    HardwareMemoryClass::IntegratedEntry => 32,
+                    HardwareMemoryClass::MainstreamDesktop => 64,
+                    HardwareMemoryClass::EnthusiastWorkstation => 96,
+                    HardwareMemoryClass::EnterpriseMultiGpu => 128,
+                };
+                let compute_ms = 2.5f32;
+                let svo_radius = 8.0f32;
+                (ring, steps, compute_ms, svo_radius)
+            }
+            LlmWorkloadPhase::PromptProcessing => {
+                let ring = (base_ring_bytes / 2).max(64 * 1024 * 1024);
+                let steps = 48;
+                let compute_ms = 1.0f32;
+                let svo_radius = 4.0f32;
+                (ring, steps, compute_ms, svo_radius)
+            }
+            LlmWorkloadPhase::Idle => {
+                let ring = base_ring_bytes;
+                let steps = match mem_class {
+                    HardwareMemoryClass::IntegratedEntry => 48,
+                    HardwareMemoryClass::MainstreamDesktop => 96,
+                    HardwareMemoryClass::EnthusiastWorkstation => 160,
+                    HardwareMemoryClass::EnterpriseMultiGpu => 256,
+                };
+                let compute_ms = 12.0f32;
+                let svo_radius = match mem_class {
+                    HardwareMemoryClass::IntegratedEntry => 0.0,
+                    HardwareMemoryClass::MainstreamDesktop => 12.0,
+                    HardwareMemoryClass::EnthusiastWorkstation => 24.0,
+                    HardwareMemoryClass::EnterpriseMultiGpu => 48.0,
+                };
+                (ring, steps, compute_ms, svo_radius)
+            }
+        };
 
         // 3. Frame-pacing feedback
         let target_frame_ms = 1000.0 / self.config.target_fps;

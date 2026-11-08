@@ -1,5 +1,5 @@
-use super::*;
 use super::super::quality_profiles::QualityTier;
+use super::*;
 
 #[test]
 fn frame_graph_empty_compiles_cleanly() {

@@ -1,3 +1,5 @@
+#![cfg(feature = "inference-model")]
+
 use etalon_model::inference::{ftw_config::FtwConfig, ARCH_QWEN2, ARCH_QWEN35_MOE};
 
 const HYBRID: &str = r#"{"model_type":"qwen3_5_moe","text_config":{

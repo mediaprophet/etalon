@@ -171,7 +171,7 @@ impl FloraBiomechanicsEvaluator {
     /// $E_{\text{eff}} = \lambda \cdot E_{\text{wood}} + (1 - \lambda) \cdot (E_{\text{tissue}} + k_{\text{hydro}} P_t)$
     pub fn effective_elastic_modulus_mpa(&self) -> f32 {
         let e_wood = 900.0; // 900 MPa wood
-        let e_tissue = 8.0;  // 8 MPa flaccid parenchyma
+        let e_tissue = 8.0; // 8 MPa flaccid parenchyma
         let k_hydro = 80.0; // 80 MPa per MPa turgor
 
         let e_hydrostat = e_tissue + k_hydro * self.turgor_pressure_mpa.max(0.0);
@@ -212,9 +212,9 @@ impl FloraBiomechanicsEvaluator {
             self.crown_height_m = match self.config.life_form {
                 RaunkiaerLifeForm::Phanerophyte => full_height_m * 0.9, // Trunk and main boughs survive
                 RaunkiaerLifeForm::Chamaephyte => 0.20,                 // Stems pruned down to 20cm
-                RaunkiaerLifeForm::Hemicryptophyte => 0.02,             // Die back to soil collar (2cm)
-                RaunkiaerLifeForm::Cryptophyte => 0.0,                  // Above-ground parts vanish completely
-                RaunkiaerLifeForm::Therophyte => 0.0,                   // Parent plant dead, only seeds persist
+                RaunkiaerLifeForm::Hemicryptophyte => 0.02, // Die back to soil collar (2cm)
+                RaunkiaerLifeForm::Cryptophyte => 0.0,      // Above-ground parts vanish completely
+                RaunkiaerLifeForm::Therophyte => 0.0,       // Parent plant dead, only seeds persist
             };
         } else if self.is_dieback_active && temp_c > 10.0 && soil_moisture > 0.4 {
             // Warm spring recovery: regrow toward full height
@@ -239,8 +239,14 @@ mod tests {
         herb.turgor_pressure_mpa = 0.05;
         tree.turgor_pressure_mpa = 0.05;
 
-        assert!(herb.is_stem_buckled(), "Herb must buckle without turgor pressure");
-        assert!(!tree.is_stem_buckled(), "Tree wood must not buckle from turgor loss");
+        assert!(
+            herb.is_stem_buckled(),
+            "Herb must buckle without turgor pressure"
+        );
+        assert!(
+            !tree.is_stem_buckled(),
+            "Tree wood must not buckle from turgor loss"
+        );
     }
 
     #[test]

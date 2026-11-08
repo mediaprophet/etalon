@@ -105,4 +105,3 @@ impl<P: AttentionProvider> AttentionEngine<'_, P> {
             .dispatch_ffn_block_pre_norm(index, hidden, emb_dim, &tensors, scratch_a, scratch_b)
     }
 }
-

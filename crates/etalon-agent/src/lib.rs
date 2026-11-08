@@ -27,11 +27,11 @@ pub use etalon_sense as sensing;
 
 pub use capability::{AgentError, CapabilityState, SiliconCapability};
 pub use compute_lane::{ComputeLane, PerQueueCompletionToken, QueueId, SubmissionToken};
-pub use device_queue::{DeviceQueueError, SharedDeviceQueue};
 #[cfg(not(target_family = "wasm"))]
 pub use cuda_lane::{
     CudaComputeLane, CudaDriverApi, CudaPreparedPlan, CudaSubmission, PinBackend, PinnedRegion,
 };
+pub use device_queue::{DeviceQueueError, SharedDeviceQueue};
 pub use hal_lane::{HalComputeLane, HalOracleError, HalPreparedPlan, HalSubmission};
 pub use lease::{AccessRights, AllocationId, BufferRegion, SubmissionLease};
 pub use slab::{BindingUsage, BufferView, MemoryTopology, QualiaSlabAllocator};

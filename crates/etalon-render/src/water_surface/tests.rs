@@ -68,7 +68,8 @@ fn shoreline_kernel_has_no_heap_allocations() {
     let mut distance = [0.0; 3];
     let mut scale = [0.0; 3];
     let mut edges = [0; 6];
-    let receipt = shore_distance_into(&p, &[0, 1, 2], &mut distance, &mut scale, &mut edges).unwrap();
+    let receipt =
+        shore_distance_into(&p, &[0, 1, 2], &mut distance, &mut scale, &mut edges).unwrap();
     assert_eq!(receipt.boundary_edges, 3);
     assert_eq!(distance, [0.0, 0.0, 0.0]);
 }

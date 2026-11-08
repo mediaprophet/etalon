@@ -450,7 +450,8 @@ mod tests {
         // Eye is at [0.0, 0.0, 2_500.0], looking at target [0.0, 0.0, 0.0] (along -Z).
         // Target is 2,500.0 m ahead. A point 1,200.0 m in front of the camera is at Z = 2500 - 1200 = 1300.
         let near = 0.25;
-        let vp = orbit_view_projection_with_near(0.0, 0.0, 2_500.0, [0.0, 0.0, 0.0], 16.0 / 9.0, near);
+        let vp =
+            orbit_view_projection_with_near(0.0, 0.0, 2_500.0, [0.0, 0.0, 0.0], 16.0 / 9.0, near);
         let point_world = [0.0_f32, 0.0, 1_300.0, 1.0];
 
         // Column-major multiplication: clip[r] = sum_c (vp[c][r] * point_world[c])

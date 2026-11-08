@@ -25,55 +25,56 @@ pub struct BindGroupManager {
 impl BindGroupManager {
     /// Create a new bind group manager
     pub fn new(device: &etalon::Device) -> Self {
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("webizen-render-bind-group-layout"),
-            entries: &[
-                // Binding 0: View/Projection matrix (4x4 = 16 floats = 64 bytes)
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::VERTEX,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("webizen-render-bind-group-layout"),
+                entries: &[
+                    // Binding 0: View/Projection matrix (4x4 = 16 floats = 64 bytes)
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                // Binding 1: Motor buffer (storage array of Motors)
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::VERTEX,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    // Binding 1: Motor buffer (storage array of Motors)
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                // Binding 2: Motor index uniform
-                etalon::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: etalon::ShaderStages::VERTEX,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    // Binding 2: Motor index uniform
+                    etalon::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: etalon::ShaderStages::VERTEX,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                // Binding 3: Epistemic parameters
-                etalon::BindGroupLayoutEntry {
-                    binding: 3,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    // Binding 3: Epistemic parameters
+                    etalon::BindGroupLayoutEntry {
+                        binding: 3,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                ],
+            });
 
         // View/Projection matrix buffer (4x4 = 16 floats = 64 bytes)
         let view_projection_buffer = device.create_buffer(&etalon::BufferDescriptor {
@@ -141,7 +142,11 @@ impl BindGroupManager {
     }
 
     /// Create a bind group for rendering
-    pub fn create_bind_group(&self, device: &etalon::Device, motor_index: u32) -> etalon::BindGroup {
+    pub fn create_bind_group(
+        &self,
+        device: &etalon::Device,
+        motor_index: u32,
+    ) -> etalon::BindGroup {
         // Motor index uniform buffer
         let motor_index_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
             label: Some("webizen-motor-index-buffer"),

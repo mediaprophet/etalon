@@ -18,11 +18,11 @@ pub use moe_operator::{
 #[cfg(test)]
 mod tests {
     use super::*;
-    use etalon_model::operator_package::{
-        FidelityContract, OperatorPackage, OperatorRecord, PackageBuilder, SegmentKind,
-    };
     use etalon_inference_kernel::operators::{
         AccumKind, OperatorDescriptor, OperatorKind, ScaleLayout,
+    };
+    use etalon_model::operator_package::{
+        FidelityContract, OperatorPackage, OperatorRecord, PackageBuilder, SegmentKind,
     };
 
     fn make_dense_package() -> OperatorPackage {

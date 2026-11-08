@@ -357,7 +357,9 @@ mod tests {
         let wilted = LeafVascularSkeleton::new(profile, 0.0);
 
         // Effective modulus should drop dramatically without turgor
-        assert!(turgid.effective_elastic_modulus_mpa() > wilted.effective_elastic_modulus_mpa() * 10.0);
+        assert!(
+            turgid.effective_elastic_modulus_mpa() > wilted.effective_elastic_modulus_mpa() * 10.0
+        );
 
         // Wilted leaf droop angle must be significantly higher
         let droop_turgid = turgid.evaluate_droop_angle(1.0);

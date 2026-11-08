@@ -1,4 +1,3 @@
-
 /// A low-rank residual factor delta: delta_W * x = A * (B * x).
 #[derive(Debug, Clone)]
 pub struct LowRankDelta {
@@ -80,4 +79,3 @@ pub struct ClusteredMoeScratch<'a> {
     pub ws_gate_up: &'a mut [f32],
     pub ws_down: &'a mut [f32],
 }
-

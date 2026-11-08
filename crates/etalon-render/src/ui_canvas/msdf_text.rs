@@ -195,7 +195,10 @@ pub fn shape_text_zero_heap(
         }
 
         // If at the start of a word and wrapping is enabled, measure word width ahead
-        if wrap_enabled && ch != ' ' && (prev_char.is_none() || prev_char == Some(' ')) && pen_x > 0.0
+        if wrap_enabled
+            && ch != ' '
+            && (prev_char.is_none() || prev_char == Some(' '))
+            && pen_x > 0.0
         {
             let mut word_w = 0.0_f32;
             let mut prev_w_ch = prev_char;

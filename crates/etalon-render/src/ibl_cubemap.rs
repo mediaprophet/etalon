@@ -213,7 +213,10 @@ pub fn cubemap_face_uv_to_direction(face: u32, uv: [f32; 2]) -> [f32; 3] {
 /// Evaluates the procedural Rayleigh + Henyey-Greenstein Mie sky radiance in direction `dir`
 /// on the CPU with zero heap allocations (`HotZeroHeap`).
 #[inline]
-pub fn eval_procedural_sky_radiance_zero_heap(dir: [f32; 3], params: &IblCubemapParams) -> [f32; 3] {
+pub fn eval_procedural_sky_radiance_zero_heap(
+    dir: [f32; 3],
+    params: &IblCubemapParams,
+) -> [f32; 3] {
     let s = params.sun_dir_and_turbidity;
     let s_len = (s[0] * s[0] + s[1] * s[1] + s[2] * s[2]).sqrt().max(1e-8);
     let sun_dir = [s[0] / s_len, s[1] / s_len, s[2] / s_len];
@@ -239,13 +242,12 @@ pub fn eval_procedural_sky_radiance_zero_heap(dir: [f32; 3], params: &IblCubemap
 
     let pi = std::f32::consts::PI;
     let zenith_deg = cos_theta.acos() * 180.0 / pi;
-    let optical_mass = (1.0 / (cos_theta + 0.15 * (93.885 - zenith_deg).max(1.0).powf(-1.253)))
-        .min(16.0);
+    let optical_mass =
+        (1.0 / (cos_theta + 0.15 * (93.885 - zenith_deg).max(1.0).powf(-1.253))).min(16.0);
     let rayleigh_phase = 0.75 * (1.0 + cos_gamma * cos_gamma);
     let g = params.zenith_and_mie_g[3].clamp(0.0, 0.96);
     let g2 = g * g;
-    let mie_phase = (1.0 - g2)
-        / (4.0 * pi * (1.0 + g2 - 2.0 * g * cos_gamma).max(1e-4).powf(1.5));
+    let mie_phase = (1.0 - g2) / (4.0 * pi * (1.0 + g2 - 2.0 * g * cos_gamma).max(1e-4).powf(1.5));
 
     let beta_r = [5.8e-3f32, 13.5e-3, 33.1e-3];
     let beta_m = 4.0e-3 * turbidity;
@@ -363,31 +365,32 @@ impl IblCubemapGenerator {
             source: etalon::ShaderSource::Wgsl(IBL_CUBEMAP_CONVOLVE_WGSL.into()),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("qualia_ibl_cubemap_bgl"),
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("qualia_ibl_cubemap_bgl"),
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::StorageTexture {
-                        access: etalon::StorageTextureAccess::WriteOnly,
-                        format: etalon::TextureFormat::Rgba16Float,
-                        view_dimension: etalon::TextureViewDimension::D2Array,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::StorageTexture {
+                            access: etalon::StorageTextureAccess::WriteOnly,
+                            format: etalon::TextureFormat::Rgba16Float,
+                            view_dimension: etalon::TextureViewDimension::D2Array,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                ],
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia_ibl_cubemap_pl"),

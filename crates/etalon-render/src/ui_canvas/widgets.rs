@@ -33,7 +33,12 @@ pub struct Rect2D {
 
 impl Rect2D {
     pub const fn new(x: f32, y: f32, width: f32, height: f32) -> Self {
-        Self { x, y, width, height }
+        Self {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 
     /// Tests if a point (px, py) lies within this rectangle.
@@ -62,20 +67,11 @@ pub enum WidgetKind {
         border_width: f32,
     },
     /// Clickable push button.
-    Button {
-        is_hovered: bool,
-        is_pressed: bool,
-    },
+    Button { is_hovered: bool, is_pressed: bool },
     /// Continuous or stepped value slider.
-    Slider {
-        value: f32,
-        min: f32,
-        max: f32,
-    },
+    Slider { value: f32, min: f32, max: f32 },
     /// On/Off toggle switch.
-    Toggle {
-        checked: bool,
-    },
+    Toggle { checked: bool },
     /// Circular telemetry dial or knob.
     Dial {
         value: f32,
@@ -83,10 +79,7 @@ pub enum WidgetKind {
         max_angle_rad: f32,
     },
     /// Node graph connection pin (input or output).
-    GraphPin {
-        node_id: u16,
-        is_output: bool,
-    },
+    GraphPin { node_id: u16, is_output: bool },
 }
 
 /// A single UI widget element.
@@ -220,7 +213,8 @@ impl ZeroHeapUiCanvas {
             return ShapedTextRunMetrics::default();
         }
         let rem = &mut self.text_quads[self.text_quad_count..];
-        let metrics = shape_text_zero_heap(text, x, y, font_size_px, 1.25, max_width_px, color, rem);
+        let metrics =
+            shape_text_zero_heap(text, x, y, font_size_px, 1.25, max_width_px, color, rem);
         self.text_quad_count += metrics.quad_count;
         metrics
     }

@@ -11,51 +11,52 @@ impl FoliageLodPipelineGpu {
             source: etalon::ShaderSource::Wgsl(include_str!("../shaders/foliage_lod.wgsl").into()),
         });
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("qualia_foliage_lod_bgl"),
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("qualia_foliage_lod_bgl"),
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Storage { read_only: true },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Storage { read_only: true },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Storage { read_only: false },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Storage { read_only: false },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 3,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Storage { read_only: false },
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+                    etalon::BindGroupLayoutEntry {
+                        binding: 3,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Storage { read_only: false },
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                ],
+            });
 
         let layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia_foliage_lod_pl"),

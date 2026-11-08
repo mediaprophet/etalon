@@ -1,6 +1,8 @@
 //! Cold Q4_K comparison against caller-selected packed tensor bytes.
+use etalon_inference_kernel::operators::{
+    q4k_lookup_workspace_floats, Q4K_SUPERBLOCK_BYTES, Q4K_SUPERBLOCK_ELEMS,
+};
 use etalon_inference_lab::operator_compare::compare_single_tensor;
-use etalon_inference_kernel::operators::{q4k_lookup_workspace_floats, Q4K_SUPERBLOCK_BYTES, Q4K_SUPERBLOCK_ELEMS};
 use std::io::Read;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,13 +16,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     if input_dim == 0 || output_dim == 0 || input_dim % block_elems != 0 {
         return Err("dimensions must be positive and IN_FEATURES divisible by 256".into());
     }
-    let expected = input_dim.checked_div(block_elems)
+    let expected = input_dim
+        .checked_div(block_elems)
         .and_then(|n| n.checked_mul(output_dim))
         .and_then(|n| n.checked_mul(Q4K_SUPERBLOCK_BYTES))
         .ok_or("tensor size overflow")?;
     let budget = 256 * 1024 * 1024;
     let ws_len = q4k_lookup_workspace_floats(input_dim).map_err(|_| "workspace size overflow")?;
-    let total_bytes = input_dim.checked_mul(2)
+    let total_bytes = input_dim
+        .checked_mul(2)
         .and_then(|n| n.checked_add(output_dim.checked_mul(2)?))
         .and_then(|n| n.checked_add(ws_len))
         .and_then(|n| n.checked_mul(std::mem::size_of::<f32>()))
@@ -40,7 +44,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("file length changed during read".into());
     }
     // Deterministic input is a comparison stimulus, not model inference output.
-    let input: Vec<f32> = (0..input_dim).map(|i| ((i % 128) as f32 * 0.02).sin()).collect();
+    let input: Vec<f32> = (0..input_dim)
+        .map(|i| ((i % 128) as f32 * 0.02).sin())
+        .collect();
     let receipt = compare_single_tensor(&weights, input_dim, output_dim, &input);
     println!("{}", serde_json::to_string_pretty(&receipt)?);
     if !receipt.fidelity_satisfied {

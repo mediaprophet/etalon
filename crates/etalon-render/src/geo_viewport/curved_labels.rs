@@ -19,8 +19,14 @@
 /// Error conditions for vector tile styling, glyph layout, and label collision.
 #[derive(Debug, Clone, PartialEq)]
 pub enum GeoLabelError {
-    ByteBudgetExceeded { requested: usize, budget: usize },
-    MaxCurvatureExceeded { turn_angle_rad: f32, max_angle_rad: f32 },
+    ByteBudgetExceeded {
+        requested: usize,
+        budget: usize,
+    },
+    MaxCurvatureExceeded {
+        turn_angle_rad: f32,
+        max_angle_rad: f32,
+    },
     PolylineTooShort,
     EmptyText,
     InvalidGlyphMetrics,
@@ -30,14 +36,22 @@ impl core::fmt::Display for GeoLabelError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             Self::ByteBudgetExceeded { requested, budget } => {
-                write!(f, "byte budget exceeded: requested {requested} B, budget {budget} B")
+                write!(
+                    f,
+                    "byte budget exceeded: requested {requested} B, budget {budget} B"
+                )
             }
-            Self::MaxCurvatureExceeded { turn_angle_rad, max_angle_rad } => {
+            Self::MaxCurvatureExceeded {
+                turn_angle_rad,
+                max_angle_rad,
+            } => {
                 write!(f, "max curvature exceeded: deflection {turn_angle_rad:.3} rad > max {max_angle_rad:.3} rad")
             }
             Self::PolylineTooShort => write!(f, "polyline too short for label placement"),
             Self::EmptyText => write!(f, "empty text cannot be placed"),
-            Self::InvalidGlyphMetrics => write!(f, "invalid glyph metrics: dimensions must be positive"),
+            Self::InvalidGlyphMetrics => {
+                write!(f, "invalid glyph metrics: dimensions must be positive")
+            }
         }
     }
 }
@@ -55,25 +69,48 @@ pub struct StyleZoomStop {
 ///
 /// Supports linear (`base_exponential == 1.0`) and exponential (`base_exponential > 1.0`)
 /// zoom curve interpolation. Tier-1 HotZeroHeap: zero heap allocations.
-pub fn evaluate_style_zoom_interpolated(stops: &[StyleZoomStop], zoom: f32, base_exponential: f32) -> f32 {
-    if stops.is_empty() { return 0.0; }
-    if stops.len() == 1 || zoom <= stops[0].zoom { return stops[0].value; }
+pub fn evaluate_style_zoom_interpolated(
+    stops: &[StyleZoomStop],
+    zoom: f32,
+    base_exponential: f32,
+) -> f32 {
+    if stops.is_empty() {
+        return 0.0;
+    }
+    if stops.len() == 1 || zoom <= stops[0].zoom {
+        return stops[0].value;
+    }
     let last_idx = stops.len() - 1;
-    if zoom >= stops[last_idx].zoom { return stops[last_idx].value; }
+    if zoom >= stops[last_idx].zoom {
+        return stops[last_idx].value;
+    }
 
     let mut idx = 0;
-    while idx < last_idx && stops[idx + 1].zoom < zoom { idx += 1; }
+    while idx < last_idx && stops[idx + 1].zoom < zoom {
+        idx += 1;
+    }
 
-    let (z0, z1, v0, v1) = (stops[idx].zoom, stops[idx + 1].zoom, stops[idx].value, stops[idx + 1].value);
+    let (z0, z1, v0, v1) = (
+        stops[idx].zoom,
+        stops[idx + 1].zoom,
+        stops[idx].value,
+        stops[idx + 1].value,
+    );
     let dz = z1 - z0;
-    if dz.abs() < 1e-6 { return v0; }
+    if dz.abs() < 1e-6 {
+        return v0;
+    }
 
     let t = if (base_exponential - 1.0).abs() < 1e-5 {
         ((zoom - z0) / dz).clamp(0.0, 1.0)
     } else if base_exponential > 0.0 {
         let num = base_exponential.powf(zoom - z0) - 1.0;
         let den = base_exponential.powf(dz) - 1.0;
-        if den.abs() < 1e-6 { 0.0 } else { (num / den).clamp(0.0, 1.0) }
+        if den.abs() < 1e-6 {
+            0.0
+        } else {
+            (num / den).clamp(0.0, 1.0)
+        }
     } else {
         ((zoom - z0) / dz).clamp(0.0, 1.0)
     };
@@ -109,7 +146,9 @@ pub struct CurvedGlyphQuad {
 #[inline]
 fn angle_deflection(a: f32, b: f32) -> f32 {
     let mut diff = (a - b).abs() % (2.0 * core::f32::consts::PI);
-    if diff > core::f32::consts::PI { diff = 2.0 * core::f32::consts::PI - diff; }
+    if diff > core::f32::consts::PI {
+        diff = 2.0 * core::f32::consts::PI - diff;
+    }
     diff
 }
 
@@ -125,14 +164,24 @@ pub fn layout_glyphs_along_centerline(
     color_rgba8: u32,
     byte_budget: usize,
 ) -> Result<Vec<CurvedGlyphQuad>, GeoLabelError> {
-    if text.is_empty() { return Err(GeoLabelError::EmptyText); }
-    if polyline_px.len() < 2 { return Err(GeoLabelError::PolylineTooShort); }
-    if glyph_advance_px <= 0.0 || glyph_height_px <= 0.0 { return Err(GeoLabelError::InvalidGlyphMetrics); }
+    if text.is_empty() {
+        return Err(GeoLabelError::EmptyText);
+    }
+    if polyline_px.len() < 2 {
+        return Err(GeoLabelError::PolylineTooShort);
+    }
+    if glyph_advance_px <= 0.0 || glyph_height_px <= 0.0 {
+        return Err(GeoLabelError::InvalidGlyphMetrics);
+    }
 
     let char_count = text.chars().count();
-    let estimated_bytes = char_count * core::mem::size_of::<CurvedGlyphQuad>() + polyline_px.len() * 16 + 128;
+    let estimated_bytes =
+        char_count * core::mem::size_of::<CurvedGlyphQuad>() + polyline_px.len() * 16 + 128;
     if estimated_bytes > byte_budget {
-        return Err(GeoLabelError::ByteBudgetExceeded { requested: estimated_bytes, budget: byte_budget });
+        return Err(GeoLabelError::ByteBudgetExceeded {
+            requested: estimated_bytes,
+            budget: byte_budget,
+        });
     }
 
     let seg_count = polyline_px.len() - 1;
@@ -141,13 +190,18 @@ pub fn layout_glyphs_along_centerline(
     let mut total_length = 0.0f32;
 
     for i in 0..seg_count {
-        let (dx, dy) = (polyline_px[i + 1][0] - polyline_px[i][0], polyline_px[i + 1][1] - polyline_px[i][1]);
+        let (dx, dy) = (
+            polyline_px[i + 1][0] - polyline_px[i][0],
+            polyline_px[i + 1][1] - polyline_px[i][1],
+        );
         total_length += (dx * dx + dy * dy).sqrt();
         cum_dist.push(total_length);
     }
 
     let text_length = (char_count as f32) * glyph_advance_px;
-    if text_length > total_length { return Err(GeoLabelError::PolylineTooShort); }
+    if text_length > total_length {
+        return Err(GeoLabelError::PolylineTooShort);
+    }
 
     let start_s = (total_length - text_length) * 0.5;
     let mut quads = Vec::with_capacity(char_count);
@@ -156,7 +210,9 @@ pub fn layout_glyphs_along_centerline(
     for (idx, ch) in text.chars().enumerate() {
         let s_clamped = (start_s + (idx as f32 + 0.5) * glyph_advance_px).clamp(0.0, total_length);
         let mut seg_idx = 0;
-        while seg_idx < seg_count - 1 && cum_dist[seg_idx + 1] < s_clamped { seg_idx += 1; }
+        while seg_idx < seg_count - 1 && cum_dist[seg_idx + 1] < s_clamped {
+            seg_idx += 1;
+        }
 
         let (p0, p1) = (polyline_px[seg_idx], polyline_px[seg_idx + 1]);
         let seg_d = cum_dist[seg_idx + 1] - cum_dist[seg_idx];
@@ -176,7 +232,10 @@ pub fn layout_glyphs_along_centerline(
         if let Some(prev) = prev_angle {
             let turn = angle_deflection(angle, prev);
             if turn > max_turn_angle_rad {
-                return Err(GeoLabelError::MaxCurvatureExceeded { turn_angle_rad: turn, max_angle_rad: max_turn_angle_rad });
+                return Err(GeoLabelError::MaxCurvatureExceeded {
+                    turn_angle_rad: turn,
+                    max_angle_rad: max_turn_angle_rad,
+                });
             }
         }
         prev_angle = Some(angle);
@@ -223,17 +282,22 @@ pub const OFFSET_T: u8 = 6;
 pub const OFFSET_B: u8 = 7;
 pub const OFFSET_CENTER: u8 = 8;
 
-fn compute_imhof_candidate_center(anchor: [f32; 2], half_size: [f32; 2], margin: f32, code: u8) -> [f32; 2] {
+fn compute_imhof_candidate_center(
+    anchor: [f32; 2],
+    half_size: [f32; 2],
+    margin: f32,
+    code: u8,
+) -> [f32; 2] {
     let (dx, dy) = (half_size[0] + margin, half_size[1] + margin);
     match code {
         OFFSET_TR => [anchor[0] + dx, anchor[1] - dy],
         OFFSET_TL => [anchor[0] - dx, anchor[1] - dy],
         OFFSET_BR => [anchor[0] + dx, anchor[1] + dy],
         OFFSET_BL => [anchor[0] - dx, anchor[1] + dy],
-        OFFSET_R  => [anchor[0] + dx, anchor[1]],
-        OFFSET_L  => [anchor[0] - dx, anchor[1]],
-        OFFSET_T  => [anchor[0], anchor[1] - dy],
-        OFFSET_B  => [anchor[0], anchor[1] + dy],
+        OFFSET_R => [anchor[0] + dx, anchor[1]],
+        OFFSET_L => [anchor[0] - dx, anchor[1]],
+        OFFSET_T => [anchor[0], anchor[1] - dy],
+        OFFSET_B => [anchor[0], anchor[1] + dy],
         _ => anchor,
     }
 }
@@ -268,11 +332,16 @@ pub struct RTreeScreenIndex {
 
 impl RTreeScreenIndex {
     pub fn new() -> Self {
-        Self { nodes: Vec::new(), root: None }
+        Self {
+            nodes: Vec::new(),
+            root: None,
+        }
     }
 
     pub fn collides(&self, bbox: &[f32; 4]) -> bool {
-        let Some(root_idx) = self.root else { return false; };
+        let Some(root_idx) = self.root else {
+            return false;
+        };
         let mut stack = [0usize; 64];
         let mut top = 1;
         stack[0] = root_idx;
@@ -280,7 +349,9 @@ impl RTreeScreenIndex {
             top -= 1;
             let node = &self.nodes[stack[top]];
             if aabb_intersects(&node.bbox, bbox) {
-                if node.label.is_some() { return true; }
+                if node.label.is_some() {
+                    return true;
+                }
                 for &child_idx in &node.children {
                     if top < stack.len() {
                         stack[top] = child_idx;
@@ -294,11 +365,19 @@ impl RTreeScreenIndex {
 
     pub fn insert(&mut self, label: PlacedLabel) {
         let leaf_idx = self.nodes.len();
-        self.nodes.push(RTreeNode { bbox: label.aabb_min_max_px, children: Vec::new(), label: Some(label) });
+        self.nodes.push(RTreeNode {
+            bbox: label.aabb_min_max_px,
+            children: Vec::new(),
+            label: Some(label),
+        });
         match self.root {
             None => {
                 let root_idx = self.nodes.len();
-                self.nodes.push(RTreeNode { bbox: label.aabb_min_max_px, children: vec![leaf_idx], label: None });
+                self.nodes.push(RTreeNode {
+                    bbox: label.aabb_min_max_px,
+                    children: vec![leaf_idx],
+                    label: None,
+                });
                 self.root = Some(root_idx);
             }
             Some(r_idx) => {
@@ -318,14 +397,20 @@ pub fn solve_screen_space_label_collisions(
     margin_px: f32,
     byte_budget: usize,
 ) -> Result<Vec<PlacedLabel>, GeoLabelError> {
-    let estimated_bytes = candidates.len() * (core::mem::size_of::<PlacedLabel>() + core::mem::size_of::<RTreeNode>() + 32) + 128;
+    let estimated_bytes = candidates.len()
+        * (core::mem::size_of::<PlacedLabel>() + core::mem::size_of::<RTreeNode>() + 32)
+        + 128;
     if estimated_bytes > byte_budget {
-        return Err(GeoLabelError::ByteBudgetExceeded { requested: estimated_bytes, budget: byte_budget });
+        return Err(GeoLabelError::ByteBudgetExceeded {
+            requested: estimated_bytes,
+            budget: byte_budget,
+        });
     }
 
     let mut sorted_indices: Vec<usize> = (0..candidates.len()).collect();
     sorted_indices.sort_by(|&a, &b| {
-        candidates[b].priority
+        candidates[b]
+            .priority
             .partial_cmp(&candidates[a].priority)
             .unwrap_or(core::cmp::Ordering::Equal)
             .then_with(|| candidates[a].id.cmp(&candidates[b].id))
@@ -339,16 +424,28 @@ pub fn solve_screen_space_label_collisions(
         let (hw, hh) = (cand.bbox_half_px[0], cand.bbox_half_px[1]);
 
         let trial_codes: &[u8] = if cand.allow_8_way_offset {
-            &[OFFSET_TR, OFFSET_TL, OFFSET_BR, OFFSET_BL, OFFSET_R, OFFSET_L, OFFSET_T, OFFSET_B]
+            &[
+                OFFSET_TR, OFFSET_TL, OFFSET_BR, OFFSET_BL, OFFSET_R, OFFSET_L, OFFSET_T, OFFSET_B,
+            ]
         } else {
             &[OFFSET_CENTER]
         };
 
         for &code in trial_codes {
-            let center = compute_imhof_candidate_center(cand.anchor_px, cand.bbox_half_px, margin_px, code);
-            let aabb = [center[0] - hw, center[1] - hh, center[0] + hw, center[1] + hh];
+            let center =
+                compute_imhof_candidate_center(cand.anchor_px, cand.bbox_half_px, margin_px, code);
+            let aabb = [
+                center[0] - hw,
+                center[1] - hh,
+                center[0] + hw,
+                center[1] + hh,
+            ];
 
-            if aabb[0] >= 0.0 && aabb[1] >= 0.0 && aabb[2] <= viewport_wh_px[0] && aabb[3] <= viewport_wh_px[1] {
+            if aabb[0] >= 0.0
+                && aabb[1] >= 0.0
+                && aabb[2] <= viewport_wh_px[0]
+                && aabb[3] <= viewport_wh_px[1]
+            {
                 if !rtree.collides(&aabb) {
                     let placed = PlacedLabel {
                         id: cand.id,
@@ -380,9 +477,18 @@ mod tests {
     #[test]
     fn test_zoom_stop_interpolation() {
         let stops = [
-            StyleZoomStop { zoom: 10.0, value: 2.0 },
-            StyleZoomStop { zoom: 12.0, value: 8.0 },
-            StyleZoomStop { zoom: 14.0, value: 20.0 },
+            StyleZoomStop {
+                zoom: 10.0,
+                value: 2.0,
+            },
+            StyleZoomStop {
+                zoom: 12.0,
+                value: 8.0,
+            },
+            StyleZoomStop {
+                zoom: 14.0,
+                value: 20.0,
+            },
         ];
         assert_eq!(evaluate_style_zoom_interpolated(&stops, 8.0, 1.0), 2.0);
         assert_eq!(evaluate_style_zoom_interpolated(&stops, 15.0, 1.0), 20.0);
@@ -396,15 +502,37 @@ mod tests {
 
     #[test]
     fn test_curve_following_glyph_placement_and_hairpin_rejection() {
-        let gentle_river = [[0.0, 0.0], [50.0, 5.0], [100.0, 15.0], [150.0, 30.0], [200.0, 50.0]];
+        let gentle_river = [
+            [0.0, 0.0],
+            [50.0, 5.0],
+            [100.0, 15.0],
+            [150.0, 30.0],
+            [200.0, 50.0],
+        ];
         let max_turn = core::f32::consts::PI / 4.0;
-        let res_gentle = layout_glyphs_along_centerline(&gentle_river, "RIVER", 16.0, 12.0, max_turn, 0xFFFFFFFF, 65536);
+        let res_gentle = layout_glyphs_along_centerline(
+            &gentle_river,
+            "RIVER",
+            16.0,
+            12.0,
+            max_turn,
+            0xFFFFFFFF,
+            65536,
+        );
         assert!(res_gentle.is_ok());
         let quads = res_gentle.unwrap();
         assert_eq!(quads.len(), 5);
 
         let hairpin_bend = [[0.0, 0.0], [100.0, 0.0], [10.0, 30.0]];
-        let res_hairpin = layout_glyphs_along_centerline(&hairpin_bend, "RIVER", 20.0, 12.0, max_turn, 0xFFFFFFFF, 65536);
+        let res_hairpin = layout_glyphs_along_centerline(
+            &hairpin_bend,
+            "RIVER",
+            20.0,
+            12.0,
+            max_turn,
+            0xFFFFFFFF,
+            65536,
+        );
         match res_hairpin {
             Err(GeoLabelError::MaxCurvatureExceeded { turn_angle_rad, .. }) => {
                 assert!(turn_angle_rad > 2.0);
@@ -434,7 +562,8 @@ mod tests {
             },
         ];
 
-        let placed = solve_screen_space_label_collisions(&candidates, [800.0, 600.0], 4.0, 65536).unwrap();
+        let placed =
+            solve_screen_space_label_collisions(&candidates, [800.0, 600.0], 4.0, 65536).unwrap();
         assert_eq!(placed.len(), 2);
         assert_eq!(placed[0].id, 1);
         assert_eq!(placed[0].offset_position_code, OFFSET_TR);

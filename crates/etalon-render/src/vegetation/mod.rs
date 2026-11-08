@@ -44,15 +44,25 @@ mod tests {
 
         assert!(tree_params.stiffness > 0.8, "Tree must be stiff");
         assert!(tree_params.recovery_rate > 8.0, "Tree must recover quickly");
-        assert!(tree_params.max_bend_angle < 0.7, "Tree must resist large deflections");
+        assert!(
+            tree_params.max_bend_angle < 0.7,
+            "Tree must resist large deflections"
+        );
 
         // Flaccid herb under drought -> low stiffness, slow recovery, high max bend
-        let mut herb_eval = FloraBiomechanicsEvaluator::new(FloraArchetypeConfig::culinary_herb(), 0.5);
+        let mut herb_eval =
+            FloraBiomechanicsEvaluator::new(FloraArchetypeConfig::culinary_herb(), 0.5);
         herb_eval.turgor_pressure_mpa = 0.0;
         let herb_params = derive_bending_params_from_flora(&herb_eval, [0.0, 1.0], 0.2);
 
         assert!(herb_params.stiffness < 0.2, "Wilted herb must be flexible");
-        assert!(herb_params.recovery_rate < 4.0, "Wilted herb must recover slowly");
-        assert!(herb_params.max_bend_angle > 1.0, "Wilted herb must bend far under force");
+        assert!(
+            herb_params.recovery_rate < 4.0,
+            "Wilted herb must recover slowly"
+        );
+        assert!(
+            herb_params.max_bend_angle > 1.0,
+            "Wilted herb must bend far under force"
+        );
     }
 }

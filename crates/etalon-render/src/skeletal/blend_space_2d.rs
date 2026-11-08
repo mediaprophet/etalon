@@ -71,8 +71,8 @@ fn point_in_circumcircle(a: [f32; 2], b: [f32; 2], c: [f32; 2], p: [f32; 2]) -> 
     let ef = cx * cx + cy * cy;
 
     let det = ax * (by * ef - cy * cd) - ay * (bx * ef - cx * cd) + ab * (bx * cy - cx * by);
-    let orient = (b[0] - a[0]) as f64 * (c[1] - a[1]) as f64
-        - (b[1] - a[1]) as f64 * (c[0] - a[0]) as f64;
+    let orient =
+        (b[0] - a[0]) as f64 * (c[1] - a[1]) as f64 - (b[1] - a[1]) as f64 * (c[0] - a[0]) as f64;
     if orient > 0.0 {
         det > 1e-7
     } else {

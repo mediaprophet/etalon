@@ -244,9 +244,7 @@ impl SystemTelemetry {
     /// derived view for optional effects and does not change the GPU contract.
     #[inline]
     pub fn ambient_wind_strength(&self) -> f32 {
-        (self.network_ripple * 0.7
-            + self.temporal_pulse * 0.2
-            + self.manifold_pressure * 0.1)
+        (self.network_ripple * 0.7 + self.temporal_pulse * 0.2 + self.manifold_pressure * 0.1)
             .clamp(0.0, 1.0)
     }
 

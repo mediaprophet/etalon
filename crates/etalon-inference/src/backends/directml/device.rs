@@ -86,7 +86,8 @@ impl DmlDevice {
 
             Ok(Self {
                 provider_generation: {
-                    static NEXT_PROVIDER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+                    static NEXT_PROVIDER: std::sync::atomic::AtomicU64 =
+                        std::sync::atomic::AtomicU64::new(1);
                     NEXT_PROVIDER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
                 },
                 d3d12,

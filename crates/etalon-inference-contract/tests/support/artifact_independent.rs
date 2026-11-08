@@ -260,8 +260,8 @@ fn independent_deny_steer_and_occupied_record_cannot_publish() {
     ] {
         let mut s = session(&f);
         let key = s.propose(output(), 2).unwrap();
-        assert!(
-            s.decide(
+        assert!(s
+            .decide(
                 ArtifactDecision {
                     candidate: key,
                     decision,
@@ -270,8 +270,7 @@ fn independent_deny_steer_and_occupied_record_cannot_publish() {
                 b"decision",
                 2
             )
-            .is_err()
-        );
+            .is_err());
         let mut out = None;
         assert!(s.accept_into(key, 2, &mut out).is_err());
         assert!(out.is_none());

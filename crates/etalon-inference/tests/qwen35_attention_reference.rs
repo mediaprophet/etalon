@@ -126,8 +126,14 @@ fn three_token_gqa_partial_rope_and_raw_folded_norm_match_pinned_oracle() {
                 raw_results[position] = hidden;
             }
         }
-        assert!(KEY_1.iter().zip(WRONG_ADJACENT_KEY_1).any(|(a,b)| (a-b).abs()>0.1));
-        assert!(keys[6..12].iter().zip(WRONG_ADJACENT_KEY_1).any(|(a,b)| (a-b).abs()>0.1));
+        assert!(KEY_1
+            .iter()
+            .zip(WRONG_ADJACENT_KEY_1)
+            .any(|(a, b)| (a - b).abs() > 0.1));
+        assert!(keys[6..12]
+            .iter()
+            .zip(WRONG_ADJACENT_KEY_1)
+            .any(|(a, b)| (a - b).abs() > 0.1));
         keys.fill(0.0);
         values.fill(0.0);
         cursor = 0;
@@ -188,7 +194,13 @@ impl Host for Failing<'_> {
 fn malformed_position_provider_partial_and_nonfinite_failures_preserve_live_state() {
     let (data, roles) = setup(false);
     let layout = WorkspaceLayout::checked(roles.geometry, 3).unwrap();
-    for (fail, nan, position) in [(0, false, 1), (1, false, 1), (4, false, 1), (4, true, 1), (99, false, 0)] {
+    for (fail, nan, position) in [
+        (0, false, 1),
+        (1, false, 1),
+        (4, false, 1),
+        (4, true, 1),
+        (99, false, 0),
+    ] {
         let host = Failing {
             inner: F32FixtureHost { values: &data },
             calls: Cell::new(0),
@@ -250,8 +262,12 @@ fn malformed_buffers_and_nonfinite_inputs_preserve_live_state() {
     for case in 0..7 {
         let mut scratch = vec![0.0; layout.floats];
         let (mut keys, mut values, mut cursor) = ([0.25; 18], [-0.5; 18], 1);
-        if case == 5 { cursor = 3; }
-        if case == 6 { cursor = usize::MAX; }
+        if case == 5 {
+            cursor = 3;
+        }
+        if case == 6 {
+            cursor = usize::MAX;
+        }
         let original_cursor = cursor;
         let mut hidden = HIDDEN_1;
         let mut normalized = NORMALIZED_1;

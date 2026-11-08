@@ -1,5 +1,8 @@
 use super::types::*;
-use etalon_inference_kernel::operators::{apply_q4k_lookup, validate_operator, AccumKind, MatrixView, MatrixViewMut, OperatorDescriptor, OperatorError, OperatorKind, OperatorWorkspace, PayloadView, ScaleLayout, Q4K_SUPERBLOCK_ELEMS};
+use etalon_inference_kernel::operators::{
+    apply_q4k_lookup, validate_operator, AccumKind, MatrixView, MatrixViewMut, OperatorDescriptor,
+    OperatorError, OperatorKind, OperatorWorkspace, PayloadView, ScaleLayout, Q4K_SUPERBLOCK_ELEMS,
+};
 
 /// SiLU (Swish) activation function: x * sigmoid(x).
 #[inline(always)]
@@ -261,4 +264,3 @@ pub fn dispatch_clustered_moe_step(
 
     Ok(())
 }
-

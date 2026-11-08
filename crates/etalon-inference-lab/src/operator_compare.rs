@@ -7,12 +7,12 @@
 //! - Strict compliance: Missing checkpoints are explicitly recorded as `not measured`, never as pass.
 
 use super::operator_metrics::{OperatorExperimentReceipt, OperatorMemoryBreakdown};
-use etalon_model::operator_package::FidelityContract;
 use etalon_inference_kernel::operators::{
     apply_q4k_lookup, q4k_lookup_workspace_floats, reconstruct_q4k_into, validate_operator,
     AccumKind, MatrixView, MatrixViewMut, OperatorDescriptor, OperatorKind, OperatorWorkspace,
     PayloadView, ScaleLayout, Q4K_SUPERBLOCK_BYTES, Q4K_SUPERBLOCK_ELEMS,
 };
+use etalon_model::operator_package::FidelityContract;
 use serde::{Deserialize, Serialize};
 use std::time::Instant;
 

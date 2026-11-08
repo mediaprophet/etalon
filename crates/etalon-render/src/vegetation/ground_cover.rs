@@ -110,16 +110,19 @@ impl ToroidalGroundCoverClipmap {
     }
 
     /// Injects a vehicle wheel or character boot trample deformation into the nearest cell.
-    pub fn inject_trample(&mut self, world_x: f32, world_z: f32, dir_x: f32, dir_z: f32, matted_ratio: f32) {
+    pub fn inject_trample(
+        &mut self,
+        world_x: f32,
+        world_z: f32,
+        dir_x: f32,
+        dir_z: f32,
+        matted_ratio: f32,
+    ) {
         let gx = (world_x / self.cell_size_m).floor() as i32;
         let gz = (world_z / self.cell_size_m).floor() as i32;
         let idx = self.cell_index_at(gx, gz);
 
-        self.cells[idx].trample_deformation = [
-            dir_x,
-            dir_z,
-            matted_ratio.clamp(0.0, 1.0),
-        ];
+        self.cells[idx].trample_deformation = [dir_x, dir_z, matted_ratio.clamp(0.0, 1.0)];
     }
 
     /// Maps distance from camera in meters to the optimal continuous LOD level.
@@ -214,9 +217,18 @@ mod tests {
         let fiber_erect = clipmap.evaluate_sggx_fiber_direction(&erect);
         let fiber_trampled = clipmap.evaluate_sggx_fiber_direction(&trampled);
 
-        assert!(fiber_erect[1] > 0.9, "Erect grass fiber must point along +Y");
-        assert!(fiber_trampled[1] < 0.1, "Trampled grass fiber must collapse horizontally");
-        assert!(fiber_trampled[0] > 0.8, "Trampled fiber must align with trample vector +X");
+        assert!(
+            fiber_erect[1] > 0.9,
+            "Erect grass fiber must point along +Y"
+        );
+        assert!(
+            fiber_trampled[1] < 0.1,
+            "Trampled grass fiber must collapse horizontally"
+        );
+        assert!(
+            fiber_trampled[0] > 0.8,
+            "Trampled fiber must align with trample vector +X"
+        );
     }
 
     #[test]
@@ -224,7 +236,13 @@ mod tests {
         let clipmap = ToroidalGroundCoverClipmap::default();
         assert_eq!(clipmap.evaluate_lod(4.0), GroundCoverLod::Lod0BezierBlades);
         assert_eq!(clipmap.evaluate_lod(15.0), GroundCoverLod::Lod1ClumpRibbons);
-        assert_eq!(clipmap.evaluate_lod(45.0), GroundCoverLod::Lod2VolumetricShells);
-        assert_eq!(clipmap.evaluate_lod(120.0), GroundCoverLod::Lod3SggxMicroflakes);
+        assert_eq!(
+            clipmap.evaluate_lod(45.0),
+            GroundCoverLod::Lod2VolumetricShells
+        );
+        assert_eq!(
+            clipmap.evaluate_lod(120.0),
+            GroundCoverLod::Lod3SggxMicroflakes
+        );
     }
 }

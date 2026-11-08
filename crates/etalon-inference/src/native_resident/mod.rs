@@ -3,8 +3,8 @@ use std::sync::{
     atomic::{AtomicU64, Ordering},
     Arc,
 };
-mod resources;
 pub mod planning;
+mod resources;
 pub use resources::ResidentResources;
 mod prefill_arena;
 pub mod prefill_arena_plan;

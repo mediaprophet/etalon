@@ -525,7 +525,9 @@ mod tests {
     #[test]
     fn emf_field_cell_v2_layout_and_v1_migration() {
         assert_eq!(core::mem::size_of::<EmfFieldCell>(), 64);
-        let v1 = [1.0, 0.5, 2.4e9, 0.8, 0.3, 0.9, 0.1, 0.05, 0.2, 0.4, 0.6, 0.7, 0.15];
+        let v1 = [
+            1.0, 0.5, 2.4e9, 0.8, 0.3, 0.9, 0.1, 0.05, 0.2, 0.4, 0.6, 0.7, 0.15,
+        ];
         let cell = EmfFieldCell::from_v1_13f32(v1);
         assert_eq!(cell.amplitude, 1.0);
         assert_eq!(cell.manifold_curvature, 0.15);

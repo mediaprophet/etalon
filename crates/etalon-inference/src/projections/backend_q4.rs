@@ -1,7 +1,21 @@
 //! Cold legacy native Q4 projection adapters. Explicit payload admission precedes densification.
 //! Driver/compiler metadata remains owned by the selected native backend, not the Sentinel arena.
+#[cfg(any(
+    all(target_os = "windows", feature = "native-directml"),
+    all(
+        any(target_os = "macos", target_os = "ios"),
+        feature = "native-accelerate"
+    )
+))]
 use super::ProjectionTensor;
 
+#[cfg(any(
+    all(target_os = "windows", feature = "native-directml"),
+    all(
+        any(target_os = "macos", target_os = "ios"),
+        feature = "native-accelerate"
+    )
+))]
 struct Geometry<'a> {
     raw: &'a [u8],
     rows: usize,
@@ -9,6 +23,13 @@ struct Geometry<'a> {
     batches: usize,
     elements: usize,
 }
+#[cfg(any(
+    all(target_os = "windows", feature = "native-directml"),
+    all(
+        any(target_os = "macos", target_os = "ios"),
+        feature = "native-accelerate"
+    )
+))]
 fn geometry<'a>(
     model: &'a [u8],
     data_offset: u64,

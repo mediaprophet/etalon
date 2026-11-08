@@ -543,8 +543,16 @@ impl ZeroHeapUiLayoutTree {
         for (k, &c_u16) in children[..child_count].iter().enumerate() {
             let c = &self.nodes[c_u16 as usize];
             let m = c.style.margin;
-            let main_rule = if is_row { c.style.width } else { c.style.height };
-            let cross_rule = if is_row { c.style.height } else { c.style.width };
+            let main_rule = if is_row {
+                c.style.width
+            } else {
+                c.style.height
+            };
+            let cross_rule = if is_row {
+                c.style.height
+            } else {
+                c.style.width
+            };
             let min_main = if is_row {
                 c.style.min_width
             } else {
@@ -610,7 +618,11 @@ impl ZeroHeapUiLayoutTree {
         if total_flex_grow > 1e-6 {
             for (k, &c_u16) in children[..child_count].iter().enumerate() {
                 let c = &self.nodes[c_u16 as usize];
-                let main_rule = if is_row { c.style.width } else { c.style.height };
+                let main_rule = if is_row {
+                    c.style.width
+                } else {
+                    c.style.height
+                };
                 let min_main = if is_row {
                     c.style.min_width
                 } else {

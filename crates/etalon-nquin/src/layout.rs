@@ -76,10 +76,7 @@ mod tests {
     fn five_field_xor_parity_includes_metadata() {
         let q = NQuinWire::from_parts(0x11, 0x22, 0x33, 0x44, 0x5500_0000_0001);
         assert!(q.is_parity_valid());
-        assert_eq!(
-            q.parity,
-            0x11 ^ 0x22 ^ 0x33 ^ 0x44 ^ 0x5500_0000_0001
-        );
+        assert_eq!(q.parity, 0x11 ^ 0x22 ^ 0x33 ^ 0x44 ^ 0x5500_0000_0001);
         // 4-field parity omitting non-zero metadata must fail verification
         let q_bad = NQuinWire::new(
             0x11,

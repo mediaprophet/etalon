@@ -12,6 +12,8 @@ pub fn submit_checked(
     if submission.is_none() {
         return Err(SubmissionError::Rejected);
     }
-    if submission.is_some() { crate::provider_scope::record_route(2); }
+    if submission.is_some() {
+        crate::provider_scope::record_route(2);
+    }
     Ok(submission)
 }

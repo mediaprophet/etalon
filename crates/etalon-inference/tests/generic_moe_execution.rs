@@ -1,7 +1,5 @@
 #![cfg(feature = "cpu-inference")]
-use etalon_inference::ordinary::{
-    expert_source::ExpertSource, LayerEvent, LayerProvider,
-};
+use etalon_inference::ordinary::{expert_source::ExpertSource, LayerEvent, LayerProvider};
 use etalon_model::inference::{LayerTensors, ModelHyperparams, TensorInfo};
 
 struct Host {

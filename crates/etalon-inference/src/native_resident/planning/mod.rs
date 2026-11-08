@@ -19,7 +19,6 @@ const MAX_STACK_GEMM_DIM: usize = 10240;
 const PREFILL_CHUNK_SIZE: usize = 64;
 const VOCAB_CHUNK_ROWS: usize = 10240;
 
-
 pub struct ResidentPlanner<'a, P> {
     pub host: &'a P,
 }

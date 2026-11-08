@@ -17,8 +17,17 @@ pub fn decode_tokens<H: super::super::QwenHyperparams>(
     let start = Instant::now();
     // Compatibility receipt construction is cold and deliberately allocating.
     let mut output = vec![0u32; max_tokens];
-    let count = decode_tokens_into(runtime, session, scratch, prompt, max_tokens,
-        is_stop, &mut output, trace, &mut |_, _| true)?;
+    let count = decode_tokens_into(
+        runtime,
+        session,
+        scratch,
+        prompt,
+        max_tokens,
+        is_stop,
+        &mut output,
+        trace,
+        &mut |_, _| true,
+    )?;
     receipt.prompt_tokens = prompt.len();
     receipt.generated_tokens.clear();
     receipt.generated_tokens.extend_from_slice(&output[..count]);
@@ -49,17 +58,29 @@ pub fn decode_tokens_with_sink<H: super::super::QwenHyperparams>(
     trace: &mut impl Qwen4ExpTraceSink,
     accept: &mut impl FnMut(StreamedArgmax, usize) -> bool,
 ) -> Result<usize, Qwen4ExpDecodeError> {
-    prompt.len().checked_add(max_tokens.saturating_sub(1))
+    prompt
+        .len()
+        .checked_add(max_tokens.saturating_sub(1))
         .ok_or(Qwen4ExpDecodeError::SizeOverflow)?;
-    let (&last, prefix) = prompt.split_last().ok_or(Qwen4ExpDecodeError::MissingTensor)?;
-    if max_tokens == 0 { return Ok(0); }
-    for &token in prefix { decode_step(runtime, session, scratch, token, trace, false)?; }
+    let (&last, prefix) = prompt
+        .split_last()
+        .ok_or(Qwen4ExpDecodeError::MissingTensor)?;
+    if max_tokens == 0 {
+        return Ok(0);
+    }
+    for &token in prefix {
+        decode_step(runtime, session, scratch, token, trace, false)?;
+    }
     let mut winner = decode_step(runtime, session, scratch, last, trace, false)?;
     let mut written = 0;
     while written < max_tokens {
-        if is_stop(winner.token_id) { break; }
+        if is_stop(winner.token_id) {
+            break;
+        }
         let position = prompt.len() - 1 + written;
-        if !accept(winner, position) { return Err(Qwen4ExpDecodeError::PublicationDenied); }
+        if !accept(winner, position) {
+            return Err(Qwen4ExpDecodeError::PublicationDenied);
+        }
         written += 1;
         // The final candidate need not advance any unobserved recurrent state.
         if written < max_tokens {
@@ -71,18 +92,34 @@ pub fn decode_tokens_with_sink<H: super::super::QwenHyperparams>(
 
 /// Caller-buffered adapter. The sink is responsible for custody while writing.
 pub fn decode_tokens_into<H: super::super::QwenHyperparams>(
-    runtime: &mut Qwen4ExpRuntime<'_, H>, session: &mut Qwen4ExpSession,
-    scratch: &mut Qwen4ExpDecodeScratch, prompt: &[u32], max_tokens: usize,
-    is_stop: &dyn Fn(u32) -> bool, out: &mut [u32],
+    runtime: &mut Qwen4ExpRuntime<'_, H>,
+    session: &mut Qwen4ExpSession,
+    scratch: &mut Qwen4ExpDecodeScratch,
+    prompt: &[u32],
+    max_tokens: usize,
+    is_stop: &dyn Fn(u32) -> bool,
+    out: &mut [u32],
     trace: &mut impl Qwen4ExpTraceSink,
     accept: &mut impl FnMut(StreamedArgmax, usize) -> bool,
 ) -> Result<usize, Qwen4ExpDecodeError> {
-    if out.len() < max_tokens { return Err(Qwen4ExpDecodeError::OutputTooSmall); }
+    if out.len() < max_tokens {
+        return Err(Qwen4ExpDecodeError::OutputTooSmall);
+    }
     let first = prompt.len().saturating_sub(1);
-    decode_tokens_with_sink(runtime, session, scratch, prompt, max_tokens, is_stop, trace,
+    decode_tokens_with_sink(
+        runtime,
+        session,
+        scratch,
+        prompt,
+        max_tokens,
+        is_stop,
+        trace,
         &mut |winner, position| {
-            if !accept(winner, position) { return false; }
+            if !accept(winner, position) {
+                return false;
+            }
             out[position - first] = winner.token_id;
             true
-        })
+        },
+    )
 }

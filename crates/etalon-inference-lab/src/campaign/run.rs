@@ -16,7 +16,11 @@ pub fn try_run_optimization_campaign(
     cfg: &CampaignConfig,
     runner: &mut dyn crate::runner::ExperimentExecutor,
 ) -> Result<CampaignReport, String> {
-    try_run_optimization_campaign_with_objective(cfg, runner, crate::search::SearchObjective::ThroughputTimesQuality)
+    try_run_optimization_campaign_with_objective(
+        cfg,
+        runner,
+        crate::search::SearchObjective::ThroughputTimesQuality,
+    )
 }
 
 pub fn try_run_optimization_campaign_with_objective(

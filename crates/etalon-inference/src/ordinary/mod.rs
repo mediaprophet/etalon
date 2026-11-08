@@ -40,7 +40,9 @@ pub enum LayerEvent {
 /// Providers retain their backend identity and must bound their own allocation and I/O.
 pub trait LayerProvider {
     type Index;
-    fn moe_routing(_index: &Self::Index) -> etalon_model::inference::moe_routing::MoeRoutingSettings {
+    fn moe_routing(
+        _index: &Self::Index,
+    ) -> etalon_model::inference::moe_routing::MoeRoutingSettings {
         etalon_model::inference::moe_routing::MoeRoutingSettings::default()
     }
     fn hyperparams(index: &Self::Index) -> ModelHyperparams;

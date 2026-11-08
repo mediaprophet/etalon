@@ -3,11 +3,7 @@
 //!
 //! This is a CPU reference operation, not an acceleration backend,
 //! calibrated spectrum, or a guarantee that caller-supplied coefficients are DFT twiddles.
-use crate::{
-    fft::MAX_FFT_SAMPLES,
-    filter::sin_cos_f64,
-    SignalError,
-};
+use crate::{fft::MAX_FFT_SAMPLES, filter::sin_cos_f64, SignalError};
 
 /// Upper bound on the quadratic work and coefficient matrix size.
 pub const MAX_DFT_SAMPLES: usize = 1024;

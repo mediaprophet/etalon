@@ -17,8 +17,8 @@ mod dispatch_gemm_raw_into_async;
 mod dispatch_gemm_resident_chunk_async;
 mod output;
 
-mod fused_block;
 mod batched_argmax;
+mod fused_block;
 
 mod top1;
 pub use top1::{read_browser_top1, BrowserTop1Plan, BrowserTop1Resources};

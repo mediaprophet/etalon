@@ -518,11 +518,11 @@ fn next_tier(tier: QualityTier) -> QualityTier {
 
 #[cfg(test)]
 mod tests {
+    use super::super::quality_profiles::QualityTier;
     use super::{
         QualityChangeReason, QualityRuntimeEvent, QualityRuntimePolicy, ResourcePressure,
         RuntimeQualityConfig, RuntimeQualitySample, ThermalState,
     };
-    use super::super::quality_profiles::QualityTier;
 
     fn sample(now_ms: u64, frame_time_us: u32) -> RuntimeQualitySample {
         RuntimeQualitySample {

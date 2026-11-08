@@ -97,4 +97,3 @@ pub fn elem_op_label(op: u32) -> &'static str {
         _ => "unknown",
     }
 }
-

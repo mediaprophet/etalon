@@ -139,12 +139,12 @@ pub fn evaluate_skinning_motor_palette_zero_heap(
         .min(MAX_GPU_RIG_JOINTS);
 
     for j in 0..count {
-        let current_skin = if valid_motor(&world_joint_motors[j]) && valid_motor(&bind_inv_motors[j])
-        {
-            world_joint_motors[j].mul(&bind_inv_motors[j]).normalize()
-        } else {
-            Motor::identity()
-        };
+        let current_skin =
+            if valid_motor(&world_joint_motors[j]) && valid_motor(&bind_inv_motors[j]) {
+                world_joint_motors[j].mul(&bind_inv_motors[j]).normalize()
+            } else {
+                Motor::identity()
+            };
 
         out_current_skin_motors[j] = current_skin;
 
@@ -328,7 +328,8 @@ pub fn gpu_shader_skin_vertex_reference(
     };
 
     let raw_tan = motor_rotate_vec3_f32(curr_r_norm, [tangent[0], tangent[1], tangent[2]]);
-    let t_len = (raw_tan[0] * raw_tan[0] + raw_tan[1] * raw_tan[1] + raw_tan[2] * raw_tan[2]).sqrt();
+    let t_len =
+        (raw_tan[0] * raw_tan[0] + raw_tan[1] * raw_tan[1] + raw_tan[2] * raw_tan[2]).sqrt();
     let skinned_tangent = if t_len > 1e-6 {
         [
             raw_tan[0] / t_len,

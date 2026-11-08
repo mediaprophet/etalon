@@ -154,7 +154,11 @@ impl Motor {
 
     /// Constructs a rigid motor from a translation vector and axis-angle rotation.
     #[inline]
-    pub fn from_translation_axis_angle(translation: [f32; 3], axis: [f32; 3], angle_rad: f32) -> Self {
+    pub fn from_translation_axis_angle(
+        translation: [f32; 3],
+        axis: [f32; 3],
+        angle_rad: f32,
+    ) -> Self {
         let t = motor_translate(translation);
         let r = Self::from_rotor(rotor_from_axis_angle(axis, angle_rad));
         motor_mul(t, r)

@@ -1,7 +1,7 @@
 //! Unit and qualification tests for compressed texture block decoding and KTX2 transcoding.
 
-use super::*;
 use super::super::ktx2::KTX2_IDENTIFIER;
+use super::*;
 
 #[test]
 fn test_decode_bc1_block_endpoints_and_interpolations() {

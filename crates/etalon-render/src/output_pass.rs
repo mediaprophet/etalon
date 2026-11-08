@@ -71,7 +71,8 @@ impl<R> OutputChain<R> {
             sample_count: 1,
             dimension: etalon::TextureDimension::D2,
             format: scene_format,
-            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
         let scene_view = scene_texture.create_view(&etalon::TextureViewDescriptor::default());
@@ -97,37 +98,38 @@ impl<R> OutputChain<R> {
             contents: bytemuck::bytes_of(&params),
             usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
         });
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("qualia-sdr-output-layout"),
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Texture {
-                        sample_type: etalon::TextureSampleType::Float { filterable: true },
-                        view_dimension: etalon::TextureViewDimension::D2,
-                        multisampled: false,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("qualia-sdr-output-layout"),
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Sampler(etalon::SamplerBindingType::Filtering),
+                        count: None,
                     },
-                    count: None,
-                },
-                etalon::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: etalon::ShaderStages::FRAGMENT,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: std::num::NonZeroU64::new(OUTPUT_PARAMS_BYTES),
+                    etalon::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: true },
+                            view_dimension: etalon::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                    etalon::BindGroupLayoutEntry {
+                        binding: 2,
+                        visibility: etalon::ShaderStages::FRAGMENT,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: std::num::NonZeroU64::new(OUTPUT_PARAMS_BYTES),
+                        },
+                        count: None,
+                    },
+                ],
+            });
         let bind_group = device.create_bind_group(&etalon::BindGroupDescriptor {
             label: Some("qualia-sdr-output-bind"),
             layout: &bind_group_layout,

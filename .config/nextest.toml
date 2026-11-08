@@ -59,7 +59,11 @@ threads-required = "num-test-threads"
 #
 [[profile.default.overrides]]
 priority = 1
-filter = 'test(clear_texture) | test(clear_buffer_range_respected) | test(compile_fail) | test(test_api)'
+filter = 'test(clear_texture) | test(clear_buffer_range_respected) | test(compile_fail) | test(test_api) | test(resident_weights_decode_block)'
+
+[[profile.default.overrides]]
+filter = 'test(resident_weights_decode_block)'
+slow-timeout = { period = "30s", terminate-after = 6 }
 
 [profile.wasm]
 default-filter = "test([wasm])"

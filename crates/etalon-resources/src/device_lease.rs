@@ -1,6 +1,6 @@
 use std::sync::{
-    Arc,
     atomic::{AtomicBool, AtomicU64, Ordering},
+    Arc,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use std::sync::{Mutex, OnceLock, Weak};

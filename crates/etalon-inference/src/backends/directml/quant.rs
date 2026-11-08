@@ -34,4 +34,3 @@ pub fn dequantize_q4_k_tensor(q4k_bytes: &[u8], num_elements: usize) -> Vec<f32>
     out.truncate(num_elements);
     out
 }
-

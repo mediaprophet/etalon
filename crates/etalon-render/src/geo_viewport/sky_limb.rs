@@ -32,12 +32,20 @@ fn norm3(a: [f32; 3]) -> f32 {
 #[inline]
 fn normalize3(a: [f32; 3]) -> [f32; 3] {
     let l = norm3(a);
-    if l > 1e-9 { [a[0] / l, a[1] / l, a[2] / l] } else { [0.0, 1.0, 0.0] }
+    if l > 1e-9 {
+        [a[0] / l, a[1] / l, a[2] / l]
+    } else {
+        [0.0, 1.0, 0.0]
+    }
 }
 
 #[inline]
 fn lerp3(a: [f32; 3], b: [f32; 3], t: f32) -> [f32; 3] {
-    [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]
+    [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t,
+        a[2] + (b[2] - a[2]) * t,
+    ]
 }
 
 /// Evaluates single-scattering Rayleigh & Mie sky limb radiance and aerial perspective transmittance.
@@ -123,21 +131,27 @@ pub fn evaluate_sky_limb_and_aerial_perspective(
                 opt_m_sun += (-hj / params.mie_scale_h_m.max(1.0)).exp() * ds_sun;
             }
             for c in 0..3 {
-                let tau_s = opt_r_sun * params.beta_rayleigh[c] + opt_m_sun * params.beta_mie[c] * 1.11;
+                let tau_s =
+                    opt_r_sun * params.beta_rayleigh[c] + opt_m_sun * params.beta_mie[c] * 1.11;
                 t_sun[c] = (-tau_s).exp();
             }
         }
 
         for c in 0..3 {
             let ext_c = rho_r * params.beta_rayleigh[c] + rho_m * params.beta_mie[c] * 1.11;
-            let scat_c = rho_r * params.beta_rayleigh[c] * p_rayleigh + rho_m * params.beta_mie[c] * p_mie;
+            let scat_c =
+                rho_r * params.beta_rayleigh[c] * p_rayleigh + rho_m * params.beta_mie[c] * p_mie;
             let t_view_c = (-tau_view[c]).exp();
             in_scatter[c] += scat_c * params.sun_intensity * t_sun[c] * t_view_c * ds;
             tau_view[c] += ext_c * ds;
         }
     }
 
-    let transmittance = [(-tau_view[0]).exp(), (-tau_view[1]).exp(), (-tau_view[2]).exp()];
+    let transmittance = [
+        (-tau_view[0]).exp(),
+        (-tau_view[1]).exp(),
+        (-tau_view[2]).exp(),
+    ];
     (in_scatter, transmittance)
 }
 
@@ -160,7 +174,11 @@ pub fn evaluate_water_wave_and_foam(
     view_cos_theta: f32,
 ) -> WaterSurfaceSample {
     let wind_len = (wind_dir[0] * wind_dir[0] + wind_dir[1] * wind_dir[1]).sqrt();
-    let w = if wind_len > 1e-6 { [wind_dir[0] / wind_len, wind_dir[1] / wind_len] } else { [1.0, 0.0] };
+    let w = if wind_len > 1e-6 {
+        [wind_dir[0] / wind_len, wind_dir[1] / wind_len]
+    } else {
+        [1.0, 0.0]
+    };
 
     let angles = [0.0f32, 0.32, -0.45, 0.75];
     let wl_scales = [1.0f32, 0.48, 0.24, 0.12];
@@ -192,7 +210,8 @@ pub fn evaluate_water_wave_and_foam(
         n_accum[2] -= q * wa * sin_p;
     }
 
-    let n_len = (n_accum[0] * n_accum[0] + n_accum[1] * n_accum[1] + n_accum[2] * n_accum[2]).sqrt();
+    let n_len =
+        (n_accum[0] * n_accum[0] + n_accum[1] * n_accum[1] + n_accum[2] * n_accum[2]).sqrt();
     let normal_xyz = if n_len > 1e-6 {
         [n_accum[0] / n_len, n_accum[1] / n_len, n_accum[2] / n_len]
     } else {
@@ -207,9 +226,15 @@ pub fn evaluate_water_wave_and_foam(
     let shallow_break = (wave_amp_m * 2.5).max(0.2);
     let shallow_weight = ((shallow_break - water_depth_m) / shallow_break).clamp(0.0, 1.0);
     let crest_weight = ((disp[2] + wave_amp_m * 0.2) / wave_amp_m.max(0.1)).clamp(0.0, 1.0);
-    let shore_foam_weight = (shallow_weight * 0.75 + crest_weight * shallow_weight * 0.25).clamp(0.0, 1.0);
+    let shore_foam_weight =
+        (shallow_weight * 0.75 + crest_weight * shallow_weight * 0.25).clamp(0.0, 1.0);
 
-    WaterSurfaceSample { displacement_xyz: disp, normal_xyz, shore_foam_weight, fresnel_reflectance }
+    WaterSurfaceSample {
+        displacement_xyz: disp,
+        normal_xyz,
+        shore_foam_weight,
+        fresnel_reflectance,
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -240,11 +265,23 @@ fn hypsometric_ramp(t: f32) -> [f32; 3] {
     } else if t < 0.38 {
         lerp3([78.0, 142.0, 72.0], [156.0, 182.0, 92.0], (t - 0.15) / 0.23)
     } else if t < 0.62 {
-        lerp3([156.0, 182.0, 92.0], [204.0, 168.0, 98.0], (t - 0.38) / 0.24)
+        lerp3(
+            [156.0, 182.0, 92.0],
+            [204.0, 168.0, 98.0],
+            (t - 0.38) / 0.24,
+        )
     } else if t < 0.82 {
-        lerp3([204.0, 168.0, 98.0], [152.0, 144.0, 140.0], (t - 0.62) / 0.20)
+        lerp3(
+            [204.0, 168.0, 98.0],
+            [152.0, 144.0, 140.0],
+            (t - 0.62) / 0.20,
+        )
     } else {
-        lerp3([152.0, 144.0, 140.0], [248.0, 250.0, 252.0], (t - 0.82) / 0.18)
+        lerp3(
+            [152.0, 144.0, 140.0],
+            [248.0, 250.0, 252.0],
+            (t - 0.82) / 0.18,
+        )
     }
 }
 
@@ -369,7 +406,14 @@ pub fn resolve_gpu_picking_id_aperture(
                 }
             };
             if replace {
-                best = Some((feature_id, layer_id, px as usize, py as usize, depth, dist_sq));
+                best = Some((
+                    feature_id,
+                    layer_id,
+                    px as usize,
+                    py as usize,
+                    depth,
+                    dist_sq,
+                ));
             }
         }
     }
@@ -403,20 +447,34 @@ mod tests {
 
         let (zenith_rad, zenith_trans) =
             evaluate_sky_limb_and_aerial_perspective(&params, 10.0, [0.0, 1.0, 0.0], 100_000.0, 16);
-        assert!(zenith_rad[2] > zenith_rad[0], "Zenith scattered light must be blue dominant");
+        assert!(
+            zenith_rad[2] > zenith_rad[0],
+            "Zenith scattered light must be blue dominant"
+        );
         assert!(zenith_trans[0] > 0.0 && zenith_trans[0] <= 1.0);
 
         let mut sunset_params = params;
         sunset_params.sun_dir = [1.0, 0.0, 0.0];
-        let (_, sunset_trans) =
-            evaluate_sky_limb_and_aerial_perspective(&sunset_params, 10.0, [1.0, 0.05, 0.0], 80_000.0, 16);
-        assert!(sunset_trans[0] > sunset_trans[2], "Sunset horizon transmittance preserves red over blue");
+        let (_, sunset_trans) = evaluate_sky_limb_and_aerial_perspective(
+            &sunset_params,
+            10.0,
+            [1.0, 0.05, 0.0],
+            80_000.0,
+            16,
+        );
+        assert!(
+            sunset_trans[0] > sunset_trans[2],
+            "Sunset horizon transmittance preserves red over blue"
+        );
 
         let (_, near_trans) =
             evaluate_sky_limb_and_aerial_perspective(&params, 10.0, [1.0, 0.0, 0.0], 1_000.0, 8);
         let (_, far_trans) =
             evaluate_sky_limb_and_aerial_perspective(&params, 10.0, [1.0, 0.0, 0.0], 50_000.0, 8);
-        assert!(near_trans[0] > far_trans[0], "Aerial perspective transmittance decays over distance");
+        assert!(
+            near_trans[0] > far_trans[0],
+            "Aerial perspective transmittance decays over distance"
+        );
     }
 
     #[test]
@@ -426,14 +484,26 @@ mod tests {
         assert!((n_len - 1.0).abs() < 1e-4, "Wave normal must be normalized");
 
         let grazing = evaluate_water_wave_and_foam([0.0, 0.0], 0.0, 50.0, [1.0, 0.0], 1.0, 0.0);
-        assert!((grazing.fresnel_reflectance - 1.0).abs() < 1e-3, "Grazing Fresnel must approach 1.0");
+        assert!(
+            (grazing.fresnel_reflectance - 1.0).abs() < 1e-3,
+            "Grazing Fresnel must approach 1.0"
+        );
         let normal_inc = evaluate_water_wave_and_foam([0.0, 0.0], 0.0, 50.0, [1.0, 0.0], 1.0, 1.0);
-        assert!((normal_inc.fresnel_reflectance - 0.02).abs() < 1e-3, "Normal incidence must match R0");
+        assert!(
+            (normal_inc.fresnel_reflectance - 0.02).abs() < 1e-3,
+            "Normal incidence must match R0"
+        );
 
         let shallow = evaluate_water_wave_and_foam([0.0, 0.0], 0.0, 0.5, [1.0, 0.0], 2.0, 0.5);
         let deep = evaluate_water_wave_and_foam([0.0, 0.0], 0.0, 100.0, [1.0, 0.0], 2.0, 0.5);
-        assert!(shallow.shore_foam_weight > 0.4, "Shallow breaking water generates foam");
-        assert!(deep.shore_foam_weight < 0.05, "Deep water has negligible shore foam");
+        assert!(
+            shallow.shore_foam_weight > 0.4,
+            "Shallow breaking water generates foam"
+        );
+        assert!(
+            deep.shore_foam_weight < 0.05,
+            "Deep water has negligible shore foam"
+        );
     }
 
     #[test]
@@ -453,7 +523,11 @@ mod tests {
         depth_buf[2 * 5 + 3] = 0.3;
 
         let hit = resolve_gpu_picking_id_aperture(&id_buf, &depth_buf, 5, 5, 2, 2, 1);
-        assert_eq!(hit, Some((202, 14, 3, 2, 0.3)), "Must pick closest depth within aperture");
+        assert_eq!(
+            hit,
+            Some((202, 14, 3, 2, 0.3)),
+            "Must pick closest depth within aperture"
+        );
         let miss = resolve_gpu_picking_id_aperture(&id_buf, &depth_buf, 5, 5, 0, 0, 0);
         assert_eq!(miss, None);
     }

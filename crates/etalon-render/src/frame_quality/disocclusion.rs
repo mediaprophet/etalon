@@ -244,10 +244,10 @@ impl SaliencePerceptualGovernor {
     #[inline]
     pub fn evaluate_qp_and_ray_budget(salience_class: u8) -> (u8, u32) {
         match salience_class {
-            0..=31 => (0, 8),      // Class A: Lossless, 8 spp path trace
-            32..=95 => (64, 2),    // Class B: Dynamic, 2 spp + SVGF
-            96..=224 => (192, 1),  // Class C: Ambient, 1 spp rolling
-            _ => (255, 0),         // Class D: Skip / Impostor
+            0..=31 => (0, 8),     // Class A: Lossless, 8 spp path trace
+            32..=95 => (64, 2),   // Class B: Dynamic, 2 spp + SVGF
+            96..=224 => (192, 1), // Class C: Ambient, 1 spp rolling
+            _ => (255, 0),        // Class D: Skip / Impostor
         }
     }
 }
@@ -361,7 +361,11 @@ mod tests {
 
         let mut out_ids = [0u32; 8];
         let count = DisocclusionForecaster::forecast_disocclusions(
-            &moving, &planes, 3, 0.0166, &mut out_ids,
+            &moving,
+            &planes,
+            3,
+            0.0166,
+            &mut out_ids,
         );
 
         assert_eq!(count, 1);

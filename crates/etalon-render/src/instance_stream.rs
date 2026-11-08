@@ -610,12 +610,7 @@ mod tests {
             Err(MeshInstanceUploadError::BufferSizeOverflow)
         );
         assert_eq!(
-            coalesce_dirty_ranges(
-                &[],
-                (MAX_MESH_INSTANCES + 1) as u32,
-                policy,
-                &mut out
-            ),
+            coalesce_dirty_ranges(&[], (MAX_MESH_INSTANCES + 1) as u32, policy, &mut out),
             Err(MeshInstanceUploadError::TooManyInstances {
                 count: MAX_MESH_INSTANCES + 1,
                 maximum: MAX_MESH_INSTANCES,
@@ -631,7 +626,7 @@ mod tests {
         };
         let mut out = [DirtyInstanceRange::new(0, 0); MAX_COALESCED_DIRTY_RANGES];
         let policy = DirtyUploadPolicy::default(); // 65%
-        // 65 / 100 == 65% -> collapses to [0..100]
+                                                   // 65 / 100 == 65% -> collapses to [0..100]
         let count = coalesce_dirty_ranges(
             &[
                 DirtyInstanceRange::new(10, 30),
@@ -684,10 +679,7 @@ mod tests {
 
         // Including record 7 in a dirty subrange catches the invalid transform at index 7.
         let n = coalesce_dirty_ranges(
-            &[
-                DirtyInstanceRange::new(1, 2),
-                DirtyInstanceRange::new(6, 3),
-            ],
+            &[DirtyInstanceRange::new(1, 2), DirtyInstanceRange::new(6, 3)],
             10,
             DirtyUploadPolicy::default(),
             &mut coalesced,

@@ -22,9 +22,8 @@ pub const FABRIC_VIEWPORT_LOCAL: u32 = 0;
 pub const FABRIC_SHARED: u32 = 1;
 
 /// Default 11-float ambient telemetry sample array when no live ledger is bound.
-pub const DEFAULT_TELEMETRY_SAMPLES: [f32; 11] = [
-    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.08, 0.25, 0.0, 0.0,
-];
+pub const DEFAULT_TELEMETRY_SAMPLES: [f32; 11] =
+    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.08, 0.25, 0.0, 0.0];
 
 /// System telemetry for ambient / projector shaders (`#[repr(C)]`, 48 bytes).
 #[repr(C)]
@@ -224,7 +223,11 @@ impl ObserverStandpoint {
 
     #[inline]
     /// Builds [`AmbientUniforms`] from explicit 11-float telemetry samples.
-    pub fn to_ambient_uniforms_with_samples(&self, time: f32, samples: &[f32; 11]) -> AmbientUniforms {
+    pub fn to_ambient_uniforms_with_samples(
+        &self,
+        time: f32,
+        samples: &[f32; 11],
+    ) -> AmbientUniforms {
         let _ = self;
         AmbientUniforms {
             time,

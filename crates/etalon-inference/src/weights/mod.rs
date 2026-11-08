@@ -101,11 +101,11 @@ fn dot_f32(a: &[f32], b: &[f32]) -> f32 {
     sum
 }
 
-pub(crate) mod source;
 mod gemv;
 mod parallel;
 mod projection;
 #[allow(unsafe_code)]
 mod rows;
+pub(crate) mod source;
 #[cfg(test)]
 mod tests;

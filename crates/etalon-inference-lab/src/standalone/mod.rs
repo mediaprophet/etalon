@@ -21,7 +21,13 @@ pub fn runtime_identity() -> String {
         include_str!("../../../etalon-inference-kernel/src/dense_cpu/attention.rs"),
         include_str!("../../../etalon-inference-kernel/src/dense_cpu/math.rs"),
         include_str!("../../../etalon-inference-kernel/src/dense_cpu/plan.rs"),
-        include_str!("executor.rs"), include_str!("model_run.rs"),
-    ] { digest.update(source.as_bytes()); }
-    format!("etalon:p64-dense:scalar-cpu:source-sha256:{:x}", digest.finalize())
+        include_str!("executor.rs"),
+        include_str!("model_run.rs"),
+    ] {
+        digest.update(source.as_bytes());
+    }
+    format!(
+        "etalon:p64-dense:scalar-cpu:source-sha256:{:x}",
+        digest.finalize()
+    )
 }

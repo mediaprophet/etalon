@@ -13,11 +13,11 @@ extern crate std;
 #[cfg(feature = "device")]
 pub mod device_caps;
 #[cfg(feature = "device")]
-pub mod shared_device;
-#[cfg(feature = "device")]
 pub mod device_lease;
 #[cfg(feature = "device")]
 pub mod provider_scope;
+#[cfg(feature = "device")]
+pub mod shared_device;
 
 #[cfg(feature = "device")]
 pub mod submission;

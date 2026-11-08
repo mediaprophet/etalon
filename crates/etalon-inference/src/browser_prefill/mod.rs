@@ -11,8 +11,8 @@ mod planning;
 mod tail;
 
 pub mod encoding;
-mod encoding_element;
-mod encoding_gemm;
-mod encoding_ffn;
-mod encoding_attention_offset;
 mod encoding_attention;
+mod encoding_attention_offset;
+mod encoding_element;
+mod encoding_ffn;
+mod encoding_gemm;

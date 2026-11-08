@@ -156,7 +156,11 @@ pub fn solve_two_bone_motor_ik_zero_heap(
     min_knee_angle_rad: f32,
     max_knee_angle_rad: f32,
 ) -> Result<TwoBoneIkResult, SkeletalError> {
-    if target_pos.iter().chain(pole_target.iter()).any(|v| !v.is_finite()) {
+    if target_pos
+        .iter()
+        .chain(pole_target.iter())
+        .any(|v| !v.is_finite())
+    {
         return Err(SkeletalError::InvalidInput);
     }
 
@@ -276,7 +280,10 @@ fn apply_joint_constraint_dir(
                 return dir;
             }
             let axis = normalize3_or(cross3(parent_dir, dir), orthogonal_unit(parent_dir));
-            normalize3_or(rotate_vec_by_axis_angle(parent_dir, axis, max_angle), parent_dir)
+            normalize3_or(
+                rotate_vec_by_axis_angle(parent_dir, axis, max_angle),
+                parent_dir,
+            )
         }
         JointConstraint::HingeLimit {
             axis,

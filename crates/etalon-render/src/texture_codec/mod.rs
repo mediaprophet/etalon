@@ -13,14 +13,12 @@ pub use cpu_mips::{
 };
 pub use ktx2::{
     select_hardware_compressed_format, HardwareCompressedUploadFormat, Ktx2ColorSpace,
-    Ktx2Document, Ktx2Error, Ktx2Level, Ktx2Supercompression, Ktx2TranscodeSource,
-    KTX2_IDENTIFIER,
+    Ktx2Document, Ktx2Error, Ktx2Level, Ktx2Supercompression, Ktx2TranscodeSource, KTX2_IDENTIFIER,
 };
 pub use ktx2_rgba8::{
     decode_ktx2_rgba8_base_level, decode_ktx2_rgba8_base_level_with_scratch,
-    inspect_ktx2_rgba8_base_level, inspect_ktx2_rgba8_base_level_with_compression,
-    Rgba8Ktx2Error, Rgba8Ktx2Format, Rgba8Ktx2Image, VK_FORMAT_R8G8B8A8_SRGB,
-    VK_FORMAT_R8G8B8A8_UNORM,
+    inspect_ktx2_rgba8_base_level, inspect_ktx2_rgba8_base_level_with_compression, Rgba8Ktx2Error,
+    Rgba8Ktx2Format, Rgba8Ktx2Image, VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_R8G8B8A8_UNORM,
 };
 pub use stream_policy::{
     plan_texture_residency, plan_texture_residency_lifecycle, plan_texture_residency_partial,

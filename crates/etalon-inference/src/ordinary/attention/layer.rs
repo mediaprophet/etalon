@@ -1,8 +1,6 @@
 use super::*;
 use crate::ordinary::{
-    cpu::prepare_pre_norm_input,
-    matmul_dims,
-    quant_support::ggml_gpu_attention_shader_supported,
+    cpu::prepare_pre_norm_input, matmul_dims, quant_support::ggml_gpu_attention_shader_supported,
 };
 const MAX_HIDDEN_DIM: usize = 4096;
 impl<P: AttentionProvider> AttentionEngine<'_, P> {
@@ -309,4 +307,3 @@ impl<P: AttentionProvider> AttentionEngine<'_, P> {
         Some(n)
     }
 }
-

@@ -19,8 +19,10 @@ impl DmlProviderLease {
     }
 
     pub fn matches(&self, owner: &DmlDevice) -> bool {
-        self.device == owner.d3d12 && self.dml_identity == Interface::as_raw(&owner.dml) as usize as u64
-            && self.generation == owner.provider_generation && self.queue == owner.queue
+        self.device == owner.d3d12
+            && self.dml_identity == Interface::as_raw(&owner.dml) as usize as u64
+            && self.generation == owner.provider_generation
+            && self.queue == owner.queue
     }
 
     pub fn live(&self) -> windows::core::Result<()> {

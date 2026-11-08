@@ -53,8 +53,8 @@ impl CallGraph {
             state[start_idx] = 1;
             stack.push((start_idx, 0));
 
-            while let Some((node_idx, edge_idx)) = stack.last_mut() {
-                let (&node_id, callees) = self.edges.get_index(*node_idx).unwrap();
+            while let Some(&mut (node_idx, ref mut edge_idx)) = stack.last_mut() {
+                let (&node_id, callees) = self.edges.get_index(node_idx).unwrap();
                 if *edge_idx < callees.len() {
                     let callee_id = callees[*edge_idx];
                     *edge_idx += 1;
@@ -68,7 +68,7 @@ impl CallGraph {
                         _ => {}
                     }
                 } else {
-                    state[*node_idx] = 2;
+                    state[node_idx] = 2;
                     order.push(node_id);
                     stack.pop();
                 }

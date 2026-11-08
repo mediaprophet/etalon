@@ -60,7 +60,9 @@ impl<P: BrowserProjectionProvider> BrowserProjectionEngine<'_, P> {
             resources.pipeline
         };
         let bind_layout = active_pipeline.get_bind_group_layout(0);
-        let bind_group = self.host.gpu_device()
+        let bind_group = self
+            .host
+            .gpu_device()
             .create_bind_group(&wgpu::BindGroupDescriptor {
                 label: Some("ResidentLogitsBind"),
                 layout: &bind_layout,

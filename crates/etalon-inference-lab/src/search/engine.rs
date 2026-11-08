@@ -34,7 +34,11 @@ impl SearchEngine {
         Self::with_objective(space, budget, SearchObjective::ThroughputTimesQuality)
     }
 
-    pub fn with_objective(space: ConfigurationSpace, budget: usize, objective: SearchObjective) -> Self {
+    pub fn with_objective(
+        space: ConfigurationSpace,
+        budget: usize,
+        objective: SearchObjective,
+    ) -> Self {
         let dim = space.dims();
         let initial = (budget / 5).clamp(5, 20).min(budget);
         Self {

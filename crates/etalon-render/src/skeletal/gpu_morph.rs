@@ -239,14 +239,7 @@ mod tests {
         deltas[6 * 2 + 0] = GpuMorphDelta::new([-0.2, 0.0, 0.0], [0.5, 0.0, 0.0]);
         deltas[7 * 2 + 1] = GpuMorphDelta::new([0.0, -0.4, 0.0], [0.0, 0.0, 0.0]);
 
-        let weights = compute_ontogenetic_morph_weights_zero_heap(
-            &[0.5],
-            8,
-            2,
-            2,
-            500,
-            250,
-        );
+        let weights = compute_ontogenetic_morph_weights_zero_heap(&[0.5], 8, 2, 2, 500, 250);
         assert!((weights.weights[0] - 0.5).abs() < 1e-6);
         assert!((weights.weights[5] - 1.0).abs() < 1e-6);
         assert!((weights.weights[6] - 0.5).abs() < 1e-6);

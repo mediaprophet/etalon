@@ -144,10 +144,9 @@ impl<'a> P64View<'a> {
         {
             return Err(P64Error::MetadataChecksum);
         }
-        let mut previous_end =
-            checked_align_up(checksum_end, page).ok_or(P64Error::ArithmeticOverflow(
-                P64OverflowContext::BlobAlignment,
-            ))?;
+        let mut previous_end = checked_align_up(checksum_end, page).ok_or(
+            P64Error::ArithmeticOverflow(P64OverflowContext::BlobAlignment),
+        )?;
         let mut previous_manifold = None;
         let layer_packed = header.flags & P64_FLAG_LAYER_PACK != 0;
         for index in 0..count {

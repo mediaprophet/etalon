@@ -1,6 +1,6 @@
 use super::*;
-use crate::runtime::kv::prefix::{PrefixIdentity, PrefixPageSet};
 use crate::runtime::kv::paged::{BlockPool, CopyOnWrite, SequenceBlockTable};
+use crate::runtime::kv::prefix::{PrefixIdentity, PrefixPageSet};
 
 #[test]
 fn registry_ownership_survives_request_attach_and_eviction() {

@@ -227,13 +227,13 @@ fn tensor_layer_number(name: &str) -> Option<u32> {
 }
 
 mod file;
-mod hyperparams;
 pub mod ftw_config;
-pub mod qwen_roles;
-pub mod qwen_attention;
+mod hyperparams;
 mod lookup;
 mod metadata;
 mod parse;
+pub mod qwen_attention;
+pub mod qwen_roles;
 mod types;
 pub use hyperparams::*;
 pub use types::*;

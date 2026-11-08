@@ -1,6 +1,6 @@
 //! Portable GPU material storage and fixed fourteen-binding construction.
-use std::num::NonZeroU64;
 use etalon::util::DeviceExt;
+use std::num::NonZeroU64;
 pub const MATERIAL_UNIFORM_STRIDE: u64 = 512;
 pub struct MaterialGpu<D> {
     pub _uniform_buffer: etalon::Buffer,
@@ -39,11 +39,12 @@ pub fn create<'a, U: bytemuck::Pod, E: bytemuck::Pod, D>(
         contents: bytemuck::cast_slice(uniforms),
         usage: etalon::BufferUsages::UNIFORM,
     });
-    let environment_uniform_buffer = device.create_buffer_init(&etalon::util::BufferInitDescriptor {
-        label: Some("portal-mesh-environment-lighting"),
-        contents: bytemuck::bytes_of(environment),
-        usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
-    });
+    let environment_uniform_buffer =
+        device.create_buffer_init(&etalon::util::BufferInitDescriptor {
+            label: Some("portal-mesh-environment-lighting"),
+            contents: bytemuck::bytes_of(environment),
+            usage: etalon::BufferUsages::UNIFORM | etalon::BufferUsages::COPY_DST,
+        });
     let mut material_bind_groups = Vec::with_capacity(uniforms.len());
     for index in 0..uniforms.len() {
         let slots = slots(index)?;
@@ -93,29 +94,30 @@ pub fn layout_entries(binding_offset: u32) -> [etalon::BindGroupLayoutEntry; 12]
 }
 pub fn create_layout(device: &etalon::Device, environment_bytes: u64) -> etalon::BindGroupLayout {
     let texture = layout_entries(1);
-    let entries: [etalon::BindGroupLayoutEntry; 14] = std::array::from_fn(|binding| match binding {
-        0 => etalon::BindGroupLayoutEntry {
-            binding: 0,
-            visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
-            ty: etalon::BindingType::Buffer {
-                ty: etalon::BufferBindingType::Uniform,
-                has_dynamic_offset: true,
-                min_binding_size: NonZeroU64::new(MATERIAL_UNIFORM_STRIDE),
+    let entries: [etalon::BindGroupLayoutEntry; 14] =
+        std::array::from_fn(|binding| match binding {
+            0 => etalon::BindGroupLayoutEntry {
+                binding: 0,
+                visibility: etalon::ShaderStages::VERTEX_FRAGMENT,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Uniform,
+                    has_dynamic_offset: true,
+                    min_binding_size: NonZeroU64::new(MATERIAL_UNIFORM_STRIDE),
+                },
+                count: None,
             },
-            count: None,
-        },
-        1..=12 => texture[binding - 1].clone(),
-        _ => etalon::BindGroupLayoutEntry {
-            binding: 13,
-            visibility: etalon::ShaderStages::FRAGMENT,
-            ty: etalon::BindingType::Buffer {
-                ty: etalon::BufferBindingType::Uniform,
-                has_dynamic_offset: false,
-                min_binding_size: NonZeroU64::new(environment_bytes),
+            1..=12 => texture[binding - 1].clone(),
+            _ => etalon::BindGroupLayoutEntry {
+                binding: 13,
+                visibility: etalon::ShaderStages::FRAGMENT,
+                ty: etalon::BindingType::Buffer {
+                    ty: etalon::BufferBindingType::Uniform,
+                    has_dynamic_offset: false,
+                    min_binding_size: NonZeroU64::new(environment_bytes),
+                },
+                count: None,
             },
-            count: None,
-        },
-    });
+        });
     device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
         label: Some("portal-mesh-material-textures-layout"),
         entries: &entries,

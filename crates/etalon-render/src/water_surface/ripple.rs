@@ -88,10 +88,18 @@ impl InteractiveRippleBuffer {
         let grid_radius = (radius_m / cell_m).max(1.0);
         let r_sq = grid_radius * grid_radius;
 
-        let min_x = ((gx - grid_radius).floor() as isize).max(1).min((RIPPLE_GRID_DIM - 2) as isize) as usize;
-        let max_x = ((gx + grid_radius).ceil() as isize).max(1).min((RIPPLE_GRID_DIM - 2) as isize) as usize;
-        let min_z = ((gz - grid_radius).floor() as isize).max(1).min((RIPPLE_GRID_DIM - 2) as isize) as usize;
-        let max_z = ((gz + grid_radius).ceil() as isize).max(1).min((RIPPLE_GRID_DIM - 2) as isize) as usize;
+        let min_x = ((gx - grid_radius).floor() as isize)
+            .max(1)
+            .min((RIPPLE_GRID_DIM - 2) as isize) as usize;
+        let max_x = ((gx + grid_radius).ceil() as isize)
+            .max(1)
+            .min((RIPPLE_GRID_DIM - 2) as isize) as usize;
+        let min_z = ((gz - grid_radius).floor() as isize)
+            .max(1)
+            .min((RIPPLE_GRID_DIM - 2) as isize) as usize;
+        let max_z = ((gz + grid_radius).ceil() as isize)
+            .max(1)
+            .min((RIPPLE_GRID_DIM - 2) as isize) as usize;
 
         for z in min_z..=max_z {
             let dz = (z as f32) - gz;
@@ -137,7 +145,8 @@ impl InteractiveRippleBuffer {
                     + self.h_curr[row_down + x]
                     - 4.0 * self.h_curr[idx];
 
-                let h_new = (2.0 * self.h_curr[idx] - self.h_prev[idx] + alpha * laplacian) * damping;
+                let h_new =
+                    (2.0 * self.h_curr[idx] - self.h_prev[idx] + alpha * laplacian) * damping;
                 self.h_next[idx] = h_new;
             }
         }

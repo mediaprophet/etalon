@@ -407,7 +407,7 @@ pub fn mix_spatial_voice_occluded_into(
     let (sin_w0_f64, cos_w0_f64) = sin_cos_f64(f64::from(w0));
     let cos_w0 = cos_w0_f64 as f32;
     let sin_w0 = sin_w0_f64 as f32;
-    let alpha = sin_w0 / (2.0 * 0.7071);
+    let alpha = sin_w0 / (2.0 * core::f32::consts::FRAC_1_SQRT_2);
     let inv_a0 = 1.0 / (1.0 + alpha).max(1e-6);
     let b0 = ((1.0 - cos_w0) * 0.5) * inv_a0;
     let b1 = (1.0 - cos_w0) * inv_a0;

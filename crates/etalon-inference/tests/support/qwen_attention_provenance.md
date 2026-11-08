@@ -26,10 +26,10 @@ rounding against float64; it does not claim bitwise HF framework equivalence.
 
 SHA256 receipts (UTF-8 LF bytes):
 
-| Artifact | SHA256 |
-|---|---|
-| generator | `27ee652dfa6457e278c2c98c7b0f467c8c79db696cd2de4c7f6b6b71708dd097` |
-| qwen_attention_fixture.rs | `fb26d16b3157535842f19584502098c950def64c09dc3f9dfaad38c79672ef53` |
+| Artifact                      | SHA256                                                             |
+| ----------------------------- | ------------------------------------------------------------------ |
+| generator                     | `27ee652dfa6457e278c2c98c7b0f467c8c79db696cd2de4c7f6b6b71708dd097` |
+| qwen_attention_fixture.rs     | `fb26d16b3157535842f19584502098c950def64c09dc3f9dfaad38c79672ef53` |
 | qwen_attention_reference.json | `ff8129d209d56421796840ed715afa8d7ac4a6e1d829ac25a210ddc8ed340949` |
 
 Three tokens use two query heads sharing one KV head, dimension six, with

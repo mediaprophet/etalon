@@ -1,11 +1,11 @@
 #[cfg(feature = "cpu-inference")]
 mod runner {
 
+    use etalon_inference::cpu_model::sequence::workspace;
     use etalon_inference::cpu_model::{
         empty_layer, prepare_dense_p64_into, BindingLimits, GgmlCpuKernels,
     };
     use etalon_inference::runtime::dense_transaction::propose_dense;
-    use etalon_inference::cpu_model::sequence::workspace;
     use etalon_inference_kernel::dense_cpu::{self as dense};
     use etalon_model::{
         inference::{ModelPreparationBudget, PreparedP64, TensorInfo},

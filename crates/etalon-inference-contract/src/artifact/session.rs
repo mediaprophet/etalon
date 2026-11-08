@@ -1,6 +1,6 @@
 use super::*;
 use crate::{
-    ControllerBinding, Decision, ExecutionMode, MAX_CONTROL_EVIDENCE_BYTES, VerificationError,
+    ControllerBinding, Decision, ExecutionMode, VerificationError, MAX_CONTROL_EVIDENCE_BYTES,
 };
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

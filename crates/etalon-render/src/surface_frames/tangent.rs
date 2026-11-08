@@ -91,10 +91,12 @@ pub fn tangents_from_uvs_strict_into(
         if a == b || b == c || c == a {
             return Err(DegenerateGeometry);
         }
-        let e1 =
-            std::array::from_fn::<_, 3, _>(|k| f64::from(positions[b][k]) - f64::from(positions[a][k]));
-        let e2 =
-            std::array::from_fn::<_, 3, _>(|k| f64::from(positions[c][k]) - f64::from(positions[a][k]));
+        let e1 = std::array::from_fn::<_, 3, _>(|k| {
+            f64::from(positions[b][k]) - f64::from(positions[a][k])
+        });
+        let e2 = std::array::from_fn::<_, 3, _>(|k| {
+            f64::from(positions[c][k]) - f64::from(positions[a][k])
+        });
         let area = [
             e1[1] * e2[2] - e1[2] * e2[1],
             e1[2] * e2[0] - e1[0] * e2[2],
@@ -125,7 +127,11 @@ pub fn tangents_from_uvs_strict_into(
     tangents_from_uvs_into(positions, uv, normals, indices, temporary, scratch)
         .map_err(|_| Kernel)?;
     for i in 0..n {
-        if scratch[i].iter().chain(temporary[i].iter()).any(|v| !v.is_finite()) {
+        if scratch[i]
+            .iter()
+            .chain(temporary[i].iter())
+            .any(|v| !v.is_finite())
+        {
             return Err(UndefinedFrame);
         }
         let normal = unit(normals[i]);
@@ -137,10 +143,7 @@ pub fn tangents_from_uvs_strict_into(
         }
         let bitangent = [scratch[i][3], scratch[i][4], scratch[i][5]];
         let orientation = dot(
-            cross(
-                normal,
-                [temporary[i][0], temporary[i][1], temporary[i][2]],
-            ),
+            cross(normal, [temporary[i][0], temporary[i][1], temporary[i][2]]),
             bitangent,
         );
         if !orientation.is_finite() || orientation == 0.0 {

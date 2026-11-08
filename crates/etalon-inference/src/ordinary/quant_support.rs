@@ -72,4 +72,3 @@ pub fn ggml_gpu_gemm_supported(ggml_type: u32) -> bool {
             | etalon_model::ggml::GGML_TYPE_Q6_K
     )
 }
-

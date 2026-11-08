@@ -179,11 +179,11 @@ fn has(mask: u32, bit: u32) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use super::super::acceptance_contract::PerformanceEvidence;
     use super::{
         feature, select_quality_profile, select_quality_tier_via_vibe, CapabilityAcceptance,
         CapabilityEvidence, GraphicsCapabilitySnapshot, QualityTier,
     };
-    use super::super::acceptance_contract::PerformanceEvidence;
 
     fn capable(tier: QualityTier) -> GraphicsCapabilitySnapshot {
         GraphicsCapabilitySnapshot {

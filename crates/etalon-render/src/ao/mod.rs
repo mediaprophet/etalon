@@ -102,21 +102,23 @@ impl<R> AoTargets<R> {
             sample_count: 1,
             dimension: etalon::TextureDimension::D2,
             format: etalon::TextureFormat::R8Unorm,
-            usage: etalon::TextureUsages::RENDER_ATTACHMENT | etalon::TextureUsages::TEXTURE_BINDING,
+            usage: etalon::TextureUsages::RENDER_ATTACHMENT
+                | etalon::TextureUsages::TEXTURE_BINDING,
             view_formats: &[],
         });
         let ao_view = ao_texture.create_view(&etalon::TextureViewDescriptor::default());
 
-        let depth_prepass_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
-            label: Some("qualia-ao-depth-normal-pipeline-layout"),
-            bind_group_layouts: &[
-                Some(camera_layout),
-                Some(model_layout),
-                Some(material_layout),
-                Some(instance_layout),
-            ],
-            immediate_size: 0,
-        });
+        let depth_prepass_layout =
+            device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
+                label: Some("qualia-ao-depth-normal-pipeline-layout"),
+                bind_group_layouts: &[
+                    Some(camera_layout),
+                    Some(model_layout),
+                    Some(material_layout),
+                    Some(instance_layout),
+                ],
+                immediate_size: 0,
+            });
         let prepass_shader = device.create_shader_module(etalon::ShaderModuleDescriptor {
             label: Some("qualia-ao-depth-normal-wgsl"),
             source: etalon::ShaderSource::Wgsl(include_str!("../shaders/ao_prepass.wgsl").into()),

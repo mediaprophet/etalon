@@ -486,8 +486,13 @@ mod tests {
     #[test]
     fn adm_geodesic_bends_ray_toward_schwarzschild_mass() {
         // Ray starts at (-10, 2, 0) traveling in +X past a mass at (0, 0, 0).
-        let (pos, dir) =
-            adm_geodesic_deflect_ray([-10.0, 2.0, 0.0], [1.0, 0.0, 0.0], [0.0, 0.0, 0.0], 1.5, 1.0);
+        let (pos, dir) = adm_geodesic_deflect_ray(
+            [-10.0, 2.0, 0.0],
+            [1.0, 0.0, 0.0],
+            [0.0, 0.0, 0.0],
+            1.5,
+            1.0,
+        );
         assert!(pos[0] > -10.0);
         // Ray at +Y above the mass must bend downward (-Y) toward the mass center.
         assert!(
@@ -515,8 +520,12 @@ mod tests {
             [1.0, 0.0, 0.0, 0.0],
             [10.0, 0.0, 5.0, 1.0],
         ];
-        let (out_pos, out_dir) =
-            portal_transport_ray([0.0, 2.0, 0.0], [0.0, 0.0, 1.0], &portal_in_inv, &portal_out);
+        let (out_pos, out_dir) = portal_transport_ray(
+            [0.0, 2.0, 0.0],
+            [0.0, 0.0, 1.0],
+            &portal_in_inv,
+            &portal_out,
+        );
         assert!((out_pos[0] - 10.0).abs() < 1.0e-5);
         assert!((out_pos[1] - 2.0).abs() < 1.0e-5);
         assert!((out_pos[2] - 5.0).abs() < 1.0e-5);

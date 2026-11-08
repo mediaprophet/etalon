@@ -103,14 +103,23 @@ impl PleNvmeReader {
         let row_width = usize::try_from(info.dims[0]).map_err(|_| PleNvmeError::OffsetOverflow)?;
         let row_bytes = etalon_model::ggml::ggml_row_bytes(info.ggml_type, row_width)
             .ok_or(PleNvmeError::NotRowAddressable)?;
-        let end = info.dims[1].checked_mul(row_bytes as u64)
+        let end = info.dims[1]
+            .checked_mul(row_bytes as u64)
             .and_then(|n| n.checked_add(info.byte_offset))
             .and_then(|n| n.checked_add(tensor_data_start))
             .ok_or(PleNvmeError::OffsetOverflow)?;
-        if end > lease.identity().byte_len { return Err(PleNvmeError::DescriptorMismatch); }
+        if end > lease.identity().byte_len {
+            return Err(PleNvmeError::DescriptorMismatch);
+        }
         Ok(Self {
-            file: crate::weights::source::WeightCursor::Lease(std::io::Cursor::new(crate::weights::source::LeaseBytes(lease))),
-            tensor_data_start, info, row_bytes, rows: info.dims[1], row_width,
+            file: crate::weights::source::WeightCursor::Lease(std::io::Cursor::new(
+                crate::weights::source::LeaseBytes(lease),
+            )),
+            tensor_data_start,
+            info,
+            row_bytes,
+            rows: info.dims[1],
+            row_width,
             stats: PleIoStats::default(),
         })
     }

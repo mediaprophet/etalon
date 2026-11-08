@@ -240,19 +240,18 @@ pub fn encode_surface_png_into(
     let mut block_len = 0usize;
     let mut remaining_raw = total_raw;
 
-    let start_new_block =
-        |buf: &mut [u8], zcursor: &mut usize, rem: usize| -> (usize, usize) {
-            let chunk_cap = rem.min(65535);
-            let bfinal = u8::from(rem <= 65535);
-            let hdr_pos = *zcursor;
-            buf[hdr_pos] = bfinal;
-            let len16 = chunk_cap as u16;
-            let nlen16 = !len16;
-            buf[hdr_pos + 1..hdr_pos + 3].copy_from_slice(&len16.to_le_bytes());
-            buf[hdr_pos + 3..hdr_pos + 5].copy_from_slice(&nlen16.to_le_bytes());
-            *zcursor += 5;
-            (hdr_pos, chunk_cap)
-        };
+    let start_new_block = |buf: &mut [u8], zcursor: &mut usize, rem: usize| -> (usize, usize) {
+        let chunk_cap = rem.min(65535);
+        let bfinal = u8::from(rem <= 65535);
+        let hdr_pos = *zcursor;
+        buf[hdr_pos] = bfinal;
+        let len16 = chunk_cap as u16;
+        let nlen16 = !len16;
+        buf[hdr_pos + 1..hdr_pos + 3].copy_from_slice(&len16.to_le_bytes());
+        buf[hdr_pos + 3..hdr_pos + 5].copy_from_slice(&nlen16.to_le_bytes());
+        *zcursor += 5;
+        (hdr_pos, chunk_cap)
+    };
 
     let (first_hdr, mut block_cap) = start_new_block(out, &mut zpos, remaining_raw);
     let _ = first_hdr;

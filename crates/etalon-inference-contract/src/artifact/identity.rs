@@ -97,5 +97,5 @@ pub trait ArtifactVerifier {
         evidence: &[u8],
     ) -> Result<(), VerificationError>;
     fn live(&mut self, binding: &ControllerBinding, now_tick: u64)
-    -> Result<(), VerificationError>;
+        -> Result<(), VerificationError>;
 }

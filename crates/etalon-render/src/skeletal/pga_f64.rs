@@ -429,7 +429,8 @@ mod tests {
     #[test]
     fn motor_f64_to_pga_f32_roundtrip_matches_sandwich_point() {
         let half = std::f64::consts::FRAC_PI_4;
-        let m64 = Motor::from_rotation_translation([half.cos(), 0.0, half.sin(), 0.0], [2.0, -1.5, 4.0]);
+        let m64 =
+            Motor::from_rotation_translation([half.cos(), 0.0, half.sin(), 0.0], [2.0, -1.5, 4.0]);
         let m32 = m64.to_pga_f32();
         let p64 = [1.0, 2.0, -0.5];
         let out64 = m64.transform_point(p64);

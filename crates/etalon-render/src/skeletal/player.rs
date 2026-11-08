@@ -384,10 +384,7 @@ impl SkeletalPlayer {
         // Include borrowed authoring inputs and the encoded section during the
         // admission pass; refuse before allocating beyond the execution budget.
         if allocated_bytes > resident_budget
-            || allocated_bytes
-                + n * 32
-                + indices.len() * 4
-                + c.encoded_bytes.unwrap_or(usize::MAX)
+            || allocated_bytes + n * 32 + indices.len() * 4 + c.encoded_bytes.unwrap_or(usize::MAX)
                 > 42 * 1024 * 1024
         {
             return Err(PlayerError::BudgetExceeded);
@@ -632,7 +629,11 @@ impl SkeletalPlayer {
         dt_seconds: f64,
         reduced_motion: bool,
     ) -> Result<PlaybackReceipt, PlayerError> {
-        self.advance_pose_only_with_policy(dt_seconds, reduced_motion, PoseTimePolicy::AuthoredLooping)
+        self.advance_pose_only_with_policy(
+            dt_seconds,
+            reduced_motion,
+            PoseTimePolicy::AuthoredLooping,
+        )
     }
     /// Explicit closed-interval sampling avoids wrapping a requested final
     /// contact boundary to the first pose. Stored clip metadata is unchanged.

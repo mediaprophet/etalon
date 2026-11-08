@@ -28,13 +28,13 @@ reader consumes its declared entries and ignores appended extension bytes.
 
 The header reserved20 locator is little-endian:
 
-| Bytes | Value |
-|---|---|
-| 0..8 | `ETLMDTA\0` |
-| 8..12 | Record offset relative to tokenizer section start |
-| 12..16 | Record length, 736 |
-| 16..18 | Version, 1 |
-| 18..20 | Zero |
+| Bytes  | Value                                             |
+| ------ | ------------------------------------------------- |
+| 0..8   | `ETLMDTA\0`                                       |
+| 8..12  | Record offset relative to tokenizer section start |
+| 12..16 | Record length, 736                                |
+| 16..18 | Version, 1                                        |
+| 18..20 | Zero                                              |
 
 This locator is assigned only while constructing a fresh header. Existing unknown
 reserved bytes are never overwritten by a read or preparation operation. P64View
@@ -42,16 +42,16 @@ preserves all raw bytes and unknown reserved data, as before.
 
 The record is little-endian:
 
-| Bytes | Value |
-|---|---|
-| 0..8 | `ETLIMD1\0` |
-| 8..10 | Version, 1 |
-| 10..12 | Zero |
-| 12..16 | Total length, 736 |
-| 16..92 | Nineteen 32-bit ModelHyperparams fields in declaration order; f32 fields preserve IEEE bits |
-| 92..96 | PLE present, 0 or 1 |
-| 96..732 | Qwen4ExpPleConfig fields in declaration order, fixed arrays in element order; i64 fields are 8 bytes |
-| 732..736 | CRC-32C of bytes 0..732 |
+| Bytes    | Value                                                                                                |
+| -------- | ---------------------------------------------------------------------------------------------------- |
+| 0..8     | `ETLIMD1\0`                                                                                          |
+| 8..10    | Version, 1                                                                                           |
+| 10..12   | Zero                                                                                                 |
+| 12..16   | Total length, 736                                                                                    |
+| 16..92   | Nineteen 32-bit ModelHyperparams fields in declaration order; f32 fields preserve IEEE bits          |
+| 92..96   | PLE present, 0 or 1                                                                                  |
+| 96..732  | Qwen4ExpPleConfig fields in declaration order, fixed arrays in element order; i64 fields are 8 bytes |
+| 732..736 | CRC-32C of bytes 0..732                                                                              |
 
 An absent PLE configuration has an all-zero 636-byte payload. The existing P64
 metadata CRC also covers locator and record. Structure-only container admission

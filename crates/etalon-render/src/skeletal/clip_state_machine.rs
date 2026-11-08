@@ -418,7 +418,9 @@ impl<const CAP: usize> SimSignalQueue<CAP> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::skeletal::gpu_skin::{gpu_shader_skin_vertex_reference, GpuJointMotorPair, GpuSkinnedVertex};
+    use crate::skeletal::gpu_skin::{
+        gpu_shader_skin_vertex_reference, GpuJointMotorPair, GpuSkinnedVertex,
+    };
 
     #[test]
     fn test_skeleton_forward_kinematics_and_dual_quaternion_palette_uplift() {

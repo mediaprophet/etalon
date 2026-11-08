@@ -14,9 +14,9 @@ pub mod micro;
 pub mod pareto;
 pub mod qualification;
 pub mod runner;
+pub mod search;
 #[cfg(all(feature = "standalone-cpu", not(target_arch = "wasm32")))]
 pub mod standalone;
-pub mod search;
 pub mod timeline;
 #[cfg(not(target_family = "wasm"))]
 pub mod worker;

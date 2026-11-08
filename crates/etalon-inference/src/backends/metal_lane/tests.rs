@@ -1,4 +1,3 @@
-
 #[test]
 fn metal_mega_pass_platform_guard() {
     if cfg!(not(target_os = "macos")) {

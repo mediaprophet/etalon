@@ -267,11 +267,7 @@ fn animation_frame_pipeline_allocates_no_heap() {
 
 #[test]
 fn epic3_and_epic4_full_pipeline_absm_ik_morph_and_gpu_skin_zero_heap() {
-    let joints = [
-        joint(None, 0.0),
-        joint(Some(0), 1.0),
-        joint(Some(1), 1.0),
-    ];
+    let joints = [joint(None, 0.0), joint(Some(0), 1.0), joint(Some(1), 1.0)];
     let inv_bind = joints.map(|j| j.inverse_bind);
     let rest_local = joints.map(|j| j.rest_local);
 

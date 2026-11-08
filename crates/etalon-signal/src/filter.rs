@@ -5,9 +5,9 @@ use crate::SignalError;
 
 const PI_F64: f64 = core::f64::consts::PI;
 const TAU_F64: f64 = core::f64::consts::TAU;
-const LN2_HI: f64 = 0.693_147_180_559_945_3;
+const LN2_HI: f64 = core::f64::consts::LN_2;
 const LN2_LO: f64 = 2.319_046_813_846_299_6e-17;
-const PIO2_HI: f64 = 1.570_796_326_794_896_6;
+const PIO2_HI: f64 = core::f64::consts::FRAC_PI_2;
 const PIO2_LO: f64 = 6.123_233_995_736_766e-17;
 const INV_PIO2: f64 = 2.0 / PI_F64;
 

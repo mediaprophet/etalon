@@ -55,7 +55,11 @@ pub fn sample_combined_water_surface(
     let ny = (g_n[1] + r_n[1]) * 0.5;
     let nz = g_n[2] + r_n[2];
     let len_sq = nx * nx + ny * ny + nz * nz;
-    let inv_len = if len_sq > 1e-8 { 1.0 / len_sq.sqrt() } else { 1.0 };
+    let inv_len = if len_sq > 1e-8 {
+        1.0 / len_sq.sqrt()
+    } else {
+        1.0
+    };
 
     (height, [nx * inv_len, ny * inv_len, nz * inv_len])
 }

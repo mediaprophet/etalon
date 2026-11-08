@@ -1,5 +1,5 @@
-use super::*;
 use super::super::ktx2::KTX2_IDENTIFIER;
+use super::*;
 
 fn fixture(vk_format: u32, width: u32, height: u32, payload: &[u8]) -> Vec<u8> {
     let payload_offset = 136usize;

@@ -89,11 +89,7 @@ pub fn fill_hann_window_into(out: &mut [f32]) -> Result<usize, SignalError> {
 /// Checks that across all hop-phase residues $m \in [0, \text{hop})$, the
 /// overlapped window sum $S_m = \sum_{k} w[m + k \cdot \text{hop}]$ is strictly
 /// positive and remains within `tolerance` of the mean envelope.
-pub fn verify_cola_window(
-    window: &[f32],
-    hop: usize,
-    tolerance: f32,
-) -> Result<bool, SignalError> {
+pub fn verify_cola_window(window: &[f32], hop: usize, tolerance: f32) -> Result<bool, SignalError> {
     if window.is_empty() {
         return Err(SignalError::EmptyInput);
     }
@@ -301,9 +297,8 @@ pub fn woodworth_itd_seconds(
         0.0
     };
 
-    let itd = sign
-        * (f64::from(head_radius_m) / f64::from(speed_of_sound_m_s))
-        * (phi + sin_f64(phi));
+    let itd =
+        sign * (f64::from(head_radius_m) / f64::from(speed_of_sound_m_s)) * (phi + sin_f64(phi));
     let out = itd as f32;
     if !out.is_finite() {
         return Err(SignalError::NumericRange);
@@ -323,9 +318,7 @@ pub fn spherical_ild_db(azimuth_rad: f32, frequency_hz: f32) -> Result<f32, Sign
         return Err(SignalError::InvalidParameter);
     }
 
-    let ka = core::f64::consts::TAU
-        * f64::from(frequency_hz)
-        * f64::from(DEFAULT_HEAD_RADIUS_M)
+    let ka = core::f64::consts::TAU * f64::from(frequency_hz) * f64::from(DEFAULT_HEAD_RADIUS_M)
         / f64::from(DEFAULT_SPEED_OF_SOUND_M_S);
     let max_ild_db = 1.5 + 18.5 * (ka / (1.0 + ka));
     let ild_db = sin_f64(f64::from(azimuth_rad)) * max_ild_db;
@@ -346,10 +339,8 @@ pub fn pinna_elevation_notch_hz(elevation_rad: f32) -> Result<f32, SignalError> 
     if elevation_rad < -half_pi || elevation_rad > half_pi {
         return Err(SignalError::InvalidParameter);
     }
-    let clamped = f64::from(elevation_rad).clamp(
-        -core::f64::consts::FRAC_PI_2,
-        core::f64::consts::FRAC_PI_2,
-    );
+    let clamped =
+        f64::from(elevation_rad).clamp(-core::f64::consts::FRAC_PI_2, core::f64::consts::FRAC_PI_2);
     let notch_hz = 8000.0 + 3500.0 * sin_f64(clamped);
     Ok(notch_hz as f32)
 }
@@ -361,11 +352,7 @@ pub fn head_relative_position(source: [f32; 3], listener_yaw_rad: f32) -> [f32; 
     let (s, c) = sin_cos_f64(f64::from(listener_yaw_rad));
     let x = f64::from(source[0]);
     let z = f64::from(source[2]);
-    [
-        (x * c - z * s) as f32,
-        source[1],
-        (x * s + z * c) as f32,
-    ]
+    [(x * c - z * s) as f32, source[1], (x * s + z * c) as f32]
 }
 
 /// Caller-buffered direct linear FIR convolution:
@@ -555,7 +542,12 @@ mod stft_hrtf_tests {
         let c = DEFAULT_SPEED_OF_SOUND_M_S;
 
         assert_eq!(woodworth_itd_seconds(0.0, a, c).unwrap(), 0.0);
-        assert!(woodworth_itd_seconds(core::f32::consts::PI, a, c).unwrap().abs() < 1e-7);
+        assert!(
+            woodworth_itd_seconds(core::f32::consts::PI, a, c)
+                .unwrap()
+                .abs()
+                < 1e-7
+        );
 
         for deg in [10.0_f32, 30.0, 45.0, 60.0, 90.0, 120.0, 150.0] {
             let rad = deg * core::f32::consts::PI / 180.0;

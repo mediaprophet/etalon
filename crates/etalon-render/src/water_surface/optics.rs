@@ -216,12 +216,7 @@ impl BioGeoOpticalConstituents {
         let tripton_mie_blue = b_550 * (WAVELENGTH_BLUE_NM / 550.0).powf(-0.8);
 
         // Highly forward-peaked particulate asymmetry: g ≈ 0.92 for clay/silt
-        let mie_scattering = [
-            tripton_mie_red,
-            tripton_mie_green,
-            tripton_mie_blue,
-            0.92,
-        ];
+        let mie_scattering = [tripton_mie_red, tripton_mie_green, tripton_mie_blue, 0.92];
 
         DielectricVolumeIop {
             ior_spectrum,

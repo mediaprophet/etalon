@@ -223,7 +223,9 @@ mod tests {
     #[test]
     fn camera_projects_and_rejects_points_behind_near_plane() {
         let cam = Camera::default();
-        assert!(cam.project(Vec3::new(0.0, 0.0, 5.0), (800.0, 600.0)).is_none());
+        assert!(cam
+            .project(Vec3::new(0.0, 0.0, 5.0), (800.0, 600.0))
+            .is_none());
         let pt = cam
             .project_point(Vec3::new(0.0, 0.0, 10.0), (800.0, 600.0))
             .expect("point in front of camera projects");

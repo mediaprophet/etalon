@@ -48,7 +48,10 @@ pub enum TemporalResource {
 /// Errors found while assembling a typed producer contract.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TemporalContractError {
-    InvalidExtent { width: u32, height: u32 },
+    InvalidExtent {
+        width: u32,
+        height: u32,
+    },
     ExtentOverflow,
     ProducerExtentMismatch {
         resource: TemporalResource,
@@ -316,11 +319,7 @@ impl<'a> TemporalFrameContract<'a> {
         self,
         expected_extent: FrameExtent,
     ) -> Result<TemporalAdmission, TemporalCapabilityRefusal> {
-        admit_capabilities(
-            self.producers.capabilities(),
-            self.history,
-            expected_extent,
-        )
+        admit_capabilities(self.producers.capabilities(), self.history, expected_extent)
     }
 }
 
@@ -375,7 +374,9 @@ pub enum TemporalCapabilityRefusal {
         expected: FrameExtent,
         actual: Option<FrameExtent>,
     },
-    MissingProducer { resource: TemporalResource },
+    MissingProducer {
+        resource: TemporalResource,
+    },
     HistoryResetRequired,
     PublicationRequired,
     QualiaScheduleIncomplete,

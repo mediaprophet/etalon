@@ -1,11 +1,11 @@
 #![deny(unsafe_code)]
 //! Numerical inference storage and budget mechanics; host policy remains external.
-pub mod runtime;
 pub mod backends;
-#[cfg(all(not(target_arch = "wasm32"), feature = "gpu-attention"))]
-pub mod native_attention;
 #[cfg(feature = "gguf-cpu")]
 pub mod cpu_gguf;
+#[cfg(all(not(target_arch = "wasm32"), feature = "gpu-attention"))]
+pub mod native_attention;
+pub mod runtime;
 
 pub mod qwen;
 

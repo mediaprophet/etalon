@@ -32,8 +32,7 @@ pub struct GemvPipelines {
 pub(super) fn build(
     device: &wgpu::Device,
     native_pipeline_cache: &Option<wgpu::PipelineCache>,
-    #[allow(unused_variables)]
-    options: super::PipelineOptions,
+    #[allow(unused_variables)] options: super::PipelineOptions,
 ) -> GemvPipelines {
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Fused Transformer Shader"),

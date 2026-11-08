@@ -229,8 +229,8 @@ impl FrustumWedge {
             let phi_center = (ring as f32 + 0.5) * phi_step;
             // Circumference proportional to cos(phi)
             let ring_weight = phi_center.cos().max(0.1);
-            let ring_nodes = ((node_count as f32 / ring_count as f32) * ring_weight * 1.5)
-                .round() as u32;
+            let ring_nodes =
+                ((node_count as f32 / ring_count as f32) * ring_weight * 1.5).round() as u32;
             let ring_nodes = ring_nodes.max(1);
 
             let theta_step = (std::f32::consts::TAU) / ring_nodes as f32;

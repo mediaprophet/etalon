@@ -52,7 +52,10 @@ pub enum Qwen4ExpDecodeError {
 impl core::fmt::Display for Qwen4ExpDecodeError {
     fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
-            Self::PublicationDenied => write!(f, "Qwen candidate publication refused; discard numerical state"),
+            Self::PublicationDenied => write!(
+                f,
+                "Qwen candidate publication refused; discard numerical state"
+            ),
             Self::OutputTooSmall => write!(f, "Qwen token output buffer is too small"),
             Self::SizeOverflow => write!(f, "Qwen state size overflowed"),
             Self::AllocationFailed => write!(f, "Qwen state allocation failed"),

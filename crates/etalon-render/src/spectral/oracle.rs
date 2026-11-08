@@ -167,8 +167,8 @@ pub fn cpu_gpu_differential(emf: &[f32]) -> (Vec<u8>, usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use super::super::kernel::emf_to_linear_rgb;
+    use super::*;
 
     #[test]
     fn golden_vectors_all_pass() {

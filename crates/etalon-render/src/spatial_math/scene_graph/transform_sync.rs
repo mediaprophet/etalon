@@ -58,11 +58,12 @@ pub fn bilateral_pull_active_for_node(
     observer_did_hash: u64,
     mu_carrier: u64,
 ) -> bool {
-    let standpoint_class = if observer_did_hash != 0 && (mu_carrier == 0 || mu_carrier == observer_did_hash) {
-        STANDPOINT_DID
-    } else {
-        STANDPOINT_SPECTATOR
-    };
+    let standpoint_class =
+        if observer_did_hash != 0 && (mu_carrier == 0 || mu_carrier == observer_did_hash) {
+            STANDPOINT_DID
+        } else {
+            STANDPOINT_SPECTATOR
+        };
     bilateral_pull_active(deontic_lane as f32, standpoint_class)
 }
 
@@ -261,7 +262,12 @@ pub fn propagate_transforms_zero_heap(
             out_holographic[summary.synced_holographic_nodes] = SyncedHolographicNode {
                 position_scale: [world_pos[0], world_pos[1], world_pos[2], max_scale],
                 half_extents_primitive: [world_scale[0], world_scale[1], world_scale[2], 0.0],
-                frequency_amplitude: [1.0 + node.sigma_spectral * 4.0, node.alpha_salience, time_sec, 1.0],
+                frequency_amplitude: [
+                    1.0 + node.sigma_spectral * 4.0,
+                    node.alpha_salience,
+                    time_sec,
+                    1.0,
+                ],
                 manifold_tensor: [node.epistemic_q, node.tensor_v as f32, 0.0, 0.5],
                 connection_endpoint: [0.0, 0.0, 0.0, 1.0],
                 emissive_color: [0.1, 0.85, 1.0, 1.0],

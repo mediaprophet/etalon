@@ -37,7 +37,11 @@ pub struct BuoyancySphere {
 impl BuoyancySphere {
     pub fn new(offset: [f32; 3], radius: f32) -> Self {
         let volume = (4.0 / 3.0) * core::f32::consts::PI * radius * radius * radius;
-        Self { offset, radius, volume }
+        Self {
+            offset,
+            radius,
+            volume,
+        }
     }
 }
 
@@ -91,7 +95,8 @@ impl ArchimedesProxy {
                 base_pos[2] + s.offset[2],
             ];
 
-            let (water_y, _) = spectrum.sample_surface(sphere_center[0], sphere_center[2], time_sec);
+            let (water_y, _) =
+                spectrum.sample_surface(sphere_center[0], sphere_center[2], time_sec);
             let water_above_center = water_y - sphere_center[1];
 
             if water_above_center > -s.radius {
@@ -185,7 +190,8 @@ impl HydrologicalHysteresisGate {
     ) -> Option<SubmersionState> {
         // Exponential moving average filter on raw water depth
         let filter_alpha = 10.0 * dt; // ~100ms response time
-        self.smoothed_depth = self.smoothed_depth + filter_alpha * (raw_depth - self.smoothed_depth);
+        self.smoothed_depth =
+            self.smoothed_depth + filter_alpha * (raw_depth - self.smoothed_depth);
 
         // Update continuous wetness ratio (absorbs instantly, dries slowly over 30 seconds)
         if self.smoothed_depth > 0.05 {
@@ -209,7 +215,9 @@ impl HydrologicalHysteresisGate {
             SubmersionState::Diving
         };
 
-        if candidate_state != self.current_committed_state && current_tick >= self.last_commit_tick + 16 {
+        if candidate_state != self.current_committed_state
+            && current_tick >= self.last_commit_tick + 16
+        {
             self.current_committed_state = candidate_state;
             self.last_commit_tick = current_tick;
             Some(candidate_state)

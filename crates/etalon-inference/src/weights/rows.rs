@@ -55,15 +55,23 @@ impl TrunkNvmeReader {
             return Err(TrunkNvmeError::InvalidTensor);
         }
         let mut parallel = parallel::ParallelScratch::new();
-        if mapped { parallel.prepare(scratch_budget)?; }
+        if mapped {
+            parallel.prepare(scratch_budget)?;
+        }
         if !mapped && scratch_budget < TRUNK_CHUNK_BYTES {
             return Err(TrunkNvmeError::RawScratchTooSmall);
         }
         Ok(Self {
-            file: source::WeightCursor::Lease(std::io::Cursor::new(source::LeaseBytes(lease.clone()))),
+            file: source::WeightCursor::Lease(std::io::Cursor::new(source::LeaseBytes(
+                lease.clone(),
+            ))),
             map: mapped.then(|| source::WeightMap::Lease(lease)),
             tensor_data_start,
-            chunk: if mapped { Vec::new() } else { vec![0; TRUNK_CHUNK_BYTES] },
+            chunk: if mapped {
+                Vec::new()
+            } else {
+                vec![0; TRUNK_CHUNK_BYTES]
+            },
             stats: TrunkIoStats::default(),
             parallel,
         })

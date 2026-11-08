@@ -6,11 +6,11 @@
 //! - Zero heap allocation during execution hot path.
 //! - Strictly no dependencies on or modifications to `gguf_bridge` or `decode.rs`.
 
-use etalon_model::operator_package::{OperatorPackage, PackageError, SegmentError};
 use etalon_inference_kernel::operators::{
     apply_into, validate_operator, MatrixView, MatrixViewMut, OperatorDescriptor, OperatorError,
     OperatorWorkspace, PayloadView,
 };
+use etalon_model::operator_package::{OperatorPackage, PackageError, SegmentError};
 use std::fmt;
 
 /// Errors occurring during operator preparation or execution.

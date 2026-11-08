@@ -239,8 +239,8 @@ fn deny_steer_loss_expiry_clock_and_unwind_are_terminal() {
         let f = Cell::new(0);
         let mut s = session(&f);
         let k = s.propose(output(), 2).unwrap();
-        assert!(
-            s.decide(
+        assert!(s
+            .decide(
                 ArtifactDecision {
                     candidate: k,
                     decision,
@@ -249,8 +249,7 @@ fn deny_steer_loss_expiry_clock_and_unwind_are_terminal() {
                 b"decide",
                 3
             )
-            .is_err()
-        );
+            .is_err());
         assert!(s.accept_into(k, 4, &mut None).is_err());
         assert_eq!(s.phase(), ArtifactPhase::Stopped);
     }

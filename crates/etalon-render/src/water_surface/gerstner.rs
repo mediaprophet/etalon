@@ -74,17 +74,65 @@ impl SimdGerstnerSpectrum {
         Self {
             waves: [
                 // Primary ocean swell: 35m wavelength, 0.6m amplitude
-                GerstnerWave { direction: [0.92, 0.38], amplitude: 0.6, wavelength: 35.0, steepness: 0.45, phase: 0.0 },
+                GerstnerWave {
+                    direction: [0.92, 0.38],
+                    amplitude: 0.6,
+                    wavelength: 35.0,
+                    steepness: 0.45,
+                    phase: 0.0,
+                },
                 // Secondary cross-swell: 18m wavelength, 0.35m amplitude
-                GerstnerWave { direction: [0.707, -0.707], amplitude: 0.35, wavelength: 18.0, steepness: 0.35, phase: 1.2 },
+                GerstnerWave {
+                    direction: [0.707, -0.707],
+                    amplitude: 0.35,
+                    wavelength: 18.0,
+                    steepness: 0.35,
+                    phase: 1.2,
+                },
                 // Wind chop: 7m wavelength, 0.15m amplitude
-                GerstnerWave { direction: [0.38, 0.92], amplitude: 0.15, wavelength: 7.0, steepness: 0.25, phase: 2.4 },
+                GerstnerWave {
+                    direction: [0.38, 0.92],
+                    amplitude: 0.15,
+                    wavelength: 7.0,
+                    steepness: 0.25,
+                    phase: 2.4,
+                },
                 // High-frequency capillary ripples: 2.5m wavelength, 0.05m amplitude
-                GerstnerWave { direction: [0.0, 1.0], amplitude: 0.05, wavelength: 2.5, steepness: 0.15, phase: 0.5 },
-                GerstnerWave { direction: [1.0, 0.0], amplitude: 0.0, wavelength: 10.0, steepness: 0.0, phase: 0.0 },
-                GerstnerWave { direction: [1.0, 0.0], amplitude: 0.0, wavelength: 10.0, steepness: 0.0, phase: 0.0 },
-                GerstnerWave { direction: [1.0, 0.0], amplitude: 0.0, wavelength: 10.0, steepness: 0.0, phase: 0.0 },
-                GerstnerWave { direction: [1.0, 0.0], amplitude: 0.0, wavelength: 10.0, steepness: 0.0, phase: 0.0 },
+                GerstnerWave {
+                    direction: [0.0, 1.0],
+                    amplitude: 0.05,
+                    wavelength: 2.5,
+                    steepness: 0.15,
+                    phase: 0.5,
+                },
+                GerstnerWave {
+                    direction: [1.0, 0.0],
+                    amplitude: 0.0,
+                    wavelength: 10.0,
+                    steepness: 0.0,
+                    phase: 0.0,
+                },
+                GerstnerWave {
+                    direction: [1.0, 0.0],
+                    amplitude: 0.0,
+                    wavelength: 10.0,
+                    steepness: 0.0,
+                    phase: 0.0,
+                },
+                GerstnerWave {
+                    direction: [1.0, 0.0],
+                    amplitude: 0.0,
+                    wavelength: 10.0,
+                    steepness: 0.0,
+                    phase: 0.0,
+                },
+                GerstnerWave {
+                    direction: [1.0, 0.0],
+                    amplitude: 0.0,
+                    wavelength: 10.0,
+                    steepness: 0.0,
+                    phase: 0.0,
+                },
             ],
             active_waves: 4,
             sea_level,
@@ -165,7 +213,11 @@ impl SimdGerstnerSpectrum {
         let ny = raw_normal[1];
         let nz = raw_normal[2] * factor;
         let len_sq = nx * nx + ny * ny + nz * nz;
-        let inv_len = if len_sq > 1e-8 { 1.0 / len_sq.sqrt() } else { 1.0 };
+        let inv_len = if len_sq > 1e-8 {
+            1.0 / len_sq.sqrt()
+        } else {
+            1.0
+        };
 
         (height, [nx * inv_len, ny * inv_len, nz * inv_len])
     }

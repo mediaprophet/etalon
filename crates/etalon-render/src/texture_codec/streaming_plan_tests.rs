@@ -1,5 +1,5 @@
-use super::*;
 use super::super::ktx2::{Ktx2Document, KTX2_IDENTIFIER};
+use super::*;
 
 const BUDGET: TextureMipBudget = TextureMipBudget {
     decoded_cpu_bytes: 5_000_000,

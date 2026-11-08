@@ -8,13 +8,10 @@ exclude-dev = true
 multiple-versions = "deny"
 skip-tree = [{ name = "rustc-hash", version = "1.1.0" }]
 skip = [
-    # naga -> petgraph uses an old version
-    { name = "hashbrown", version = "0.15.5" },
-    # Used by hashbrown 0.15.5
-    { name = "foldhash", version = "0.1.5" },
-
     # naga depends on hashbrown 0.16 directly, while naga -> indexmap pulls hashbrown 0.17
     { name = "hashbrown", version = "0.16.1" },
+    { name = "cpufeatures", version = "=0.2.17" },
+    { name = "libloading", version = "=0.8.9" },
 
     # etalon-hal -> drm -> drm-sys uses an older version, while etalon-hal -> drm -> rustix uses a newer one
     { name = "linux-raw-sys", version = "0.9.4" },
@@ -47,9 +44,6 @@ skip = [
     { name = "windows_x86_64_gnullvm", version = "=0.52.6" },
     { name = "windows_x86_64_msvc", version = "=0.52.6" },
 
-    # Parking-lot deadlock detection uses petgraph 0.6 and its fixedbitset API.
-    { name = "petgraph", version = "=0.6.5" },
-    { name = "fixedbitset", version = "=0.4.2" },
     # Backtrace and PNG compression have incompatible miniz_oxide requirements.
     { name = "miniz_oxide", version = "=0.8.9" },
     # JNI 0.3 is required by NDK 0.9, alongside the JNI 0.4 implementation.
@@ -86,6 +80,7 @@ private = { ignore = true }
 unknown-registry = "deny"
 unknown-git = "deny"
 required-git-spec = "rev"
+allow-git = ["https://github.com/mediaprophet/vibe-script.git"]
 
 [sources.allow-org]
 github = []

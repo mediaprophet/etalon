@@ -41,38 +41,39 @@ impl IndirectCullPipelineGpu {
             count: None,
         };
 
-        let bind_group_layout = device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
-            label: Some("qualia_indirect_cull_bgl"),
-            entries: &[
-                etalon::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Buffer {
-                        ty: etalon::BufferBindingType::Uniform,
-                        has_dynamic_offset: false,
-                        min_binding_size: None,
+        let bind_group_layout =
+            device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
+                label: Some("qualia_indirect_cull_bgl"),
+                entries: &[
+                    etalon::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Buffer {
+                            ty: etalon::BufferBindingType::Uniform,
+                            has_dynamic_offset: false,
+                            min_binding_size: None,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                storage_entry(1, true),
-                storage_entry(2, true),
-                storage_entry(3, false),
-                storage_entry(4, false),
-                storage_entry(5, false),
-                storage_entry(6, false),
-                storage_entry(7, false),
-                etalon::BindGroupLayoutEntry {
-                    binding: 8,
-                    visibility: etalon::ShaderStages::COMPUTE,
-                    ty: etalon::BindingType::Texture {
-                        sample_type: etalon::TextureSampleType::Float { filterable: false },
-                        view_dimension: etalon::TextureViewDimension::D2,
-                        multisampled: false,
+                    storage_entry(1, true),
+                    storage_entry(2, true),
+                    storage_entry(3, false),
+                    storage_entry(4, false),
+                    storage_entry(5, false),
+                    storage_entry(6, false),
+                    storage_entry(7, false),
+                    etalon::BindGroupLayoutEntry {
+                        binding: 8,
+                        visibility: etalon::ShaderStages::COMPUTE,
+                        ty: etalon::BindingType::Texture {
+                            sample_type: etalon::TextureSampleType::Float { filterable: false },
+                            view_dimension: etalon::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-            ],
-        });
+                ],
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&etalon::PipelineLayoutDescriptor {
             label: Some("qualia_indirect_cull_pl"),

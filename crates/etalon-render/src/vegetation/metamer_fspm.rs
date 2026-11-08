@@ -161,7 +161,8 @@ impl MetamerPlantGraph {
         if idx >= self.count {
             return 0.005;
         }
-        let total_pipes = (self.metamers[idx].active_pipes + self.metamers[idx].retired_pipes) as f32;
+        let total_pipes =
+            (self.metamers[idx].active_pipes + self.metamers[idx].retired_pipes) as f32;
         let area = total_pipes * self.unit_pipe_area_m2;
         (area / std::f32::consts::PI).sqrt().max(0.001)
     }
@@ -245,7 +246,10 @@ impl MetamerPlantGraph {
 
         // Compute global assimilate production Q = light * moisture * leaf_area
         let leaf_area_total = (leaf_count as f32) * 0.015; // 0.015 m² per leaf
-        let net_assimilation = leaf_area_total * light_intensity.clamp(0.0, 1.5) * soil_moisture.clamp(0.0, 1.0) * 0.05;
+        let net_assimilation = leaf_area_total
+            * light_intensity.clamp(0.0, 1.5)
+            * soil_moisture.clamp(0.0, 1.0)
+            * 0.05;
         self.carbon_pool_q_kg += net_assimilation;
 
         // ── Pass 2: Top-Down Sink Distribution ────────────────────────────────
@@ -331,7 +335,12 @@ mod tests {
         let r_apex = tree.radius_m(tree.count - 1);
 
         // Pipe model demands trunk base radius exceeds branch apex
-        assert!(r_base > r_apex, "Trunk base {} must exceed apex {}", r_base, r_apex);
+        assert!(
+            r_base > r_apex,
+            "Trunk base {} must exceed apex {}",
+            r_base,
+            r_apex
+        );
     }
 
     #[test]
