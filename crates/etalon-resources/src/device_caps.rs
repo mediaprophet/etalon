@@ -129,6 +129,29 @@ impl GpuAdapterCaps {
         }
     }
 
+    /// Anvil ontology workgroup size for this PCI id.
+    ///
+    /// Etalon injects this as a Naga/WGSL override. Values match
+    /// `anvil-gpu::hints_for_pci` (Xe-LP 64, Ampere 256). Anvil remains a
+    /// side-by-side crate; this table is the local handshake until etalon
+    /// pins `mediaprophet/anvil`.
+    pub fn anvil_workgroup_size(&self) -> u32 {
+        match (self.vendor as u16, self.device as u16) {
+            (0x8086, 0xA788) => 64,  // Xe-LP 32 EU
+            (0x8086, 0x5917) => 64,  // UHD 620
+            (0x10DE, 0x2531) => 256, // RTX A2000
+            (0x106B, 0x0001) => 256, // Apple Silicon unified
+            (0x13B5, 0x0001) => 64,  // Mali-class mobile
+            _ => {
+                if self.is_integrated_gpu() {
+                    64
+                } else {
+                    256
+                }
+            }
+        }
+    }
+
     #[inline]
     /// `true` when the adapter reports an integrated GPU.
     pub fn is_integrated_gpu(&self) -> bool {
