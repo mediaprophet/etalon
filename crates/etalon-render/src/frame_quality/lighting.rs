@@ -250,10 +250,14 @@ pub fn evaluate_fragment_radiance(
     let v = normalize3(view_dir);
     let n_dot_v = dot3(n, v).clamp(1e-4, 1.0);
 
+    // Authored dielectric F0 (IOR); metals still mix toward base_color.
     let f0 = [
-        0.04 * (1.0 - surface.metallic) + surface.base_color[0] * surface.metallic,
-        0.04 * (1.0 - surface.metallic) + surface.base_color[1] * surface.metallic,
-        0.04 * (1.0 - surface.metallic) + surface.base_color[2] * surface.metallic,
+        surface.reflectance_f0 * (1.0 - surface.metallic)
+            + surface.base_color[0] * surface.metallic,
+        surface.reflectance_f0 * (1.0 - surface.metallic)
+            + surface.base_color[1] * surface.metallic,
+        surface.reflectance_f0 * (1.0 - surface.metallic)
+            + surface.base_color[2] * surface.metallic,
     ];
 
     let mut direct_accum = [0.0f32; 3];

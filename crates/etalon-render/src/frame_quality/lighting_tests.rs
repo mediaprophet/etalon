@@ -119,6 +119,42 @@ fn pbr_fragment_radiance_conserves_energy_and_scales_with_shadow() {
     assert_eq!(shadowed, [0.0; 3]);
 }
 
+#[test]
+fn pbr_fragment_radiance_honors_reflectance_f0() {
+    let dielectric = test_surface();
+    let glass = SurfaceParameters {
+        reflectance_f0: 0.17, // IOR ~2.4 dielectric F0
+        ..dielectric
+    };
+    let sun = DirectionalLight {
+        direction: [0.0, -1.0, 0.0],
+        illuminance_lux: 10.0,
+        color_linear: [1.0, 1.0, 1.0],
+        cast_shadows: false,
+    };
+
+    let low = evaluate_fragment_radiance(
+        &dielectric,
+        [0.0, 1.0, 0.0],
+        [0.0, 1.0, 1.0],
+        Some(&sun),
+        1.0,
+        [0.0; 3],
+        None,
+    );
+    let high = evaluate_fragment_radiance(
+        &glass,
+        [0.0, 1.0, 0.0],
+        [0.0, 1.0, 1.0],
+        Some(&sun),
+        1.0,
+        [0.0; 3],
+        None,
+    );
+    assert!(low[0] > 0.0 && high[0] > 0.0);
+    assert_ne!(low, high);
+}
+
 fn test_surface() -> SurfaceParameters {
     SurfaceParameters {
         base_color: [0.8, 0.6, 0.4],
