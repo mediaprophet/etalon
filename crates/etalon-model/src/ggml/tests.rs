@@ -188,3 +188,9 @@ fn iq4_nl_block_layout_and_lane_order_match_ggml() {
     );
     assert!(out.iter().all(|value| (*value - 1.0).abs() < f32::EPSILON));
 }
+
+#[path = "tests/q5_1.rs"]
+mod q5_1;
+
+#[path = "tests/mxfp4.rs"]
+mod mxfp4;

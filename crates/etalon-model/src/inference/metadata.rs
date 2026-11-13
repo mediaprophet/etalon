@@ -22,6 +22,46 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             }
             return patch;
         }
+        if key.ends_with("rope.freq_base_swa") {
+            match vtype {
+                6 if *pos + 4 <= mmap.len() => {
+                    let bits =
+                        u32::from_le_bytes(mmap[*pos..*pos + 4].try_into().unwrap_or([0; 4]));
+                    *pos += 4;
+                    patch.rope_freq_base_swa = f32::from_bits(bits);
+                }
+                12 if *pos + 8 <= mmap.len() => {
+                    let bits =
+                        u64::from_le_bytes(mmap[*pos..*pos + 8].try_into().unwrap_or([0; 8]));
+                    *pos += 8;
+                    patch.rope_freq_base_swa = f64::from_bits(bits) as f32;
+                }
+                _ => {
+                    let _ = gguf_skip_value(mmap, pos, vtype);
+                }
+            }
+            return patch;
+        }
+        if key.ends_with("attention.layer_norm_rms_epsilon") {
+            match vtype {
+                6 if *pos + 4 <= mmap.len() => {
+                    let bits =
+                        u32::from_le_bytes(mmap[*pos..*pos + 4].try_into().unwrap_or([0; 4]));
+                    *pos += 4;
+                    patch.rms_norm_eps = f32::from_bits(bits);
+                }
+                12 if *pos + 8 <= mmap.len() => {
+                    let bits =
+                        u64::from_le_bytes(mmap[*pos..*pos + 8].try_into().unwrap_or([0; 8]));
+                    *pos += 8;
+                    patch.rms_norm_eps = f64::from_bits(bits) as f32;
+                }
+                _ => {
+                    let _ = gguf_skip_value(mmap, pos, vtype);
+                }
+            }
+            return patch;
+        }
         if key.ends_with("rope.freq_base") && !key.contains("swa") {
             match vtype {
                 6 if *pos + 4 <= mmap.len() => {
@@ -95,6 +135,35 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             }
             return patch;
         }
+        if (key.contains("head_count_kv") || key.contains("n_kv_head")) && vtype == 9 {
+            if *pos + 12 <= mmap.len() {
+                let element_type =
+                    u32::from_le_bytes(mmap[*pos..*pos + 4].try_into().unwrap_or([0; 4]));
+                *pos += 4;
+                let items =
+                    u64::from_le_bytes(mmap[*pos..*pos + 8].try_into().unwrap_or([0; 8]));
+                *pos += 8;
+                let mut max_kv = 0u32;
+                for _ in 0..items {
+                    if (element_type == 4 || element_type == 5) && *pos + 4 <= mmap.len() {
+                        let v =
+                            u32::from_le_bytes(mmap[*pos..*pos + 4].try_into().unwrap_or([0; 4]));
+                        *pos += 4;
+                        if v > max_kv {
+                            max_kv = v;
+                        }
+                    } else if gguf_skip_value(mmap, pos, element_type).is_none() {
+                        break;
+                    }
+                }
+                if max_kv > 0 {
+                    patch.n_kv_head = max_kv;
+                }
+            } else {
+                let _ = gguf_skip_value(mmap, pos, vtype);
+            }
+            return patch;
+        }
         if vtype != 4 {
             let _ = gguf_skip_value(mmap, pos, vtype);
             return patch;
@@ -148,6 +217,10 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             patch.ssm_inner_size = v;
         } else if key.ends_with("full_attention_interval") {
             patch.full_attention_interval = v;
+        } else if key.ends_with("rope.dimension_count_swa") {
+            patch.rope_dim_swa = v;
+        } else if key.ends_with("rope.dimension_count") && !key.contains("swa") {
+            patch.rope_dim = v;
         }
         patch
     }

@@ -72,8 +72,8 @@ pub(super) fn dequant_q4_k(
 /// GGML `dequantize_row_q5_K`.
 ///
 /// `Q5_K` keeps Q4_K's eight scale/min pairs and adds a 32-byte bitplane.
-/// The bitplane is indexed as `[bit-plane][lane]`: each successive group of
-/// 32 unpacked values consumes the next bit of the same 32 source bytes.
+/// Each 64-value pair uses bit `scale_index` for its low-nibble 32 values and
+/// bit `scale_index + 1` for its high-nibble 32 values.
 pub(super) fn dequant_q5_k(
     raw: &[u8],
     n_elems: usize,
@@ -110,7 +110,7 @@ pub(super) fn dequant_q5_k(
                 if element >= block_elems {
                     break;
                 }
-                let high = ((qh[lane] >> (element / 32)) & 1) << 4;
+                let high = ((qh[lane] >> scale_index) & 1) << 4;
                 out[out_idx] = d0 * ((qs[q_off + lane] & 0x0f) | high) as f32 - m0;
                 out_idx += 1;
                 element += 1;
@@ -119,7 +119,7 @@ pub(super) fn dequant_q5_k(
                 if element >= block_elems {
                     break;
                 }
-                let high = ((qh[lane] >> (element / 32)) & 1) << 4;
+                let high = ((qh[lane] >> (scale_index + 1)) & 1) << 4;
                 out[out_idx] = d1 * ((qs[q_off + lane] >> 4) | high) as f32 - m1;
                 out_idx += 1;
                 element += 1;

@@ -340,6 +340,11 @@ fn vertex_main(
 
 @fragment
 fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
+    // Derivatives precede alpha discard and per-fragment cascade branches.
+    let near_receiver = shadow_receiver_coordinates(input.sun_shadow_near_position);
+    let far_receiver = shadow_receiver_coordinates(input.sun_shadow_far_position);
+    let near_plane = shadow_receiver_gradient(dpdx(near_receiver), dpdy(near_receiver), sun_shadow.params.y, sun_shadow.params.z);
+    let far_plane = shadow_receiver_gradient(dpdx(far_receiver), dpdy(far_receiver), sun_shadow.params.y, sun_shadow.params.z);
     var n = normalize(input.normal);
     let normal_sample = sample_normal(material_uv(input.uv0, 1u));
     if (material.texture_flags.y != 0u) {
@@ -390,6 +395,8 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
         input.sun_shadow_near_position,
         input.sun_shadow_far_position,
         input.camera_depth,
+        near_plane,
+        far_plane,
         n,
         key
     );
@@ -515,6 +522,8 @@ fn cascaded_shadow_visibility(
     near_clip: vec4<f32>,
     far_clip: vec4<f32>,
     camera_depth: f32,
+    near_plane: vec3<f32>,
+    far_plane: vec3<f32>,
     normal: vec3<f32>,
     light: vec3<f32>
 ) -> f32 {
@@ -523,11 +532,11 @@ fn cascaded_shadow_visibility(
     }
     let split = sun_shadow.params.w;
     let overlap = clamp(split * 0.08, 0.5, 4.0);
-    let near_visibility = sample_shadow_map(sun_shadow_near, near_clip, normal, light);
+    let near_visibility = sample_shadow_map(sun_shadow_near, near_clip, near_plane, normal, light);
     if (camera_depth <= split - overlap) {
         return near_visibility;
     }
-    let far_visibility = sample_shadow_map(sun_shadow_far, far_clip, normal, light);
+    let far_visibility = sample_shadow_map(sun_shadow_far, far_clip, far_plane, normal, light);
     if (camera_depth >= split + overlap) {
         return far_visibility;
     }
@@ -538,6 +547,7 @@ fn cascaded_shadow_visibility(
 fn sample_shadow_map(
     shadow_map: texture_depth_2d,
     light_clip: vec4<f32>,
+    plane: vec3<f32>,
     normal: vec3<f32>,
     light: vec3<f32>
 ) -> f32 {
@@ -549,17 +559,17 @@ fn sample_shadow_map(
     if (ndc.z < 0.0 || ndc.z > 1.0 || any(uv < vec2<f32>(0.0)) || any(uv > vec2<f32>(1.0))) {
         return 1.0;
     }
-    let slope_bias = sun_shadow.params.z * (1.0 - max(dot(normal, light), 0.0));
-    let compare_depth = ndc.z - slope_bias;
     let texel = sun_shadow.params.y;
     var visibility = 0.0;
     for (var y = -1; y <= 1; y = y + 1) {
         for (var x = -1; x <= 1; x = x + 1) {
             let offset = vec2<f32>(f32(x), f32(y)) * texel;
+            let sample_uv = clamp(uv + offset, vec2<f32>(0.0), vec2<f32>(1.0));
+            let compare_depth = shadow_receiver_compare_depth(ndc.z, plane, (sample_uv - uv) / texel, fract(sample_uv / texel - vec2<f32>(0.5)), dot(normal, light), sun_shadow.params.z);
             visibility += textureSampleCompareLevel(
                 shadow_map,
                 sun_shadow_sampler,
-                clamp(uv + offset, vec2<f32>(0.0), vec2<f32>(1.0)),
+                sample_uv,
                 compare_depth
             );
         }

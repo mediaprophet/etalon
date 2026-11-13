@@ -41,6 +41,8 @@ pub fn dequantize_row_into(
         GGML_TYPE_BF16 => dequant_bf16(raw, n_elems, out),
         GGML_TYPE_Q4_0 => dequant_q4_0(raw, n_elems, out),
         GGML_TYPE_Q5_0 => dequant_q5_0(raw, n_elems, out),
+        GGML_TYPE_Q5_1 => dequant_q5_1(raw, n_elems, out),
+        GGML_TYPE_MXFP4 => dequant_mxfp4(raw, n_elems, out),
         GGML_TYPE_Q8_0 => dequant_q8_0(raw, n_elems, out),
         GGML_TYPE_Q4_K => dequant_q4_k(raw, n_elems, out),
         GGML_TYPE_Q5_K => dequant_q5_k(raw, n_elems, out),

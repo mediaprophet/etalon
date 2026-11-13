@@ -101,26 +101,32 @@ pub fn route_topk(
     }
 
     if norm_topk_prob {
-        // Softmax normalization across the top-k logits
+        // Full softmax over all router logits in fp32, then normalize top-k probabilities.
         let mut max_val = f32::NEG_INFINITY;
-        for i in 0..k {
-            if top[i].0 > max_val {
-                max_val = top[i].0;
+        for &logit in gate_logits {
+            if logit > max_val {
+                max_val = logit;
             }
         }
 
         let mut sum_exp = 0.0f32;
-        let mut exps: [f32; MAX_MOE_TOPK] = [0.0; MAX_MOE_TOPK];
+        for &logit in gate_logits {
+            sum_exp += (logit - max_val).exp();
+        }
+        let inv_all = if sum_exp > 0.0 { 1.0 / sum_exp } else { 0.0 };
+
+        let mut sum_topk = 0.0f32;
+        let mut probs: [f32; MAX_MOE_TOPK] = [0.0; MAX_MOE_TOPK];
         for i in 0..k {
-            let exp_val = (top[i].0 - max_val).exp();
-            exps[i] = exp_val;
-            sum_exp += exp_val;
+            let p = (top[i].0 - max_val).exp() * inv_all;
+            probs[i] = p;
+            sum_topk += p;
         }
 
-        let inv_sum = if sum_exp > 0.0 { 1.0 / sum_exp } else { 0.0 };
+        let inv_topk = if sum_topk > 0.0 { 1.0 / sum_topk } else { 0.0 };
         for i in 0..k {
             out_indices[i] = top[i].1;
-            out_weights[i] = exps[i] * inv_sum;
+            out_weights[i] = probs[i] * inv_topk;
         }
     } else {
         // Raw linear normalization: max(logit, 0) normalized

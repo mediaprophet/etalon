@@ -69,6 +69,16 @@ pub struct ModelHyperparams {
     pub architecture: u32,
     /// `ARCH_FLAG_*()` bitmask.
     pub arch_flags: u32,
+    /// RoPE rotary dimension count (`0` = full `head_dim`).
+    pub rope_dim: u32,
+    /// Sliding-window attention RoPE rotary dimension count (`0` = `rope_dim` or SWA `head_dim`).
+    pub rope_dim_swa: u32,
+    /// Sliding-window attention RoPE theta base frequency (`0.0` = `rope_freq_base`).
+    pub rope_freq_base_swa: f32,
+    /// RMSNorm epsilon (`0.0` defaults to `1e-5`).
+    pub rms_norm_eps: f32,
+    /// Per-Layer Embedding (PLE) dimension per layer (`0` = no PLE).
+    pub ple_embd_per_layer: u32,
 }
 
 impl ModelHyperparams {
@@ -183,9 +193,9 @@ impl ModelHyperparams {
         // ARCH_GRANITE_HYBRID: SSM causal-conv + GatedDeltaNet path implemented in
         // `gguf_bridge::ssm_forward`.  Full attention layers in the hybrid model still
         // use the standard attention path.  No longer hard-rejected.
-        if self.architecture == ARCH_GEMMA4
-            || (self.arch_flags & ARCH_FLAG_HAS_PLE) != 0
-            || (self.arch_flags & ARCH_FLAG_HAS_SHARED_KV) != 0
+        if self.architecture != ARCH_GEMMA4
+            && ((self.arch_flags & ARCH_FLAG_HAS_PLE) != 0
+                || (self.arch_flags & ARCH_FLAG_HAS_SHARED_KV) != 0)
         {
             let mut missing = Vec::new();
             if (self.arch_flags & ARCH_FLAG_HAS_PLE) != 0 {
@@ -227,7 +237,7 @@ pub fn parse_architecture_id(name: &str) -> u32 {
         "qwen35moe" | "qwen3.5moe" | "qwen3.6moe" => ARCH_QWEN35_MOE,
         "qwen4exp" | "qwen4_exp" => ARCH_QWEN4EXP,
         "granitehybrid" | "granite-hybrid" | "granite_hybrid" => ARCH_GRANITE_HYBRID,
-        "qwen2" | "qwen2vl" | "qwen3" | "qwen3.5" | "qwen3.6" => ARCH_QWEN2,
+        "qwen2" | "qwen2vl" | "qwen3" | "qwen35" | "qwen3.5" | "qwen36" | "qwen3.6" => ARCH_QWEN2,
         "glm" | "glm4" | "glm4.7" | "chatglm" => ARCH_GLM4,
         "phi" | "phi3" | "phi4" => ARCH_PHI4,
         "deepseek" | "deepseek2" | "deepseek3" | "deepseek_moe" => ARCH_DEEPSEEK_MOE,

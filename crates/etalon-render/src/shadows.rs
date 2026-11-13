@@ -6,7 +6,7 @@ use crate::shadow_math::SHADOW_RESOLUTION_CANDIDATES;
 #[derive(Clone, Copy, Debug, PartialEq, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct ShadowUniform {
     pub light_view_projection: [[[f32; 4]; 4]; SHADOW_CASCADE_COUNT],
-    /// enabled, inverse resolution, constant receiver bias, camera split depth
+    /// enabled, inverse resolution, bounded fallback receiver bias, camera split depth
     pub params: [f32; 4],
 }
 

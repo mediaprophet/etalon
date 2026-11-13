@@ -170,6 +170,16 @@ pub struct LayerTensors {
     pub indexer_k: Option<TensorInfo>,
     pub indexer_q_norm: Option<TensorInfo>,
     pub indexer_k_norm: Option<TensorInfo>,
+    // Gemma 4 post-attention / post-FFN norms, PLE per-layer projections, and output scalar.
+    pub post_attention_norm: Option<TensorInfo>,
+    pub post_ffw_norm: Option<TensorInfo>,
+    pub post_ffw_norm_1: Option<TensorInfo>,
+    pub post_ffw_norm_2: Option<TensorInfo>,
+    pub pre_ffw_norm_2: Option<TensorInfo>,
+    pub ple_inp_gate: Option<TensorInfo>,
+    pub ple_proj: Option<TensorInfo>,
+    pub ple_post_norm: Option<TensorInfo>,
+    pub layer_output_scale: Option<TensorInfo>,
 }
 
 impl LayerTensors {

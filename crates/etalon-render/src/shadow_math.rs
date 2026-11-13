@@ -493,3 +493,7 @@ fn scale(a: [f32; 3], factor: f32) -> [f32; 3] {
 #[cfg(test)]
 #[path = "shadow_math_tests.rs"]
 mod tests;
+
+#[path="shadow_receiver.rs"]
+mod receiver;
+pub use receiver::{receiver_plane_gradient,receiver_compare_depth,ReceiverPlane,RECEIVER_DEPTH_EPSILON};

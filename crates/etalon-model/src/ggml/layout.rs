@@ -3,6 +3,7 @@ pub const GGML_TYPE_F32: u32 = 0;
 pub const GGML_TYPE_F16: u32 = 1;
 pub const GGML_TYPE_Q4_0: u32 = 2;
 pub const GGML_TYPE_Q5_0: u32 = 6;
+pub const GGML_TYPE_Q5_1: u32 = 7;
 pub const GGML_TYPE_Q8_0: u32 = 8;
 pub const GGML_TYPE_Q4_K: u32 = 12;
 /// GGML's 256-value K-quant block with a fifth high-bit plane. Qwen3.8
@@ -21,6 +22,7 @@ pub const GGML_TYPE_IQ4_XS: u32 = 23;
 /// Brain float16 (1 sign / 8 exp / 7 mantissa) — used by Gemma-4 and other modern GGUFs
 /// for norms / residual scales alongside Q4_K weights (`ggml_type` enum value 30).
 pub const GGML_TYPE_BF16: u32 = 30;
+pub const GGML_TYPE_MXFP4: u32 = 39;
 /// FP8 E4M3 (1 sign / 4 exp / 3 mantissa) — 1 byte per element.
 pub const GGML_TYPE_FP8_E4M3: u32 = 40;
 /// Qualia conversion-time **SoA Q4_K** (not a stock GGML type).
@@ -67,6 +69,14 @@ pub fn ggml_block_layout(ggml_type: u32) -> Option<GgmlBlockLayout> {
         GGML_TYPE_Q5_0 => Some(GgmlBlockLayout {
             block_elems: 32,
             block_bytes: 22,
+        }),
+        GGML_TYPE_Q5_1 => Some(GgmlBlockLayout {
+            block_elems: 32,
+            block_bytes: 24,
+        }),
+        GGML_TYPE_MXFP4 => Some(GgmlBlockLayout {
+            block_elems: 32,
+            block_bytes: 17,
         }),
         GGML_TYPE_Q8_0 => Some(GgmlBlockLayout {
             block_elems: 32,

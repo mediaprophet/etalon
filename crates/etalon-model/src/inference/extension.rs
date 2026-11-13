@@ -158,6 +158,7 @@ impl ModelMetadata {
             full_attention_interval: u32::from_le_bytes(take(bytes, &mut cursor)),
             architecture: u32::from_le_bytes(take(bytes, &mut cursor)),
             arch_flags: u32::from_le_bytes(take(bytes, &mut cursor)),
+            ..ModelHyperparams::default()
         };
         let present = u32::from_le_bytes(take(bytes, &mut cursor));
         if present > 1 {

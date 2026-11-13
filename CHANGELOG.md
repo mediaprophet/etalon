@@ -1,6 +1,20 @@
 # Change Log
 
+## Unreleased
+
+- `etalon-model` resolves exact weight-name components, preserving Q/K normalization and expert scale tensors instead of aliasing them as projections.
+
+- `cargo xtask test` stages Windows WARP beside binaries in `CARGO_TARGET_DIR`, including isolated test builds.
+
+- `etalon-model` decodes Q5_0/Q5_1 upper-half high bits from the correct lanes, correcting quantized expert and embedding values.
+
+- `etalon-render` corrects cascaded-shadow PCF receiver depths per texel, avoiding self-shadow rings and streaks while retaining bounded grazing fallback and contact shadows.
+
+- `etalon-model-io` checks opened-file locality directly, allowing local NTFS volumes with newer device flags while retaining remote-file rejection and immutable lease exclusion.
+
+
 ## 0.0.2.1 release (QualiaDB 0.0.41 synchronization — `v0.0.2.1-release`)
+
 
 - Enforce canonical 5-field XOR parity (`subject ^ predicate ^ object ^ context ^ metadata`) in `etalon-nquin::NQuinWire` (`Q42-00`), aligning GPU/CPU wire validation with the Q42 v4 48-byte Super-Quin specification.
 - Complete Wave 1 & 2 domain-neutral library migration into `etalon-render`, `etalon-sim`, `etalon-signal`, `etalon-tensor`, and `etalon-wgsl-forge` (skeletal animation, 10D spatial math/scene graph, B-rep/CSG/parametric geometry, DSP/vision/radar/acoustic kernels, and Naga SPIR-V/Forge executor optimizations).

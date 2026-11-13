@@ -56,6 +56,58 @@ pub fn checked_ssm_layout_for(
     if h.ssm_conv_kernel != 0 && h.ssm_conv_kernel != 4 {
         return Err(SsmStateError::UnsupportedDimensions);
     }
+    if let (Some(qkv_info), Some(a_info)) = (tensors.attn_qkv.as_ref(), tensors.ssm_a.as_ref()) {
+        let qkv_out = usize::try_from(if qkv_info.n_dims > 1 && qkv_info.dims[1] > 0 {
+            qkv_info.dims[1]
+        } else {
+            qkv_info.dims[0]
+        })
+        .map_err(|_| SsmStateError::SizeOverflow)?;
+        if qkv_out == 0 || qkv_out > MAX_SSM_INNER {
+            return Err(SsmStateError::UnsupportedDimensions);
+        }
+        let d_state = if h.ssm_state_size > 0 {
+            h.ssm_state_size as usize
+        } else {
+            128
+        };
+        let n_heads = if h.ssm_time_step_rank > 0 {
+            h.ssm_time_step_rank as usize
+        } else {
+            usize::try_from(a_info.dims[0]).map_err(|_| SsmStateError::SizeOverflow)?
+        };
+        let d_head = if h.ssm_inner_size > 0 && n_heads > 0 {
+            (h.ssm_inner_size as usize) / n_heads
+        } else {
+            d_state
+        };
+        if d_state == 0
+            || d_state > MAX_SSM_STATE
+            || d_head == 0
+            || d_head > MAX_SSM_HEAD
+            || n_heads == 0
+            || n_heads > MAX_SSM_HEAD
+        {
+            return Err(SsmStateError::UnsupportedDimensions);
+        }
+        let conv_len = CONV_HISTORY_DEPTH
+            .checked_mul(qkv_out)
+            .ok_or(SsmStateError::SizeOverflow)?;
+        let delta_len = d_state
+            .checked_mul(d_head)
+            .and_then(|n| n.checked_mul(n_heads))
+            .ok_or(SsmStateError::SizeOverflow)?;
+        let stride = conv_len
+            .checked_add(delta_len)
+            .ok_or(SsmStateError::SizeOverflow)?;
+        return Ok(SsmLayerStateLayout {
+            stride,
+            conv_offset: 0,
+            conv_len,
+            delta_offset: conv_len,
+            delta_len,
+        });
+    }
     let inner_dim = if h.ssm_inner_size > 0 {
         h.ssm_inner_size as usize
     } else if let Some(info) = tensors.ssm_conv1d.as_ref() {
@@ -162,6 +214,9 @@ pub fn ssm_layout_for(
     h: &ModelHyperparams,
     n_embd: usize,
 ) -> SsmLayerStateLayout {
+    if let Ok(layout) = checked_ssm_layout_for(tensors, h, n_embd) {
+        return layout;
+    }
     let inner_dim = if h.ssm_inner_size > 0 {
         h.ssm_inner_size as usize
     } else if let Some(info) = tensors.ssm_conv1d.as_ref() {

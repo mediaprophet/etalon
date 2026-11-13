@@ -56,11 +56,12 @@ pub struct TensorIndex<H = ModelHyperparams> {
 
 /// True when `name` is a per-layer matmul weight consumed by `dispatch_transformer_layer`.
 fn is_layer_matmul_tensor_name(name: &[u8]) -> bool {
-    const SUFFIXES: [&[u8]; 16] = [
+    const SUFFIXES: [&[u8]; 19] = [
         b"attn_q.weight",
         b"attn_k.weight",
         b"attn_v.weight",
         b"attn_qkv.weight",
+        b"attn_gate.weight",
         b"attn_output.weight",
         b"ffn_gate.weight",
         b"ffn_up.weight",
@@ -73,6 +74,8 @@ fn is_layer_matmul_tensor_name(name: &[u8]) -> bool {
         b"ffn_gate_shexp.weight",
         b"ffn_up_shexp.weight",
         b"ffn_down_shexp.weight",
+        b"inp_gate.weight",
+        b"proj.weight",
     ];
     if !name.starts_with(b"blk.") {
         return false;
@@ -167,19 +170,46 @@ fn canonical_component_name(name: &[u8], out: &mut [u8; 128]) -> usize {
     let Ok(name) = core::str::from_utf8(name) else {
         return 0;
     };
-    if name.contains("per_layer") || name.contains("ple.") {
+    if !name.ends_with(".weight") {
+        return 0;
+    }
+    let component = |value: &str| name.split('.').any(|part| part == value);
+    if name.contains("per_layer")
+        || name.contains("ple.")
+        || name.ends_with(".scale")
+        || name.contains("_scale")
+        || name.contains("q_norm")
+        || name.contains("k_norm")
+        || name.contains("gate_inp_shexp")
+        || name.contains("down_exps")
+        || name.contains("gate_exps")
+        || name.contains("up_exps")
+        || name.contains("post_ffw_norm")
+        || name.contains("post_feedforward")
+        || name.contains("pre_ffw_norm")
+        || name.contains("pre_feedforward_layernorm_2")
+        || name.contains("layer_output_scale")
+        || name.contains("layer_scalar")
+    {
         return 0;
     }
     // Qwen hybrid checkpoints use one fused `[Q;K;V]` projection.  It has no P64 role
     // equivalent to a single projection, so normalise it before the ordinary role mapper.
-    if name.contains("qkv_proj") || name.contains("attn_qkv") {
+    if component("qkv_proj") || component("attn_qkv") {
         if let Some(layer) = tensor_layer_number(name) {
             return write_blk_tensor_name(layer, b"attn_qkv.weight", out);
         }
     }
-    if name.contains("gate_up_exps") || name.contains("experts.gate_up_proj") {
+    if component("ffn_gate_up_exps") || (component("experts") && component("gate_up_proj")) {
         if let Some(layer) = tensor_layer_number(name) {
             return write_blk_tensor_name(layer, b"ffn_gate_up_exps.weight", out);
+        }
+    }
+    if name.ends_with("post_attention_norm.weight")
+        || name.ends_with("post_attention_layernorm.weight")
+    {
+        if let Some(layer) = tensor_layer_number(name) {
+            return write_blk_tensor_name(layer, b"post_attention_norm.weight", out);
         }
     }
     let Some(role) = crate::tensor_roles::name_to_role(name) else {
@@ -236,6 +266,9 @@ pub mod qwen_attention;
 pub mod qwen_roles;
 mod types;
 pub use hyperparams::*;
+pub use lookup::{
+    embedding_row_fingerprint, lookup_embedded_token_id, record_embedded_token_id,
+};
 pub use types::*;
 
 mod compat_cursor;
@@ -277,3 +310,6 @@ pub use encoding::WeightEncoding;
 
 mod moe_metadata;
 pub use moe_metadata::MODEL_ROUTING_EXTENSION_BYTES;
+
+#[cfg(test)]
+mod tensor_alias_tests;

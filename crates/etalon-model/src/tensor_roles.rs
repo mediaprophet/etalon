@@ -43,21 +43,24 @@ fn extract_layer(name: &str) -> Option<u16> {
 
 /// Map a tensor name (GGUF or HF convention) to its engine role + layer, or `None` if unrecognised.
 pub fn name_to_role(name: &str) -> Option<TensorRole> {
+    if !name.ends_with(".weight") {
+        return None;
+    }
+    let component = |value: &str| name.split('.').any(|part| part == value);
     // Global (non-layer) tensors first — and `output_norm` BEFORE the bare `output` (it contains it).
-    if name.contains("output_norm") || name == "model.norm.weight" {
+    if component("output_norm") || name == "model.norm.weight" {
         return Some(TensorRole {
             role: P64_ROLE_OUTPUT_NORM,
             layer: P64_LAYER_GLOBAL,
         });
     }
-    if (name.contains("token_embd") || name.contains("embed_tokens")) && !name.contains("per_layer")
-    {
+    if (component("token_embd") || component("embed_tokens")) && !component("per_layer") {
         return Some(TensorRole {
             role: P64_ROLE_TOKEN_EMBD,
             layer: P64_LAYER_GLOBAL,
         });
     }
-    if name.contains("lm_head") || name == "output.weight" {
+    if component("lm_head") || name == "output.weight" {
         return Some(TensorRole {
             role: P64_ROLE_OUTPUT,
             layer: P64_LAYER_GLOBAL,
@@ -66,52 +69,49 @@ pub fn name_to_role(name: &str) -> Option<TensorRole> {
 
     // Per-layer tensors require a layer index.
     let layer = extract_layer(name)?;
-    let role = if name.contains("attn_q") || name.contains("q_proj") {
+    let role = if component("attn_q") || component("q_proj") {
         P64_ROLE_ATTN_Q
-    } else if name.contains("attn_k") || name.contains("k_proj") {
+    } else if component("attn_k") || component("k_proj") {
         P64_ROLE_ATTN_K
-    } else if name.contains("attn_v") || name.contains("v_proj") {
+    } else if component("attn_v") || component("v_proj") {
         P64_ROLE_ATTN_V
-    } else if name.contains("attn_output") || name.contains("o_proj") {
+    } else if component("attn_output") || component("o_proj") {
         P64_ROLE_ATTN_OUTPUT
-    } else if name.contains("ffn_gate_inp")
-        || name.contains("gate_inp")
-        || (name.contains("mlp")
-            && name.contains("gate")
-            && !name.contains("gate_proj")
-            && !name.contains("gate_exps"))
+    } else if component("ffn_gate_inp")
+        || component("gate_inp")
+        || (component("mlp")
+            && component("gate")
+            && !component("gate_proj")
+            && !component("gate_exps"))
     {
         P64_ROLE_MOE_ROUTER
-    } else if name.contains("ffn_gate_shexp") || name.contains("shared_expert.gate_proj") {
+    } else if component("ffn_gate_shexp") || (component("shared_expert") && component("gate_proj"))
+    {
         P64_ROLE_MOE_SHARED_GATE
-    } else if name.contains("ffn_up_shexp") || name.contains("shared_expert.up_proj") {
+    } else if component("ffn_up_shexp") || (component("shared_expert") && component("up_proj")) {
         P64_ROLE_MOE_SHARED_UP
-    } else if name.contains("ffn_down_shexp") || name.contains("shared_expert.down_proj") {
+    } else if component("ffn_down_shexp") || (component("shared_expert") && component("down_proj"))
+    {
         P64_ROLE_MOE_SHARED_DOWN
-    } else if name.contains("ffn_gate_exps")
-        || (name.contains("experts") && name.contains("gate_proj"))
-    {
+    } else if component("ffn_gate_exps") || (component("experts") && component("gate_proj")) {
         P64_ROLE_MOE_GATE_EXPS
-    } else if name.contains("ffn_up_exps") || (name.contains("experts") && name.contains("up_proj"))
-    {
+    } else if component("ffn_up_exps") || (component("experts") && component("up_proj")) {
         P64_ROLE_MOE_UP_EXPS
-    } else if name.contains("ffn_down_exps")
-        || (name.contains("experts") && name.contains("down_proj"))
-    {
+    } else if component("ffn_down_exps") || (component("experts") && component("down_proj")) {
         P64_ROLE_MOE_DOWN_EXPS
-    } else if name.contains("ffn_gate") || name.contains("gate_proj") {
+    } else if component("ffn_gate") || component("gate_proj") {
         P64_ROLE_FFN_GATE
-    } else if name.contains("ffn_up") || name.contains("up_proj") {
+    } else if component("ffn_up") || component("up_proj") {
         P64_ROLE_FFN_UP
-    } else if name.contains("ffn_down") || name.contains("down_proj") {
+    } else if component("ffn_down") || component("down_proj") {
         P64_ROLE_FFN_DOWN
-    } else if name.contains("attn_sub_norm") || name.contains("self_attn_layer_norm") {
+    } else if component("attn_sub_norm") || component("self_attn_layer_norm") {
         P64_ROLE_ATTN_SUBLN
-    } else if name.contains("ffn_sub_norm") || name.contains("mlp_layer_norm") {
+    } else if component("ffn_sub_norm") || component("mlp_layer_norm") {
         P64_ROLE_FFN_SUBLN
-    } else if name.contains("attn_norm") || name.contains("input_layernorm") {
+    } else if component("attn_norm") || component("input_layernorm") {
         P64_ROLE_ATTN_NORM
-    } else if name.contains("ffn_norm") || name.contains("post_attention_layernorm") {
+    } else if component("ffn_norm") || component("post_attention_layernorm") {
         P64_ROLE_FFN_NORM
     } else {
         return None;

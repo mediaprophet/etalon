@@ -1,7 +1,7 @@
 use super::{cpu::*, HybridEngine, LayerProvider};
 use etalon_model::inference::LayerTensors;
 const MAX_HIDDEN_DIM: usize = 4096;
-const MAX_STACK_GEMM_DIM: usize = 10240;
+const MAX_STACK_GEMM_DIM: usize = 20480;
 impl<P: LayerProvider> HybridEngine<'_, P> {
     pub fn ffn(
         &mut self,

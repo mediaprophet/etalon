@@ -261,7 +261,7 @@ fn dequant_q5_0_weight(row: u32, col: u32) -> f32 {
         let xh = ((qh >> j) << 4u) & 0x10u;
         q = i32((qs_byte & 0xFu) | xh) - 16;
     } else {
-        let xh = (qh >> (j + 12u)) & 0x10u;
+        let xh = ((qh >> (j + 12u)) << 4u) & 0x10u;
         q = i32((qs_byte >> 4u) | xh) - 16;
     }
     return d * f32(q);

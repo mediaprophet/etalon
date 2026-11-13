@@ -34,6 +34,13 @@ struct AttributeInfo {
 }
 #[link(name = "ntdll")]
 unsafe extern "system" {
+    fn NtQueryInformationFile(
+        handle: *mut c_void,
+        status: *mut IoStatus,
+        buffer: *mut c_void,
+        length: u32,
+        class: i32,
+    ) -> i32;
     fn NtQueryVolumeInformationFile(
         handle: *mut c_void,
         status: *mut IoStatus,
@@ -43,9 +50,6 @@ unsafe extern "system" {
     ) -> i32;
 }
 const REMOTE_MASK: u32 = 0x10 | 0x1000 | 0x2000 | 0x80000; // remote, TS, WebDAV, VSMB
-                                                           // Known local flags from Windows FILE_FS_DEVICE_INFORMATION. Unknown future
-                                                           // characteristics require qualification instead of being silently admitted.
-const LOCAL_MASK: u32 = 0x1 | 0x2 | 0x4 | 0x8 | 0x20 | 0x40 | 0x100 | 0x4000 | 0x20000;
 fn completed(status: i32, io: &IoStatus, maximum: usize) -> Result<usize, LeaseError> {
     // SAFETY: initialized as Status before the call, and this query writes the
     // documented NTSTATUS member (never interpret it as a pointer).
@@ -60,11 +64,14 @@ fn classify(
     device_len: usize,
     fs: &AttributeInfo,
     fs_len: usize,
+    is_remote: u8,
+    remote_len: usize,
 ) -> Result<(), LeaseError> {
     if device_len != 8
         || device.device_type != 7
         || device.characteristics & REMOTE_MASK != 0
-        || device.characteristics & !LOCAL_MASK != 0
+        || remote_len != 1
+        || is_remote != 0
         || fs.name_bytes != 8
         || fs_len < 20
         || fs_len > std::mem::size_of::<AttributeInfo>()
@@ -148,7 +155,26 @@ fn validate_supported(file: &File) -> Result<(), LeaseError> {
         )
     };
     let fs_len = completed(status, &fs_status, std::mem::size_of::<AttributeInfo>())?;
-    classify(device, device_len, &fs, fs_len)
+    // The opened file's locality is authoritative; unrelated new device flags
+    // do not imply remote storage. Unknown/error/short query results fail closed.
+    let mut is_remote = 0xffu8;
+    let mut remote_status = IoStatus {
+        status_or_pointer: StatusOrPointer { status: -1 },
+        information: 0,
+    };
+    // SAFETY: FileIsRemoteDeviceInformation writes one BOOLEAN to this owned,
+    // synchronous handle's fixed buffer; all pointers live through the query.
+    let status = unsafe {
+        NtQueryInformationFile(
+            file.as_raw_handle(),
+            &mut remote_status,
+            std::ptr::from_mut(&mut is_remote).cast(),
+            1,
+            51,
+        )
+    };
+    let remote_len = completed(status, &remote_status, 1)?;
+    classify(device, device_len, &fs, fs_len, is_remote, remote_len)
 }
 #[cfg(test)]
 mod tests {
@@ -170,41 +196,62 @@ mod tests {
             ..Default::default()
         };
         fs.name[..4].copy_from_slice(&[78, 84, 70, 83]);
-        assert!(classify(local, 8, &fs, 20).is_ok());
-        for flags in [0x10, 0x1000, 0x2000, 0x80000, 0x8000_0000] {
-            assert!(classify(
-                DeviceInfo {
-                    characteristics: flags,
-                    ..local
-                },
-                8,
-                &fs,
-                20
-            )
-            .is_err());
+        assert!(classify(local, 8, &fs, 20, 0, 1).is_ok());
+        for flags in [0x10, 0x1000, 0x2000, 0x80000] {
+            assert!(
+                classify(
+                    DeviceInfo {
+                        characteristics: flags,
+                        ..local
+                    },
+                    8,
+                    &fs,
+                    20,
+                    0,
+                    1
+                )
+                .is_err()
+            );
+        }
+        for flags in [0x220020, 0x8000_0020] {
+            let observed = DeviceInfo {
+                characteristics: flags,
+                ..local
+            };
+            assert!(classify(observed, 8, &fs, 20, 0, 1).is_ok());
+            for remote in [1, 2, 255] {
+                assert!(classify(observed, 8, &fs, 20, remote, 1).is_err());
+            }
+            for size in [0, 2, usize::MAX] {
+                assert!(classify(observed, 8, &fs, 20, 0, size).is_err());
+            }
         }
         for kind in [0, 2, 8, 20, u32::MAX] {
-            assert!(classify(
-                DeviceInfo {
-                    device_type: kind,
-                    ..local
-                },
-                8,
-                &fs,
-                20
-            )
-            .is_err());
+            assert!(
+                classify(
+                    DeviceInfo {
+                        device_type: kind,
+                        ..local
+                    },
+                    8,
+                    &fs,
+                    20,
+                    0,
+                    1
+                )
+                .is_err()
+            );
         }
         for n in [0, 7, 9, usize::MAX] {
-            assert!(classify(local, n, &fs, 20).is_err());
+            assert!(classify(local, n, &fs, 20, 0, 1).is_err());
         }
         for n in [0, 19, 77, usize::MAX] {
-            assert!(classify(local, 8, &fs, n).is_err());
+            assert!(classify(local, 8, &fs, n, 0, 1).is_err());
         }
         for n in [0, 7, 9, 64, u32::MAX] {
             let mut bad = fs;
             bad.name_bytes = n;
-            assert!(classify(local, 8, &bad, 20).is_err());
+            assert!(classify(local, 8, &bad, 20, 0, 1).is_err());
         }
         for name in [
             [82, 101, 70, 83],
@@ -214,36 +261,42 @@ mod tests {
         ] {
             let mut bad = fs;
             bad.name[..4].copy_from_slice(&name);
-            assert!(classify(local, 8, &bad, 20).is_err());
+            assert!(classify(local, 8, &bad, 20, 0, 1).is_err());
         }
         for status in [1, 0x103, -1, i32::MIN] {
-            assert!(completed(
-                status,
+            assert!(
+                completed(
+                    status,
+                    &IoStatus {
+                        status_or_pointer: StatusOrPointer { status: 0 },
+                        information: 8
+                    },
+                    8
+                )
+                .is_err()
+            );
+        }
+        assert!(
+            completed(
+                0,
                 &IoStatus {
-                    status_or_pointer: StatusOrPointer { status: 0 },
+                    status_or_pointer: StatusOrPointer { status: 1 },
                     information: 8
                 },
                 8
             )
-            .is_err());
-        }
-        assert!(completed(
-            0,
-            &IoStatus {
-                status_or_pointer: StatusOrPointer { status: 1 },
-                information: 8
-            },
-            8
-        )
-        .is_err());
-        assert!(completed(
-            0,
-            &IoStatus {
-                status_or_pointer: StatusOrPointer { status: 0 },
-                information: 9
-            },
-            8
-        )
-        .is_err());
+            .is_err()
+        );
+        assert!(
+            completed(
+                0,
+                &IoStatus {
+                    status_or_pointer: StatusOrPointer { status: 0 },
+                    information: 9
+                },
+                8
+            )
+            .is_err()
+        );
     }
 }

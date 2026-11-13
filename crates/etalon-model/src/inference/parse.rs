@@ -121,7 +121,22 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             if patch.architecture != 0 {
                 hyperparams.architecture = patch.architecture;
             }
+            if patch.rope_dim != 0 {
+                hyperparams.rope_dim = patch.rope_dim;
+            }
+            if patch.rope_dim_swa != 0 {
+                hyperparams.rope_dim_swa = patch.rope_dim_swa;
+            }
+            if patch.rope_freq_base_swa > 0.0 {
+                hyperparams.rope_freq_base_swa = patch.rope_freq_base_swa;
+            }
+            if patch.rms_norm_eps > 0.0 {
+                hyperparams.rms_norm_eps = patch.rms_norm_eps;
+            }
             hyperparams.arch_flags |= patch.arch_flags;
+        }
+        if ple_config.embedding_row_width != 0 {
+            hyperparams.ple_embd_per_layer = ple_config.embedding_row_width;
         }
 
         super::moe_metadata::validate(moe_routing).ok()?;

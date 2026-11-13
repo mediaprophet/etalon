@@ -1,5 +1,47 @@
 use super::*;
 
+std::thread_local! {
+    static EMBED_TOKEN_CACHE: core::cell::Cell<([(u64, u32); 64], usize)> =
+        const { core::cell::Cell::new(([(0, 0); 64], 0)) };
+}
+
+/// Compute a 64-bit FNV-1a fingerprint of the first 16 floats of an embedding row.
+#[must_use]
+pub fn embedding_row_fingerprint(emb: &[f32]) -> u64 {
+    let mut h = 0xcbf2_9ce4_8422_2325u64;
+    for &v in emb.iter().take(16) {
+        h ^= u64::from(v.to_bits());
+        h = h.wrapping_mul(0x0100_0000_01b3);
+    }
+    h
+}
+
+/// Record `(embedding_row_fingerprint(emb), token_id)` in the thread-local zero-heap ring.
+pub fn record_embedded_token_id(emb: &[f32], token_id: u32) {
+    let fp = embedding_row_fingerprint(emb);
+    EMBED_TOKEN_CACHE.with(|cell| {
+        let (mut ring, cursor) = cell.get();
+        ring[cursor & 63] = (fp, token_id);
+        cell.set((ring, cursor.wrapping_add(1)));
+    });
+}
+
+/// Look up the most recently dequantized `token_id` matching `emb`'s fingerprint.
+#[must_use]
+pub fn lookup_embedded_token_id(emb: &[f32]) -> Option<u32> {
+    let fp = embedding_row_fingerprint(emb);
+    EMBED_TOKEN_CACHE.with(|cell| {
+        let (ring, cursor) = cell.get();
+        for step in 1..=64 {
+            let idx = cursor.wrapping_sub(step) & 63;
+            if ring[idx].0 == fp && fp != 0 {
+                return Some(ring[idx].1);
+            }
+        }
+        None
+    })
+}
+
 impl<H: From<ModelHyperparams>> TensorIndex<H> {
     fn find(&self, name: &[u8]) -> Option<TensorInfo> {
         let h = gguf_name_hash(name);
@@ -16,7 +58,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
         self.find(name)
     }
 
-    fn find_layer_tensor(&self, layer: u32, suffix: &[u8]) -> Option<TensorInfo> {
+    pub fn find_layer_tensor(&self, layer: u32, suffix: &[u8]) -> Option<TensorInfo> {
         let mut name = [0u8; 96];
         let n = write_blk_tensor_name(layer, suffix, &mut name);
         if n > 0 {
@@ -31,11 +73,30 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             b"attn_v.weight" => &[b"self_attn.v_proj.weight", b"v_proj.weight"],
             b"attn_output.weight" => &[b"self_attn.o_proj.weight", b"o_proj.weight"],
             b"attn_norm.weight" => &[b"input_layernorm.weight"],
-            b"ffn_norm.weight" => &[b"post_attention_layernorm.weight"],
+            b"ffn_norm.weight" => &[
+                b"pre_feedforward_layernorm.weight",
+                b"post_attention_layernorm.weight",
+                b"post_attention_norm.weight",
+            ],
+            b"post_attention_norm.weight" => &[b"post_attention_layernorm.weight"],
+            b"post_ffw_norm.weight" => &[b"post_feedforward_layernorm.weight"],
+            b"post_ffw_norm_1.weight" => &[b"post_feedforward_layernorm_1.weight"],
+            b"post_ffw_norm_2.weight" => &[b"post_feedforward_layernorm_2.weight"],
+            b"pre_ffw_norm_2.weight" => &[b"pre_feedforward_layernorm_2.weight"],
+            b"inp_gate.weight" => &[b"per_layer_input_gate.weight"],
+            b"proj.weight" => &[b"per_layer_projection.weight"],
+            b"post_norm.weight" => &[b"post_per_layer_input_norm.weight"],
+            b"layer_output_scale.weight" => &[b"layer_scalar"],
             b"ffn_gate.weight" => &[b"mlp.gate_proj.weight", b"gate_proj.weight"],
             b"ffn_up.weight" => &[b"mlp.up_proj.weight", b"up_proj.weight"],
             b"ffn_down.weight" => &[b"mlp.down_proj.weight", b"down_proj.weight"],
-            b"ffn_gate_inp.weight" => &[b"mlp.gate.weight", b"gate.weight"],
+            b"ffn_gate_inp.weight" => &[
+                b"mlp.gate.weight",
+                b"gate.weight",
+                b"router.proj.weight",
+            ],
+            b"ffn_gate_inp_shexp.weight" => &[b"ffn_gate_inp.scale", b"router.scale"],
+            b"ffn_down_exps.scale" => &[b"router.per_expert_scale"],
             b"ssm_conv1d.weight" => &[b"linear_attn.conv1d.weight", b"conv1d.weight"],
             b"ssm_a" => &[b"linear_attn.A_log", b"A_log"],
             b"ssm_dt.bias" => &[b"linear_attn.dt_bias", b"dt_bias"],
@@ -70,6 +131,12 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
 
     /// Retrieve attention + FFN tensor metadata for one transformer block.
     pub fn get_layer_tensors(&self, layer_idx: u32) -> LayerTensors {
+        let ffn_norm = self.find_layer_tensor(layer_idx, b"ffn_norm.weight");
+        let raw_post_attn_norm = self.find_layer_tensor(layer_idx, b"post_attention_norm.weight");
+        let post_attention_norm = match (ffn_norm, raw_post_attn_norm) {
+            (Some(ffn), Some(post)) if ffn != post => Some(post),
+            _ => None,
+        };
         LayerTensors {
             layer_idx,
             attn_norm: self.find_layer_tensor(layer_idx, b"attn_norm.weight"),
@@ -81,7 +148,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             attn_qkv: self.find_layer_tensor(layer_idx, b"attn_qkv.weight"),
             attn_gate: self.find_layer_tensor(layer_idx, b"attn_gate.weight"),
             attn_output: self.find_layer_tensor(layer_idx, b"attn_output.weight"),
-            ffn_norm: self.find_layer_tensor(layer_idx, b"ffn_norm.weight"),
+            ffn_norm,
             ffn_gate: self.find_layer_tensor(layer_idx, b"ffn_gate.weight"),
             ffn_up: self.find_layer_tensor(layer_idx, b"ffn_up.weight"),
             ffn_down: self.find_layer_tensor(layer_idx, b"ffn_down.weight"),
@@ -121,6 +188,15 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             indexer_k: self.find_layer_tensor(layer_idx, b"indexer.k_proj.weight"),
             indexer_q_norm: self.find_layer_tensor(layer_idx, b"indexer.q_norm.weight"),
             indexer_k_norm: self.find_layer_tensor(layer_idx, b"indexer.k_norm.weight"),
+            post_attention_norm,
+            post_ffw_norm: self.find_layer_tensor(layer_idx, b"post_ffw_norm.weight"),
+            post_ffw_norm_1: self.find_layer_tensor(layer_idx, b"post_ffw_norm_1.weight"),
+            post_ffw_norm_2: self.find_layer_tensor(layer_idx, b"post_ffw_norm_2.weight"),
+            pre_ffw_norm_2: self.find_layer_tensor(layer_idx, b"pre_ffw_norm_2.weight"),
+            ple_inp_gate: self.find_layer_tensor(layer_idx, b"inp_gate.weight"),
+            ple_proj: self.find_layer_tensor(layer_idx, b"proj.weight"),
+            ple_post_norm: self.find_layer_tensor(layer_idx, b"post_norm.weight"),
+            layer_output_scale: self.find_layer_tensor(layer_idx, b"layer_output_scale.weight"),
         }
     }
 
@@ -207,7 +283,11 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             Ok(s) => s,
             Err(_) => return 0,
         };
-        crate::ggml::dequantize_row_into(raw, info.ggml_type, n_embd, out).unwrap_or(0)
+        let n = crate::ggml::dequantize_row_into(raw, info.ggml_type, n_embd, out).unwrap_or(0);
+        if n > 0 {
+            record_embedded_token_id(&out[..n], token_id);
+        }
+        n
     }
 
     /// Dequantize one Qwen4Exp PLE n-gram table row from an already-mapped

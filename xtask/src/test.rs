@@ -1,10 +1,19 @@
-use std::ffi::OsString;
+use std::{ffi::OsString, path::PathBuf};
 
 use anyhow::Context;
 use pico_args::Arguments;
 use xshell::Shell;
 
 use crate::{install_agility_sdk, install_warp, util::flatten_args};
+
+fn warp_target_dir(target_root: Option<OsString>, llvm_cov: bool, profile: &str) -> PathBuf {
+    let mut directory = target_root.map_or_else(|| PathBuf::from("target"), PathBuf::from);
+    if llvm_cov {
+        directory.push("llvm-cov-target");
+    }
+    directory.push(profile);
+    directory
+}
 
 /// Apply Agility SDK environment variables to a command.
 fn apply_agility_sdk_env<'a>(
@@ -69,13 +78,11 @@ pub fn run_tests(
 
     // Install WARP and Agility SDK on Windows for D3D12 testing
     let agility_sdk_info = if cfg!(target_os = "windows") {
-        let llvm_cov_dir = if llvm_cov {
-            "target/llvm-cov-target"
-        } else {
-            "target"
-        };
-        let target_dir = format!("{llvm_cov_dir}/{profile}");
-        install_warp::install_warp(&shell, &target_dir)?;
+        let target_dir = warp_target_dir(std::env::var_os("CARGO_TARGET_DIR"), llvm_cov, profile);
+        install_warp::install_warp(
+            &shell,
+            target_dir.to_str().context("WARP target directory is not valid UTF-8")?,
+        )?;
         Some(install_agility_sdk::install_agility_sdk(&shell)?)
     } else {
         None
@@ -159,4 +166,29 @@ pub fn run_tests(
     log::info!("Finished tests");
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::warp_target_dir;
+    use std::path::Path;
+
+    #[test]
+    fn warp_follows_isolated_cargo_target_and_profile() {
+        let root = Path::new("isolated-build").join("gpu");
+        for (coverage, profile) in [(false, "debug"), (false, "release"), (true, "review")] {
+            let actual = warp_target_dir(Some(root.clone().into_os_string()), coverage, profile);
+            let mut expected = root.clone();
+            if coverage {
+                expected.push("llvm-cov-target");
+            }
+            assert_eq!(actual, expected.join(profile));
+            assert!(!actual.starts_with("target"));
+        }
+        assert_eq!(warp_target_dir(None, false, "debug"), Path::new("target/debug"));
+        assert_eq!(
+            warp_target_dir(None, true, "debug"),
+            Path::new("target/llvm-cov-target/debug")
+        );
+    }
 }
