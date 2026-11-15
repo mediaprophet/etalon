@@ -10,6 +10,8 @@ on:
       - dev
       - stable
       - 0.0.41
+      - "0.0.41.*"
+      - 0.0.41.2
       # latest and version-line aliases promote already-qualified stable commits.
   workflow_dispatch:
 
