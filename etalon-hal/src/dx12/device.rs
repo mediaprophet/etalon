@@ -59,6 +59,17 @@ impl super::Device {
         {
             auxil::dxgi::exception::register_exception_handler();
         }
+        let cache_coherent = matches!(
+            private_caps.memory_architecture,
+            super::MemoryArchitecture::Unified {
+                cache_coherent: true
+            }
+        );
+        log::debug!(
+            "DX12 device capabilities: heterogeneous_resource_heaps={}, cache_coherent_uma={}",
+            private_caps.heterogeneous_resource_heaps,
+            cache_coherent,
+        );
 
         let mem_allocator =
             suballocation::Allocator::new(&raw, memory_hints, memory_budget_thresholds)?;
@@ -1195,7 +1206,7 @@ impl crate::Device for super::Device {
                         Direct3D12::D3D12_DESCRIPTOR_RANGE_TYPE_SRV => &mut bind_srv,
                         Direct3D12::D3D12_DESCRIPTOR_RANGE_TYPE_UAV => &mut bind_uav,
                         Direct3D12::D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER => continue,
-                        _ => todo!(),
+                        _ => return Err(crate::DeviceError::Unexpected),
                     };
 
                     let binding_array_size = entry.count.map(NonZeroU32::get);
@@ -1443,14 +1454,6 @@ impl crate::Device for super::Device {
                 ShaderVisibility: Direct3D12::D3D12_SHADER_VISIBILITY_ALL, // really needed for VS and CS only,
             });
             let binding = bind_cbv;
-            // This is the last time we use this, but lets increment
-            // it so if we add more later, the value behaves correctly.
-
-            // This is an allow as it doesn't trigger on 1.90, hal's MSRV.
-            #[allow(unused_assignments)]
-            {
-                bind_cbv.register += 1;
-            }
             (Some(parameter_index as u32), Some(binding))
         } else {
             (None, None)
@@ -2355,7 +2358,7 @@ impl crate::Device for super::Device {
         _pipeline: &super::RayTracingPipeline,
         _groups: core::ops::Range<u32>,
     ) -> Result<Vec<u8>, crate::DeviceError> {
-        unimplemented!("ray tracing pipelines not yet implemented")
+        Err(crate::DeviceError::Unexpected)
     }
 
     unsafe fn create_pipeline_cache(

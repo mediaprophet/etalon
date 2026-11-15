@@ -4,8 +4,8 @@
 //! and `AnimationClip`, uplifted with direct `Transform3D` ↔ PGA `Motor` (`f64`/`f32`)
 //! conversion and hemisphere-aligned `GpuJointMotorPair` dual-quaternion palette export.
 
-use super::gpu_skin::{hemisphere_align_motor, GpuJointMotorPair};
 use super::Motor;
+use super::gpu_skin::{GpuJointMotorPair, hemisphere_align_motor};
 
 /// Maximum bones supported per skeleton instance (fits in GPU uniform blocks).
 pub const MAX_BONES: usize = 64;

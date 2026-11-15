@@ -8,7 +8,7 @@
 //! Honors `AGENTS.md` §0 & §0-A: `evaluate_skinning_motor_palette_zero_heap` and
 //! `gpu_shader_skin_vertex_reference` perform zero heap allocations (`HotZeroHeap`).
 
-use super::{valid_motor, Motor, SkeletalError};
+use super::{Motor, SkeletalError, valid_motor};
 
 /// Maximum joints supported per GPU skeletal rig palette (`128` joints = `8 KiB` per instance).
 pub const MAX_GPU_RIG_JOINTS: usize = 128;

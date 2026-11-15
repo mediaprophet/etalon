@@ -1760,7 +1760,6 @@ dependencies = [
 name = "etalon-vibe"
 version = "0.0.2"
 dependencies = [
- "etalon-model",
  "etalon-nquin",
  "etalon-resources",
  "etalon-sense-core",

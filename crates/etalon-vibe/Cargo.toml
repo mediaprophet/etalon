@@ -18,7 +18,6 @@ std = []
 
 [dependencies]
 vibescript-abi = { workspace = true }
-etalon-model = { workspace = true, default-features = false }
 etalon-nquin = { workspace = true, default-features = false }
 etalon-resources = { workspace = true, default-features = false }
 etalon-sense-core = { workspace = true, default-features = false }

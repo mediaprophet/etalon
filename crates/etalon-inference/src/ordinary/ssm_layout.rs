@@ -16,7 +16,6 @@ pub struct SsmLayerStateLayout {
     /// Layer stride in f32 elements.
     pub stride: usize,
     /// Offset of conv history region within the stride (always 0).
-    #[allow(dead_code)]
     pub conv_offset: usize,
     /// Length of conv history region.
     pub conv_len: usize,
@@ -40,6 +39,11 @@ impl SsmLayerStateLayout {
             delta_offset,
             delta_len,
         }
+    }
+
+    /// Returns the element range of the convolution history region within the layer stride.
+    pub fn conv_range(&self) -> std::ops::Range<usize> {
+        self.conv_offset..self.conv_offset + self.conv_len
     }
 }
 

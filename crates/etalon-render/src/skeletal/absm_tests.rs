@@ -1,7 +1,7 @@
 //! Unit tests for the multi-layer Animation Blending State Machine (`absm`).
 
 use super::absm::*;
-use super::{assert_zero_alloc, Motor};
+use super::{Motor, assert_zero_alloc};
 
 #[test]
 fn bone_layer_mask_from_subtree_and_multi_layer_absm_zero_heap() {

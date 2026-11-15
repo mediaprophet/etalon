@@ -10,7 +10,7 @@ use vibescript_abi::{
 
 use crate::helpers::{
     check_arity, check_len_exact, make_func_descriptor, ontology_triad, prepare_output,
-    read_f32_finite, read_f32_vec3,
+    read_f32_finite, read_f32_vec3, read_f32_vec4,
 };
 
 pub const RENDER_PROVIDER_IRI: &str = "https://qualiadb.org/ext/etalon/render";
@@ -37,6 +37,19 @@ const PARAMS_SKELETAL_LERP: [ParamSpec; 3] = [
     ParamSpec::scalar("t", PrimitiveKind::F32),
 ];
 const PARAMS_EULER: [ParamSpec; 1] = [ParamSpec::slice("v_e_f", PrimitiveKind::U32, 3, 3)];
+const PARAMS_DIPOLE_PREVIEW: [ParamSpec; 3] = [
+    ParamSpec::slice("dipole_moment_xyz", PrimitiveKind::F32, 3, 3),
+    ParamSpec::slice("probe_offset_m", PrimitiveKind::F32, 3, 3),
+    ParamSpec::scalar("gain", PrimitiveKind::F32),
+];
+const PARAMS_RADIATIVE_TRANSFER: [ParamSpec; 2] = [
+    ParamSpec::slice("optical_params", PrimitiveKind::F32, 3, 3),
+    ParamSpec::scalar("incident_radiance", PrimitiveKind::F32),
+];
+const PARAMS_SH_IRRADIANCE: [ParamSpec; 2] = [
+    ParamSpec::slice("sh_l0_l1", PrimitiveKind::F32, 4, 4),
+    ParamSpec::slice("normal_xyz", PrimitiveKind::F32, 3, 3),
+];
 
 const SPATIAL_FUNCS: [FuncDescriptor; 4] = [
     make_func_descriptor(
@@ -93,11 +106,60 @@ const SPATIAL_FUNCS: [FuncDescriptor; 4] = [
     ),
 ];
 
-const RENDER_SUB_NAMESPACES: [SubNamespaceDescriptor; 1] = [SubNamespaceDescriptor {
-    name: "spatial",
-    sub_id: 0,
-    functions: &SPATIAL_FUNCS,
-}];
+const EMF_FUNCS: [FuncDescriptor; 3] = [
+    make_func_descriptor(
+        "bioelectric_dipole_preview",
+        "https://qualiadb.org/ext/etalon/render/emf/bioelectric_dipole_preview",
+        StableFuncId::new(1, 0),
+        &PARAMS_DIPOLE_PREVIEW,
+        PrimitiveKind::F32,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicTolerance,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(48, 8),
+        "(F32[3],F32[3],F32[1])->F32[2]",
+    ),
+    make_func_descriptor(
+        "radiative_transfer_slice",
+        "https://qualiadb.org/ext/etalon/render/emf/radiative_transfer_slice",
+        StableFuncId::new(1, 1),
+        &PARAMS_RADIATIVE_TRANSFER,
+        PrimitiveKind::F32,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicTolerance,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(40, 8),
+        "(F32[3],F32[1])->F32[2]",
+    ),
+    make_func_descriptor(
+        "sh_irradiance_probe",
+        "https://qualiadb.org/ext/etalon/render/emf/sh_irradiance_probe",
+        StableFuncId::new(1, 2),
+        &PARAMS_SH_IRRADIANCE,
+        PrimitiveKind::F32,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicTolerance,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(40, 8),
+        "(F32[4],F32[3])->F32[2]",
+    ),
+];
+
+const RENDER_SUB_NAMESPACES: [SubNamespaceDescriptor; 2] = [
+    SubNamespaceDescriptor {
+        name: "spatial",
+        sub_id: 0,
+        functions: &SPATIAL_FUNCS,
+    },
+    SubNamespaceDescriptor {
+        name: "emf",
+        sub_id: 1,
+        functions: &EMF_FUNCS,
+    },
+];
 
 const RENDER_DESCRIPTOR: ProviderDescriptor = ProviderDescriptor {
     canonical_iri: CanonicalIri::new(RENDER_PROVIDER_IRI),
@@ -200,6 +262,108 @@ pub fn oracle_brep_euler_characteristic(v: u32, e: u32, f: u32) -> Result<[i64; 
     Ok([chi, genus_times_2])
 }
 
+/// Reference oracle for `(1, 0) bioelectric_dipole_preview`: `[potential_uv, field_mag_uv_per_m]`.
+#[inline]
+pub fn oracle_bioelectric_dipole_preview(
+    dipole_moment_xyz: [f32; 3],
+    probe_offset_m: [f32; 3],
+    gain: f32,
+) -> Result<[f32; 2], VibeTrap> {
+    if dipole_moment_xyz.iter().any(|x| !x.is_finite())
+        || probe_offset_m.iter().any(|x| !x.is_finite())
+        || !gain.is_finite()
+        || gain <= 0.0
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let rx = probe_offset_m[0] as f64;
+    let ry = probe_offset_m[1] as f64;
+    let rz = probe_offset_m[2] as f64;
+    let r2 = (rx * rx) + (ry * ry) + (rz * rz);
+    let r = r2.sqrt();
+    if !r.is_finite() || r < 1e-6 {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let px = dipole_moment_xyz[0] as f64;
+    let py = dipole_moment_xyz[1] as f64;
+    let pz = dipole_moment_xyz[2] as f64;
+    let p_dot_r = (px * rx) + (py * ry) + (pz * rz);
+    let p_dot_r_hat = p_dot_r / r;
+    let p2 = (px * px) + (py * py) + (pz * pz);
+    let g = gain as f64;
+    let inv_r3 = 1.0 / (r2 * r);
+    let potential_uv = (g * p_dot_r * inv_r3) as f32;
+    let field_mag_uv_per_m = (g * (p2 + 3.0 * p_dot_r_hat * p_dot_r_hat).sqrt() * inv_r3) as f32;
+    if !potential_uv.is_finite() || !field_mag_uv_per_m.is_finite() {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    Ok([potential_uv, field_mag_uv_per_m])
+}
+
+/// Reference oracle for `(1, 1) radiative_transfer_slice`: `[transmitted_radiance, single_scatter_radiance]`.
+#[inline]
+pub fn oracle_radiative_transfer_slice(
+    optical_params: [f32; 3],
+    incident_radiance: f32,
+) -> Result<[f32; 2], VibeTrap> {
+    if optical_params.iter().any(|x| !x.is_finite())
+        || !incident_radiance.is_finite()
+        || incident_radiance <= 0.0
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let optical_depth = optical_params[0] as f64;
+    let albedo = optical_params[1] as f64;
+    let anisotropy_g = optical_params[2] as f64;
+    if optical_depth < 0.0
+        || !(0.0..=1.0).contains(&albedo)
+        || !(-0.99..=0.99).contains(&anisotropy_g)
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let l0 = incident_radiance as f64;
+    let transmittance = (-optical_depth).exp();
+    let transmitted = (l0 * transmittance) as f32;
+    let forward_fraction = 0.5 * (1.0 + anisotropy_g);
+    let single_scatter = (l0 * albedo * (1.0 - transmittance) * forward_fraction) as f32;
+    if !transmitted.is_finite() || !single_scatter.is_finite() {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    Ok([transmitted, single_scatter])
+}
+
+/// Reference oracle for `(1, 2) sh_irradiance_probe`: `[irradiance, directional_contrast]`.
+#[inline]
+pub fn oracle_sh_irradiance_probe(
+    sh_l0_l1: [f32; 4],
+    normal_xyz: [f32; 3],
+) -> Result<[f32; 2], VibeTrap> {
+    if sh_l0_l1.iter().any(|x| !x.is_finite()) || normal_xyz.iter().any(|x| !x.is_finite()) {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let nx = normal_xyz[0] as f64;
+    let ny = normal_xyz[1] as f64;
+    let nz = normal_xyz[2] as f64;
+    let norm = ((nx * nx) + (ny * ny) + (nz * nz)).sqrt();
+    if !norm.is_finite() || norm <= 1e-6 {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let inv_n = 1.0 / norm;
+    let ux = nx * inv_n;
+    let uy = ny * inv_n;
+    let uz = nz * inv_n;
+    // Zonal harmonic cosine-lobe weights: pi*Y00 = sqrt(pi)/2, (2*pi/3)*Y1m = sqrt(pi/3)*n_i.
+    let e0 = (core::f64::consts::PI.sqrt() * 0.5) * (sh_l0_l1[0] as f64);
+    let e1 = (core::f64::consts::PI / 3.0).sqrt()
+        * ((sh_l0_l1[1] as f64) * uy + (sh_l0_l1[2] as f64) * uz + (sh_l0_l1[3] as f64) * ux);
+    let irradiance = (e0 + e1).max(0.0) as f32;
+    let contrast = (e1 / (e0.abs() + e1.abs() + 1e-6)) as f32;
+    if !irradiance.is_finite() || !contrast.is_finite() {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    Ok([irradiance, contrast])
+}
+
 /// Zero-heap Etalon spatial & volumetric render provider (`https://qualiadb.org/ext/etalon/render`).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct EtalonRenderProvider;
@@ -278,6 +442,39 @@ impl VibeNamespaceProvider for EtalonRenderProvider {
                 output.push_i64_le(res[0])?;
                 output.push_i64_le(res[1])?;
                 Ok(6)
+            }
+            (1, 0) => {
+                check_arity(inputs, 3)?;
+                let moment = read_f32_vec3(&inputs[0])?;
+                let offset = read_f32_vec3(&inputs[1])?;
+                check_len_exact(&inputs[2], PrimitiveKind::F32, 1)?;
+                let gain = read_f32_finite(&inputs[2], 0)?;
+                prepare_output(output, PrimitiveKind::F32, 2)?;
+                let res = oracle_bioelectric_dipole_preview(moment, offset, gain)?;
+                output.push_f32_le(res[0])?;
+                output.push_f32_le(res[1])?;
+                Ok(12)
+            }
+            (1, 1) => {
+                check_arity(inputs, 2)?;
+                let optical = read_f32_vec3(&inputs[0])?;
+                check_len_exact(&inputs[1], PrimitiveKind::F32, 1)?;
+                let incident = read_f32_finite(&inputs[1], 0)?;
+                prepare_output(output, PrimitiveKind::F32, 2)?;
+                let res = oracle_radiative_transfer_slice(optical, incident)?;
+                output.push_f32_le(res[0])?;
+                output.push_f32_le(res[1])?;
+                Ok(10)
+            }
+            (1, 2) => {
+                check_arity(inputs, 2)?;
+                let sh = read_f32_vec4(&inputs[0])?;
+                let normal = read_f32_vec3(&inputs[1])?;
+                prepare_output(output, PrimitiveKind::F32, 2)?;
+                let res = oracle_sh_irradiance_probe(sh, normal)?;
+                output.push_f32_le(res[0])?;
+                output.push_f32_le(res[1])?;
+                Ok(10)
             }
             _ => Err(VibeTrap::FunctionNotFound),
         }

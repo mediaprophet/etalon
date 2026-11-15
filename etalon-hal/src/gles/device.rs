@@ -1857,7 +1857,7 @@ impl crate::Device for super::Device {
             self.render_doc
                 .start_frame_capture(self.shared.context.raw_context(), ptr::null_mut())
         };
-        #[allow(unreachable_code)]
+        #[cfg(not(all(native, feature = "renderdoc")))]
         false
     }
     unsafe fn stop_graphics_debugger_capture(&self) {

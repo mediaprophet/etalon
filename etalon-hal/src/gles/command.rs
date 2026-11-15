@@ -425,7 +425,6 @@ impl crate::CommandEncoder for super::CommandEncoder {
             copy.clamp_size_to_virtual(&dst.copy_size);
             self.cmd_buffer.commands.push(C::CopyBufferToTexture {
                 src: src.clone(),
-                src_target: src.target,
                 dst: dst_raw,
                 dst_target,
                 dst_format: dst.format,
@@ -451,7 +450,6 @@ impl crate::CommandEncoder for super::CommandEncoder {
                 src_target,
                 src_format: src.format,
                 dst: dst.clone(),
-                dst_target: dst.target,
                 copy,
             })
         }

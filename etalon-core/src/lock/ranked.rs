@@ -80,7 +80,6 @@ pub struct Mutex<T> {
 /// For details, see [the module documentation][self].
 pub struct MutexGuard<'a, T> {
     inner: etalon_sync::MutexGuard<'a, T>,
-    #[cfg_attr(not(miri), expect(unused))] // but `Drop` has important side effects
     saved: LockStateGuard,
 }
 
@@ -290,7 +289,6 @@ pub struct RwLockReadGuard<'a, T> {
 /// For details, see [the module documentation][self].
 pub struct RwLockWriteGuard<'a, T> {
     inner: etalon_sync::RwLockWriteGuard<'a, T>,
-    #[cfg_attr(not(miri), expect(unused))] // but `Drop` has important side effects
     saved: LockStateGuard,
 }
 

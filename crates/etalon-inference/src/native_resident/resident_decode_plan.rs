@@ -81,12 +81,18 @@ pub struct ResidentDecodePlan {
     pub use_ffn_warp: bool,
     /// True when every layer has fused_ffn bind groups (T-A1).
     /// Read by lab audit via `ffn_fusion_in_resident()`; kept on plan for diagnostics.
-    #[allow(dead_code)]
     pub use_fused_ffn: bool,
     /// Exact compute dispatches encoded for one token on this prepared plan.
     pub dispatches_per_token: u32,
     /// Candidate bytes copied into the MAP_READ staging buffer per token.
     pub readback_bytes_per_token: u32,
+}
+
+impl ResidentDecodePlan {
+    /// Returns whether every layer in this plan uses fused FFN bind groups.
+    pub fn is_ffn_fused(&self) -> bool {
+        self.use_fused_ffn
+    }
 }
 
 pub enum ResidentDecodeState {

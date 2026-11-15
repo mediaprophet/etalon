@@ -1,4 +1,4 @@
-use super::{valid_motor, Motor, SkeletalError, MAX_JOINTS, MAX_VERTICES};
+use super::{MAX_JOINTS, MAX_VERTICES, Motor, SkeletalError, valid_motor};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 #[repr(C)]

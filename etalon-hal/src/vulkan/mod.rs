@@ -139,7 +139,6 @@ struct DebugUtils {
     /// `InstanceShared::drop` destroys the debug messenger before
     /// dropping this, so the callback should never receive a dangling
     /// user data pointer.
-    #[allow(dead_code)]
     callback_data: Box<DebugUtilsMessengerUserData>,
 }
 
@@ -1856,7 +1855,7 @@ fn get_unexpected_err(_err: vk::Result) -> crate::DeviceError {
     #[cfg(feature = "internal_error_panic")]
     panic!("Unexpected Vulkan error: {_err:?}");
 
-    #[allow(unreachable_code)]
+    #[cfg(not(feature = "internal_error_panic"))]
     crate::DeviceError::Unexpected
 }
 
@@ -1871,7 +1870,7 @@ fn get_lost_err() -> crate::DeviceError {
     #[cfg(feature = "device_lost_panic")]
     panic!("Device lost");
 
-    #[allow(unreachable_code)]
+    #[cfg(not(feature = "device_lost_panic"))]
     crate::DeviceError::Lost
 }
 

@@ -448,7 +448,21 @@ impl super::Queue {
                         };
                     }
                     (None, None) => {
-                        todo!()
+                        let src_offset = copy.src_offset as usize;
+                        let dst_offset = copy.dst_offset as usize;
+                        if Arc::ptr_eq(&src.map_state, &dst.map_state) {
+                            let mut map_state = dst.map_state.lock();
+                            let data = map_state.data.as_mut().unwrap().as_mut_slice();
+                            data.copy_within(src_offset..src_offset + size, dst_offset);
+                        } else {
+                            let src_map_state = src.map_state.lock();
+                            let mut dst_map_state = dst.map_state.lock();
+                            let src_data = &src_map_state.data.as_ref().unwrap().as_slice()
+                                [src_offset..src_offset + size];
+                            let dst_data = &mut dst_map_state.data.as_mut().unwrap().as_mut_slice()
+                                [dst_offset..dst_offset + size];
+                            dst_data.copy_from_slice(src_data);
+                        }
                     }
                 }
                 unsafe { gl.bind_buffer(copy_src_target, None) };
@@ -784,7 +798,6 @@ impl super::Queue {
             }
             C::CopyBufferToTexture {
                 ref src,
-                src_target: _,
                 dst,
                 dst_target,
                 dst_format,
@@ -925,7 +938,6 @@ impl super::Queue {
                 src_target,
                 src_format,
                 ref dst,
-                dst_target: _,
                 ref copy,
             } => {
                 let block_size = src_format.block_copy_size(None).unwrap();

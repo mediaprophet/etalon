@@ -1114,8 +1114,6 @@ pub struct Swapchain {
     extent: wgt::Extent3d,
     format: wgt::TextureFormat,
     format_desc: super::TextureFormatDesc,
-    #[allow(unused)]
-    sample_type: wgt::TextureSampleType,
 }
 
 #[derive(Debug)]
@@ -1439,7 +1437,6 @@ impl crate::Surface for Surface {
             extent: config.extent,
             format: config.format,
             format_desc,
-            sample_type: wgt::TextureSampleType::Float { filterable: false },
         });
 
         Ok(())

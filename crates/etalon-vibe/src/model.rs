@@ -1,7 +1,7 @@
 //! `EtalonModelProvider` — Zero-heap P64 weight container alignment, MoE top-2 router
 //! softmax, and bounded residency admission checks backed by `etalon-model` and `etalon-resources`.
 
-use etalon_model::p64::P64_CACHE_LINE_BYTES;
+pub const P64_CACHE_LINE_BYTES: usize = 64;
 use etalon_resources::AdmissionLimits;
 use vibescript_abi::{
     BorrowedSliceView, CallerOutputSlice, CanonicalIri, ContractVersionAxes, DeterminismGuarantee,

@@ -287,11 +287,7 @@ fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
 
 fn bump(x: f32, center: f32, width: f32) -> f32 {
     let t = ((x - center) / width).abs();
-    if t >= 1.0 {
-        0.0
-    } else {
-        1.0 - t * t
-    }
+    if t >= 1.0 { 0.0 } else { 1.0 - t * t }
 }
 
 /// Buffers are allocated once on validated scene admission, never on advance.

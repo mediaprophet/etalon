@@ -39,6 +39,7 @@ fn encode_u64_slice<const N: usize>(vals: [u64; N], buf: &mut [u8]) -> BorrowedS
 fn all_eight_providers_have_valid_descriptors_contracts_and_5field_ontology_quins() {
     assert_eq!(ETALON_VIBE_PROVIDERS.len(), 8);
     let mut total_funcs = 0usize;
+    let mut per_provider_counts = [0usize; 8];
 
     for (idx, &provider) in ETALON_VIBE_PROVIDERS.iter().enumerate() {
         let desc = provider.descriptor();
@@ -64,6 +65,7 @@ fn all_eight_providers_have_valid_descriptors_contracts_and_5field_ontology_quin
             assert!(!sub.functions.is_empty());
             for func in sub.functions {
                 total_funcs += 1;
+                per_provider_counts[idx] += 1;
                 assert!(func.canonical_iri.is_valid());
                 assert_eq!(func.stable_id.sub_namespace_id, sub.sub_id);
                 assert_eq!(func.envelope.max_scratch_bytes, 0);
@@ -85,7 +87,8 @@ fn all_eight_providers_have_valid_descriptors_contracts_and_5field_ontology_quin
             }
         }
     }
-    assert_eq!(total_funcs, 30);
+    assert_eq!(per_provider_counts, [5, 5, 3, 7, 8, 5, 3, 3]);
+    assert_eq!(total_funcs, 39);
 }
 
 #[test]
@@ -445,5 +448,335 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     assert_eq!(
         NQUIN_PROVIDER.call(StableFuncId::new(0, 2), &[kv], &mut out),
         Err(VibeTrap::ArityMismatch)
+    );
+}
+
+#[test]
+fn render_emf_subnamespace_matches_oracles_and_traps_on_invalid_inputs() {
+    // (1, 0) bioelectric_dipole_preview
+    let mut mom_b = [0u8; 12];
+    let mut off_b = [0u8; 12];
+    let mut gain_b = [0u8; 4];
+    let mom = encode_f32_slice([1.0, 0.0, 0.0], &mut mom_b);
+    let off = encode_f32_slice([1.0, 0.0, 0.0], &mut off_b);
+    let gain = encode_f32_slice([2.0], &mut gain_b);
+    let mut out_raw = [0u8; 8];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
+    let ticks = RENDER_PROVIDER
+        .call(StableFuncId::new(1, 0), &[mom, off, gain], &mut out)
+        .unwrap();
+    assert!(ticks > 0);
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::F32, 2).unwrap();
+    let exp = oracle_bioelectric_dipole_preview([1.0, 0.0, 0.0], [1.0, 0.0, 0.0], 2.0).unwrap();
+    assert!((exp[0] - 2.0).abs() < 1e-6);
+    assert!((exp[1] - 4.0).abs() < 1e-6);
+    assert_eq!(out_view.read_f32_le(0).unwrap(), exp[0]);
+    assert_eq!(out_view.read_f32_le(1).unwrap(), exp[1]);
+    let eq_perp = oracle_bioelectric_dipole_preview([1.0, 0.0, 0.0], [0.0, 2.0, 0.0], 1.0).unwrap();
+    assert!((eq_perp[0]).abs() < 1e-6);
+    assert!((eq_perp[1] - 0.125).abs() < 1e-6);
+
+    assert_eq!(
+        oracle_bioelectric_dipole_preview([1.0, 0.0, 0.0], [1.0, 0.0, 0.0], 0.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_bioelectric_dipole_preview([1.0, 0.0, 0.0], [1e-7, 0.0, 0.0], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_bioelectric_dipole_preview([f32::NAN, 0.0, 0.0], [1.0, 0.0, 0.0], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+
+    // (1, 1) radiative_transfer_slice
+    let mut opt_b = [0u8; 12];
+    let mut rad_b = [0u8; 4];
+    let opt = encode_f32_slice([0.0, 0.5, 0.0], &mut opt_b);
+    let rad = encode_f32_slice([10.0], &mut rad_b);
+    let mut out_raw = [0u8; 8];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
+    RENDER_PROVIDER
+        .call(StableFuncId::new(1, 1), &[opt, rad], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::F32, 2).unwrap();
+    assert!((out_view.read_f32_le(0).unwrap() - 10.0).abs() < 1e-5);
+    assert!((out_view.read_f32_le(1).unwrap()).abs() < 1e-6);
+    let rt = oracle_radiative_transfer_slice([1.0, 0.8, 0.5], 5.0).unwrap();
+    assert!((rt[0] - 5.0 * (-1.0f64).exp() as f32).abs() < 1e-5);
+    assert!(rt[1] > 0.0 && rt[0] + rt[1] <= 5.0);
+
+    assert_eq!(
+        oracle_radiative_transfer_slice([-0.1, 0.5, 0.0], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_radiative_transfer_slice([1.0, 1.2, 0.0], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_radiative_transfer_slice([1.0, 0.5, 0.995], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_radiative_transfer_slice([1.0, 0.5, 0.0], 0.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+
+    // (1, 2) sh_irradiance_probe
+    let mut sh_b = [0u8; 16];
+    let mut n_b = [0u8; 12];
+    let sh = encode_f32_slice([1.0, 0.0, 0.0, 0.5], &mut sh_b);
+    let n_pos = encode_f32_slice([2.0, 0.0, 0.0], &mut n_b);
+    let mut out_raw = [0u8; 8];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
+    RENDER_PROVIDER
+        .call(StableFuncId::new(1, 2), &[sh, n_pos], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::F32, 2).unwrap();
+    let sh_pos = oracle_sh_irradiance_probe([1.0, 0.0, 0.0, 0.5], [1.0, 0.0, 0.0]).unwrap();
+    let sh_neg = oracle_sh_irradiance_probe([1.0, 0.0, 0.0, 0.5], [-1.0, 0.0, 0.0]).unwrap();
+    assert_eq!(out_view.read_f32_le(0).unwrap(), sh_pos[0]);
+    assert_eq!(out_view.read_f32_le(1).unwrap(), sh_pos[1]);
+    assert!(sh_pos[0] > sh_neg[0]);
+    assert!(sh_pos[1] > 0.0 && sh_neg[1] < 0.0);
+    assert_eq!(
+        oracle_sh_irradiance_probe([1.0, 0.0, 0.0, 0.0], [0.0, 0.0, 0.0]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        RENDER_PROVIDER.call(StableFuncId::new(1, 2), &[sh], &mut out),
+        Err(VibeTrap::ArityMismatch)
+    );
+}
+
+#[test]
+fn signal_qac_subnamespace_matches_oracles_and_traps_on_invalid_inputs() {
+    // (2, 0) decode_container_summary
+    let mut hdr_b = [0u8; 16];
+    let hdr = encode_u32_slice([10, 48_000, 480, 0b0101], &mut hdr_b);
+    let mut out_raw = [0u8; 16];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U64).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(2, 0), &[hdr], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::U64, 2).unwrap();
+    assert_eq!(out_view.read_u64_le(0).unwrap(), 100_000);
+    assert_eq!(out_view.read_u64_le(1).unwrap(), 2);
+    assert_eq!(
+        oracle_decode_container_summary([0, 48_000, 480, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_decode_container_summary([10, 0, 480, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_decode_container_summary([10, 48_000, 0, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_decode_container_summary([10, 48_000, 480, 0]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_decode_container_summary([10, 48_000, 480, 0x10]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+
+    // (2, 1) render_binaural_frame
+    let mut pose_b = [0u8; 12];
+    let mut gl_b = [0u8; 4];
+    let pose = encode_f32_slice([90.0, 0.0, 2.0], &mut pose_b);
+    let gl = encode_f32_slice([1.0], &mut gl_b);
+    let mut out_raw = [0u8; 12];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(2, 1), &[pose, gl], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::F32, 3).unwrap();
+    let b_right = oracle_render_binaural_frame([90.0, 0.0, 2.0], 1.0).unwrap();
+    assert_eq!(out_view.read_f32_le(0).unwrap(), b_right[0]);
+    assert_eq!(out_view.read_f32_le(1).unwrap(), b_right[1]);
+    assert_eq!(out_view.read_f32_le(2).unwrap(), b_right[2]);
+    assert!(b_right[1] > b_right[0] && b_right[2] > 0.0);
+    let b_center = oracle_render_binaural_frame([0.0, 0.0, 1.0], 1.0).unwrap();
+    assert!((b_center[0] - b_center[1]).abs() < 1e-6);
+    assert_eq!(b_center[2], 0.0);
+
+    assert_eq!(
+        oracle_render_binaural_frame([181.0, 0.0, 1.0], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_render_binaural_frame([0.0, 91.0, 1.0], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_render_binaural_frame([0.0, 0.0, 0.05], 1.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_render_binaural_frame([0.0, 0.0, 1.0], 0.0),
+        Err(VibeTrap::NumericalDomainError)
+    );
+
+    // (2, 2) evaluate_directivity_sh
+    let mut ang_b = [0u8; 8];
+    let mut w_b = [0u8; 16];
+    let ang = encode_f32_slice([0.0, 0.0], &mut ang_b);
+    let w = encode_f32_slice([0.5, 0.0, 0.0, 0.5], &mut w_b);
+    let mut out_raw = [0u8; 8];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(2, 2), &[ang, w], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::F32, 2).unwrap();
+    assert!((out_view.read_f32_le(0).unwrap() - 1.0).abs() < 1e-6);
+    assert!((out_view.read_f32_le(1).unwrap() - 0.5).abs() < 1e-6);
+    let z_dipole =
+        oracle_evaluate_directivity_sh([0.0, core::f32::consts::FRAC_PI_2], [0.0, 0.0, 1.0, 0.0])
+            .unwrap();
+    assert!((z_dipole[0] - 1.0).abs() < 1e-6);
+    assert_eq!(z_dipole[1], 0.0);
+    assert_eq!(
+        oracle_evaluate_directivity_sh([0.0, 2.0], [1.0, 0.0, 0.0, 0.0]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+
+    // (2, 3) sonify_emf_envelope
+    let mut emf_b = [0u8; 24];
+    let emf = encode_f64_slice([400.0, 1.0, 1.0], &mut emf_b);
+    let mut out_raw = [0u8; 16];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F64).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(2, 3), &[emf], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::F64, 2).unwrap();
+    assert!((out_view.read_f64_le(0).unwrap() - 1760.0).abs() < 1e-9);
+    assert!((out_view.read_f64_le(1).unwrap() - 0.5).abs() < 1e-9);
+    let red = oracle_sonify_emf_envelope([700.0, 0.0, 0.5]).unwrap();
+    assert!((red[0] - 110.0).abs() < 1e-9);
+    assert_eq!(red[1], 0.0);
+
+    assert_eq!(
+        oracle_sonify_emf_envelope([379.0, 1.0, 0.5]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_sonify_emf_envelope([781.0, 1.0, 0.5]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_sonify_emf_envelope([550.0, -0.1, 0.5]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_sonify_emf_envelope([550.0, 1.0, 1.1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+}
+
+#[test]
+fn sense_authority_subnamespace_matches_oracles_and_traps_on_invalid_inputs() {
+    // (1, 0) verify_evidence_gate
+    let mut gate_b = [0u8; 32];
+    let gate = encode_u64_slice([0b101, 200, 1_000, 0b11], &mut gate_b);
+    let mut out_raw = [0u8; 16];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U64).unwrap();
+    SENSE_PROVIDER
+        .call(StableFuncId::new(1, 0), &[gate], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::U64, 2).unwrap();
+    assert_eq!(out_view.read_u64_le(0).unwrap(), 1);
+    assert_eq!(out_view.read_u64_le(1).unwrap(), 2);
+    assert_eq!(
+        oracle_verify_evidence_gate([0b01, 200, 1_000, 0b11]).unwrap(),
+        [1, 1]
+    );
+    assert_eq!(
+        oracle_verify_evidence_gate([0b01, 1_001, 1_000, 0b11]).unwrap(),
+        [0, 0]
+    );
+    assert_eq!(
+        oracle_verify_evidence_gate([0b01, 200, 1_000, 0b10]).unwrap(),
+        [0, 0]
+    );
+    assert_eq!(
+        oracle_verify_evidence_gate([0b01, 200, 1_000, 0b01]).unwrap(),
+        [0, 0]
+    );
+
+    assert_eq!(
+        oracle_verify_evidence_gate([0, 200, 1_000, 0b11]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_verify_evidence_gate([1, 200, 0, 0b11]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_verify_evidence_gate([1, 200, 1_000, 4]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    let mut bad_gate_b = [0u8; 24];
+    let bad_gate = encode_u64_slice([1, 200, 1_000], &mut bad_gate_b);
+    assert_eq!(
+        SENSE_PROVIDER.call(StableFuncId::new(1, 0), &[bad_gate], &mut out),
+        Err(VibeTrap::SliceLengthMismatch)
+    );
+    let mut wrong_type_b = [0u8; 16];
+    let wrong_type = encode_u32_slice([1, 200, 1_000, 3], &mut wrong_type_b);
+    assert_eq!(
+        SENSE_PROVIDER.call(StableFuncId::new(1, 0), &[wrong_type], &mut out),
+        Err(VibeTrap::TypeMismatch)
+    );
+
+    // (1, 1) dicom_modality_check
+    let mut dcm_b = [0u8; 12];
+    let dcm = encode_u32_slice([1, 16, 1], &mut dcm_b);
+    let mut out_raw = [0u8; 8];
+    let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U32).unwrap();
+    SENSE_PROVIDER
+        .call(StableFuncId::new(1, 1), &[dcm], &mut out)
+        .unwrap();
+    let out_view =
+        BorrowedSliceView::from_raw_bytes(out.written_byte_slice(), PrimitiveKind::U32, 2).unwrap();
+    assert_eq!(out_view.read_u32_le(0).unwrap(), 1);
+    assert_eq!(out_view.read_u32_le(1).unwrap(), 2);
+    assert_eq!(oracle_dicom_modality_check([4, 8, 3]).unwrap(), [1, 3]);
+    assert_eq!(oracle_dicom_modality_check([1, 16, 4]).unwrap(), [0, 8]);
+
+    assert_eq!(
+        oracle_dicom_modality_check([0, 16, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_dicom_modality_check([7, 16, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_dicom_modality_check([1, 7, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_dicom_modality_check([1, 17, 1]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_dicom_modality_check([1, 8, 0]),
+        Err(VibeTrap::NumericalDomainError)
+    );
+    assert_eq!(
+        oracle_dicom_modality_check([1, 8, 5]),
+        Err(VibeTrap::NumericalDomainError)
     );
 }

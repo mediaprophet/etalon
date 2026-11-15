@@ -42,18 +42,21 @@ pub use nquin::{
     EtalonNQuinProvider, NQUIN_PROVIDER, NQUIN_PROVIDER_IRI, NQUIN_SHORT_ALIAS,
 };
 pub use render::{
-    oracle_brep_euler_characteristic, oracle_project_10d_to_3d, oracle_sdf_torus_eval,
+    oracle_bioelectric_dipole_preview, oracle_brep_euler_characteristic, oracle_project_10d_to_3d,
+    oracle_radiative_transfer_slice, oracle_sdf_torus_eval, oracle_sh_irradiance_probe,
     oracle_skeletal_lerp_joint, EtalonRenderProvider, RENDER_PROVIDER, RENDER_PROVIDER_IRI,
     RENDER_SHORT_ALIAS,
 };
 pub use sense::{
-    oracle_clock_stamp_drift_ns, oracle_rssi_log_distance_m, oracle_spectrum_bin_hz,
-    EtalonSenseProvider, SENSE_PROVIDER, SENSE_PROVIDER_IRI, SENSE_SHORT_ALIAS,
+    oracle_clock_stamp_drift_ns, oracle_dicom_modality_check, oracle_rssi_log_distance_m,
+    oracle_spectrum_bin_hz, oracle_verify_evidence_gate, EtalonSenseProvider, SENSE_PROVIDER,
+    SENSE_PROVIDER_IRI, SENSE_SHORT_ALIAS,
 };
 pub use signal::{
-    oracle_biquad_df1_step, oracle_cfar_cell_average, oracle_region_mean_u8,
-    oracle_signal_rms_peak, EtalonSignalProvider, SIGNAL_PROVIDER, SIGNAL_PROVIDER_IRI,
-    SIGNAL_SHORT_ALIAS,
+    oracle_biquad_df1_step, oracle_cfar_cell_average, oracle_decode_container_summary,
+    oracle_evaluate_directivity_sh, oracle_region_mean_u8, oracle_render_binaural_frame,
+    oracle_signal_rms_peak, oracle_sonify_emf_envelope, EtalonSignalProvider, SIGNAL_PROVIDER,
+    SIGNAL_PROVIDER_IRI, SIGNAL_SHORT_ALIAS,
 };
 pub use vibescript_abi::VibeNamespaceProvider;
 

@@ -1,7 +1,12 @@
 //! `EtalonSignalProvider` — Zero-heap DSP and vision kernels backed by `etalon-signal`
 //! (`signal_rms_peak`, `cfar_cell_average`, `biquad_df1_step`, `region_mean_u8`).
 
-use etalon_signal::{df1_step_f32, mean_u8_region, rms_f32, ImageRegion};
+use etalon_signal::{
+    df1_step_f32,
+    hoa::{evaluate_hoa_basis_f64, spherical_to_unit_cartesian_f64, HoaNormalization, HoaOrder},
+    mean_u8_region, rms_f32, woodworth_itd_seconds, DistanceModel, ImageRegion,
+    DEFAULT_HEAD_RADIUS_M, DEFAULT_SPEED_OF_SOUND_M_S,
+};
 use vibescript_abi::{
     BorrowedSliceView, CallerOutputSlice, CanonicalIri, ContractVersionAxes, DeterminismGuarantee,
     EffectSet, FuncDescriptor, NQuin48, ParamSpec, PrimitiveKind, ProviderDescriptor,
@@ -11,7 +16,7 @@ use vibescript_abi::{
 
 use crate::helpers::{
     check_arity, check_len_exact, check_len_range, make_func_descriptor, ontology_triad,
-    prepare_output, read_f32_finite, read_f32_vec3,
+    prepare_output, read_f32_finite, read_f32_vec3, read_f32_vec4, read_f64_vec3,
 };
 
 pub const SIGNAL_PROVIDER_IRI: &str = "https://qualiadb.org/ext/etalon/signal";
@@ -35,6 +40,18 @@ const PARAMS_BIQUAD: [ParamSpec; 3] = [
     ParamSpec::slice("coeffs_b0b1b2a1a2", PrimitiveKind::F32, 5, 5),
 ];
 const PARAMS_REGION_U8: [ParamSpec; 1] = [ParamSpec::slice("pixels", PrimitiveKind::U8, 4, 64)];
+const PARAMS_QAC_CONTAINER: [ParamSpec; 1] =
+    [ParamSpec::slice("header_meta", PrimitiveKind::U32, 4, 4)];
+const PARAMS_QAC_BINAURAL: [ParamSpec; 2] = [
+    ParamSpec::slice("pose_deg_dist", PrimitiveKind::F32, 3, 3),
+    ParamSpec::scalar("gain_linear", PrimitiveKind::F32),
+];
+const PARAMS_QAC_DIRECTIVITY: [ParamSpec; 2] = [
+    ParamSpec::slice("angles_rad", PrimitiveKind::F32, 2, 2),
+    ParamSpec::slice("weights_l0_l1", PrimitiveKind::F32, 4, 4),
+];
+const PARAMS_QAC_SONIFY: [ParamSpec; 1] =
+    [ParamSpec::slice("emf_sample", PrimitiveKind::F64, 3, 3)];
 
 const DSP_FUNCS: [FuncDescriptor; 3] = [
     make_func_descriptor(
@@ -92,7 +109,62 @@ const VISION_FUNCS: [FuncDescriptor; 1] = [make_func_descriptor(
     "(U8[4..64])->F32[2]",
 )];
 
-const SIGNAL_SUB_NAMESPACES: [SubNamespaceDescriptor; 2] = [
+const QAC_FUNCS: [FuncDescriptor; 4] = [
+    make_func_descriptor(
+        "decode_container_summary",
+        "https://qualiadb.org/ext/etalon/signal/qac/decode_container_summary",
+        StableFuncId::new(2, 0),
+        &PARAMS_QAC_CONTAINER,
+        PrimitiveKind::U64,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicExact,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(16, 16),
+        "(U32[4])->U64[2]",
+    ),
+    make_func_descriptor(
+        "render_binaural_frame",
+        "https://qualiadb.org/ext/etalon/signal/qac/render_binaural_frame",
+        StableFuncId::new(2, 1),
+        &PARAMS_QAC_BINAURAL,
+        PrimitiveKind::F32,
+        3,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicTolerance,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(48, 12),
+        "(F32[3],F32[1])->F32[3]",
+    ),
+    make_func_descriptor(
+        "evaluate_directivity_sh",
+        "https://qualiadb.org/ext/etalon/signal/qac/evaluate_directivity_sh",
+        StableFuncId::new(2, 2),
+        &PARAMS_QAC_DIRECTIVITY,
+        PrimitiveKind::F32,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicTolerance,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(40, 8),
+        "(F32[2],F32[4])->F32[2]",
+    ),
+    make_func_descriptor(
+        "sonify_emf_envelope",
+        "https://qualiadb.org/ext/etalon/signal/qac/sonify_emf_envelope",
+        StableFuncId::new(2, 3),
+        &PARAMS_QAC_SONIFY,
+        PrimitiveKind::F64,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicTolerance,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(32, 16),
+        "(F64[3])->F64[2]",
+    ),
+];
+
+const SIGNAL_SUB_NAMESPACES: [SubNamespaceDescriptor; 3] = [
     SubNamespaceDescriptor {
         name: "dsp",
         sub_id: 0,
@@ -102,6 +174,11 @@ const SIGNAL_SUB_NAMESPACES: [SubNamespaceDescriptor; 2] = [
         name: "vision",
         sub_id: 1,
         functions: &VISION_FUNCS,
+    },
+    SubNamespaceDescriptor {
+        name: "qac",
+        sub_id: 2,
+        functions: &QAC_FUNCS,
     },
 ];
 
@@ -222,6 +299,135 @@ pub fn oracle_region_mean_u8(pixels: &[u8]) -> Result<[f32; 2], VibeTrap> {
     Ok([mean, span])
 }
 
+/// Reference oracle for `(2, 0) decode_container_summary`: `[duration_micros, active_mode_count]`.
+#[inline]
+pub fn oracle_decode_container_summary(header_meta: [u32; 4]) -> Result<[u64; 2], VibeTrap> {
+    let [entry_count, sample_rate_hz, frame_samples, modes_mask] = header_meta;
+    if entry_count == 0
+        || sample_rate_hz == 0
+        || frame_samples == 0
+        || modes_mask == 0
+        || modes_mask > 0x0F
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let total_samples = (entry_count as u128) * (frame_samples as u128);
+    let duration_micros_u128 = (total_samples * 1_000_000u128) / (sample_rate_hz as u128);
+    let duration_micros =
+        u64::try_from(duration_micros_u128).map_err(|_| VibeTrap::NumericalDomainError)?;
+    let active_mode_count = modes_mask.count_ones() as u64;
+    Ok([duration_micros, active_mode_count])
+}
+
+/// Reference oracle for `(2, 1) render_binaural_frame`: `[left_gain, right_gain, itd_sec]`.
+#[inline]
+pub fn oracle_render_binaural_frame(
+    pose_deg_dist: [f32; 3],
+    gain_linear: f32,
+) -> Result<[f32; 3], VibeTrap> {
+    if pose_deg_dist.iter().any(|x| !x.is_finite())
+        || !gain_linear.is_finite()
+        || gain_linear <= 0.0
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let [azimuth_deg, elevation_deg, distance_m] = pose_deg_dist;
+    if !(-180.0..=180.0).contains(&azimuth_deg)
+        || !(-90.0..=90.0).contains(&elevation_deg)
+        || distance_m <= 0.05
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let az_rad = (azimuth_deg as f64).to_radians();
+    let el_rad = (elevation_deg as f64).to_radians();
+    let itd_base = woodworth_itd_seconds(
+        az_rad as f32,
+        DEFAULT_HEAD_RADIUS_M,
+        DEFAULT_SPEED_OF_SOUND_M_S,
+    )
+    .map_err(|_| VibeTrap::NumericalDomainError)? as f64;
+    let itd_sec = (itd_base * el_rad.cos()) as f32;
+    let pan = (az_rad.sin() * el_rad.cos()).clamp(-1.0, 1.0);
+    let pan_angle = (pan + 1.0) * core::f64::consts::FRAC_PI_4;
+    let dist_gain = DistanceModel::Inverse {
+        ref_distance: 1.0,
+        max_distance: 10_000.0,
+        rolloff_factor: 1.0,
+    }
+    .calculate_gain(distance_m) as f64;
+    let net_gain = (gain_linear as f64) * dist_gain;
+    let left_gain = (net_gain * pan_angle.cos()) as f32;
+    let right_gain = (net_gain * pan_angle.sin()) as f32;
+    if !left_gain.is_finite() || !right_gain.is_finite() || !itd_sec.is_finite() {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    Ok([left_gain, right_gain, itd_sec])
+}
+
+/// Reference oracle for `(2, 2) evaluate_directivity_sh`: `[directivity_gain, l0_energy_ratio]`.
+#[inline]
+pub fn oracle_evaluate_directivity_sh(
+    angles_rad: [f32; 2],
+    weights_l0_l1: [f32; 4],
+) -> Result<[f32; 2], VibeTrap> {
+    if angles_rad.iter().any(|x| !x.is_finite()) || weights_l0_l1.iter().any(|w| !w.is_finite()) {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    if angles_rad[1].abs() > core::f32::consts::FRAC_PI_2 + 1e-4 {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let el_clamped =
+        (angles_rad[1] as f64).clamp(-core::f64::consts::FRAC_PI_2, core::f64::consts::FRAC_PI_2);
+    let dir = spherical_to_unit_cartesian_f64(angles_rad[0] as f64, el_clamped)
+        .map_err(|_| VibeTrap::NumericalDomainError)?;
+    let mut basis = [0.0f64; 4];
+    evaluate_hoa_basis_f64(HoaOrder::Order1, HoaNormalization::Sn3d, dir, &mut basis)
+        .map_err(|_| VibeTrap::NumericalDomainError)?;
+    let directivity_gain = ((weights_l0_l1[0] as f64) * basis[0]
+        + (weights_l0_l1[1] as f64) * basis[1]
+        + (weights_l0_l1[2] as f64) * basis[2]
+        + (weights_l0_l1[3] as f64) * basis[3]) as f32;
+    let w0 = weights_l0_l1[0] as f64;
+    let w1 = weights_l0_l1[1] as f64;
+    let w2 = weights_l0_l1[2] as f64;
+    let w3 = weights_l0_l1[3] as f64;
+    let e0 = w0 * w0;
+    let total = e0 + (w1 * w1) + (w2 * w2) + (w3 * w3);
+    let l0_energy_ratio = if total > 0.0 {
+        (e0 / total) as f32
+    } else {
+        0.0
+    };
+    if !directivity_gain.is_finite() || !l0_energy_ratio.is_finite() {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    Ok([directivity_gain, l0_energy_ratio])
+}
+
+/// Reference oracle for `(2, 3) sonify_emf_envelope`: `[carrier_hz, amplitude_norm]`.
+#[inline]
+pub fn oracle_sonify_emf_envelope(emf_sample: [f64; 3]) -> Result<[f64; 2], VibeTrap> {
+    if emf_sample.iter().any(|x| !x.is_finite()) {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let [wavelength_nm, e_mag_v_per_m, spectral_sigma] = emf_sample;
+    if !(380.0..=780.0).contains(&wavelength_nm)
+        || e_mag_v_per_m < 0.0
+        || !(0.0..=1.0).contains(&spectral_sigma)
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    // Matches QualiaDB `sigma_to_center_frequency_hz`: linear 400..700 nm -> 1760..110 Hz fold.
+    let t = ((wavelength_nm - 400.0) / 300.0).clamp(0.0, 1.0);
+    let carrier_hz = (1760.0 * (1.0 - t) + 110.0 * t).clamp(55.0, 8_000.0);
+    let amp_field = e_mag_v_per_m / (1.0 + e_mag_v_per_m);
+    let amplitude_norm = (amp_field * (0.5 + 0.5 * spectral_sigma)).clamp(0.0, 1.0);
+    if !carrier_hz.is_finite() || !amplitude_norm.is_finite() {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    Ok([carrier_hz, amplitude_norm])
+}
+
 /// Zero-heap Etalon DSP & Vision provider (`https://qualiadb.org/ext/etalon/signal`).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct EtalonSignalProvider;
@@ -307,6 +513,56 @@ impl VibeNamespaceProvider for EtalonSignalProvider {
                 output.push_f32_le(res[0])?;
                 output.push_f32_le(res[1])?;
                 Ok((n as u64) + 4)
+            }
+            (2, 0) => {
+                check_arity(inputs, 1)?;
+                check_len_exact(&inputs[0], PrimitiveKind::U32, 4)?;
+                let meta = [
+                    inputs[0].read_u32_le(0)?,
+                    inputs[0].read_u32_le(1)?,
+                    inputs[0].read_u32_le(2)?,
+                    inputs[0].read_u32_le(3)?,
+                ];
+                prepare_output(output, PrimitiveKind::U64, 2)?;
+                let res = oracle_decode_container_summary(meta)?;
+                output.push_u64_le(res[0])?;
+                output.push_u64_le(res[1])?;
+                Ok(6)
+            }
+            (2, 1) => {
+                check_arity(inputs, 2)?;
+                let pose = read_f32_vec3(&inputs[0])?;
+                check_len_exact(&inputs[1], PrimitiveKind::F32, 1)?;
+                let gain = read_f32_finite(&inputs[1], 0)?;
+                prepare_output(output, PrimitiveKind::F32, 3)?;
+                let res = oracle_render_binaural_frame(pose, gain)?;
+                output.push_f32_le(res[0])?;
+                output.push_f32_le(res[1])?;
+                output.push_f32_le(res[2])?;
+                Ok(12)
+            }
+            (2, 2) => {
+                check_arity(inputs, 2)?;
+                check_len_exact(&inputs[0], PrimitiveKind::F32, 2)?;
+                let angles = [
+                    read_f32_finite(&inputs[0], 0)?,
+                    read_f32_finite(&inputs[0], 1)?,
+                ];
+                let weights = read_f32_vec4(&inputs[1])?;
+                prepare_output(output, PrimitiveKind::F32, 2)?;
+                let res = oracle_evaluate_directivity_sh(angles, weights)?;
+                output.push_f32_le(res[0])?;
+                output.push_f32_le(res[1])?;
+                Ok(12)
+            }
+            (2, 3) => {
+                check_arity(inputs, 1)?;
+                let sample = read_f64_vec3(&inputs[0])?;
+                prepare_output(output, PrimitiveKind::F64, 2)?;
+                let res = oracle_sonify_emf_envelope(sample)?;
+                output.push_f64_le(res[0])?;
+                output.push_f64_le(res[1])?;
+                Ok(8)
             }
             _ => Err(VibeTrap::FunctionNotFound),
         }

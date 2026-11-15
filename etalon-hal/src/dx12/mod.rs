@@ -546,7 +546,6 @@ impl Surface {
 #[derive(Debug, Clone, Copy)]
 enum MemoryArchitecture {
     Unified {
-        #[allow(unused)]
         cache_coherent: bool,
     },
     NonUnified,
@@ -556,7 +555,6 @@ enum MemoryArchitecture {
 struct PrivateCapabilities {
     instance_flags: wgt::InstanceFlags,
     workarounds: Workarounds,
-    #[allow(unused)]
     heterogeneous_resource_heaps: bool,
     memory_architecture: MemoryArchitecture,
     heap_create_not_zeroed: bool,

@@ -1078,12 +1078,16 @@ impl Drop for super::InstanceShared {
     fn drop(&mut self) {
         unsafe {
             // Keep du alive since destroy_instance may also log
-            let _du = self.debug_utils.take().inspect(|du| {
+            let du = self.debug_utils.take();
+            if let Some(ref du) = du {
                 du.extension
                     .destroy_debug_utils_messenger(du.messenger, None);
-            });
+            }
             if self.drop_guard.is_none() {
                 self.raw.destroy_instance(None);
+            }
+            if let Some(du) = du {
+                drop(du.callback_data);
             }
         }
     }

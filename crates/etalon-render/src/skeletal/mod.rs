@@ -20,9 +20,13 @@ pub mod authoring;
 pub mod blend_space_1d;
 pub mod blend_space_2d;
 pub mod clip_state_machine;
+pub mod cosserat_rod;
+pub mod dca_multibody;
+pub mod exoskeletal_cuticle;
 pub mod gpu_morph;
 pub mod gpu_skin;
 pub mod ik_motor;
+pub mod mobility_risk_eval;
 pub mod pga_f64;
 pub mod player;
 pub mod pose;
@@ -30,6 +34,7 @@ pub mod root_motion;
 pub mod skin;
 pub mod time_policy;
 pub mod transform_hierarchy;
+pub mod vbd_soft_tissue;
 
 /// Submodule namespace preserving `skeletal::absm::*` import paths.
 pub mod absm {
@@ -53,43 +58,68 @@ pub mod inertial_skeleton {
 pub use absm::{
     AbsmLayer, AbsmMachine, AbsmParameter, AbsmStateNode, AbsmStateSource, AbsmTransition,
     AnimationSignal, BoneLayerMask, EontPostureConfig, LayerBlendMode, LeafCondition,
-    RootMotionDelta, RootMotionExtractor, SignalQueue, SignalTrigger, TransitionCondition,
-    MAX_ABSM_PARAMS, MAX_SIGNALS_PER_STATE,
+    MAX_ABSM_PARAMS, MAX_SIGNALS_PER_STATE, RootMotionDelta, RootMotionExtractor, SignalQueue,
+    SignalTrigger, TransitionCondition,
 };
 pub use blend_space::{
-    sample_blend_space_1d_zero_heap, sample_blend_space_2d_zero_heap, BlendPoint1D, BlendPoint2D,
-    BlendSample2D, BlendSpace1D, BlendSpace2D, BlendTriangle,
+    BlendPoint1D, BlendPoint2D, BlendSample2D, BlendSpace1D, BlendSpace2D, BlendTriangle,
+    sample_blend_space_1d_zero_heap, sample_blend_space_2d_zero_heap,
 };
 pub use clip_state_machine::{
-    blend_skeleton_layer_zero_heap, sample_pose_2d_zero_heap, AnimationStateMachine, BoneMask64,
-    LayerBlendOp, SimAnimationSignal, SimBlendPoint2D, SimBlendSpace2D, SimRootMotionDelta,
-    SimRootMotionExtractor, SimSignalQueue, TransitionMode,
+    AnimationStateMachine, BoneMask64, LayerBlendOp, SimAnimationSignal, SimBlendPoint2D,
+    SimBlendSpace2D, SimRootMotionDelta, SimRootMotionExtractor, SimSignalQueue, TransitionMode,
+    blend_skeleton_layer_zero_heap, sample_pose_2d_zero_heap,
+};
+pub use cosserat_rod::{
+    COSSERAT_ROD_WGSL, CosseratElement, CosseratElementGpu, CosseratEnvironment, CosseratNode,
+    MAX_COSSERAT_NODES, compute_darboux_vector, hydrostatic_cavity_axial_force,
+    step_cosserat_rod_zero_heap,
+};
+pub use dca_multibody::{
+    BodyDensitometryInertia, DCA_MULTIBODY_WGSL, DcaAssemblyNodeGpu, DcaBodyGpu, DcaBodyNode,
+    LoopClosureConstraint, MAX_DCA_BODIES, MAX_DCA_LOOPS, SpatialMat6, SpatialVec6,
+    resolve_loop_closures_zero_heap, solve_aba_zero_heap, solve_dca_parallel_chain_zero_heap,
+};
+pub use exoskeletal_cuticle::{
+    ApodemeActuator, BicondylarHinge, CuticleSclerite, EXOSKELETAL_CUTICLE_WGSL, ExoHingeGpu,
+    HemolymphHydraulics, MAX_EXO_APODEMES, MAX_EXO_SCLERITES, step_exoskeletal_cuticle_zero_heap,
 };
 pub use gpu_morph::{
-    compute_ontogenetic_morph_weights_from_header_zero_heap,
+    EntityOntologyMiniHeader, GpuInstanceMorphWeights, GpuMorphDelta, MAX_GPU_MORPH_TARGETS,
+    OntogeneticStateHeader, compute_ontogenetic_morph_weights_from_header_zero_heap,
     compute_ontogenetic_morph_weights_zero_heap, evaluate_morph_deltas_zero_heap,
-    ontogenetic_stage_growth_factor, EntityOntologyMiniHeader, GpuInstanceMorphWeights,
-    GpuMorphDelta, OntogeneticStateHeader, MAX_GPU_MORPH_TARGETS,
+    ontogenetic_stage_growth_factor,
 };
 pub use gpu_skin::{
+    GpuJointMotorPair, GpuSkinnedVertex, MAX_GPU_RIG_JOINTS, MAX_GPU_SKELETON_INSTANCES,
     evaluate_skinning_motor_palette_zero_heap, gpu_shader_skin_vertex_reference,
-    hemisphere_align_motor, skin_vertices_gpu_reference_into, GpuJointMotorPair, GpuSkinnedVertex,
-    MAX_GPU_RIG_JOINTS, MAX_GPU_SKELETON_INSTANCES,
+    hemisphere_align_motor, skin_vertices_gpu_reference_into,
 };
 pub use ik_motor::{
-    solve_constrained_fabrik_motor_ik_zero_heap, solve_two_bone_motor_ik_zero_heap,
-    JointConstraint, TwoBoneIkResult, MAX_IK_CHAIN,
+    JointConstraint, MAX_IK_CHAIN, TwoBoneIkResult, solve_constrained_fabrik_motor_ik_zero_heap,
+    solve_two_bone_motor_ik_zero_heap,
+};
+pub use mobility_risk_eval::{
+    AnatomicBoneSite, BiologicalSexBasis, BoneFractureLoadEvaluation, BoneFractureLoadInput,
+    CoupledMobilityFractureSummary, FractureCallusStage, GaitStabilityEvaluation,
+    GaitStabilityInput, JointMobilityEvaluation, JointMobilityInput, evaluate_bone_fracture_load,
+    evaluate_coupled_mobility_and_fracture_risk, evaluate_gait_stability, evaluate_joint_mobility,
+    sideways_fall_trochanteric_impact_force_n,
 };
 pub use pga_f64::{Motor, MotorBivector};
 pub use player::{
-    clip_view, BodyFitSource, BodyFitSpec, ClipRecord, PlaybackReceipt, PlayerError,
-    SkeletalCounts, SkeletalPlayer, SkeletalRigDescriptor, SkeletalSectionSource,
+    BodyFitSource, BodyFitSpec, ClipRecord, PlaybackReceipt, PlayerError, SkeletalCounts,
+    SkeletalPlayer, SkeletalRigDescriptor, SkeletalSectionSource, clip_view,
 };
 pub use pose::{compose_palette_into, sample_pose_into};
-pub use skin::{skin_vertices_into, SkinWeight};
+pub use skin::{SkinWeight, skin_vertices_into};
 pub use time_policy::PoseTimePolicy;
 pub use transform_hierarchy::{
-    AnimationClip, AnimationEvent, BoneTrack, Keyframe3D, Transform3D, ZeroHeapSkeleton, MAX_BONES,
+    AnimationClip, AnimationEvent, BoneTrack, Keyframe3D, MAX_BONES, Transform3D, ZeroHeapSkeleton,
+};
+pub use vbd_soft_tissue::{
+    MAX_VBD_COLORS, MAX_VBD_TETS, MAX_VBD_VERTICES, VBD_SOFT_TISSUE_WGSL, VbdTetElement, VbdVertex,
+    VbdVertexGpu, step_vbd_soft_tissue_zero_heap,
 };
 
 pub const MAX_JOINTS: usize = 128;

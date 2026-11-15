@@ -127,7 +127,6 @@ static GLOBAL: CountingAllocator = CountingAllocator;
 pub struct AllocSnapshot {
     pub alloc_calls: u64,
     pub dealloc_calls: u64,
-    #[allow(dead_code)]
     pub bytes_allocated: u64,
 }
 
@@ -247,7 +246,6 @@ pub fn assert_zero_alloc<F: FnOnce()>(label: &'static str, f: F) {
 /// Stricter than `assert_zero_alloc` is the zero-heap rule; this is the
 /// weaker "no leak" check useful for cold builders that may allocate
 /// transiently but must free everything.
-#[allow(dead_code)]
 pub fn assert_zero_net_alloc<F: FnOnce()>(label: &'static str, f: F) {
     let guard = AllocGuard::begin(label, false);
     f();
@@ -255,7 +253,6 @@ pub fn assert_zero_net_alloc<F: FnOnce()>(label: &'static str, f: F) {
 }
 
 /// Get the current thread's raw alloc-call count (for custom assertions).
-#[allow(dead_code)]
 pub fn current_alloc_calls() -> u64 {
     ALLOC_CALLS.with(|c| c.get())
 }
@@ -348,5 +345,18 @@ mod tests {
             0,
             "flag must be cleared after panic-drop"
         );
+    }
+
+    #[test]
+    fn net_alloc_and_byte_counters_work() {
+        let calls_before = current_alloc_calls();
+        let snap_before = AllocSnapshot::now();
+        assert_zero_net_alloc("transient_vec", || {
+            let v = vec![1u8; 32];
+            assert_eq!(v.len(), 32);
+        });
+        let snap_after = AllocSnapshot::now();
+        assert!(current_alloc_calls() > calls_before);
+        assert!(snap_after.bytes_allocated >= snap_before.bytes_allocated + 32);
     }
 }

@@ -11,7 +11,7 @@ use vibescript_abi::{
 
 use crate::helpers::{
     check_arity, check_len_exact, make_func_descriptor, ontology_triad, prepare_output,
-    read_f64_finite, read_f64_vec3,
+    push_u32_le, read_f64_finite, read_f64_vec3,
 };
 
 pub const SENSE_PROVIDER_IRI: &str = "https://qualiadb.org/ext/etalon/sense";
@@ -34,6 +34,10 @@ const PARAMS_SPECTRUM_BIN: [ParamSpec; 2] = [
 ];
 const PARAMS_RSSI_DIST: [ParamSpec; 1] =
     [ParamSpec::slice("rssi_dbm_tx_dbm_n", PrimitiveKind::F64, 3, 3)];
+const PARAMS_EVIDENCE_GATE: [ParamSpec; 1] =
+    [ParamSpec::slice("gate_inputs", PrimitiveKind::U64, 4, 4)];
+const PARAMS_DICOM_CHECK: [ParamSpec; 1] =
+    [ParamSpec::slice("dicom_meta", PrimitiveKind::U32, 3, 3)];
 
 const TELEMETRY_FUNCS: [FuncDescriptor; 3] = [
     make_func_descriptor(
@@ -77,11 +81,47 @@ const TELEMETRY_FUNCS: [FuncDescriptor; 3] = [
     ),
 ];
 
-const SENSE_SUB_NAMESPACES: [SubNamespaceDescriptor; 1] = [SubNamespaceDescriptor {
-    name: "telemetry",
-    sub_id: 0,
-    functions: &TELEMETRY_FUNCS,
-}];
+const AUTHORITY_FUNCS: [FuncDescriptor; 2] = [
+    make_func_descriptor(
+        "verify_evidence_gate",
+        "https://qualiadb.org/ext/etalon/sense/authority/verify_evidence_gate",
+        StableFuncId::new(1, 0),
+        &PARAMS_EVIDENCE_GATE,
+        PrimitiveKind::U64,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicExact,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(16, 16),
+        "(U64[4])->U64[2]",
+    ),
+    make_func_descriptor(
+        "dicom_modality_check",
+        "https://qualiadb.org/ext/etalon/sense/authority/dicom_modality_check",
+        StableFuncId::new(1, 1),
+        &PARAMS_DICOM_CHECK,
+        PrimitiveKind::U32,
+        2,
+        EffectSet::PURE_COMPUTE,
+        DeterminismGuarantee::DeterministicExact,
+        ReversibilityKind::PureNoState,
+        ResourceEnvelope::hot_zero_heap(12, 8),
+        "(U32[3])->U32[2]",
+    ),
+];
+
+const SENSE_SUB_NAMESPACES: [SubNamespaceDescriptor; 2] = [
+    SubNamespaceDescriptor {
+        name: "telemetry",
+        sub_id: 0,
+        functions: &TELEMETRY_FUNCS,
+    },
+    SubNamespaceDescriptor {
+        name: "authority",
+        sub_id: 1,
+        functions: &AUTHORITY_FUNCS,
+    },
+];
 
 const SENSE_DESCRIPTOR: ProviderDescriptor = ProviderDescriptor {
     canonical_iri: CanonicalIri::new(SENSE_PROVIDER_IRI),
@@ -162,6 +202,45 @@ pub fn oracle_rssi_log_distance_m(
     Ok(dist_m)
 }
 
+/// Reference oracle for `(1, 0) verify_evidence_gate`: `[admitted_flag, authority_tier]`.
+#[inline]
+pub fn oracle_verify_evidence_gate(gate_inputs: [u64; 4]) -> Result<[u64; 2], VibeTrap> {
+    let [modality_mask, calibration_age_ms, max_calibration_age_ms, consent_and_merkle_flags] =
+        gate_inputs;
+    if modality_mask == 0 || max_calibration_age_ms == 0 || consent_and_merkle_flags > 0x03 {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let has_consent = (consent_and_merkle_flags & 0x01) != 0;
+    let has_merkle = (consent_and_merkle_flags & 0x02) != 0;
+    let calibration_fresh = calibration_age_ms <= max_calibration_age_ms;
+    let admitted = calibration_fresh && has_consent && has_merkle;
+    let authority_tier = if !admitted {
+        0
+    } else if modality_mask.count_ones() >= 2 {
+        2
+    } else {
+        1
+    };
+    Ok([u64::from(admitted), authority_tier])
+}
+
+/// Reference oracle for `(1, 1) dicom_modality_check`: `[supported_flag, bytes_per_voxel]`.
+#[inline]
+pub fn oracle_dicom_modality_check(dicom_meta: [u32; 3]) -> Result<[u32; 2], VibeTrap> {
+    let [modality_code, bits_stored, samples_per_pixel] = dicom_meta;
+    if !(1..=6).contains(&modality_code)
+        || !(8..=16).contains(&bits_stored)
+        || !(1..=4).contains(&samples_per_pixel)
+    {
+        return Err(VibeTrap::NumericalDomainError);
+    }
+    let bytes_per_sample = if bits_stored <= 8 { 1 } else { 2 };
+    let bytes_per_voxel = bytes_per_sample * samples_per_pixel;
+    let supported =
+        u32::from(samples_per_pixel == 1 || (samples_per_pixel == 3 && bits_stored == 8));
+    Ok([supported, bytes_per_voxel])
+}
+
 /// Zero-heap Etalon sensor telemetry provider (`https://qualiadb.org/ext/etalon/sense`).
 #[derive(Debug, Clone, Copy, Default)]
 pub struct EtalonSenseProvider;
@@ -219,6 +298,35 @@ impl VibeNamespaceProvider for EtalonSenseProvider {
                 let dist = oracle_rssi_log_distance_m(p[0], p[1], p[2])?;
                 output.push_f64_le(dist)?;
                 Ok(10)
+            }
+            (1, 0) => {
+                check_arity(inputs, 1)?;
+                check_len_exact(&inputs[0], PrimitiveKind::U64, 4)?;
+                let gate_inputs = [
+                    inputs[0].read_u64_le(0)?,
+                    inputs[0].read_u64_le(1)?,
+                    inputs[0].read_u64_le(2)?,
+                    inputs[0].read_u64_le(3)?,
+                ];
+                prepare_output(output, PrimitiveKind::U64, 2)?;
+                let res = oracle_verify_evidence_gate(gate_inputs)?;
+                output.push_u64_le(res[0])?;
+                output.push_u64_le(res[1])?;
+                Ok(6)
+            }
+            (1, 1) => {
+                check_arity(inputs, 1)?;
+                check_len_exact(&inputs[0], PrimitiveKind::U32, 3)?;
+                let dicom_meta = [
+                    inputs[0].read_u32_le(0)?,
+                    inputs[0].read_u32_le(1)?,
+                    inputs[0].read_u32_le(2)?,
+                ];
+                prepare_output(output, PrimitiveKind::U32, 2)?;
+                let res = oracle_dicom_modality_check(dicom_meta)?;
+                push_u32_le(output, res[0])?;
+                push_u32_le(output, res[1])?;
+                Ok(6)
             }
             _ => Err(VibeTrap::FunctionNotFound),
         }

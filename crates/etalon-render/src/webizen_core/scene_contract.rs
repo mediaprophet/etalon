@@ -198,8 +198,7 @@ impl Tensor10DProjection {
     /// Uses CIE 1931 2-degree color matching functions
     ///
     /// Zero-heap consideration: Stack-allocated matrices, no heap allocation
-    #[allow(dead_code)]
-    fn spectral_to_cie_xyz(&self) -> [f64; 3] {
+    pub fn spectral_to_cie_xyz(&self) -> [f64; 3] {
         // Simplified spectral projection using stack-allocated CMF matrices
         // In full implementation, would use actual CIE 1931 2-degree CMF data
         let sigma = self.sigma;
@@ -220,8 +219,7 @@ impl Tensor10DProjection {
     /// Convert CIE XYZ to sRGB display gamut
     ///
     /// Zero-heap consideration: Stack-allocated transformation matrix
-    #[allow(dead_code)]
-    fn cie_xyz_to_srgb(&self, xyz: [f64; 3]) -> [f64; 3] {
+    pub fn cie_xyz_to_srgb(&self, xyz: [f64; 3]) -> [f64; 3] {
         // Stack-allocated XYZ to sRGB transformation matrix
         let xyz_to_srgb = [
             [3.2406, -1.5372, -0.4986],
@@ -492,5 +490,8 @@ mod tests {
         };
         let (r, g, b) = crate::spectral::sigma::sigma_to_display_rgb(0.42);
         assert_eq!(tensor.spectral_to_color(), format!("rgb({r}, {g}, {b})"));
+        let xyz = tensor.spectral_to_cie_xyz();
+        let srgb = tensor.cie_xyz_to_srgb(xyz);
+        assert!(srgb.iter().all(|c| c.is_finite()));
     }
 }

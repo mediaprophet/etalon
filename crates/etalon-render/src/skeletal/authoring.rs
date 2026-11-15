@@ -1,5 +1,5 @@
 //! Bounded skin influence authoring and seam remapping into caller buffers.
-use super::{SkeletalError, SkinWeight, MAX_JOINTS, MAX_VERTICES};
+use super::{MAX_JOINTS, MAX_VERTICES, SkeletalError, SkinWeight};
 
 #[derive(Debug, Clone, Copy)]
 pub struct BoneSegment {
