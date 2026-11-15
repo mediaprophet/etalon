@@ -49,3 +49,20 @@ pub const FOLIAGE_LOD_WGSL: &str = include_str!("foliage_lod.wgsl");
 pub const TEMPORAL_WARP_WGSL: &str = include_str!("temporal_warp.wgsl");
 pub const TILE_COMPACTION_WGSL: &str = include_str!("tile_compaction.wgsl");
 pub const INSTANCE_CULL_INDIRECT_WGSL: &str = include_str!("instance_cull_indirect.wgsl");
+
+#[cfg(test)]
+mod emf_tests {
+    #[test]
+    fn current_emf_shader_validates_with_sixteen_lane_storage_layout() {
+        let module = naga::front::wgsl::parse_str(super::EMF_VOLUMETRIC_WGSL).unwrap();
+        naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all())
+            .validate(&module).unwrap();
+        for name in ["EmfFieldCell", "EmfSliceUniform"] {
+            let (_, ty) = module.types.iter().find(|(_, ty)| ty.name.as_deref() == Some(name)).unwrap();
+            let naga::TypeInner::Struct { members, span } = &ty.inner else { panic!("expected struct"); };
+            assert_eq!(*span, 64, "{name} storage ABI");
+            assert_eq!(members.len(), 16);
+            for (i, member) in members.iter().enumerate() { assert_eq!(member.offset, i as u32 * 4); }
+        }
+    }
+}

@@ -11,7 +11,6 @@ pub mod space_weather;
 
 pub use atmosphere::*;
 pub use coupling::*;
-pub use excavation::*;
 pub use fire_ecology::*;
 pub use geomechanics::*;
 pub use space_weather::*;

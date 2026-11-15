@@ -1,0 +1,22 @@
+[package]
+name = "etalon-reconstruct"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+repository.workspace = true
+license.workspace = true
+publish = false
+description = "Local image-to-mesh reconstruction: multi-view visual hull, single-view relief, naive surface nets. Mesh export is OBJ/GLB; QualiaDB .10d is sealed by qualia-seal-10d"
+
+[[bin]]
+name = "etalon-reconstruct"
+path = "src/bin/reconstruct.rs"
+
+[features]
+default = ["std"]
+std = []
+
+[dependencies]
+image = { workspace = true, features = ["png", "jpeg"] }
+pico-args = { workspace = true }

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `etalon-render` unifies EMF shader exports with the 64-byte field ABI and adds an explicit nearest-cell magnitude display mode with transparent missing samples.
+
 - `etalon-model` resolves exact weight-name components, preserving Q/K normalization and expert scale tensors instead of aliasing them as projections.
 
 - `cargo xtask test` stages Windows WARP beside binaries in `CARGO_TARGET_DIR`, including isolated test builds.
@@ -12,9 +14,11 @@
 
 - `etalon-model-io` checks opened-file locality directly, allowing local NTFS volumes with newer device flags while retaining remote-file rejection and immutable lease exclusion.
 
+- `etalon-reconstruct` keys seamless studio-grey backdrops by flooding low-chroma paper from the image border, so a luma-18 threshold no longer treats the whole frame as foreground and the visual hull can carve.
 
 ## 0.0.2.1 release (QualiaDB 0.0.41 synchronization — `v0.0.2.1-release`)
 
+- Add `crates/etalon-reconstruct`: local image-to-mesh (multi-view visual hull, single-view relief, naive surface nets after MIT `fast-surface-nets-rs`) emitting OBJ plus OCC1 / Q42SDF16 volumetric sidecars. QualiaDB `.10d` (mesh, cardiac SKL1, VOX0, FEMC, MRP1, FIEL, MID2 electromagnetic field kind), sibling `.m64`, and `.emf` (`Q42EMF64`) are sealed by the QualiaDB `qualia-seal-10d` compiler so reconstruct does not fork those containers. This is the on-device alternative to the hosted `grok-imagine-3d` deferred `/v1/3d` job, which Zero Data Retention teams cannot call.
 
 - Enforce canonical 5-field XOR parity (`subject ^ predicate ^ object ^ context ^ metadata`) in `etalon-nquin::NQuinWire` (`Q42-00`), aligning GPU/CPU wire validation with the Q42 v4 48-byte Super-Quin specification.
 - Complete Wave 1 & 2 domain-neutral library migration into `etalon-render`, `etalon-sim`, `etalon-signal`, `etalon-tensor`, and `etalon-wgsl-forge` (skeletal animation, 10D spatial math/scene graph, B-rep/CSG/parametric geometry, DSP/vision/radar/acoustic kernels, and Naga SPIR-V/Forge executor optimizations).

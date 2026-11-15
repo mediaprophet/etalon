@@ -16,12 +16,14 @@
 //!   weather (`space_weather`), Rothermel/Byram fire ecology (`fire_ecology`), Mohr-Coulomb/McKyes-Ali
 //!   soil geomechanics & excavation (`geomechanics`), and `evaluate_heliophysical_fire_weather` coupling
 
+pub mod acoustics_continuum;
 pub mod character;
 pub mod continuum_3d;
 pub mod ecs;
 pub mod environment;
 pub mod input;
 pub mod kinematics;
+pub mod maxwell_emf;
 pub mod navigation;
 pub mod physics3d;
 pub mod time;

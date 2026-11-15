@@ -1,255 +1,15 @@
 //! Electromagnetic field and signal wave-propagation visualization pipeline.
 //!
 //! Provides the complete GPU rendering pipeline for drawing 2D slices of 4D EMF field grids
-//! (x * y * z * t) with 10D manifold records and 3 Stokes polarization parameters preserved.
+//! (x * y * z * t) with 10D manifold records and 3 Stokes polarization parameters preserved,
+//! along with CPU reference evaluators matching `shaders/emf_volumetric.wgsl`.
 
 use bytemuck::{Pod, Zeroable};
 
 /// Raw WGSL shader source for the EMF volumetric visualizer.
-pub const EMF_VOLUMETRIC_WGSL: &str = r#"// EMF 5D volumetric visualizer — renders 2D slices of the 4D EMF field grid
-// (x×y×z×t) with 10D manifold tags and Stokes polarization mapped to color.
-//
-// Fragment shader samples a storage buffer containing the flat field grid
-// (indexed [t][z][y][x]) and maps:
-//   amplitude  → brightness (HDR value)
-//   phase      → hue (via Full-Spectrum σ → CIE XYZ / False-Color → linear sRGB)
-//   manifold.scale + attention_depth → saturation gain
-//   manifold.manifold_curvature + Stokes (Q,U,V) → rim glow / polarization highlight
-//
-// @group(0) camera + slice params · @group(1) field grid storage
+pub const EMF_VOLUMETRIC_WGSL: &str = include_str!("shaders/emf_volumetric.wgsl");
 
-struct EmfSliceUniform {
-    // Grid dimensions.
-    nx: u32,
-    ny: u32,
-    nz: u32,
-    nt: u32,
-    // Current slice indices.
-    slice_z: u32,
-    slice_t: u32,
-    // Grid bounds: [x_min, x_max, y_min, y_max, z_min, z_max].
-    x_min: f32,
-    x_max: f32,
-    y_min: f32,
-    y_max: f32,
-    z_min: f32,
-    z_max: f32,
-    // Display controls.
-    amplitude_scale: f32,
-    phase_offset: f32,
-    manifold_gain: f32,
-    _pad: f32,
-};
-
-// Per-cell field data: amplitude, phase, frequency + 10D manifold coords + 3 Stokes polarization params.
-// Matches the host-side EmfFieldCell struct (64 bytes = 3 f32 + 10 f32 + 3 f32).
-struct EmfFieldCell {
-    amplitude: f32,
-    phase: f32,
-    frequency: f32,
-    // 10D manifold coordinate.
-    scale: f32,
-    attention_depth: f32,
-    epistemic_weight: f32,
-    topological_spin: f32,
-    temporal_decay: f32,
-    entropy_bias: f32,
-    spatial_phase: f32,
-    recurrence_frequency: f32,
-    density_threshold: f32,
-    manifold_curvature: f32,
-    // Stokes polarization parameters (Q, U, V).
-    stokes_q: f32,
-    stokes_u: f32,
-    stokes_v: f32,
-};
-
-@group(0) @binding(0) var<uniform> params: EmfSliceUniform;
-@group(1) @binding(0) var<storage, read> field: array<EmfFieldCell>;
-
-const TWO_PI: f32 = 6.283185307;
-
-// σ → CIE 1931 XYZ → linear sRGB (shared spectral mapping).
-fn sigma_to_cie_xyz(sigma: f32) -> vec3<f32> {
-    let s = fract(sigma);
-    let lambda = 380.0 + (s * 370.0);
-    let x1 = 1.056 * exp(-0.5 * pow((lambda - 599.8) / 43.2, 2.0));
-    let x2 = 0.362 * exp(-0.5 * pow((lambda - 442.0) / 32.0, 2.0));
-    let x3 = -0.065 * exp(-0.5 * pow((lambda - 501.1) / 20.4, 2.0));
-    let X = x1 + x2 + x3;
-    let y1 = 0.821 * exp(-0.5 * pow((lambda - 568.8) / 46.9, 2.0));
-    let y2 = 0.286 * exp(-0.5 * pow((lambda - 530.9) / 16.3, 2.0));
-    let Y = y1 + y2;
-    let z1 = 1.217 * exp(-0.5 * pow((lambda - 437.0) / 11.8, 2.0));
-    let z2 = 0.681 * exp(-0.5 * pow((lambda - 459.0) / 26.0, 2.0));
-    let Z = z1 + z2;
-    return vec3<f32>(X, Y, Z);
-}
-
-fn xyz_to_linear_srgb(xyz: vec3<f32>) -> vec3<f32> {
-    let R = 3.2404542 * xyz.x - 1.5371385 * xyz.y - 0.4985314 * xyz.z;
-    let G = -0.9692660 * xyz.x + 1.8760108 * xyz.y + 0.0415560 * xyz.z;
-    let B = 0.0556434 * xyz.x - 0.2040259 * xyz.y + 1.0572252 * xyz.z;
-    return max(vec3<f32>(R, G, B), vec3<f32>(0.0));
-}
-
-// Full-Spectrum False-Color Lens across 6 electromagnetic bands.
-fn sigma_to_linear_rgb(sigma: f32) -> vec3<f32> {
-    let band = i32(floor(sigma));
-    let s = fract(sigma);
-    if (band == 0) {
-        // Band 0 (Visible 380-750 nm): CIE 1931 XYZ analytic Gaussian fit -> linear sRGB
-        return xyz_to_linear_srgb(sigma_to_cie_xyz(s));
-    } else if (band == 1) {
-        // Band 1 (Radio/Microwave): deep crimson-to-amber false-color ramp
-        return vec3<f32>(
-            mix(0.35, 1.0, s),
-            mix(0.02, 0.55, s * s),
-            mix(0.05, 0.08, s)
-        );
-    } else if (band == 2) {
-        // Band 2 (Infrared / Thermal): blackbody ironbow ramp (indigo -> magenta -> orange -> white-hot)
-        let r = clamp(s * 1.6, 0.0, 1.0);
-        let g = clamp((s - 0.35) * 1.55, 0.0, 1.0);
-        let b = clamp(sin(s * 3.14159265) * 0.75 + max(0.0, (s - 0.75) * 4.0), 0.0, 1.0);
-        return vec3<f32>(r, g, b);
-    } else if (band == 3) {
-        // Band 3 (Ultraviolet): violet-to-electric-cyan fluorescence ramp
-        return vec3<f32>(
-            mix(0.42, 0.05, s),
-            mix(0.05, 0.92, s),
-            mix(0.75, 1.0, s)
-        );
-    } else if (band == 4) {
-        // Band 4 (X-Ray / CT attenuation): high-contrast radiographic cyan-white ramp
-        let c = pow(s, 0.85);
-        return vec3<f32>(c * 0.75, c * 0.95, clamp(c * 1.15, 0.0, 1.0));
-    } else {
-        // Band >= 5 (Gamma / Cherenkov): Cherenkov blue-violet-white radiation ramp
-        return vec3<f32>(
-            mix(0.15, 0.95, s * s),
-            mix(0.35, 0.98, s),
-            1.0
-        );
-    }
-}
-
-// Map phase (radians) to σ in [0,1) for spectral coloring.
-fn phase_to_sigma(phase: f32) -> f32 {
-    return fract(phase / TWO_PI);
-}
-
-// Sample the field grid at integer (ix, iy) for the current (slice_z, slice_t).
-fn sample_field(ix: u32, iy: u32) -> EmfFieldCell {
-    let idx = ((params.slice_t * params.nz + params.slice_z) * params.ny + iy) * params.nx + ix;
-    return field[idx];
-}
-
-// Bilinear sample at normalized UV in [0,1].
-fn sample_field_bilinear(uv: vec2<f32>) -> EmfFieldCell {
-    let fx = clamp(uv.x, 0.0, 0.999) * f32(params.nx);
-    let fy = clamp(uv.y, 0.0, 0.999) * f32(params.ny);
-    let ix0 = u32(floor(fx));
-    let iy0 = u32(floor(fy));
-    let ix1 = min(ix0 + 1u, params.nx - 1u);
-    let iy1 = min(iy0 + 1u, params.ny - 1u);
-    let tx = fx - f32(ix0);
-    let ty = fy - f32(iy0);
-
-    let c00 = sample_field(ix0, iy0);
-    let c10 = sample_field(ix1, iy0);
-    let c01 = sample_field(ix0, iy1);
-    let c11 = sample_field(ix1, iy1);
-
-    var result: EmfFieldCell;
-    result.amplitude = mix(mix(c00.amplitude, c10.amplitude, tx), mix(c01.amplitude, c11.amplitude, tx), ty);
-    result.phase = mix(mix(c00.phase, c10.phase, tx), mix(c01.phase, c11.phase, tx), ty);
-    result.frequency = mix(mix(c00.frequency, c10.frequency, tx), mix(c01.frequency, c11.frequency, tx), ty);
-    result.scale = mix(mix(c00.scale, c10.scale, tx), mix(c01.scale, c11.scale, tx), ty);
-    result.attention_depth = mix(mix(c00.attention_depth, c10.attention_depth, tx), mix(c01.attention_depth, c11.attention_depth, tx), ty);
-    result.epistemic_weight = mix(mix(c00.epistemic_weight, c10.epistemic_weight, tx), mix(c01.epistemic_weight, c11.epistemic_weight, tx), ty);
-    result.topological_spin = mix(mix(c00.topological_spin, c10.topological_spin, tx), mix(c01.topological_spin, c11.topological_spin, tx), ty);
-    result.temporal_decay = mix(mix(c00.temporal_decay, c10.temporal_decay, tx), mix(c01.temporal_decay, c11.temporal_decay, tx), ty);
-    result.entropy_bias = mix(mix(c00.entropy_bias, c10.entropy_bias, tx), mix(c01.entropy_bias, c11.entropy_bias, tx), ty);
-    result.spatial_phase = mix(mix(c00.spatial_phase, c10.spatial_phase, tx), mix(c01.spatial_phase, c11.spatial_phase, tx), ty);
-    result.recurrence_frequency = mix(mix(c00.recurrence_frequency, c10.recurrence_frequency, tx), mix(c01.recurrence_frequency, c11.recurrence_frequency, tx), ty);
-    result.density_threshold = mix(mix(c00.density_threshold, c10.density_threshold, tx), mix(c01.density_threshold, c11.density_threshold, tx), ty);
-    result.manifold_curvature = mix(mix(c00.manifold_curvature, c10.manifold_curvature, tx), mix(c01.manifold_curvature, c11.manifold_curvature, tx), ty);
-    result.stokes_q = mix(mix(c00.stokes_q, c10.stokes_q, tx), mix(c01.stokes_q, c11.stokes_q, tx), ty);
-    result.stokes_u = mix(mix(c00.stokes_u, c10.stokes_u, tx), mix(c01.stokes_u, c11.stokes_u, tx), ty);
-    result.stokes_v = mix(mix(c00.stokes_v, c10.stokes_v, tx), mix(c01.stokes_v, c11.stokes_v, tx), ty);
-    return result;
-}
-
-struct VertexOutput {
-    @builtin(position) clip_position: vec4<f32>,
-    @location(0) uv: vec2<f32>,
-};
-
-@vertex
-fn vertex_main(@builtin(vertex_index) vid: u32) -> VertexOutput {
-    // Full-screen triangle strip (2 triangles covering [-1,1]²).
-    let positions = array<vec2<f32>, 6>(
-        vec2<f32>(-1.0, -1.0),
-        vec2<f32>(1.0, -1.0),
-        vec2<f32>(-1.0, 1.0),
-        vec2<f32>(-1.0, 1.0),
-        vec2<f32>(1.0, -1.0),
-        vec2<f32>(1.0, 1.0),
-    );
-    let uvs = array<vec2<f32>, 6>(
-        vec2<f32>(0.0, 0.0),
-        vec2<f32>(1.0, 0.0),
-        vec2<f32>(0.0, 1.0),
-        vec2<f32>(0.0, 1.0),
-        vec2<f32>(1.0, 0.0),
-        vec2<f32>(1.0, 1.0),
-    );
-    var out: VertexOutput;
-    let p = positions[vid];
-    out.clip_position = vec4<f32>(p, 0.0, 1.0);
-    out.uv = uvs[vid];
-    return out;
-}
-
-@fragment
-fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
-    let cell = sample_field_bilinear(input.uv);
-
-    // Amplitude → brightness (HDR, scaled).
-    let amp = abs(cell.amplitude) * params.amplitude_scale;
-    let brightness = clamp(amp, 0.0, 4.0);
-
-    // Phase → hue via spectral mapping.
-    let sigma = phase_to_sigma(cell.phase + params.phase_offset);
-    let base_rgb = sigma_to_linear_rgb(sigma);
-
-    // Manifold fields modulate saturation and tint.
-    let manifold_gain = params.manifold_gain;
-    let saturation = clamp(cell.scale * manifold_gain, 0.0, 1.5);
-    let luminance = dot(base_rgb, vec3<f32>(0.2126, 0.7152, 0.0722));
-    let saturated_rgb = mix(vec3<f32>(luminance), base_rgb, saturation);
-
-    // Degree of polarization Π = clamp(sqrt(Q² + U² + V²) / (abs(cell.amplitude) + 1e-5), 0.0, 1.0).
-    let pol_mag = sqrt(
-        cell.stokes_q * cell.stokes_q +
-        cell.stokes_u * cell.stokes_u +
-        cell.stokes_v * cell.stokes_v
-    );
-    let degree_of_polarization = clamp(pol_mag / (abs(cell.amplitude) + 1e-5), 0.0, 1.0);
-    let pol_highlight = 1.0 + 0.35 * degree_of_polarization;
-
-    // Curvature → rim glow / contour enhancement modulated by polarization.
-    let curvature_glow = clamp(abs(cell.manifold_curvature) * manifold_gain, 0.0, 1.0);
-    let glow_tint = sigma_to_linear_rgb(phase_to_sigma(cell.spatial_phase));
-    let rgb = saturated_rgb * brightness * pol_highlight + glow_tint * curvature_glow * (0.3 + 0.2 * degree_of_polarization);
-
-    // Alpha: amplitude-based opacity, fades to transparent at zero amplitude.
-    let alpha = clamp(brightness * 0.5 + 0.1, 0.0, 1.0);
-
-    return vec4<f32>(rgb, alpha);
-}
-"#;
+const TWO_PI_F32: f32 = 6.283_185_307;
 
 /// Per-cell field data uploaded to the GPU storage buffer.
 ///
@@ -279,6 +39,23 @@ pub struct EmfFieldCell {
 
 const _: () = {
     assert!(core::mem::size_of::<EmfFieldCell>() == 64);
+    assert!(core::mem::align_of::<EmfFieldCell>() == 4);
+    assert!(core::mem::offset_of!(EmfFieldCell, amplitude) == 0);
+    assert!(core::mem::offset_of!(EmfFieldCell, phase) == 4);
+    assert!(core::mem::offset_of!(EmfFieldCell, frequency) == 8);
+    assert!(core::mem::offset_of!(EmfFieldCell, scale) == 12);
+    assert!(core::mem::offset_of!(EmfFieldCell, attention_depth) == 16);
+    assert!(core::mem::offset_of!(EmfFieldCell, epistemic_weight) == 20);
+    assert!(core::mem::offset_of!(EmfFieldCell, topological_spin) == 24);
+    assert!(core::mem::offset_of!(EmfFieldCell, temporal_decay) == 28);
+    assert!(core::mem::offset_of!(EmfFieldCell, entropy_bias) == 32);
+    assert!(core::mem::offset_of!(EmfFieldCell, spatial_phase) == 36);
+    assert!(core::mem::offset_of!(EmfFieldCell, recurrence_frequency) == 40);
+    assert!(core::mem::offset_of!(EmfFieldCell, density_threshold) == 44);
+    assert!(core::mem::offset_of!(EmfFieldCell, manifold_curvature) == 48);
+    assert!(core::mem::offset_of!(EmfFieldCell, stokes_q) == 52);
+    assert!(core::mem::offset_of!(EmfFieldCell, stokes_u) == 56);
+    assert!(core::mem::offset_of!(EmfFieldCell, stokes_v) == 60);
 };
 
 impl EmfFieldCell {
@@ -336,12 +113,17 @@ pub struct EmfSliceUniform {
     pub amplitude_scale: f32,
     pub phase_offset: f32,
     pub manifold_gain: f32,
-    pub _pad: f32,
+    pub projection_mode: u32,
 }
 
 const _: () = {
     assert!(core::mem::size_of::<EmfSliceUniform>() == 64);
     assert!(core::mem::align_of::<EmfSliceUniform>() == 16);
+    assert!(core::mem::offset_of!(EmfSliceUniform, nx) == 0);
+    assert!(core::mem::offset_of!(EmfSliceUniform, slice_z) == 16);
+    assert!(core::mem::offset_of!(EmfSliceUniform, x_min) == 24);
+    assert!(core::mem::offset_of!(EmfSliceUniform, amplitude_scale) == 48);
+    assert!(core::mem::offset_of!(EmfSliceUniform, projection_mode) == 60);
 };
 
 impl Default for EmfSliceUniform {
@@ -362,9 +144,240 @@ impl Default for EmfSliceUniform {
             amplitude_scale: 1.0,
             phase_offset: 0.0,
             manifold_gain: 1.0,
-            _pad: 0.0,
+            projection_mode: 0,
         }
     }
+}
+
+#[inline]
+fn wgsl_fract(x: f32) -> f32 {
+    x - x.floor()
+}
+
+#[inline]
+fn wgsl_mix(a: f32, b: f32, t: f32) -> f32 {
+    a * (1.0 - t) + b * t
+}
+
+/// CPU reference matching WGSL `phase_to_sigma(phase)`.
+#[inline]
+pub fn phase_to_sigma_cpu(phase: f32) -> f32 {
+    wgsl_fract(phase / TWO_PI_F32)
+}
+
+/// CPU reference matching WGSL `sigma_to_cie_xyz(sigma)`.
+#[inline]
+pub fn sigma_to_cie_xyz_cpu(sigma: f32) -> [f32; 3] {
+    let s = wgsl_fract(sigma);
+    let lambda = 380.0 + (s * 370.0);
+    let x1 = 1.056 * (-0.5 * ((lambda - 599.8) / 43.2).powi(2)).exp();
+    let x2 = 0.362 * (-0.5 * ((lambda - 442.0) / 32.0).powi(2)).exp();
+    let x3 = -0.065 * (-0.5 * ((lambda - 501.1) / 20.4).powi(2)).exp();
+    let x = x1 + x2 + x3;
+    let y1 = 0.821 * (-0.5 * ((lambda - 568.8) / 46.9).powi(2)).exp();
+    let y2 = 0.286 * (-0.5 * ((lambda - 530.9) / 16.3).powi(2)).exp();
+    let y = y1 + y2;
+    let z1 = 1.217 * (-0.5 * ((lambda - 437.0) / 11.8).powi(2)).exp();
+    let z2 = 0.681 * (-0.5 * ((lambda - 459.0) / 26.0).powi(2)).exp();
+    let z = z1 + z2;
+    [x, y, z]
+}
+
+/// CPU reference matching WGSL `xyz_to_linear_srgb(xyz)`.
+#[inline]
+pub fn xyz_to_linear_srgb_cpu(xyz: [f32; 3]) -> [f32; 3] {
+    let r = 3.240_454_2 * xyz[0] - 1.537_138_5 * xyz[1] - 0.498_531_4 * xyz[2];
+    let g = -0.969_266_0 * xyz[0] + 1.876_010_8 * xyz[1] + 0.041_556_0 * xyz[2];
+    let b = 0.055_643_4 * xyz[0] - 0.204_025_9 * xyz[1] + 1.057_225_2 * xyz[2];
+    [r.max(0.0), g.max(0.0), b.max(0.0)]
+}
+
+/// CPU reference matching WGSL `sigma_to_linear_rgb(sigma)` across all 6 full-spectrum bands `[0.0, 6.0)`.
+pub fn sigma_to_linear_rgb_cpu(sigma: f32) -> [f32; 3] {
+    let band = sigma.floor() as i32;
+    let s = wgsl_fract(sigma);
+    if band == 0 {
+        xyz_to_linear_srgb_cpu(sigma_to_cie_xyz_cpu(s))
+    } else if band == 1 {
+        [
+            wgsl_mix(0.35, 1.0, s),
+            wgsl_mix(0.02, 0.55, s * s),
+            wgsl_mix(0.05, 0.08, s),
+        ]
+    } else if band == 2 {
+        let r = (s * 1.6).clamp(0.0, 1.0);
+        let g = ((s - 0.35) * 1.55).clamp(0.0, 1.0);
+        let b = ((s * 3.141_592_7).sin() * 0.75 + ((s - 0.75) * 4.0).max(0.0)).clamp(0.0, 1.0);
+        [r, g, b]
+    } else if band == 3 {
+        [
+            wgsl_mix(0.42, 0.05, s),
+            wgsl_mix(0.05, 0.92, s),
+            wgsl_mix(0.75, 1.0, s),
+        ]
+    } else if band == 4 {
+        let c = s.powf(0.85);
+        [c * 0.75, c * 0.95, (c * 1.15).clamp(0.0, 1.0)]
+    } else {
+        [wgsl_mix(0.15, 0.95, s * s), wgsl_mix(0.35, 0.98, s), 1.0]
+    }
+}
+
+/// CPU reference matching WGSL `sample_field_bilinear(uv)`.
+pub fn sample_field_bilinear_cpu(
+    params: &EmfSliceUniform,
+    field: &[EmfFieldCell],
+    uv: [f32; 2],
+) -> EmfFieldCell {
+    let sample_at = |ix: u32, iy: u32| -> EmfFieldCell {
+        let idx = (((params.slice_t * params.nz + params.slice_z) * params.ny + iy) * params.nx
+            + ix) as usize;
+        field[idx]
+    };
+    let fx = uv[0].clamp(0.0, 0.999) * (params.nx as f32);
+    let fy = uv[1].clamp(0.0, 0.999) * (params.ny as f32);
+    let ix0 = fx.floor() as u32;
+    let iy0 = fy.floor() as u32;
+    let ix1 = (ix0 + 1).min(params.nx - 1);
+    let iy1 = (iy0 + 1).min(params.ny - 1);
+    let tx = fx - (ix0 as f32);
+    let ty = fy - (iy0 as f32);
+
+    let c00 = sample_at(ix0, iy0);
+    let c10 = sample_at(ix1, iy0);
+    let c01 = sample_at(ix0, iy1);
+    let c11 = sample_at(ix1, iy1);
+    let bilerp =
+        |v00: f32, v10: f32, v01: f32, v11: f32| wgsl_mix(wgsl_mix(v00, v10, tx), wgsl_mix(v01, v11, tx), ty);
+
+    EmfFieldCell {
+        amplitude: bilerp(c00.amplitude, c10.amplitude, c01.amplitude, c11.amplitude),
+        phase: bilerp(c00.phase, c10.phase, c01.phase, c11.phase),
+        frequency: bilerp(c00.frequency, c10.frequency, c01.frequency, c11.frequency),
+        scale: bilerp(c00.scale, c10.scale, c01.scale, c11.scale),
+        attention_depth: bilerp(
+            c00.attention_depth,
+            c10.attention_depth,
+            c01.attention_depth,
+            c11.attention_depth,
+        ),
+        epistemic_weight: bilerp(
+            c00.epistemic_weight,
+            c10.epistemic_weight,
+            c01.epistemic_weight,
+            c11.epistemic_weight,
+        ),
+        topological_spin: bilerp(
+            c00.topological_spin,
+            c10.topological_spin,
+            c01.topological_spin,
+            c11.topological_spin,
+        ),
+        temporal_decay: bilerp(
+            c00.temporal_decay,
+            c10.temporal_decay,
+            c01.temporal_decay,
+            c11.temporal_decay,
+        ),
+        entropy_bias: bilerp(
+            c00.entropy_bias,
+            c10.entropy_bias,
+            c01.entropy_bias,
+            c11.entropy_bias,
+        ),
+        spatial_phase: bilerp(
+            c00.spatial_phase,
+            c10.spatial_phase,
+            c01.spatial_phase,
+            c11.spatial_phase,
+        ),
+        recurrence_frequency: bilerp(
+            c00.recurrence_frequency,
+            c10.recurrence_frequency,
+            c01.recurrence_frequency,
+            c11.recurrence_frequency,
+        ),
+        density_threshold: bilerp(
+            c00.density_threshold,
+            c10.density_threshold,
+            c01.density_threshold,
+            c11.density_threshold,
+        ),
+        manifold_curvature: bilerp(
+            c00.manifold_curvature,
+            c10.manifold_curvature,
+            c01.manifold_curvature,
+            c11.manifold_curvature,
+        ),
+        stokes_q: bilerp(c00.stokes_q, c10.stokes_q, c01.stokes_q, c11.stokes_q),
+        stokes_u: bilerp(c00.stokes_u, c10.stokes_u, c01.stokes_u, c11.stokes_u),
+        stokes_v: bilerp(c00.stokes_v, c10.stokes_v, c01.stokes_v, c11.stokes_v),
+    }
+}
+
+/// CPU reference matching WGSL `fragment_main(input)` in `shaders/emf_volumetric.wgsl`.
+///
+/// Honors `projection_mode == 1u`, masks out invalid/missing cells with `epistemic_weight <= 0.0`
+/// in `projection_mode == 0u`, and selects `cell.recurrence_frequency` (`spectral_sigma` in `[0.0, 6.0)`)
+/// when `cell.recurrence_frequency > 0.0`.
+pub fn evaluate_emf_fragment_cpu(
+    params: &EmfSliceUniform,
+    field: &[EmfFieldCell],
+    uv: [f32; 2],
+) -> [f32; 4] {
+    if params.projection_mode == 1 {
+        let ix = ((uv[0].clamp(0.0, 1.0) * (params.nx as f32)) as u32).min(params.nx - 1);
+        let iy = ((uv[1].clamp(0.0, 1.0) * (params.ny as f32)) as u32).min(params.ny - 1);
+        let idx = (((params.slice_t * params.nz + params.slice_z) * params.ny + iy) * params.nx
+            + ix) as usize;
+        let display = field[idx];
+        return [
+            display.amplitude,
+            display.amplitude,
+            display.amplitude,
+            display.epistemic_weight,
+        ];
+    }
+
+    let cell = sample_field_bilinear_cpu(params, field, uv);
+    if cell.epistemic_weight <= 0.0 {
+        return [0.0, 0.0, 0.0, 0.0];
+    }
+
+    let amp = cell.amplitude.abs() * params.amplitude_scale;
+    let brightness = amp.clamp(0.0, 4.0);
+
+    let sigma = if cell.recurrence_frequency > 0.0 {
+        cell.recurrence_frequency
+    } else {
+        phase_to_sigma_cpu(cell.phase + params.phase_offset)
+    };
+    let base_rgb = sigma_to_linear_rgb_cpu(sigma);
+
+    let manifold_gain = params.manifold_gain;
+    let saturation = (cell.scale * manifold_gain).clamp(0.0, 1.5);
+    let luminance = 0.2126 * base_rgb[0] + 0.7152 * base_rgb[1] + 0.0722 * base_rgb[2];
+    let saturated_rgb = [
+        wgsl_mix(luminance, base_rgb[0], saturation),
+        wgsl_mix(luminance, base_rgb[1], saturation),
+        wgsl_mix(luminance, base_rgb[2], saturation),
+    ];
+
+    let degree_of_polarization = cell.degree_of_polarization();
+    let pol_highlight = 1.0 + 0.35 * degree_of_polarization;
+
+    let curvature_glow = (cell.manifold_curvature.abs() * manifold_gain).clamp(0.0, 1.0);
+    let glow_tint = sigma_to_linear_rgb_cpu(phase_to_sigma_cpu(cell.spatial_phase));
+    let glow_scale = curvature_glow * (0.3 + 0.2 * degree_of_polarization);
+
+    let rgb = [
+        saturated_rgb[0] * brightness * pol_highlight + glow_tint[0] * glow_scale,
+        saturated_rgb[1] * brightness * pol_highlight + glow_tint[1] * glow_scale,
+        saturated_rgb[2] * brightness * pol_highlight + glow_tint[2] * glow_scale,
+    ];
+    let alpha = (brightness * 0.5 + 0.1).clamp(0.0, 1.0);
+
+    [rgb[0], rgb[1], rgb[2], alpha]
 }
 
 /// Bounded calculation of field cell memory requirements.
@@ -525,6 +538,7 @@ mod tests {
     #[test]
     fn emf_field_cell_v2_layout_and_v1_migration() {
         assert_eq!(core::mem::size_of::<EmfFieldCell>(), 64);
+        assert_eq!(core::mem::size_of::<EmfSliceUniform>(), 64);
         let v1 = [
             1.0, 0.5, 2.4e9, 0.8, 0.3, 0.9, 0.1, 0.05, 0.2, 0.4, 0.6, 0.7, 0.15,
         ];
@@ -535,5 +549,51 @@ mod tests {
         assert_eq!(cell.stokes_u, 0.0);
         assert_eq!(cell.stokes_v, 0.0);
         assert_eq!(cell.degree_of_polarization(), 0.0);
+    }
+
+    #[test]
+    fn emf_volumetric_wgsl_parses_and_validates() {
+        let module = naga::front::wgsl::parse_str(EMF_VOLUMETRIC_WGSL)
+            .expect("emf_volumetric.wgsl must parse");
+        let mut validator = naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::default(),
+        );
+        validator
+            .validate(&module)
+            .expect("emf_volumetric.wgsl must validate");
+    }
+
+    #[test]
+    fn emf_fragment_masks_zero_epistemic_weight_and_selects_full_spectrum_sigma() {
+        let params = EmfSliceUniform::default();
+        let mut cell = EmfFieldCell {
+            amplitude: 1.5,
+            phase: 1.0,
+            frequency: 5.0e14,
+            scale: 1.0,
+            epistemic_weight: 0.0,
+            recurrence_frequency: 2.5,
+            ..Default::default()
+        };
+
+        // Missing/invalid cell with epistemic_weight == 0.0 must be masked to transparent zero
+        let masked = evaluate_emf_fragment_cpu(&params, &[cell], [0.5, 0.5]);
+        assert_eq!(masked, [0.0, 0.0, 0.0, 0.0]);
+
+        // Valid cell with recurrence_frequency = 2.5 (Band 2 Infrared/Thermal) vs 4.5 (Band 4 X-Ray)
+        cell.epistemic_weight = 1.0;
+        let ir_rgba = evaluate_emf_fragment_cpu(&params, &[cell], [0.5, 0.5]);
+        assert!(ir_rgba[3] > 0.0);
+
+        cell.recurrence_frequency = 4.5;
+        let xray_rgba = evaluate_emf_fragment_cpu(&params, &[cell], [0.5, 0.5]);
+        assert_ne!(ir_rgba, xray_rgba);
+
+        // Fallback to phase_to_sigma when recurrence_frequency <= 0.0
+        cell.recurrence_frequency = 0.0;
+        let phase_rgba = evaluate_emf_fragment_cpu(&params, &[cell], [0.5, 0.5]);
+        assert!(phase_rgba[3] > 0.0);
+        assert_ne!(phase_rgba, xray_rgba);
     }
 }

@@ -7,6 +7,8 @@
 #![forbid(unsafe_code)]
 
 pub mod audio;
+pub mod bioheat_sones;
+pub mod bs1770;
 pub mod correlation;
 pub mod decode;
 pub mod detection;
@@ -15,12 +17,15 @@ pub mod execution;
 pub mod fft;
 pub mod filter;
 pub mod goertzel;
+pub mod hoa;
 pub mod iq;
 pub mod loudness;
 pub mod mel;
+pub mod modal;
 pub mod phase;
 pub mod pipeline;
 pub mod pitch;
+pub mod poroelastic_diffraction;
 pub mod resample;
 pub mod reverb;
 pub mod spatial;
