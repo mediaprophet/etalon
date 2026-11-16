@@ -211,7 +211,8 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
         let ix = min(u32(clamp(input.uv.x, 0.0, 1.0) * f32(params.nx)), params.nx - 1u);
         let iy = min(u32(clamp(input.uv.y, 0.0, 1.0) * f32(params.ny)), params.ny - 1u);
         let display = sample_field(ix, iy);
-        return vec4<f32>(vec3<f32>(display.amplitude), display.epistemic_weight);
+        let brightness = clamp(display.amplitude * params.amplitude_scale, 0.0, 1.0);
+        return vec4<f32>(vec3<f32>(brightness), display.epistemic_weight);
     }
     let cell = sample_field_bilinear(input.uv);
     if cell.epistemic_weight <= 0.0 {

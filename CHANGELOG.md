@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `etalon-render` applies diagnostic display gain to magnitude-only EMF slices, preserving source values and validity; the CPU oracle matches the GPU shader.
+
 - `etalon-render` unifies EMF shader exports with the 64-byte field ABI and adds an explicit nearest-cell magnitude display mode with transparent missing samples.
 
 - `etalon-model` resolves exact weight-name components, preserving Q/K normalization and expert scale tensors instead of aliasing them as projections.

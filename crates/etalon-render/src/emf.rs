@@ -331,12 +331,8 @@ pub fn evaluate_emf_fragment_cpu(
         let idx = (((params.slice_t * params.nz + params.slice_z) * params.ny + iy) * params.nx
             + ix) as usize;
         let display = field[idx];
-        return [
-            display.amplitude,
-            display.amplitude,
-            display.amplitude,
-            display.epistemic_weight,
-        ];
+        let brightness = (display.amplitude * params.amplitude_scale).clamp(0.0, 1.0);
+        return [brightness, brightness, brightness, display.epistemic_weight];
     }
 
     let cell = sample_field_bilinear_cpu(params, field, uv);
@@ -597,3 +593,7 @@ mod tests {
         assert_ne!(phase_rgba, xray_rgba);
     }
 }
+
+#[cfg(test)]
+#[path = "emf_gain_tests.rs"]
+mod gain_tests;
