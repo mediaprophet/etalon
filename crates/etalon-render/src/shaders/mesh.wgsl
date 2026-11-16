@@ -2,6 +2,8 @@
 // RENDERER_IMPLEMENTATION_PLAN.md). Uses an area-weighted normal stream for
 // smooth legacy direct lighting. Shares the orbit camera with projector/ambient.
 
+override SKIP_ABSENT_MATERIAL_MAPS: bool = false;
+
 struct Camera {
     view_projection: mat4x4<f32>,
     yaw: f32,
@@ -146,6 +148,7 @@ fn nearest_texel(uv: vec2<f32>, role: u32, dims: vec2<u32>, levels: u32, rho: f3
 }
 
 fn sample_base_color(uv: vec2<f32>) -> vec4<f32> {
+    if (SKIP_ABSENT_MATERIAL_MAPS && material.texture_flags.x == 0u) { return vec4<f32>(1.0); }
     let sampled = textureSample(base_color_map, base_color_sampler, uv);
     let dims = textureDimensions(base_color_map, 0);
     let dx = dpdx(uv) * vec2<f32>(dims);
@@ -159,6 +162,7 @@ fn sample_base_color(uv: vec2<f32>) -> vec4<f32> {
 }
 
 fn sample_normal(uv: vec2<f32>) -> vec4<f32> {
+    if (SKIP_ABSENT_MATERIAL_MAPS && material.texture_flags.y == 0u) { return vec4<f32>(0.5, 0.5, 1.0, 1.0); }
     let sampled = textureSample(normal_map, normal_sampler, uv);
     let dims = textureDimensions(normal_map, 0);
     let dx = dpdx(uv) * vec2<f32>(dims);
@@ -172,6 +176,7 @@ fn sample_normal(uv: vec2<f32>) -> vec4<f32> {
 }
 
 fn sample_metallic_roughness(uv: vec2<f32>) -> vec4<f32> {
+    if (SKIP_ABSENT_MATERIAL_MAPS && material.texture_flags.z == 0u) { return vec4<f32>(0.0, 1.0, 1.0, 1.0); }
     let sampled = textureSample(metallic_roughness_map, metallic_roughness_sampler, uv);
     let dims = textureDimensions(metallic_roughness_map, 0);
     let dx = dpdx(uv) * vec2<f32>(dims);
@@ -185,6 +190,7 @@ fn sample_metallic_roughness(uv: vec2<f32>) -> vec4<f32> {
 }
 
 fn sample_occlusion(uv: vec2<f32>) -> vec4<f32> {
+    if (SKIP_ABSENT_MATERIAL_MAPS && material.texture_flags.w == 0u) { return vec4<f32>(1.0); }
     let sampled = textureSample(occlusion_map, occlusion_sampler, uv);
     let dims = textureDimensions(occlusion_map, 0);
     let dx = dpdx(uv) * vec2<f32>(dims);
@@ -198,6 +204,7 @@ fn sample_occlusion(uv: vec2<f32>) -> vec4<f32> {
 }
 
 fn sample_emissive(uv: vec2<f32>) -> vec4<f32> {
+    if (SKIP_ABSENT_MATERIAL_MAPS && material.texture_flags_extra.x == 0u) { return vec4<f32>(1.0); }
     let sampled = textureSample(emissive_map, emissive_sampler, uv);
     let dims = textureDimensions(emissive_map, 0);
     let dx = dpdx(uv) * vec2<f32>(dims);
@@ -211,6 +218,7 @@ fn sample_emissive(uv: vec2<f32>) -> vec4<f32> {
 }
 
 fn sample_stylized_ramp(uv: vec2<f32>) -> vec4<f32> {
+    if (SKIP_ABSENT_MATERIAL_MAPS && material.texture_flags_extra.y == 0u) { return vec4<f32>(1.0); }
     let sampled = textureSample(stylized_ramp_map, stylized_ramp_sampler, uv);
     let dims = textureDimensions(stylized_ramp_map, 0);
     let dx = dpdx(uv) * vec2<f32>(dims);

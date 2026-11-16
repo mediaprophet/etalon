@@ -1,5 +1,8 @@
 //! Decoupled volumetric, HUD, and EMF rendering substrate.
 
+#[cfg(test)]
+mod ao_normal_tests;
+
 #[cfg(feature = "gpu")]
 pub mod emf;
 pub mod hud;

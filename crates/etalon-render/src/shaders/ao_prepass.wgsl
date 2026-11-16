@@ -191,10 +191,11 @@ fn vertex_main(
     @builtin(instance_index) instance_index: u32
 ) -> Output {
     var output: Output;
-    let instance_model = model * mesh_instances[instance_index].world_from_local;
+    let instance = mesh_instances[instance_index];
+    let instance_model = model * instance.world_from_local;
     let world_position = (instance_model * vec4<f32>(position, 1.0)).xyz;
     output.position = camera.view_projection * vec4<f32>(world_position, 1.0);
-    output.normal = normalize((instance_model * vec4<f32>(normal, 0.0)).xyz);
+    output.normal = normalize((model * vec4<f32>(instance.normal_from_local * normal, 0.0)).xyz);
     output.world_position = world_position;
     output.color = color;
     output.uv0 = uv0;

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `etalon-render` adds an opt-in shader variant that skips absent material maps while retaining the original default sampling path, and applies instance inverse-transpose normals in the ambient-occlusion prepass.
+
 - Compute-pass benchmark shaders use one invocation per dispatch to avoid overlapping writes, fully populate their bindless descriptor arrays, and distinguish corrected results with v2 labels.
 
 - GL fence waits preserve indefinite waits and finite deadlines across signed timeout chunks, and propagate driver wait failures instead of reporting them as timeouts.
