@@ -10,7 +10,7 @@ struct CameraMotionParams {
     viewport: vec4<f32>, // x = width, y = height, z = 1/width, w = 1/height
 };
 
-@group(0) @binding(0) var scene_depth: texture_depth_2d;
+@group(0) @binding(0) var scene_depth: texture_2d<f32>;
 @group(0) @binding(1) var<uniform> motion_params: CameraMotionParams;
 @group(0) @binding(2) var depth_sampler: sampler;
 
@@ -31,7 +31,7 @@ fn temporal_motion_vs(@builtin(vertex_index) vertex_index: u32) -> @builtin(posi
 @fragment
 fn temporal_motion_fs(@builtin(position) position: vec4<f32>) -> @location(0) vec2<f32> {
     let uv = (floor(position.xy) + vec2<f32>(0.5, 0.5)) * motion_params.viewport.zw;
-    let depth = textureSampleLevel(scene_depth, depth_sampler, uv, 0);
+    let depth = textureSampleLevel(scene_depth, depth_sampler, uv, 0.0).r;
 
     // NDC: x in [-1, 1], y in [-1, 1] (y up, uv y down: ndc_y = 1.0 - 2.0 * uv.y)
     let ndc = vec4<f32>(

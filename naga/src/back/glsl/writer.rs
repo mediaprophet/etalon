@@ -2615,11 +2615,16 @@ impl<'a, W: Write> Writer<'a, W> {
 
                 // `textureLod[Offset]` on `sampler2DArrayShadow` and `samplerCubeShadow` does not exist in GLSL,
                 // unless `GL_EXT_texture_shadow_lod` is present.
+                // On GLSL ES 3.00, `textureLod[Offset]` on `sampler2DShadow` also does not exist.
                 // But if the target LOD is zero, we can emulate that by using `textureGrad[Offset]` with a constant gradient of 0.
                 let workaround_lod_with_grad = ((dim == crate::ImageDimension::Cube && !arrayed)
-                    || (dim == crate::ImageDimension::D2 && arrayed))
+                    || (dim == crate::ImageDimension::D2 && arrayed)
+                    || (dim == crate::ImageDimension::D2
+                        && !arrayed
+                        && self.options.version.is_es()))
                     && level == crate::SampleLevel::Zero
                     && matches!(class, crate::ImageClass::Depth { .. })
+                    && depth_ref.is_some()
                     && !self.features.contains(Features::TEXTURE_SHADOW_LOD);
 
                 // Write the function to be used depending on the sample level
