@@ -13,14 +13,14 @@ struct BufferElement {
 var<storage, read_write> buffers: binding_array<BufferElement>;
 
 @compute
-@workgroup_size(16)
+@workgroup_size(1)
 fn cs_main(@builtin(global_invocation_id) global_invocation_id: vec3<u32>) {
     let offset = global_invocation_id.x; // Would be nice to offset this dynamically (it's just 0 always in the current setup)
     
     let idx0 = offset * 2 + 0;
     let idx1 = offset * 2 + 1;
     
-    let tex = textureLoad(tex[idx0], vec2u(0), 0) + textureLoad(tex[idx0], vec2u(0), 0);
+    let tex = textureLoad(tex[idx0], vec2u(0), 0) + textureLoad(tex[idx1], vec2u(0), 0);
     let image = textureLoad(images[idx0], vec2u(0)) + textureLoad(images[idx1], vec2u(0));
     buffers[idx0].element = tex.rrrr;
     buffers[idx1].element = image.rrrr;

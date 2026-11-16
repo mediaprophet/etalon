@@ -1832,6 +1832,8 @@ impl crate::Device for super::Device {
         wait_value: crate::FenceValue,
         timeout: Option<core::time::Duration>,
     ) -> Result<bool, crate::DeviceError> {
+        #[cfg(not(any(webgl, Emscripten)))]
+        let started = std::time::Instant::now();
         if fence.satisfied(wait_value) {
             return Ok(true);
         }
@@ -1841,14 +1843,14 @@ impl crate::Device for super::Device {
         // - 1s in Gecko https://searchfox.org/mozilla-central/rev/754074e05178e017ef6c3d8e30428ffa8f1b794d/dom/canvas/WebGLTypes.h#1386
         // - 0 in WebKit https://github.com/WebKit/WebKit/blob/4ef90d4672ca50267c0971b85db403d9684508ea/Source/WebCore/html/canvas/WebGL2RenderingContext.cpp#L110
         // - 0 in Chromium https://source.chromium.org/chromium/chromium/src/+/main:third_party/blink/renderer/modules/webgl/webgl2_rendering_context_base.cc;l=112;drc=a3cb0ac4c71ec04abfeaed199e5d63230eca2551
-        let timeout_ns = if cfg!(any(webgl, Emscripten)) {
-            0
-        } else {
-            timeout
-                .map(|t| t.as_nanos().min(u32::MAX as u128) as u32)
-                .unwrap_or(u32::MAX)
+        #[cfg(any(webgl, Emscripten))]
+        let timeout = {
+            let _ = timeout;
+            Some(core::time::Duration::ZERO)
         };
-        fence.wait(gl, wait_value, timeout_ns)
+        #[cfg(not(any(webgl, Emscripten)))]
+        let timeout = timeout.map(|limit| limit.saturating_sub(started.elapsed()));
+        fence.wait(gl, wait_value, timeout)
     }
 
     unsafe fn start_graphics_debugger_capture(&self) -> bool {

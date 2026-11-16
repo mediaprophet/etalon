@@ -287,7 +287,12 @@ impl ComputepassState {
                                     view_dimension: etalon::TextureViewDimension::D2,
                                     multisampled: false,
                                 },
-                                count: Some(NonZeroU32::new(texture_count as u32).unwrap()),
+                                count: Some(
+                                    NonZeroU32::new(
+                                        (dispatch_count_bindless * TEXTURES_PER_DISPATCH) as u32,
+                                    )
+                                    .unwrap(),
+                                ),
                             },
                             etalon::BindGroupLayoutEntry {
                                 binding: 1,
@@ -297,7 +302,13 @@ impl ComputepassState {
                                     format: etalon::TextureFormat::R32Float,
                                     view_dimension: etalon::TextureViewDimension::D2,
                                 },
-                                count: Some(NonZeroU32::new(storage_texture_count as u32).unwrap()),
+                                count: Some(
+                                    NonZeroU32::new(
+                                        (dispatch_count_bindless * STORAGE_TEXTURES_PER_DISPATCH)
+                                            as u32,
+                                    )
+                                    .unwrap(),
+                                ),
                             },
                             etalon::BindGroupLayoutEntry {
                                 binding: 2,
@@ -307,7 +318,13 @@ impl ComputepassState {
                                     has_dynamic_offset: false,
                                     min_binding_size: std::num::NonZeroU64::new(BUFFER_SIZE),
                                 },
-                                count: Some(NonZeroU32::new(storage_buffer_count as u32).unwrap()),
+                                count: Some(
+                                    NonZeroU32::new(
+                                        (dispatch_count_bindless * STORAGE_BUFFERS_PER_DISPATCH)
+                                            as u32,
+                                    )
+                                    .unwrap(),
+                                ),
                             },
                         ],
                     },
@@ -323,19 +340,22 @@ impl ComputepassState {
                                 etalon::BindGroupEntry {
                                     binding: 0,
                                     resource: etalon::BindingResource::TextureViewArray(
-                                        &texture_view_refs[..dispatch_count_bindless],
+                                        &texture_view_refs
+                                            [..dispatch_count_bindless * TEXTURES_PER_DISPATCH],
                                     ),
                                 },
                                 etalon::BindGroupEntry {
                                     binding: 1,
                                     resource: etalon::BindingResource::TextureViewArray(
-                                        &storage_texture_view_refs[..dispatch_count_bindless],
+                                        &storage_texture_view_refs[..dispatch_count_bindless
+                                            * STORAGE_TEXTURES_PER_DISPATCH],
                                     ),
                                 },
                                 etalon::BindGroupEntry {
                                     binding: 2,
                                     resource: etalon::BindingResource::BufferArray(
-                                        &storage_buffer_bindings[..dispatch_count_bindless],
+                                        &storage_buffer_bindings[..dispatch_count_bindless
+                                            * STORAGE_BUFFERS_PER_DISPATCH],
                                     ),
                                 },
                             ],
@@ -459,8 +479,8 @@ pub fn run_bench(
     // Test 10k dispatch calls split up into 1, 2, 4, and 8 computepasses
     for &cpasses in thread_count_list(&ctx) {
         let labels = vec![
-            format!("Encoding ({cpasses} passes)"),
-            format!("Submit ({cpasses} passes)"),
+            format!("Encoding ({cpasses} passes, single invocation v2)"),
+            format!("Submit ({cpasses} passes, single invocation v2)"),
         ];
 
         results.extend(iter_many(
@@ -494,8 +514,8 @@ pub fn run_bench(
     // Test 10k dispatch calls split up over 2, 4, and 8 threads.
     for &threads in thread_count_list(&ctx) {
         let labels = vec![
-            format!("Encoding ({threads} threads)"),
-            format!("Submit ({threads} threads)"),
+            format!("Encoding ({threads} threads, single invocation v2)"),
+            format!("Submit ({threads} threads, single invocation v2)"),
         ];
 
         results.extend(iter_many(
@@ -529,8 +549,8 @@ pub fn run_bench(
     // Test 10k dispatch calls with bindless rendering.
     if state.bindless_bind_group.is_some() {
         let labels = vec![
-            "Encoding (bindless)".to_string(),
-            "Submit (bindless)".to_string(),
+            "Encoding (bindless, single invocation v2)".to_string(),
+            "Submit (bindless, single invocation v2)".to_string(),
         ];
 
         results.extend(iter_many(

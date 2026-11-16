@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Compute-pass benchmark shaders use one invocation per dispatch to avoid overlapping writes, fully populate their bindless descriptor arrays, and distinguish corrected results with v2 labels.
+
+- GL fence waits preserve indefinite waits and finite deadlines across signed timeout chunks, and propagate driver wait failures instead of reporting them as timeouts.
+
 - `etalon-render` applies diagnostic display gain to magnitude-only EMF slices, preserving source values and validity; the CPU oracle matches the GPU shader.
 
 - `etalon-render` unifies EMF shader exports with the 64-byte field ABI and adds an explicit nearest-cell magnitude display mode with transparent missing samples.

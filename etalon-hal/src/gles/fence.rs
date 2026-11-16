@@ -5,6 +5,8 @@ use etalon_sync::RwLock;
 use glow::HasContext;
 
 use crate::AtomicFenceValue;
+#[path = "fence_wait.rs"]
+mod fence_wait;
 
 #[derive(Debug)]
 struct GLFence {
@@ -126,8 +128,10 @@ impl Fence {
         &self,
         gl: &glow::Context,
         wait_value: crate::FenceValue,
-        timeout_ns: u32,
+        timeout: Option<core::time::Duration>,
     ) -> Result<bool, crate::DeviceError> {
+        #[cfg(not(any(webgl, Emscripten)))]
+        let started = std::time::Instant::now();
         let last_completed = self.last_completed.load(Ordering::Acquire);
 
         if self.fence_behavior.is_auto_finish() {
@@ -155,24 +159,34 @@ impl Fence {
 
         drop(pending);
 
-        let status = unsafe {
-            gl.client_wait_sync(
-                *sync,
-                glow::SYNC_FLUSH_COMMANDS_BIT,
-                timeout_ns.min(i32::MAX as u32) as i32,
-            )
-        };
-
+        let signalled = fence_wait::wait_with_deadline(
+            timeout,
+            || {
+                #[cfg(not(any(webgl, Emscripten)))]
+                {
+                    started.elapsed()
+                }
+                #[cfg(any(webgl, Emscripten))]
+                {
+                    core::time::Duration::ZERO
+                }
+            },
+            |timeout_ns| {
+                let status = unsafe {
+                    gl.client_wait_sync(*sync, glow::SYNC_FLUSH_COMMANDS_BIT, timeout_ns)
+                };
+                match status {
+                    glow::ALREADY_SIGNALED | glow::CONDITION_SATISFIED => Ok(true),
+                    glow::TIMEOUT_EXPIRED => Ok(false),
+                    glow::WAIT_FAILED => Err(crate::DeviceError::Unexpected),
+                    _ => {
+                        log::warn!("Unexpected result from client_wait_sync: {status}");
+                        Err(crate::DeviceError::Unexpected)
+                    }
+                }
+            },
+        )?;
         drop(sync);
-
-        let signalled = match status {
-            glow::ALREADY_SIGNALED | glow::CONDITION_SATISFIED => true,
-            glow::TIMEOUT_EXPIRED | glow::WAIT_FAILED => false,
-            _ => {
-                log::warn!("Unexpected result from client_wait_sync: {status}");
-                false
-            }
-        };
 
         if signalled {
             self.last_completed.fetch_max(fence_value, Ordering::AcqRel);

@@ -17,7 +17,7 @@ var<storage, read_write> buffer0 : array<vec4f>;
 var<storage, read_write> buffer1 : array<vec4f>;
 
 @compute
-@workgroup_size(16)
+@workgroup_size(1)
 fn cs_main(@builtin(global_invocation_id) global_invocation_id: vec3<u32>) {
     let tex = textureLoad(tex_0, vec2u(0), 0) + textureLoad(tex_1, vec2u(0), 0);
     let image = textureLoad(image_0, vec2u(0)) + textureLoad(image_1, vec2u(0));
