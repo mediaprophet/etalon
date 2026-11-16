@@ -71,11 +71,7 @@ fn nearest_base_color_texel(uv: vec2<f32>, rho: f32) -> vec3<i32> {
     }
     if (wrap_t == 2u) { wrapped.y = wrapped.y - floor(wrapped.y); }
     let dims = textureDimensions(base_color_map, 0);
-    var level = 0u;
-    if ((record & 7u) == 2u && textureNumLevels(base_color_map) > 1u) {
-        let lod = clamp(log2(max(rho, 0.000001)), 0.0, f32(textureNumLevels(base_color_map) - 1u));
-        level = u32(floor(lod + 0.5));
-    }
+    let level = 0u;
     let level_dims = max(dims >> vec2<u32>(level), vec2<u32>(1u));
     let pixel = min(vec2<u32>(floor(wrapped * vec2<f32>(level_dims))), level_dims - vec2<u32>(1u));
     return vec3<i32>(vec2<i32>(pixel), i32(level));
