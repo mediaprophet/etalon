@@ -8,6 +8,9 @@ pub mod emit;
 pub mod ir;
 pub mod geometry_specs;
 pub mod ir_builtins;
+pub mod production_ir;
+pub mod production_lowering;
+pub mod production_quality;
 pub mod routing;
 pub mod schedule;
 
