@@ -4747,9 +4747,10 @@ impl<'a, W: Write> Writer<'a, W> {
                     )));
                 }
                 let base_name = self.get_global_name(handle, global);
-                let texture_name = format!("_naga_ro_{base_name}");
-                let width_uniform = format!("_naga_ro_{base_name}_width");
-                let byte_size_uniform = format!("_naga_ro_{base_name}_byte_size");
+                let safe_base = base_name.trim_matches('_');
+                let texture_name = format!("_naga_ro_{safe_base}");
+                let width_uniform = format!("_naga_ro_{safe_base}_width");
+                let byte_size_uniform = format!("_naga_ro_{safe_base}_byte_size");
                 self.emulated_storage_globals.insert(
                     handle,
                     EmulatedStorageMapping {
