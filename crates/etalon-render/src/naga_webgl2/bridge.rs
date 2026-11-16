@@ -92,6 +92,7 @@ pub fn compile_wgsl_to_glsl_es300(
         zero_initialize_workgroup_memory: false,
         binding_map: BTreeMap::new(),
         writer_flags: WriterFlags::empty(),
+        emulate_readonly_storage_with_textures: false,
     };
     let pipeline = PipelineOptions {
         shader_stage: stage,
@@ -144,6 +145,7 @@ pub fn compile_all_entry_points(wgsl_src: &str) -> Result<Vec<CompiledGlsl>, Com
             zero_initialize_workgroup_memory: false,
             binding_map: BTreeMap::new(),
             writer_flags: WriterFlags::empty(),
+            emulate_readonly_storage_with_textures: false,
         };
         let pipeline = PipelineOptions {
             shader_stage: stage,
