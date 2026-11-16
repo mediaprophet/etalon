@@ -45,6 +45,10 @@ pub struct Writer<'a, W> {
     varying: crate::FastHashMap<String, VaryingLocation>,
     /// Number of user-defined clip planes. Only non-zero for vertex shaders.
     clip_distance_count: u32,
+    /// Emulated read-only storage globals mapped to `usampler2D` uniforms.
+    emulated_storage_globals: crate::FastHashMap<Handle<crate::GlobalVariable>, EmulatedStorageMapping>,
+    /// Type layouter, populated when `emulate_readonly_storage_with_textures` is enabled.
+    layouter: proc::Layouter,
 }
 
 impl<'a, W: Write> Writer<'a, W> {
@@ -114,6 +118,8 @@ impl<'a, W: Write> Writer<'a, W> {
             continue_ctx: back::continue_forward::ContinueCtx::default(),
             varying: Default::default(),
             clip_distance_count: 0,
+            emulated_storage_globals: Default::default(),
+            layouter: proc::Layouter::default(),
         };
 
         // Find all features required to print this module
@@ -309,6 +315,10 @@ impl<'a, W: Write> Writer<'a, W> {
 
         let ep_info = self.info.get_entry_point(self.entry_point_idx as usize);
 
+        if self.options.emulate_readonly_storage_with_textures {
+            self.write_emulated_storage_helpers(ep_info)?;
+        }
+
         // Write the globals
         //
         // Unless explicitly disabled with WriterFlags::INCLUDE_UNUSED_ITEMS,
@@ -397,9 +407,16 @@ impl<'a, W: Write> Writer<'a, W> {
                 TypeInner::Sampler { .. } => continue,
                 // All other globals are written by `write_global`
                 _ => {
-                    self.write_global(handle, global)?;
-                    // Add a newline (only for readability)
-                    writeln!(self.out)?;
+                    if let Some(mapping) = self.emulated_storage_globals.get(&handle).cloned() {
+                        writeln!(self.out, "uniform highp usampler2D {};", mapping.texture_name)?;
+                        writeln!(self.out, "uniform int {};", mapping.width_uniform)?;
+                        writeln!(self.out, "uniform uint {};", mapping.byte_size_uniform)?;
+                        writeln!(self.out)?;
+                    } else {
+                        self.write_global(handle, global)?;
+                        // Add a newline (only for readability)
+                        writeln!(self.out)?;
+                    }
                 }
             }
         }
@@ -2520,6 +2537,14 @@ impl<'a, W: Write> Writer<'a, W> {
             }
             // glsl has no pointers so there's no load operation, just write the pointer expression
             Expression::Load { pointer } => {
+                if self.options.emulate_readonly_storage_with_textures {
+                    if let Some((global_handle, terms)) =
+                        self.resolve_emulated_storage_pointer(pointer, ctx)?
+                    {
+                        self.write_emulated_storage_load(pointer, global_handle, &terms, ctx)?;
+                        return Ok(());
+                    }
+                }
                 let ty_inner = ctx.resolve_type(pointer, &self.module.types);
                 if ty_inner.is_atomic_pointer(&self.module.types) {
                     let mut suffix = "";
@@ -3852,6 +3877,36 @@ impl<'a, W: Write> Writer<'a, W> {
             | Expression::SubgroupBallotResult => unreachable!(),
             // `ArrayLength` is written as `expr.length()` and we convert it to a uint
             Expression::ArrayLength(expr) => {
+                if self.options.emulate_readonly_storage_with_textures {
+                    if let Some((global_handle, terms)) =
+                        self.resolve_emulated_storage_pointer(expr, ctx)?
+                    {
+                        let mapping = self.emulated_storage_globals[&global_handle].clone();
+                        let stride = match *ctx.resolve_type(expr, &self.module.types) {
+                            TypeInner::Pointer { base, .. } => {
+                                match self.module.types[base].inner {
+                                    TypeInner::Array { stride, .. } => stride,
+                                    ref other => {
+                                        return Err(Error::Custom(format!(
+                                            "ArrayLength on non-array {other:?}"
+                                        )));
+                                    }
+                                }
+                            }
+                            ref other => {
+                                return Err(Error::Custom(format!(
+                                    "ArrayLength on non-pointer {other:?}"
+                                )));
+                            }
+                        };
+                        write!(self.out, "(({} > (", mapping.byte_size_uniform)?;
+                        self.write_emulated_storage_offset(&terms, ctx)?;
+                        write!(self.out, ")) ? (({} - (", mapping.byte_size_uniform)?;
+                        self.write_emulated_storage_offset(&terms, ctx)?;
+                        write!(self.out, ")) / {stride}u) : 0u)")?;
+                        return Ok(());
+                    }
+                }
                 write!(self.out, "uint(")?;
                 self.write_expr(expr, ctx)?;
                 write!(self.out, ".length())")?
@@ -4556,9 +4611,15 @@ impl<'a, W: Write> Writer<'a, W> {
                     }
                 }
                 _ => match var.space {
-                    crate::AddressSpace::Uniform | crate::AddressSpace::Storage { .. } => {
+                    crate::AddressSpace::Uniform => {
                         let name = self.reflection_names_globals[&handle].clone();
                         uniforms.insert(handle, name);
+                    }
+                    crate::AddressSpace::Storage { .. } => {
+                        if !self.emulated_storage_globals.contains_key(&handle) {
+                            let name = self.reflection_names_globals[&handle].clone();
+                            uniforms.insert(handle, name);
+                        }
                     }
                     crate::AddressSpace::Immediate => {
                         let name = self.reflection_names_globals[&handle].clone();
@@ -4596,6 +4657,7 @@ impl<'a, W: Write> Writer<'a, W> {
         Ok(ReflectionInfo {
             texture_mapping,
             uniforms,
+            emulated_storage_mapping: mem::take(&mut self.emulated_storage_globals),
             varying: mem::take(&mut self.varying),
             immediates_items,
             clip_distance_count: self.clip_distance_count,
@@ -4661,4 +4723,514 @@ impl<'a, W: Write> Writer<'a, W> {
             _ => unreachable!(),
         }
     }
+
+    fn write_emulated_storage_helpers(&mut self, ep_info: &valid::FunctionInfo) -> BackendResult {
+        let include_unused = self
+            .options
+            .writer_flags
+            .contains(WriterFlags::INCLUDE_UNUSED_ITEMS);
+
+        let mut storage_tys = Vec::new();
+        for (handle, global) in self.module.global_variables.iter() {
+            if !include_unused && ep_info[handle].is_empty() {
+                continue;
+            }
+            if let crate::AddressSpace::Storage { access } = global.space {
+                if access.contains(crate::StorageAccess::STORE) {
+                    return Err(Error::Custom(String::from(
+                        "Writable storage buffers cannot be emulated with textures",
+                    )));
+                }
+                let base_name = self.get_global_name(handle, global);
+                let texture_name = format!("_naga_ro_{base_name}");
+                let width_uniform = format!("_naga_ro_{base_name}_width");
+                let byte_size_uniform = format!("_naga_ro_{base_name}_byte_size");
+                self.emulated_storage_globals.insert(
+                    handle,
+                    EmulatedStorageMapping {
+                        texture_name,
+                        width_uniform,
+                        byte_size_uniform,
+                    },
+                );
+                storage_tys.push(global.ty);
+            }
+        }
+
+        if self.emulated_storage_globals.is_empty() {
+            return Ok(());
+        }
+
+        self.layouter
+            .update(self.module.to_ctx())
+            .map_err(|e| Error::Custom(format!("Failed to layout emulated storage: {e:?}")))?;
+
+        writeln!(
+            self.out,
+            "uint _naga_fetch_u32(highp usampler2D tex, int width, uint byte_size, uint byte_off) {{"
+        )?;
+        writeln!(
+            self.out,
+            "    uint max_word = (byte_size >= 4u) ? ((byte_size >> 2u) - 1u) : 0u;"
+        )?;
+        writeln!(self.out, "    uint word_idx = min(byte_off >> 2u, max_word);")?;
+        writeln!(self.out, "    int texel_idx = int(word_idx >> 2u);")?;
+        writeln!(self.out, "    int comp = int(word_idx & 3u);")?;
+        writeln!(
+            self.out,
+            "    uvec4 texel = texelFetch(tex, ivec2(texel_idx % width, texel_idx / width), 0);"
+        )?;
+        writeln!(self.out, "    if (comp == 0) return texel.x;")?;
+        writeln!(self.out, "    if (comp == 1) return texel.y;")?;
+        writeln!(self.out, "    if (comp == 2) return texel.z;")?;
+        writeln!(self.out, "    return texel.w;")?;
+        writeln!(self.out, "}}")?;
+        writeln!(self.out)?;
+
+        let mut visited = crate::FastHashSet::default();
+        let mut order = Vec::new();
+        for ty in storage_tys {
+            self.collect_emulated_load_types(ty, &mut visited, &mut order);
+        }
+        for ty in order {
+            self.write_emulated_load_fn(ty)?;
+        }
+
+        Ok(())
+    }
+
+    fn collect_emulated_load_types(
+        &self,
+        ty: Handle<crate::Type>,
+        visited: &mut crate::FastHashSet<Handle<crate::Type>>,
+        order: &mut Vec<Handle<crate::Type>>,
+    ) {
+        if !visited.insert(ty) {
+            return;
+        }
+        match self.module.types[ty].inner {
+            TypeInner::Array { base, size, .. } => {
+                self.collect_emulated_load_types(base, visited, order);
+                if matches!(size, crate::ArraySize::Constant(_)) {
+                    order.push(ty);
+                }
+            }
+            TypeInner::Struct { ref members, .. } => {
+                for member in members {
+                    self.collect_emulated_load_types(member.ty, visited, order);
+                }
+                order.push(ty);
+            }
+            TypeInner::Vector { .. } | TypeInner::Matrix { .. } => {
+                order.push(ty);
+            }
+            _ => {}
+        }
+    }
+
+    fn write_emulated_scalar_expr(
+        &mut self,
+        scalar: crate::Scalar,
+        tex: &str,
+        width: &str,
+        byte_size: &str,
+        off_expr: &str,
+    ) -> BackendResult {
+        match (scalar.kind, scalar.width) {
+            (crate::ScalarKind::Float, 4) => write!(
+                self.out,
+                "uintBitsToFloat(_naga_fetch_u32({tex}, {width}, {byte_size}, {off_expr}))"
+            )?,
+            (crate::ScalarKind::Sint, 4) => write!(
+                self.out,
+                "int(_naga_fetch_u32({tex}, {width}, {byte_size}, {off_expr}))"
+            )?,
+            (crate::ScalarKind::Uint, 4) => write!(
+                self.out,
+                "_naga_fetch_u32({tex}, {width}, {byte_size}, {off_expr})"
+            )?,
+            (crate::ScalarKind::Bool, _) => write!(
+                self.out,
+                "(_naga_fetch_u32({tex}, {width}, {byte_size}, {off_expr}) != 0u)"
+            )?,
+            _ => {
+                return Err(Error::Custom(format!(
+                    "Unsupported scalar in emulated storage buffer: {scalar:?}"
+                )));
+            }
+        }
+        Ok(())
+    }
+
+    fn write_emulated_load_fn(&mut self, ty: Handle<crate::Type>) -> BackendResult {
+        let fn_name = format!("_naga_load_ty_{}", ty.index());
+        match self.module.types[ty].inner {
+            TypeInner::Vector { size, scalar } => {
+                self.write_type(ty)?;
+                writeln!(
+                    self.out,
+                    " {fn_name}(highp usampler2D tex, int width, uint byte_size, uint base_off) {{"
+                )?;
+                write!(self.out, "    return ")?;
+                self.write_type(ty)?;
+                write!(self.out, "(")?;
+                for i in 0..(size as u8) {
+                    if i > 0 {
+                        write!(self.out, ", ")?;
+                    }
+                    let off = format!("base_off + {}u", u32::from(i) * 4);
+                    self.write_emulated_scalar_expr(scalar, "tex", "width", "byte_size", &off)?;
+                }
+                writeln!(self.out, ");")?;
+                writeln!(self.out, "}}")?;
+                writeln!(self.out)?;
+            }
+            TypeInner::Matrix {
+                columns,
+                rows,
+                scalar,
+            } => {
+                let col_stride = if rows == crate::VectorSize::Tri {
+                    16u32
+                } else {
+                    (rows as u32) * 4
+                };
+                self.write_type(ty)?;
+                writeln!(
+                    self.out,
+                    " {fn_name}(highp usampler2D tex, int width, uint byte_size, uint base_off) {{"
+                )?;
+                write!(self.out, "    return ")?;
+                self.write_type(ty)?;
+                write!(self.out, "(")?;
+                for c in 0..(columns as u8) {
+                    if c > 0 {
+                        write!(self.out, ", ")?;
+                    }
+                    let col_vec = format!("{}vec{}", glsl_scalar(scalar)?.prefix, rows as u8);
+                    write!(self.out, "{col_vec}(")?;
+                    for r in 0..(rows as u8) {
+                        if r > 0 {
+                            write!(self.out, ", ")?;
+                        }
+                        let off = format!("base_off + {}u", u32::from(c) * col_stride + u32::from(r) * 4);
+                        self.write_emulated_scalar_expr(scalar, "tex", "width", "byte_size", &off)?;
+                    }
+                    write!(self.out, ")")?;
+                }
+                writeln!(self.out, ");")?;
+                writeln!(self.out, "}}")?;
+                writeln!(self.out)?;
+            }
+            TypeInner::Array {
+                base,
+                size: crate::ArraySize::Constant(count),
+                stride,
+            } => {
+                self.write_type(ty)?;
+                self.write_array_size(base, crate::ArraySize::Constant(count))?;
+                writeln!(
+                    self.out,
+                    " {fn_name}(highp usampler2D tex, int width, uint byte_size, uint base_off) {{"
+                )?;
+                write!(self.out, "    ")?;
+                self.write_type(ty)?;
+                write!(self.out, " res")?;
+                self.write_array_size(base, crate::ArraySize::Constant(count))?;
+                writeln!(self.out, ";")?;
+                writeln!(
+                    self.out,
+                    "    for (uint i = 0u; i < {}u; i++) {{",
+                    count.get()
+                )?;
+                write!(self.out, "        res[i] = ")?;
+                self.write_emulated_value_load(base, "tex", "width", "byte_size", &format!("base_off + i * {stride}u"))?;
+                writeln!(self.out, ";")?;
+                writeln!(self.out, "    }}")?;
+                writeln!(self.out, "    return res;")?;
+                writeln!(self.out, "}}")?;
+                writeln!(self.out)?;
+            }
+            TypeInner::Struct { ref members, .. } => {
+                self.write_type(ty)?;
+                writeln!(
+                    self.out,
+                    " {fn_name}(highp usampler2D tex, int width, uint byte_size, uint base_off) {{"
+                )?;
+                write!(self.out, "    ")?;
+                self.write_type(ty)?;
+                writeln!(self.out, " res;")?;
+                for (index, member) in members.iter().enumerate() {
+                    let field = self.names[&NameKey::StructMember(ty, index as u32)].clone();
+                    write!(self.out, "    res.{field} = ")?;
+                    let off = format!("base_off + {}u", member.offset);
+                    self.write_emulated_value_load(member.ty, "tex", "width", "byte_size", &off)?;
+                    writeln!(self.out, ";")?;
+                }
+                writeln!(self.out, "    return res;")?;
+                writeln!(self.out, "}}")?;
+                writeln!(self.out)?;
+            }
+            _ => {}
+        }
+        Ok(())
+    }
+
+    fn write_emulated_value_load(
+        &mut self,
+        ty: Handle<crate::Type>,
+        tex: &str,
+        width: &str,
+        byte_size: &str,
+        off_expr: &str,
+    ) -> BackendResult {
+        match self.module.types[ty].inner {
+            TypeInner::Scalar(scalar) => {
+                self.write_emulated_scalar_expr(scalar, tex, width, byte_size, off_expr)
+            }
+            TypeInner::Vector { .. }
+            | TypeInner::Matrix { .. }
+            | TypeInner::Array { .. }
+            | TypeInner::Struct { .. } => {
+                write!(
+                    self.out,
+                    "_naga_load_ty_{}({tex}, {width}, {byte_size}, {off_expr})",
+                    ty.index()
+                )?;
+                Ok(())
+            }
+            ref other => Err(Error::Custom(format!(
+                "Unsupported type in emulated storage buffer: {other:?}"
+            ))),
+        }
+    }
+
+    fn resolve_emulated_storage_pointer(
+        &self,
+        expr: Handle<crate::Expression>,
+        ctx: &back::FunctionCtx,
+    ) -> Result<Option<(Handle<crate::GlobalVariable>, Vec<EmulatedOffsetTerm>)>, Error> {
+        match ctx.expressions[expr] {
+            crate::Expression::GlobalVariable(handle) => {
+                if self.emulated_storage_globals.contains_key(&handle) {
+                    Ok(Some((handle, Vec::new())))
+                } else {
+                    Ok(None)
+                }
+            }
+            crate::Expression::AccessIndex { base, index } => {
+                let Some((handle, mut terms)) = self.resolve_emulated_storage_pointer(base, ctx)?
+                else {
+                    return Ok(None);
+                };
+                let base_ty_res = &ctx.info[base].ty;
+                let mut resolved = base_ty_res.inner_with(&self.module.types);
+                let base_ty_handle = match *resolved {
+                    TypeInner::Pointer { base, .. } => {
+                        resolved = &self.module.types[base].inner;
+                        Some(base)
+                    }
+                    _ => base_ty_res.handle(),
+                };
+                let delta = match *resolved {
+                    TypeInner::Struct { ref members, .. } => members[index as usize].offset,
+                    TypeInner::Array { stride, .. } => index * stride,
+                    TypeInner::Matrix { rows, .. } => {
+                        let col_stride = if rows == crate::VectorSize::Tri {
+                            16
+                        } else {
+                            (rows as u32) * 4
+                        };
+                        index * col_stride
+                    }
+                    TypeInner::Vector { .. } => index * 4,
+                    ref other => {
+                        return Err(Error::Custom(format!(
+                            "Cannot index emulated storage {other:?} (ty={base_ty_handle:?})"
+                        )));
+                    }
+                };
+                if delta != 0 {
+                    terms.push(EmulatedOffsetTerm::Const(delta));
+                }
+                Ok(Some((handle, terms)))
+            }
+            crate::Expression::Access { base, index } => {
+                let Some((handle, mut terms)) = self.resolve_emulated_storage_pointer(base, ctx)?
+                else {
+                    return Ok(None);
+                };
+                let base_ty_res = &ctx.info[base].ty;
+                let mut resolved = base_ty_res.inner_with(&self.module.types);
+                if let TypeInner::Pointer { base, .. } = *resolved {
+                    resolved = &self.module.types[base].inner;
+                }
+                let stride = match *resolved {
+                    TypeInner::Array { stride, .. } => stride,
+                    TypeInner::Matrix { rows, .. } => {
+                        if rows == crate::VectorSize::Tri {
+                            16
+                        } else {
+                            (rows as u32) * 4
+                        }
+                    }
+                    TypeInner::Vector { .. } => 4,
+                    ref other => {
+                        return Err(Error::Custom(format!(
+                            "Cannot dynamically index emulated storage {other:?}"
+                        )));
+                    }
+                };
+                terms.push(EmulatedOffsetTerm::Expr { expr: index, stride });
+                Ok(Some((handle, terms)))
+            }
+            _ => Ok(None),
+        }
+    }
+
+    fn write_emulated_storage_offset(
+        &mut self,
+        terms: &[EmulatedOffsetTerm],
+        ctx: &back::FunctionCtx,
+    ) -> BackendResult {
+        let mut const_sum = 0u32;
+        let mut dyn_terms = Vec::new();
+        for term in terms {
+            match *term {
+                EmulatedOffsetTerm::Const(c) => const_sum = const_sum.saturating_add(c),
+                EmulatedOffsetTerm::Expr { expr, stride } => dyn_terms.push((expr, stride)),
+            }
+        }
+        if dyn_terms.is_empty() {
+            write!(self.out, "{const_sum}u")?;
+        } else {
+            write!(self.out, "({const_sum}u")?;
+            for (expr, stride) in dyn_terms {
+                write!(self.out, " + uint(")?;
+                self.write_expr(expr, ctx)?;
+                write!(self.out, ") * {stride}u")?;
+            }
+            write!(self.out, ")")?;
+        }
+        Ok(())
+    }
+
+    fn write_emulated_storage_load(
+        &mut self,
+        pointer: Handle<crate::Expression>,
+        global_handle: Handle<crate::GlobalVariable>,
+        terms: &[EmulatedOffsetTerm],
+        ctx: &back::FunctionCtx,
+    ) -> BackendResult {
+        let mapping = self.emulated_storage_globals[&global_handle].clone();
+        let pointee_ty = match *ctx.resolve_type(pointer, &self.module.types) {
+            TypeInner::Pointer { base, .. } => Some(base),
+            TypeInner::ValuePointer {
+                size: None, scalar, ..
+            } => {
+                match (scalar.kind, scalar.width) {
+                    (crate::ScalarKind::Float, 4) => write!(
+                        self.out,
+                        "uintBitsToFloat(_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    (crate::ScalarKind::Sint, 4) => write!(
+                        self.out,
+                        "int(_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    (crate::ScalarKind::Uint, 4) => write!(
+                        self.out,
+                        "_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    _ => {
+                        return Err(Error::Custom(format!(
+                            "Unsupported ValuePointer scalar in emulated storage: {scalar:?}"
+                        )));
+                    }
+                }
+                self.write_emulated_storage_offset(terms, ctx)?;
+                if matches!(scalar.kind, crate::ScalarKind::Uint) {
+                    write!(self.out, ")")?;
+                } else {
+                    write!(self.out, "))")?;
+                }
+                return Ok(());
+            }
+            ref other => {
+                return Err(Error::Custom(format!(
+                    "Unsupported pointer type in emulated storage load: {other:?}"
+                )));
+            }
+        };
+
+        let ty = pointee_ty.unwrap();
+        match self.module.types[ty].inner {
+            TypeInner::Scalar(scalar) => {
+                match (scalar.kind, scalar.width) {
+                    (crate::ScalarKind::Float, 4) => write!(
+                        self.out,
+                        "uintBitsToFloat(_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    (crate::ScalarKind::Sint, 4) => write!(
+                        self.out,
+                        "int(_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    (crate::ScalarKind::Uint, 4) => write!(
+                        self.out,
+                        "_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    (crate::ScalarKind::Bool, _) => write!(
+                        self.out,
+                        "(_naga_fetch_u32({}, {}, {}, ",
+                        mapping.texture_name, mapping.width_uniform, mapping.byte_size_uniform
+                    )?,
+                    _ => {
+                        return Err(Error::Custom(format!(
+                            "Unsupported scalar in emulated storage load: {scalar:?}"
+                        )));
+                    }
+                }
+                self.write_emulated_storage_offset(terms, ctx)?;
+                match (scalar.kind, scalar.width) {
+                    (crate::ScalarKind::Uint, 4) => write!(self.out, ")")?,
+                    (crate::ScalarKind::Bool, _) => write!(self.out, ") != 0u)")?,
+                    _ => write!(self.out, "))")?,
+                }
+            }
+            TypeInner::Vector { .. }
+            | TypeInner::Matrix { .. }
+            | TypeInner::Array { .. }
+            | TypeInner::Struct { .. } => {
+                write!(
+                    self.out,
+                    "_naga_load_ty_{}({}, {}, {}, ",
+                    ty.index(),
+                    mapping.texture_name,
+                    mapping.width_uniform,
+                    mapping.byte_size_uniform
+                )?;
+                self.write_emulated_storage_offset(terms, ctx)?;
+                write!(self.out, ")")?;
+            }
+            ref other => {
+                return Err(Error::Custom(format!(
+                    "Unsupported type in emulated storage load: {other:?}"
+                )));
+            }
+        }
+        Ok(())
+    }
+}
+
+enum EmulatedOffsetTerm {
+    Const(u32),
+    Expr {
+        expr: Handle<crate::Expression>,
+        stride: u32,
+    },
 }

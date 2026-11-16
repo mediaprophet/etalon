@@ -1302,6 +1302,10 @@ bitflags::bitflags! {
         /// GLSL ES has no `noperspective` qualifier, so the GLES backend only supports this
         /// on desktop OpenGL, not on GLES/WebGL2.
         const LINEAR_INTERPOLATION = 1 << 26;
+
+        /// Emulates read-only storage buffers via `RGBA32UI` data textures on GLES/WebGL2
+        /// targets without native shader storage blocks.
+        const READ_ONLY_STORAGE_EMULATION = 1 << 27;
     }
 }
 

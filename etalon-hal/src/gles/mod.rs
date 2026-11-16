@@ -291,6 +291,7 @@ struct AdapterShared {
     next_shader_id: AtomicU32,
     program_cache: Mutex<ProgramCache>,
     es: bool,
+    emulate_readonly_storage: bool,
 
     /// Result of `gl.get_parameter_i32(glow::MAX_SAMPLES)`.
     /// Cached here so it doesn't need to be queried every time texture format capabilities are requested.
@@ -311,6 +312,7 @@ impl fmt::Debug for AdapterShared {
             next_shader_id,
             program_cache: _,
             es,
+            emulate_readonly_storage,
             max_msaa_samples,
         } = self;
         f.debug_struct("AdapterShared")
@@ -322,6 +324,7 @@ impl fmt::Debug for AdapterShared {
             .field("shading_language_version", shading_language_version)
             .field("next_shader_id", next_shader_id)
             .field("es", es)
+            .field("emulate_readonly_storage", emulate_readonly_storage)
             .field("max_msaa_samples", max_msaa_samples)
             .finish_non_exhaustive()
     }
@@ -366,6 +369,7 @@ pub struct Queue {
     /// Keep a reasonably large buffer filled with zeroes, so that we can implement `ClearBuffer` of
     /// zeroes by copying from it.
     zero_buffer: glow::Buffer,
+    emulated_storage: Mutex<EmulatedStorageQueueState>,
     temp_query_results: Mutex<Vec<u64>>,
     draw_buffer_count: AtomicU8,
     current_index_buffer: Mutex<Option<glow::Buffer>>,
@@ -396,6 +400,14 @@ pub struct Buffer {
     /// `Buffer` is `Clone`, so the guard is shared via `Arc`
     /// and only fires its callback once every clone is dropped.
     drop_guard: Option<Arc<crate::DropGuard>>,
+    write_generation: Arc<core::sync::atomic::AtomicU64>,
+}
+
+impl Buffer {
+    fn bump_write_generation(&self) {
+        self.write_generation
+            .fetch_add(1, core::sync::atomic::Ordering::Release);
+    }
 }
 
 #[derive(Clone, Debug)]
@@ -651,11 +663,41 @@ enum BindingRegister {
 }
 
 #[derive(Debug)]
+struct EmulatedStorageShadowState {
+    texture: Option<glow::Texture>,
+    synced_generation: u64,
+    synced_offset: i32,
+    synced_size: i32,
+    width: i32,
+    height: i32,
+}
+
+impl Default for EmulatedStorageShadowState {
+    fn default() -> Self {
+        Self {
+            texture: None,
+            synced_generation: u64::MAX,
+            synced_offset: -1,
+            synced_size: -1,
+            width: 0,
+            height: 0,
+        }
+    }
+}
+
+#[derive(Debug)]
 enum RawBinding {
     Buffer {
         raw: glow::Buffer,
         offset: i32,
         size: i32,
+    },
+    EmulatedStorageBuffer {
+        raw: glow::Buffer,
+        offset: i32,
+        size: i32,
+        write_generation: Arc<core::sync::atomic::AtomicU64>,
+        shadow: Arc<Mutex<EmulatedStorageShadowState>>,
     },
     Texture {
         raw: glow::Texture,
@@ -746,11 +788,34 @@ unsafe impl Send for ImmediateDesc {}
 type SamplerBindMap = [Option<u8>; MAX_TEXTURE_SLOTS];
 
 #[derive(Debug)]
+struct EmulatedStorageQueueState {
+    slots: [(i32, u32); MAX_TEXTURE_SLOTS],
+    uniforms: Arc<[EmulatedStorageUniformDesc]>,
+}
+
+impl Default for EmulatedStorageQueueState {
+    fn default() -> Self {
+        Self {
+            slots: [(1, 0); MAX_TEXTURE_SLOTS],
+            uniforms: Arc::from([]),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct EmulatedStorageUniformDesc {
+    slot: u8,
+    width_location: Option<glow::UniformLocation>,
+    byte_size_location: Option<glow::UniformLocation>,
+}
+
+#[derive(Debug)]
 struct PipelineInner {
     program: glow::Program,
     sampler_map: SamplerBindMap,
     first_instance_location: Option<glow::UniformLocation>,
     immediates_descs: ArrayVec<ImmediateDesc, MAX_IMMEDIATES_COMMANDS>,
+    emulated_storage_uniforms: Arc<[EmulatedStorageUniformDesc]>,
     clip_distance_count: u32,
 }
 
@@ -1048,6 +1113,15 @@ enum Command {
     SetDepthBias(wgt::DepthBiasState),
     ConfigureDepthStencil(crate::FormatAspects),
     SetAlphaToCoverage(bool),
+    BindEmulatedStorage {
+        slot: u32,
+        buffer: glow::Buffer,
+        offset: i32,
+        size: i32,
+        write_generation: Arc<core::sync::atomic::AtomicU64>,
+        shadow: Arc<Mutex<EmulatedStorageShadowState>>,
+    },
+    SetEmulatedStorageUniforms(Arc<[EmulatedStorageUniformDesc]>),
     SetVertexAttribute {
         buffer: Option<glow::Buffer>,
         buffer_desc: VertexBufferDesc,

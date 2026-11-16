@@ -3333,11 +3333,19 @@ impl Device {
                     required_features |= wgt::Features::VERTEX_WRITABLE_STORAGE;
                 }
                 if let Bt::Buffer {
-                    ty: wgt::BufferBindingType::Storage { .. },
+                    ty: wgt::BufferBindingType::Storage { read_only },
                     ..
                 } = entry.ty
                 {
-                    required_downlevel_flags |= wgt::DownlevelFlags::VERTEX_STORAGE;
+                    let ro_storage_emulated = read_only
+                        && self
+                            .adapter
+                            .downlevel_capabilities()
+                            .flags
+                            .contains(wgt::DownlevelFlags::READ_ONLY_STORAGE_EMULATION);
+                    if !ro_storage_emulated {
+                        required_downlevel_flags |= wgt::DownlevelFlags::VERTEX_STORAGE;
+                    }
                 }
             }
             if writable_storage == WritableStorage::Yes
@@ -3369,9 +3377,14 @@ impl Device {
             entries: &hal_bindings,
         };
 
+        let ro_storage_emulated = self
+            .adapter
+            .downlevel_capabilities()
+            .flags
+            .contains(wgt::DownlevelFlags::READ_ONLY_STORAGE_EMULATION);
         let mut count_validator = binding_model::BindingTypeMaxCountValidator::default();
         for entry in entry_map.values() {
-            count_validator.add_binding(entry);
+            count_validator.add_binding_with_emulation(entry, ro_storage_emulated);
         }
         // If a single bind group layout violates limits, the pipeline layout is
         // definitely going to violate limits too, lets catch it now.
@@ -3443,7 +3456,21 @@ impl Device {
                 } else {
                     wgt::BufferUses::STORAGE_READ_WRITE
                 },
-                self.limits.max_storage_buffer_binding_size,
+                if read_only
+                    && self.limits.max_storage_buffer_binding_size == 0
+                    && self
+                        .adapter
+                        .downlevel_capabilities()
+                        .flags
+                        .contains(wgt::DownlevelFlags::READ_ONLY_STORAGE_EMULATION)
+                {
+                    u64::from(self.limits.max_texture_dimension_2d)
+                        .saturating_mul(u64::from(self.limits.max_texture_dimension_2d))
+                        .saturating_mul(16)
+                        .min(i32::MAX as u64)
+                } else {
+                    self.limits.max_storage_buffer_binding_size
+                },
             ),
         };
 

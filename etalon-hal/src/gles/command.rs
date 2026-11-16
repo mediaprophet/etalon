@@ -1,4 +1,4 @@
-use alloc::string::String;
+use alloc::{string::String, sync::Arc};
 use core::{mem, ops::Range};
 
 use arrayvec::ArrayVec;
@@ -231,6 +231,13 @@ impl super::CommandEncoder {
 
     fn set_pipeline_inner(&mut self, inner: &super::PipelineInner) {
         self.cmd_buffer.commands.push(C::SetProgram(inner.program));
+        if !inner.emulated_storage_uniforms.is_empty() {
+            self.cmd_buffer
+                .commands
+                .push(C::SetEmulatedStorageUniforms(Arc::clone(
+                    &inner.emulated_storage_uniforms,
+                )));
+        }
 
         self.state
             .first_instance_location
@@ -777,6 +784,34 @@ impl crate::CommandEncoder for super::CommandEncoder {
                         buffer: raw,
                         offset,
                         size,
+                    });
+                }
+                super::RawBinding::EmulatedStorageBuffer {
+                    raw,
+                    offset: base_offset,
+                    size,
+                    ref write_generation,
+                    ref shadow,
+                } => {
+                    let mut offset = base_offset;
+                    if let wgt::BindingType::Buffer {
+                        has_dynamic_offset: true,
+                        ..
+                    } = binding_layout.ty
+                    {
+                        offset += dynamic_offsets[do_index] as i32;
+                        do_index += 1;
+                    }
+                    dirty_textures |= 1 << slot;
+                    self.state.samplers[slot as usize] = None;
+                    self.state.texture_slots[slot as usize].tex_target = glow::TEXTURE_2D;
+                    self.cmd_buffer.commands.push(C::BindEmulatedStorage {
+                        slot,
+                        buffer: raw,
+                        offset,
+                        size,
+                        write_generation: Arc::clone(write_generation),
+                        shadow: Arc::clone(shadow),
                     });
                 }
                 super::RawBinding::Sampler(sampler) => {

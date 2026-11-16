@@ -190,6 +190,9 @@ pub struct Options {
     pub binding_map: BindingMap,
     /// Should workgroup variables be zero initialized (by polyfilling)?
     pub zero_initialize_workgroup_memory: bool,
+    /// Emulate read-only storage buffers using `highp usampler2D` data textures.
+    #[cfg_attr(feature = "deserialize", serde(default))]
+    pub emulate_readonly_storage_with_textures: bool,
 }
 
 impl Default for Options {
@@ -199,6 +202,7 @@ impl Default for Options {
             writer_flags: WriterFlags::ADJUST_COORDINATE_SPACE,
             binding_map: BindingMap::default(),
             zero_initialize_workgroup_memory: true,
+            emulate_readonly_storage_with_textures: false,
         }
     }
 }
@@ -229,6 +233,17 @@ pub struct VaryingLocation {
     pub index: u32,
 }
 
+/// Reflection info for an emulated read-only storage buffer backed by a `usampler2D`.
+#[derive(Debug, Clone)]
+pub struct EmulatedStorageMapping {
+    /// GLSL uniform name of the `highp usampler2D`.
+    pub texture_name: String,
+    /// GLSL uniform name of the texture width (`int`).
+    pub width_uniform: String,
+    /// GLSL uniform name of the bound buffer byte size (`uint`).
+    pub byte_size_uniform: String,
+}
+
 /// Reflection info for texture mappings and uniforms.
 #[derive(Debug)]
 pub struct ReflectionInfo {
@@ -236,6 +251,8 @@ pub struct ReflectionInfo {
     pub texture_mapping: crate::FastHashMap<String, TextureMapping>,
     /// Mapping between uniform variables and names.
     pub uniforms: crate::FastHashMap<Handle<crate::GlobalVariable>, String>,
+    /// Mapping for read-only storage globals lowered to `usampler2D` textures.
+    pub emulated_storage_mapping: crate::FastHashMap<Handle<crate::GlobalVariable>, EmulatedStorageMapping>,
     /// Mapping between names and attribute locations.
     pub varying: crate::FastHashMap<String, VaryingLocation>,
     /// List of immediate data items in the shader.
@@ -507,4 +524,92 @@ pub fn supported_capabilities() -> valid::Capabilities {
         | Caps::MEMORY_DECORATION_VOLATILE
         | Caps::STORAGE_TEXTURE_16BIT_NORM_FORMATS
         | Caps::LINEAR_INTERPOLATION
+}
+
+#[cfg(all(test, feature = "wgsl-in"))]
+mod emulated_storage_tests {
+    use super::*;
+
+    fn compile_es300(wgsl: &str) -> Result<(String, ReflectionInfo), Error> {
+        let module = crate::front::wgsl::parse_str(wgsl).expect("valid wgsl");
+        let info = valid::Validator::new(
+            valid::ValidationFlags::all(),
+            supported_capabilities(),
+        )
+        .validate(&module)
+        .expect("valid module");
+        let options = Options {
+            version: Version::new_gles(300),
+            emulate_readonly_storage_with_textures: true,
+            ..Default::default()
+        };
+        let pipeline_options = PipelineOptions {
+            shader_stage: ShaderStage::Vertex,
+            entry_point: String::from("vs_main"),
+            multiview: None,
+        };
+        let mut out = String::new();
+        let mut writer = Writer::new(
+            &mut out,
+            &module,
+            &info,
+            &options,
+            &pipeline_options,
+            proc::BoundsCheckPolicies::default(),
+        )?;
+        let reflection = writer.write()?;
+        Ok((out, reflection))
+    }
+
+    #[test]
+    fn lowers_readonly_struct_array_and_array_length() {
+        let wgsl = r#"
+            struct Nested {
+                scale: vec4<f32>,
+            };
+            struct Instance {
+                model: mat4x4<f32>,
+                nested: Nested,
+                flags: u32,
+                _pad: vec3<u32>,
+            };
+            struct Container {
+                count: u32,
+                items: array<Instance>,
+            };
+            @group(0) @binding(0) var<storage, read> instances: array<Instance>;
+            @group(0) @binding(1) var<storage, read> container: Container;
+
+            @vertex
+            fn vs_main(@builtin(instance_index) idx: u32) -> @builtin(position) vec4<f32> {
+                let inst = instances[idx];
+                let n = arrayLength(&container.items);
+                let s = container.items[min(idx, n - 1u)].nested.scale;
+                return inst.model * vec4<f32>(s.xyz, 1.0);
+            }
+        "#;
+
+        let (glsl, reflection) = compile_es300(wgsl).expect("should lower cleanly");
+        assert!(glsl.contains("#version 300 es"));
+        assert!(glsl.contains("uniform highp usampler2D "));
+        assert!(glsl.contains("_naga_fetch_u32"));
+        assert!(glsl.contains("texelFetch("));
+        assert!(!glsl.contains("layout(std430"));
+        assert_eq!(reflection.emulated_storage_mapping.len(), 2);
+    }
+
+    #[test]
+    fn rejects_writable_storage_when_emulating() {
+        let wgsl = r#"
+            @group(0) @binding(0) var<storage, read_write> data: array<u32>;
+
+            @vertex
+            fn vs_main(@builtin(vertex_index) idx: u32) -> @builtin(position) vec4<f32> {
+                data[idx] = 1u;
+                return vec4<f32>(0.0, 0.0, 0.0, 1.0);
+            }
+        "#;
+
+        assert!(compile_es300(wgsl).is_err());
+    }
 }
