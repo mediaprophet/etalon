@@ -106,7 +106,7 @@ impl WorkerSteward {
 
     pub fn try_allocate_request_id(&self) -> Result<u64, WorkerError> {
         self.next_request_id
-            .fetch_update(Ordering::Relaxed, Ordering::Relaxed, |id| {
+            .try_update(Ordering::Relaxed, Ordering::Relaxed, |id| {
                 (id != 0).then(|| id.checked_add(1)).flatten()
             })
             .map_err(|_| WorkerError::IdentityExhausted)

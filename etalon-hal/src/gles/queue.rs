@@ -50,6 +50,77 @@ fn get_z_offset(target: u32, base: &crate::TextureCopyBase) -> u32 {
     }
 }
 
+/// WebGL 2.0 Pixel Store parameter constraints:
+/// `DataStoreWidth := ROW_LENGTH ? ROW_LENGTH : width`.
+/// `UNPACK_SKIP_PIXELS + width > DataStoreWidth` is `INVALID_OPERATION`, so a
+/// non-zero row length must be at least `extent`.
+fn unpack_row_or_image_length(texels: u32, extent: u32) -> i32 {
+    if texels == 0 || texels >= extent {
+        texels as i32
+    } else {
+        0
+    }
+}
+
+/// GLES 3.0 §3.8.3 unpacked client-memory size. The last row of the last image
+/// is unpadded; earlier rows use `UNPACK_ALIGNMENT`.
+fn unpack_client_bytes(
+    width: u32,
+    height: u32,
+    depth: u32,
+    row_length: u32,
+    image_height: u32,
+    alignment: u32,
+    bytes_per_pixel: u32,
+) -> usize {
+    if width == 0 || height == 0 || depth == 0 || bytes_per_pixel == 0 {
+        return 0;
+    }
+    let row_texels = if row_length == 0 { width } else { row_length };
+    let rows_per_image = if image_height == 0 {
+        height
+    } else {
+        image_height
+    };
+    let row_bytes = u64::from(row_texels) * u64::from(bytes_per_pixel);
+    let align = u64::from(alignment.max(1));
+    let padded_row = align * row_bytes.div_ceil(align);
+    let last_row = u64::from(width) * u64::from(bytes_per_pixel);
+    let one_image = u64::from(height - 1) * padded_row + last_row;
+    let image_pitch = u64::from(rows_per_image) * padded_row;
+    ((u64::from(depth - 1) * image_pitch) + one_image) as usize
+}
+
+unsafe fn reset_unpack_state(gl: &glow::Context) {
+    unsafe { gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1) };
+    unsafe { gl.pixel_store_i32(glow::UNPACK_ROW_LENGTH, 0) };
+    unsafe { gl.pixel_store_i32(glow::UNPACK_IMAGE_HEIGHT, 0) };
+    unsafe { gl.pixel_store_i32(glow::UNPACK_SKIP_PIXELS, 0) };
+    unsafe { gl.pixel_store_i32(glow::UNPACK_SKIP_ROWS, 0) };
+    unsafe { gl.pixel_store_i32(glow::UNPACK_SKIP_IMAGES, 0) };
+    unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None) };
+}
+
+#[cfg(test)]
+mod unpack_formula_tests {
+    use super::{unpack_client_bytes, unpack_row_or_image_length};
+
+    #[test]
+    fn rgba8_tight_rows_match_gles_last_row_rule() {
+        assert_eq!(unpack_client_bytes(1, 1, 1, 0, 0, 1, 4), 4);
+        assert_eq!(unpack_client_bytes(32, 1, 1, 0, 0, 1, 4), 128);
+        assert_eq!(unpack_client_bytes(32, 2, 1, 64, 0, 1, 4), 256 + 128);
+    }
+
+    #[test]
+    fn webgl_pixel_store_rejects_row_length_below_width() {
+        assert_eq!(unpack_row_or_image_length(0, 32), 0);
+        assert_eq!(unpack_row_or_image_length(16, 32), 0);
+        assert_eq!(unpack_row_or_image_length(32, 32), 32);
+        assert_eq!(unpack_row_or_image_length(64, 32), 64);
+    }
+}
+
 impl super::Queue {
     /// Performs a manual shader clear, used as a workaround for a clearing bug on mesa
     unsafe fn perform_shader_clear(&self, gl: &glow::Context, draw_buffer: u32, color: [f32; 4]) {
@@ -818,27 +889,74 @@ impl super::Queue {
                     .buffer_layout
                     .rows_per_image
                     .map_or(0, |rpi| block_height * rpi);
+                let layered = is_layered_target(dst_target);
+                let unpack_row_length =
+                    unpack_row_or_image_length(row_texels, copy.size.width);
+                let unpack_image_height = if layered {
+                    unpack_row_or_image_length(column_texels, copy.size.height)
+                } else {
+                    0
+                };
 
                 unsafe { gl.bind_texture(dst_target, Some(dst)) };
-                unsafe { gl.pixel_store_i32(glow::UNPACK_ROW_LENGTH, row_texels as i32) };
-                unsafe { gl.pixel_store_i32(glow::UNPACK_IMAGE_HEIGHT, column_texels as i32) };
-                let mut unbind_unpack_buffer = false;
+                unsafe { gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 1) };
+                unsafe { gl.pixel_store_i32(glow::UNPACK_SKIP_PIXELS, 0) };
+                unsafe { gl.pixel_store_i32(glow::UNPACK_SKIP_ROWS, 0) };
+                unsafe { gl.pixel_store_i32(glow::UNPACK_SKIP_IMAGES, 0) };
+                unsafe { gl.pixel_store_i32(glow::UNPACK_ROW_LENGTH, unpack_row_length) };
+                unsafe { gl.pixel_store_i32(glow::UNPACK_IMAGE_HEIGHT, unpack_image_height) };
                 if !dst_format.is_compressed() {
                     let map_state;
                     let unpack_data = match src.raw {
                         Some(buffer) => {
                             unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, Some(buffer)) };
-                            unbind_unpack_buffer = true;
+                            crate::gles_debug::record_copy_buffer_to_texture(
+                                true,
+                                false,
+                                copy.size.width,
+                                copy.size.height,
+                                unpack_row_length,
+                                unpack_image_height,
+                                0,
+                                0,
+                            );
                             glow::PixelUnpackData::BufferOffset(copy.buffer_layout.offset as u32)
                         }
                         None => {
+                            // WebGL 2.0 texSubImage2D(ArrayBufferView): a bound
+                            // PIXEL_UNPACK_BUFFER is INVALID_OPERATION. ANGLE
+                            // reports that as glTexSubImage2DRobustANGLE overflow
+                            // when the view pointer is treated as a PBO offset.
+                            unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None) };
                             map_state = src.map_state.lock();
-                            let src_data = &map_state.data.as_ref().unwrap().as_slice()
-                                [copy.buffer_layout.offset as usize..];
-                            glow::PixelUnpackData::Slice(Some(src_data))
+                            let src_data = map_state.data.as_ref().unwrap().as_slice();
+                            let offset =
+                                (copy.buffer_layout.offset as usize).min(src_data.len());
+                            let depth = if layered { copy.size.depth } else { 1 };
+                            let needed = unpack_client_bytes(
+                                copy.size.width,
+                                copy.size.height,
+                                depth,
+                                unpack_row_length as u32,
+                                unpack_image_height as u32,
+                                1,
+                                block_size,
+                            );
+                            let take = needed.min(src_data.len() - offset);
+                            crate::gles_debug::record_copy_buffer_to_texture(
+                                false,
+                                false,
+                                copy.size.width,
+                                copy.size.height,
+                                unpack_row_length,
+                                unpack_image_height,
+                                needed as u64,
+                                take as u64,
+                            );
+                            glow::PixelUnpackData::Slice(Some(&src_data[offset..offset + take]))
                         }
                     };
-                    if is_layered_target(dst_target) {
+                    if layered {
                         unsafe {
                             gl.tex_sub_image_3d(
                                 dst_target,
@@ -890,20 +1008,40 @@ impl super::Queue {
                     let unpack_data = match src.raw {
                         Some(buffer) => {
                             unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, Some(buffer)) };
-                            unbind_unpack_buffer = true;
+                            crate::gles_debug::record_copy_buffer_to_texture(
+                                true,
+                                true,
+                                copy.size.width,
+                                copy.size.height,
+                                unpack_row_length,
+                                unpack_image_height,
+                                u64::from(bytes_in_upload),
+                                u64::from(bytes_in_upload),
+                            );
                             glow::CompressedPixelUnpackData::BufferRange(
                                 offset..offset + bytes_in_upload,
                             )
                         }
                         None => {
+                            unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None) };
                             map_state = src.map_state.lock();
                             let src_data = &map_state.data.as_ref().unwrap().as_slice()
                                 [(offset as usize)..(offset + bytes_in_upload) as usize];
+                            crate::gles_debug::record_copy_buffer_to_texture(
+                                false,
+                                true,
+                                copy.size.width,
+                                copy.size.height,
+                                unpack_row_length,
+                                unpack_image_height,
+                                u64::from(bytes_in_upload),
+                                src_data.len() as u64,
+                            );
                             glow::CompressedPixelUnpackData::Slice(src_data)
                         }
                     };
 
-                    if is_layered_target(dst_target) {
+                    if layered {
                         unsafe {
                             gl.compressed_tex_sub_image_3d(
                                 dst_target,
@@ -933,9 +1071,7 @@ impl super::Queue {
                         };
                     }
                 }
-                if unbind_unpack_buffer {
-                    unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None) };
-                }
+                unsafe { reset_unpack_state(gl) };
             }
             C::CopyTextureToBuffer {
                 src,
@@ -1647,10 +1783,23 @@ impl super::Queue {
                 unsafe { gl.active_texture(glow::TEXTURE0 + slot) };
 
                 if needs_upload {
-                    let num_texels = ((size.max(0) as usize) + 15).div_ceil(16).max(1);
+                    let num_texels = crate::gles_debug::emulated_storage_texels(size);
                     let max_tex_size = self.shared.limits.max_texture_dimension_2d.max(1) as usize;
                     let width = num_texels.min(max_tex_size).max(1) as i32;
                     let height = num_texels.div_ceil(width as usize).max(1) as i32;
+                    let full_rows = (num_texels / width as usize) as i32;
+                    let rem_texels = (num_texels % width as usize) as i32;
+                    crate::gles_debug::record_bind_emulated_storage(
+                        true,
+                        slot,
+                        offset,
+                        size,
+                        num_texels as u64,
+                        width,
+                        height,
+                        full_rows,
+                        rem_texels,
+                    );
 
                     if shadow.texture.is_none() || shadow.width != width || shadow.height != height {
                         if let Some(old) = shadow.texture.take() {
@@ -1658,6 +1807,7 @@ impl super::Queue {
                         }
                         let tex = unsafe { gl.create_texture() }.expect("create emulated storage texture");
                         unsafe {
+                            gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None);
                             gl.bind_texture(glow::TEXTURE_2D, Some(tex));
                             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::NEAREST as i32);
                             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
@@ -1692,9 +1842,10 @@ impl super::Queue {
                         gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, Some(buffer));
                         gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 4);
                         gl.pixel_store_i32(glow::UNPACK_ROW_LENGTH, 0);
+                        gl.pixel_store_i32(glow::UNPACK_IMAGE_HEIGHT, 0);
                         gl.pixel_store_i32(glow::UNPACK_SKIP_ROWS, 0);
                         gl.pixel_store_i32(glow::UNPACK_SKIP_PIXELS, 0);
-                        let full_rows = (num_texels / width as usize) as i32;
+                        gl.pixel_store_i32(glow::UNPACK_SKIP_IMAGES, 0);
                         if full_rows > 0 {
                             gl.tex_sub_image_2d(
                                 glow::TEXTURE_2D,
@@ -1708,7 +1859,6 @@ impl super::Queue {
                                 glow::PixelUnpackData::BufferOffset(offset as u32),
                             );
                         }
-                        let rem_texels = (num_texels % width as usize) as i32;
                         if rem_texels > 0 {
                             gl.tex_sub_image_2d(
                                 glow::TEXTURE_2D,
@@ -1724,13 +1874,16 @@ impl super::Queue {
                                 ),
                             );
                         }
-                        gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None);
+                        reset_unpack_state(gl);
                     }
 
                     shadow.synced_generation = gen;
                     shadow.synced_offset = offset;
                     shadow.synced_size = size;
                 } else {
+                    crate::gles_debug::record_bind_emulated_storage(
+                        false, slot, offset, size, 0, 0, 0, 0, 0,
+                    );
                     unsafe { gl.bind_texture(glow::TEXTURE_2D, shadow.texture) };
                 }
 

@@ -32,7 +32,7 @@ pub struct GemvPipelines {
 pub(super) fn build(
     device: &wgpu::Device,
     native_pipeline_cache: &Option<wgpu::PipelineCache>,
-    options: super::PipelineOptions,
+    _options: super::PipelineOptions,
 ) -> GemvPipelines {
     let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: Some("Fused Transformer Shader"),
@@ -214,7 +214,7 @@ pub(super) fn build(
     // groups are interchangeable across single-row / multi-row / residual / warp
     // (no exclusive-pipeline auto-layout traps).
     #[cfg(not(target_arch = "wasm32"))]
-    let (coop_gemv_pipeline, coop_gemv_residual_pipeline) = if options.subgroups {
+    let (coop_gemv_pipeline, coop_gemv_residual_pipeline) = if _options.subgroups {
         // Note: do NOT inject `enable subgroups;` — naga/wgpu 29 rejects it.
         let sg_src = format!(
             "{}\n{}",

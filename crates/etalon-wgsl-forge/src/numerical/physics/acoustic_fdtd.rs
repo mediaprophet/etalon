@@ -7,8 +7,7 @@
 //! validators, and GPU dispatch helpers [`acoustic_fluid_fdtd_step_with_context`] and
 //! [`elastic_virieux_fdtd_step_with_context`].
 
-use crate::numerical::execute::{BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline};
-use crate::numerical::{ForgeError, Schedule};
+use crate::numerical::ForgeError;
 
 #[path = "acoustic_fdtd_helpers.rs"]
 mod acoustic_fdtd_helpers;

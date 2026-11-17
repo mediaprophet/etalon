@@ -5,3 +5,9 @@ xtask = "run -p etalon-xtask --"
 # Note that any rustflags set here will be overridden by the `RUSTFLAGS`
 # environment variable, if set (e.g. in CI).
 rustflags = ["--cfg", "etalon_validate_locks_debug"]
+
+# Combined with [build] rustflags when RUSTFLAGS is unset. getrandom 0.3.x
+# on wasm32-unknown-unknown needs this cfg plus Cargo feature wasm_js.
+# Do not set exclusive RUSTFLAGS to only `-C debuginfo=0`.
+[target.wasm32-unknown-unknown]
+rustflags = ['--cfg', 'getrandom_backend="wasm_js"']

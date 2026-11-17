@@ -261,6 +261,8 @@ pub mod noop;
 /// Vulkan API internals.
 #[cfg(vulkan)]
 pub mod vulkan;
+/// GLES unpack and storage-emulation counters, always compiled.
+pub mod gles_debug;
 
 pub mod auxil;
 pub mod api {
