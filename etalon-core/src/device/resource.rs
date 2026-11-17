@@ -5324,8 +5324,27 @@ impl Device {
             .flags
             .contains(wgt::DownlevelFlags::BUFFER_BINDINGS_NOT_16_BYTE_ALIGNED)
         {
+            let ro_storage_emulated = self
+                .downlevel
+                .flags
+                .contains(wgt::DownlevelFlags::READ_ONLY_STORAGE_EMULATION);
             for (binding, size) in resources.minimum_binding_sizes.iter() {
-                if size.get() % 16 != 0 {
+                let texture_backed = ro_storage_emulated
+                    && pipeline_layout
+                        .bind_group_layouts
+                        .get(binding.group as usize)
+                        .and_then(|bgl| bgl.as_ref())
+                        .and_then(|bgl| bgl.entries.get(binding.binding))
+                        .is_some_and(|entry| {
+                            matches!(
+                                entry.ty,
+                                wgt::BindingType::Buffer {
+                                    ty: wgt::BufferBindingType::Storage { read_only: true },
+                                    ..
+                                }
+                            )
+                        });
+                if !texture_backed && size.get() % 16 != 0 {
                     return Err(pipeline::RenderError::UnalignedShader {
                         binding: binding.binding,
                         group: binding.group,

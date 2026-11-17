@@ -478,10 +478,6 @@ pub(crate) struct BindingTypeMaxCountValidator {
 }
 
 impl BindingTypeMaxCountValidator {
-    pub(crate) fn add_binding(&mut self, binding: &wgt::BindGroupLayoutEntry) {
-        self.add_binding_with_emulation(binding, false);
-    }
-
     pub(crate) fn add_binding_with_emulation(
         &mut self,
         binding: &wgt::BindGroupLayoutEntry,
@@ -525,9 +521,9 @@ impl BindingTypeMaxCountValidator {
                         self.sampled_textures.add(binding.visibility, count);
                     } else {
                         self.storage_buffers.add(binding.visibility, count);
-                        if has_dynamic_offset {
-                            self.dynamic_storage_buffers += count;
-                        }
+                    }
+                    if has_dynamic_offset {
+                        self.dynamic_storage_buffers += count;
                     }
                 }
                 wgt::BindingType::Sampler { .. } => {

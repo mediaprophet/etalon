@@ -1319,6 +1319,8 @@ impl DownlevelFlags {
     ///   correspond to a WebGPU canvas, and most users of `etalon` desiring
     ///   strict WebGPU compliance implement canvas view formats by means
     ///   other than [`Surface`].
+    /// - [`Self::READ_ONLY_STORAGE_EMULATION`], because it describes a fallback for
+    ///   adapters without native storage buffers, not a WebGPU capability.
     ///
     #[doc = link_to_etalon_item!(struct Surface)]
     #[must_use]
@@ -1329,7 +1331,9 @@ impl DownlevelFlags {
         // or surface view formats, which only apply to `etalon::Surface`
         Self::from_bits_truncate(
             Self::all().bits()
-                & !(Self::ANISOTROPIC_FILTERING.bits() | Self::SURFACE_VIEW_FORMATS.bits()),
+                & !(Self::ANISOTROPIC_FILTERING.bits()
+                    | Self::SURFACE_VIEW_FORMATS.bits()
+                    | Self::READ_ONLY_STORAGE_EMULATION.bits()),
         )
     }
 }
