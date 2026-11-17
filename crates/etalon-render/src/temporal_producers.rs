@@ -97,7 +97,7 @@ impl TemporalProducersGpu {
                         binding: 0,
                         visibility: etalon::ShaderStages::FRAGMENT,
                         ty: etalon::BindingType::Texture {
-                            sample_type: etalon::TextureSampleType::Depth,
+                            sample_type: etalon::TextureSampleType::Float { filterable: false },
                             view_dimension: etalon::TextureViewDimension::D2,
                             multisampled: false,
                         },

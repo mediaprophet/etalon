@@ -47,19 +47,6 @@ pub(super) fn float_texture_entry(binding: u32) -> etalon::BindGroupLayoutEntry 
     }
 }
 
-pub(super) fn depth_texture_entry(binding: u32) -> etalon::BindGroupLayoutEntry {
-    etalon::BindGroupLayoutEntry {
-        binding,
-        visibility: etalon::ShaderStages::FRAGMENT,
-        ty: etalon::BindingType::Texture {
-            sample_type: etalon::TextureSampleType::Depth,
-            view_dimension: etalon::TextureViewDimension::D2,
-            multisampled: false,
-        },
-        count: None,
-    }
-}
-
 pub(super) fn sampler_entry(binding: u32) -> etalon::BindGroupLayoutEntry {
     etalon::BindGroupLayoutEntry {
         binding,

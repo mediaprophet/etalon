@@ -1302,6 +1302,10 @@ bitflags::bitflags! {
         /// GLSL ES has no `noperspective` qualifier, so the GLES backend only supports this
         /// on desktop OpenGL, not on GLES/WebGL2.
         const LINEAR_INTERPOLATION = 1 << 26;
+
+        /// Emulates read-only storage buffers via `RGBA32UI` data textures on GLES/WebGL2
+        /// targets without native shader storage blocks.
+        const READ_ONLY_STORAGE_EMULATION = 1 << 27;
     }
 }
 
@@ -1315,6 +1319,8 @@ impl DownlevelFlags {
     ///   correspond to a WebGPU canvas, and most users of `etalon` desiring
     ///   strict WebGPU compliance implement canvas view formats by means
     ///   other than [`Surface`].
+    /// - [`Self::READ_ONLY_STORAGE_EMULATION`], because it describes a fallback for
+    ///   adapters without native storage buffers, not a WebGPU capability.
     ///
     #[doc = link_to_etalon_item!(struct Surface)]
     #[must_use]
@@ -1325,7 +1331,9 @@ impl DownlevelFlags {
         // or surface view formats, which only apply to `etalon::Surface`
         Self::from_bits_truncate(
             Self::all().bits()
-                & !(Self::ANISOTROPIC_FILTERING.bits() | Self::SURFACE_VIEW_FORMATS.bits()),
+                & !(Self::ANISOTROPIC_FILTERING.bits()
+                    | Self::SURFACE_VIEW_FORMATS.bits()
+                    | Self::READ_ONLY_STORAGE_EMULATION.bits()),
         )
     }
 }

@@ -335,7 +335,9 @@ impl super::Queue {
                 ref dst,
                 dst_target,
                 ref range,
-            } => match dst.raw {
+            } => {
+                dst.bump_write_generation();
+                match dst.raw {
                 Some(buffer) => {
                     // When `INDEX_BUFFER_ROLE_CHANGE` isn't available, we can't copy into the
                     // index buffer from the zero buffer. This would fail in Chrome with the
@@ -382,6 +384,7 @@ impl super::Queue {
                         [range.start as usize..range.end as usize]
                         .fill(0);
                 }
+            }
             },
             C::CopyBufferToBuffer {
                 ref src,
@@ -390,6 +393,7 @@ impl super::Queue {
                 dst_target,
                 copy,
             } => {
+                dst.bump_write_generation();
                 let copy_src_target = glow::COPY_READ_BUFFER;
                 let is_index_buffer_only_element_dst = !self
                     .shared
@@ -940,6 +944,7 @@ impl super::Queue {
                 ref dst,
                 ref copy,
             } => {
+                dst.bump_write_generation();
                 let block_size = src_format.block_copy_size(None).unwrap();
                 if src_format.is_compressed() {
                     log::error!("Not implemented yet: compressed texture copy to buffer");
@@ -1056,6 +1061,7 @@ impl super::Queue {
                 dst_target,
                 dst_offset,
             } => {
+                dst.bump_write_generation();
                 if self
                     .shared
                     .private_caps
@@ -1611,6 +1617,136 @@ impl super::Queue {
                 size,
             } => {
                 unsafe { gl.bind_buffer_range(target, slot, Some(buffer), offset, size) };
+            }
+            C::SetEmulatedStorageUniforms(ref uniforms) => {
+                let mut state = self.emulated_storage.lock();
+                state.uniforms = Arc::clone(uniforms);
+                for desc in uniforms.iter() {
+                    let (width, byte_size) = state.slots[desc.slot as usize];
+                    unsafe {
+                        gl.uniform_1_i32(desc.width_location.as_ref(), width);
+                        gl.uniform_1_u32(desc.byte_size_location.as_ref(), byte_size);
+                    }
+                }
+            }
+            C::BindEmulatedStorage {
+                slot,
+                buffer,
+                offset,
+                size,
+                ref write_generation,
+                ref shadow,
+            } => {
+                let gen = write_generation.load(Ordering::Acquire);
+                let mut shadow = shadow.lock();
+                let needs_upload = shadow.texture.is_none()
+                    || shadow.synced_generation != gen
+                    || shadow.synced_offset != offset
+                    || shadow.synced_size != size;
+
+                unsafe { gl.active_texture(glow::TEXTURE0 + slot) };
+
+                if needs_upload {
+                    let num_texels = ((size.max(0) as usize) + 15).div_ceil(16).max(1);
+                    let max_tex_size = self.shared.limits.max_texture_dimension_2d.max(1) as usize;
+                    let width = num_texels.min(max_tex_size).max(1) as i32;
+                    let height = num_texels.div_ceil(width as usize).max(1) as i32;
+
+                    if shadow.texture.is_none() || shadow.width != width || shadow.height != height {
+                        if let Some(old) = shadow.texture.take() {
+                            unsafe { gl.delete_texture(old) };
+                        }
+                        let tex = unsafe { gl.create_texture() }.expect("create emulated storage texture");
+                        unsafe {
+                            gl.bind_texture(glow::TEXTURE_2D, Some(tex));
+                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::NEAREST as i32);
+                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
+                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE as i32);
+                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
+                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_BASE_LEVEL, 0);
+                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAX_LEVEL, 0);
+                            if self.shared.private_caps.contains(PrivateCapabilities::TEXTURE_STORAGE) {
+                                gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::RGBA32UI, width, height);
+                            } else {
+                                gl.tex_image_2d(
+                                    glow::TEXTURE_2D,
+                                    0,
+                                    glow::RGBA32UI as i32,
+                                    width,
+                                    height,
+                                    0,
+                                    glow::RGBA_INTEGER,
+                                    glow::UNSIGNED_INT,
+                                    glow::PixelUnpackData::Slice(None),
+                                );
+                            }
+                        }
+                        shadow.texture = Some(tex);
+                        shadow.width = width;
+                        shadow.height = height;
+                    } else {
+                        unsafe { gl.bind_texture(glow::TEXTURE_2D, shadow.texture) };
+                    }
+
+                    unsafe {
+                        gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, Some(buffer));
+                        gl.pixel_store_i32(glow::UNPACK_ALIGNMENT, 4);
+                        gl.pixel_store_i32(glow::UNPACK_ROW_LENGTH, 0);
+                        gl.pixel_store_i32(glow::UNPACK_SKIP_ROWS, 0);
+                        gl.pixel_store_i32(glow::UNPACK_SKIP_PIXELS, 0);
+                        let full_rows = (num_texels / width as usize) as i32;
+                        if full_rows > 0 {
+                            gl.tex_sub_image_2d(
+                                glow::TEXTURE_2D,
+                                0,
+                                0,
+                                0,
+                                width,
+                                full_rows,
+                                glow::RGBA_INTEGER,
+                                glow::UNSIGNED_INT,
+                                glow::PixelUnpackData::BufferOffset(offset as u32),
+                            );
+                        }
+                        let rem_texels = (num_texels % width as usize) as i32;
+                        if rem_texels > 0 {
+                            gl.tex_sub_image_2d(
+                                glow::TEXTURE_2D,
+                                0,
+                                0,
+                                full_rows,
+                                rem_texels,
+                                1,
+                                glow::RGBA_INTEGER,
+                                glow::UNSIGNED_INT,
+                                glow::PixelUnpackData::BufferOffset(
+                                    (offset + full_rows * width * 16) as u32,
+                                ),
+                            );
+                        }
+                        gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None);
+                    }
+
+                    shadow.synced_generation = gen;
+                    shadow.synced_offset = offset;
+                    shadow.synced_size = size;
+                } else {
+                    unsafe { gl.bind_texture(glow::TEXTURE_2D, shadow.texture) };
+                }
+
+                let tex_width = shadow.width;
+                drop(shadow);
+
+                let mut state = self.emulated_storage.lock();
+                state.slots[slot as usize] = (tex_width, size.max(0) as u32);
+                for desc in state.uniforms.iter() {
+                    if u32::from(desc.slot) == slot {
+                        unsafe {
+                            gl.uniform_1_i32(desc.width_location.as_ref(), tex_width);
+                            gl.uniform_1_u32(desc.byte_size_location.as_ref(), size.max(0) as u32);
+                        }
+                    }
+                }
             }
             C::BindSampler(texture_index, sampler) => {
                 unsafe { gl.bind_sampler(texture_index, sampler) };

@@ -53,6 +53,7 @@ mod oom;
 mod pass_ops;
 mod passthrough;
 mod per_vertex;
+mod vertex_storage_emulation;
 mod pipeline;
 mod pipeline_cache;
 mod planar_texture;
@@ -129,6 +130,7 @@ fn all_tests() -> Vec<etalon_test::GpuTestInitializer> {
     pass_ops::all_tests(&mut tests);
     passthrough::all_tests(&mut tests);
     per_vertex::all_tests(&mut tests);
+    vertex_storage_emulation::all_tests(&mut tests);
     pipeline_cache::all_tests(&mut tests);
     pipeline::all_tests(&mut tests);
     planar_texture::all_tests(&mut tests);

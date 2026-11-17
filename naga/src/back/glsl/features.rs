@@ -403,7 +403,7 @@ impl<W> Writer<'_, W> {
                         }
 
                         // If this dynamically size array is used, we need dynamic array size support
-                        if is_used {
+                        if is_used && !self.options.emulate_readonly_storage_with_textures {
                             self.features.request(Features::DYNAMIC_ARRAY_SIZE);
                         }
                     }
@@ -480,7 +480,15 @@ impl<W> Writer<'_, W> {
             }
             match global.space {
                 AddressSpace::WorkGroup => self.features.request(Features::COMPUTE_SHADER),
-                AddressSpace::Storage { .. } => self.features.request(Features::BUFFER_STORAGE),
+                AddressSpace::Storage { access } => {
+                    if !self.options.emulate_readonly_storage_with_textures {
+                        self.features.request(Features::BUFFER_STORAGE);
+                    } else if access.contains(crate::StorageAccess::STORE) {
+                        return Err(Error::Custom(alloc::string::String::from(
+                            "Writable storage buffers cannot be emulated with textures",
+                        )));
+                    }
+                }
                 AddressSpace::Immediate => {
                     if immediates_used {
                         return Err(Error::MultipleImmediateData);

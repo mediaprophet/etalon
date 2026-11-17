@@ -183,7 +183,8 @@ pub const CAPABILITIES: crate::Capabilities = {
             ray_tracing_pipeline_data_offset_alignment: 1,
         },
         downlevel: wgt::DownlevelCapabilities {
-            flags: wgt::DownlevelFlags::all(),
+            flags: wgt::DownlevelFlags::all()
+                .difference(wgt::DownlevelFlags::READ_ONLY_STORAGE_EMULATION),
             limits: wgt::DownlevelLimits {},
             shader_model: wgt::ShaderModel::Sm5,
         },

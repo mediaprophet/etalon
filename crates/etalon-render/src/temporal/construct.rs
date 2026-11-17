@@ -82,7 +82,7 @@ impl<R> TemporalResolveGpu<R> {
             device.create_bind_group_layout(&etalon::BindGroupLayoutDescriptor {
                 label: Some("qualia-temporal-depth-producer-layout"),
                 entries: &[
-                    depth_texture_entry(0),
+                    float_texture_entry(0),
                     uniform_entry(1, DEPTH_PRODUCER_PARAMS_BYTES),
                     sampler_entry(2),
                 ],

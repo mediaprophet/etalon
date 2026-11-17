@@ -29,6 +29,7 @@ struct CompilationContext<'a> {
     sampler_map: &'a mut super::SamplerBindMap,
     name_binding_map: &'a mut NameBindingMap,
     immediates_items: &'a mut Vec<naga::back::glsl::ImmediateItem>,
+    emulated_storage_uniforms: &'a mut Vec<(u8, String, String)>,
     multiview_mask: Option<NonZeroU32>,
     clip_distance_count: &'a mut u32,
 }
@@ -93,6 +94,19 @@ impl CompilationContext<'_> {
                 let sampler_linear_index = self.layout.get_slot(sam_br);
                 self.sampler_map[texture_linear_index as usize] = Some(sampler_linear_index);
             }
+        }
+
+        for (handle, mapping) in reflection_info.emulated_storage_mapping {
+            let var = &module.global_variables[handle];
+            let br = var.binding.as_ref().unwrap();
+            let slot = self.layout.get_slot(br);
+            self.name_binding_map
+                .insert(mapping.texture_name, (super::BindingRegister::Textures, slot));
+            self.emulated_storage_uniforms.push((
+                slot,
+                mapping.width_uniform,
+                mapping.byte_size_uniform,
+            ));
         }
 
         for (name, location) in reflection_info.varying {
@@ -308,6 +322,7 @@ impl super::Device {
                 offset_of_current_mapping: 0,
             })),
             drop_guard: crate::DropGuard::from_option(drop_callback).map(Arc::new),
+            write_generation: Arc::new(core::sync::atomic::AtomicU64::new(0)),
         }
     }
 
@@ -551,6 +566,7 @@ impl super::Device {
 
         let mut name_binding_map = NameBindingMap::default();
         let mut immediates_items = ArrayVec::<_, { crate::MAX_CONCURRENT_SHADER_STAGES }>::new();
+        let mut emulated_storage_uniform_names = Vec::new();
         let mut sampler_map = [None; super::MAX_TEXTURE_SLOTS];
         let mut has_stages = wgt::ShaderStages::empty();
         let mut shaders_to_delete = ArrayVec::<_, { crate::MAX_CONCURRENT_SHADER_STAGES }>::new();
@@ -567,6 +583,7 @@ impl super::Device {
                 sampler_map: &mut sampler_map,
                 name_binding_map: &mut name_binding_map,
                 immediates_items: pc_item,
+                emulated_storage_uniforms: &mut emulated_storage_uniform_names,
                 multiview_mask,
                 clip_distance_count: &mut clip_distance_count,
             };
@@ -668,11 +685,24 @@ impl super::Device {
             None
         };
 
+        let emulated_storage_uniforms: Arc<[super::EmulatedStorageUniformDesc]> =
+            emulated_storage_uniform_names
+                .into_iter()
+                .map(|(slot, width_name, byte_size_name)| super::EmulatedStorageUniformDesc {
+                    slot,
+                    width_location: unsafe { gl.get_uniform_location(program, &width_name) },
+                    byte_size_location: unsafe {
+                        gl.get_uniform_location(program, &byte_size_name)
+                    },
+                })
+                .collect();
+
         Ok(Arc::new(super::PipelineInner {
             program,
             sampler_map,
             first_instance_location,
             immediates_descs: uniforms,
+            emulated_storage_uniforms,
             clip_distance_count,
         }))
     }
@@ -712,6 +742,7 @@ impl crate::Device for super::Device {
                         offset_of_current_mapping: 0,
                     })),
                     drop_guard: None,
+                    write_generation: Arc::new(core::sync::atomic::AtomicU64::new(0)),
                 },
                 desc.size,
             ));
@@ -742,10 +773,15 @@ impl crate::Device for super::Device {
 
         let raw = Some(unsafe { gl.create_buffer() }.map_err(|_| crate::DeviceError::OutOfMemory)?);
         unsafe { gl.bind_buffer(target, raw) };
-        let raw_size = desc
+        let mut raw_size: i32 = desc
             .size
             .try_into()
             .map_err(|_| crate::DeviceError::OutOfMemory)?;
+        if self.shared.emulate_readonly_storage
+            && desc.usage.contains(wgt::BufferUses::STORAGE_READ_ONLY)
+        {
+            raw_size = ((raw_size + 15) & !15).max(16);
+        }
 
         if self
             .shared
@@ -823,6 +859,7 @@ impl crate::Device for super::Device {
                     offset_of_current_mapping: 0,
                 })),
                 drop_guard: None,
+                write_generation: Arc::new(core::sync::atomic::AtomicU64::new(0)),
             },
             desc.size,
         ))
@@ -904,6 +941,7 @@ impl crate::Device for super::Device {
         })
     }
     unsafe fn unmap_buffer(&self, buffer: &super::Buffer) {
+        buffer.bump_write_generation();
         let gl = &self.shared.context.lock();
         let mut map_state = buffer.map_state.lock();
         if core::mem::replace(&mut map_state.mapped, false) {
@@ -1432,9 +1470,15 @@ impl crate::Device for super::Device {
                         ..
                     } => &mut num_uniform_buffers,
                     wgt::BindingType::Buffer {
-                        ty: wgt::BufferBindingType::Storage { .. },
+                        ty: wgt::BufferBindingType::Storage { read_only },
                         ..
-                    } => &mut num_storage_buffers,
+                    } => {
+                        if read_only && self.shared.emulate_readonly_storage {
+                            &mut num_textures
+                        } else {
+                            &mut num_storage_buffers
+                        }
+                    }
                     wgt::BindingType::AccelerationStructure { .. } => unimplemented!(),
                     wgt::BindingType::ExternalTexture => unimplemented!(),
                 };
@@ -1463,6 +1507,7 @@ impl crate::Device for super::Device {
                 writer_flags,
                 binding_map,
                 zero_initialize_workgroup_memory: true,
+                emulate_readonly_storage_with_textures: self.shared.emulate_readonly_storage,
             },
         })
     }
@@ -1494,12 +1539,26 @@ impl crate::Device for super::Device {
         });
         for (entry, layout) in layout_and_entry_iter {
             let binding = match layout.ty {
-                wgt::BindingType::Buffer { .. } => {
+                wgt::BindingType::Buffer { ty, .. } => {
                     let bb = &desc.buffers[entry.resource_index as usize];
-                    super::RawBinding::Buffer {
-                        raw: bb.buffer.raw.unwrap(),
-                        offset: bb.offset as i32,
-                        size: bb.size.get() as i32,
+                    if matches!(ty, wgt::BufferBindingType::Storage { read_only: true })
+                        && self.shared.emulate_readonly_storage
+                    {
+                        super::RawBinding::EmulatedStorageBuffer {
+                            raw: bb.buffer.raw.unwrap(),
+                            offset: bb.offset as i32,
+                            size: bb.size.get() as i32,
+                            write_generation: Arc::clone(&bb.buffer.write_generation),
+                            shadow: Arc::new(Mutex::new(
+                                super::EmulatedStorageShadowState::default(),
+                            )),
+                        }
+                    } else {
+                        super::RawBinding::Buffer {
+                            raw: bb.buffer.raw.unwrap(),
+                            offset: bb.offset as i32,
+                            size: bb.size.get() as i32,
+                        }
                     }
                 }
                 wgt::BindingType::Sampler { .. } => {
@@ -1556,7 +1615,15 @@ impl crate::Device for super::Device {
         })
     }
 
-    unsafe fn destroy_bind_group(&self, _group: super::BindGroup) {
+    unsafe fn destroy_bind_group(&self, group: super::BindGroup) {
+        for binding in group.contents.iter() {
+            if let super::RawBinding::EmulatedStorageBuffer { shadow, .. } = binding {
+                if let Some(tex) = shadow.lock().texture.take() {
+                    let gl = &self.shared.context.lock();
+                    unsafe { gl.delete_texture(tex) };
+                }
+            }
+        }
         self.counters.bind_groups.sub(1);
     }
 

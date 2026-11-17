@@ -414,6 +414,10 @@ impl super::Adapter {
                 && (vertex_shader_storage_blocks != 0 || vertex_ssbo_false_zero),
         );
         downlevel_flags.set(wgt::DownlevelFlags::FRAGMENT_STORAGE, supports_storage);
+        downlevel_flags.set(
+            wgt::DownlevelFlags::READ_ONLY_STORAGE_EMULATION,
+            !supports_storage,
+        );
         if extensions.contains("EXT_texture_filter_anisotropic")
             || extensions.contains("GL_EXT_texture_filter_anisotropic")
         {
@@ -971,6 +975,7 @@ impl super::Adapter {
                     next_shader_id: Default::default(),
                     program_cache: Default::default(),
                     es: es_ver.is_some(),
+                    emulate_readonly_storage: !supports_storage,
                     max_msaa_samples: max_samples,
                 }),
             },
@@ -1143,6 +1148,7 @@ impl crate::Adapter for super::Adapter {
                     .map_err(|_| crate::DeviceError::OutOfMemory)?,
                 shader_clear_program,
                 zero_buffer,
+                emulated_storage: Mutex::new(Default::default()),
                 temp_query_results: Mutex::new(Vec::new()),
                 draw_buffer_count: AtomicU8::new(1),
                 current_index_buffer: Mutex::new(None),
