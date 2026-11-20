@@ -421,11 +421,11 @@ fn fragment_main(input: VertexOutput) -> HoloFragmentOut {
         discard;
     }
 
-    // Sphere-tracing ray march through the bounding volume
+    // Sphere-tracing ray march through the bounding volume (TDR guardrail: max_steps <= 32u)
     var t = t_near;
     var hit_p = vec3<f32>(0.0);
     var hit = false;
-    let max_steps = 42u;
+    let max_steps = 32u;
     let threshold = 0.003;
 
     for (var i = 0u; i < max_steps; i = i + 1u) {
