@@ -95,6 +95,8 @@ pub struct GpuAdapterCaps {
     pub cooperative_matrix_tile_count: usize,
     pub features: GpuFeatureCaps,
     pub limits: GpuLimitCaps,
+    /// Vulkan `deviceUUID` when the adapter is Vulkan; otherwise zeros.
+    pub device_uuid: [u8; 16],
 }
 
 impl GpuAdapterCaps {
@@ -126,30 +128,33 @@ impl GpuAdapterCaps {
             cooperative_matrix_tile_count: adapter.cooperative_matrix_properties().len(),
             features: GpuFeatureCaps::from_features(features),
             limits: GpuLimitCaps::from_limits(&limits),
+            device_uuid: adapter.vulkan_device_uuid(),
         }
     }
 
     /// Anvil ontology workgroup size for this PCI id.
     ///
-    /// Etalon injects this as a Naga/WGSL override. Values match
-    /// `anvil-gpu::hints_for_pci` (Xe-LP 64, Ampere 256). Anvil remains a
-    /// side-by-side crate; this table is the local handshake until etalon
-    /// pins `mediaprophet/anvil`.
+    /// Known SKUs use [`anvil_gpu::hints_for_pci`]. Unknown PCI keeps the
+    /// integrated (64) / discrete (256) heuristic.
     pub fn anvil_workgroup_size(&self) -> u32 {
-        match (self.vendor as u16, self.device as u16) {
-            (0x8086, 0xA788) => 64,  // Xe-LP 32 EU
-            (0x8086, 0x5917) => 64,  // UHD 620
-            (0x10DE, 0x2531) => 256, // RTX A2000
-            (0x106B, 0x0001) => 256, // Apple Silicon unified
-            (0x13B5, 0x0001) => 64,  // Mali-class mobile
-            _ => {
-                if self.is_integrated_gpu() {
-                    64
-                } else {
-                    256
-                }
-            }
+        let vendor = self.vendor as u16;
+        let device = self.device as u16;
+        if anvil_core::lookup(vendor, device).is_some() {
+            u32::from(anvil_gpu::hints_for_pci(vendor, device).workgroup_size)
+        } else if self.is_integrated_gpu() {
+            64
+        } else {
+            256
         }
+    }
+
+    /// Anvil adapter snapshot from this caps record (UUID may still be zeros).
+    pub fn anvil_adapter_report(&self) -> anvil_gpu::AdapterReport {
+        let mut report =
+            anvil_gpu::AdapterReport::from_pci_uuid(self.vendor as u16, self.device as u16, self.device_uuid);
+        report.high_performance = !self.is_integrated_gpu();
+        report.unified_zero_copy = self.is_integrated_gpu();
+        report
     }
 
     #[inline]
@@ -258,5 +263,55 @@ pub fn webgpu_minimum_limits() -> etalon::Limits {
         max_compute_workgroup_size_z: 64,
         max_compute_workgroups_per_dimension: 65535,
         ..etalon::Limits::downlevel_defaults()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn dummy_caps(vendor: u32, device: u32, integrated: bool) -> GpuAdapterCaps {
+        GpuAdapterCaps {
+            name: String::from("Device_001"),
+            backend: etalon::Backend::Vulkan,
+            device_type: if integrated {
+                etalon::DeviceType::IntegratedGpu
+            } else {
+                etalon::DeviceType::DiscreteGpu
+            },
+            vendor,
+            device,
+            driver: String::new(),
+            driver_info: String::new(),
+            subgroup_min_size: 32,
+            subgroup_max_size: 32,
+            cooperative_matrix_tile_count: 0,
+            features: GpuFeatureCaps::default(),
+            limits: GpuLimitCaps::default(),
+            device_uuid: [0; 16],
+        }
+    }
+
+    #[test]
+    fn anvil_workgroup_size_calls_hints_for_pci() {
+        let xe = dummy_caps(0x8086, 0xA788, true);
+        assert_eq!(xe.anvil_workgroup_size(), 64);
+        assert_eq!(
+            xe.anvil_workgroup_size(),
+            u32::from(anvil_gpu::hints_for_pci(0x8086, 0xA788).workgroup_size)
+        );
+        let ampere = dummy_caps(0x10DE, 0x2531, false);
+        assert_eq!(ampere.anvil_workgroup_size(), 256);
+        assert_eq!(
+            ampere.anvil_workgroup_size(),
+            u32::from(anvil_gpu::hints_for_pci(0x10DE, 0x2531).workgroup_size)
+        );
+    }
+
+    #[test]
+    fn unknown_discrete_pci_keeps_256() {
+        let unknown = dummy_caps(0x10DE, 0x2D58, false);
+        assert_eq!(unknown.anvil_workgroup_size(), 256);
+        assert!(anvil_core::lookup(0x10DE, 0x2D58).is_none());
     }
 }

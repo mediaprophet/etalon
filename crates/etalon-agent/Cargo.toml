@@ -42,6 +42,8 @@ sensing-gpu-gles = ["sensing-gpu", "etalon-sense/gpu-gles"]
 [dependencies]
 etalon-resources = { path="../etalon-resources",features=["device"] }
 etalon = { workspace = true }
+anvil-core = { workspace = true }
+anvil-gpu = { workspace = true }
 etalon-types = { workspace = true }
 etalon-sense = { path = "../etalon-sense", optional = true }
 log = { workspace = true }

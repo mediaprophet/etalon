@@ -14,7 +14,9 @@ workspace = true
 
 [features]
 default = []
-device = ["dep:etalon"]
+device = ["dep:etalon", "dep:anvil-core", "dep:anvil-gpu"]
 
 [dependencies]
 etalon = { workspace = true, optional = true }
+anvil-core = { workspace = true, optional = true }
+anvil-gpu = { workspace = true, optional = true }

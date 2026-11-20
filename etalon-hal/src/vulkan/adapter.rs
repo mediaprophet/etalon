@@ -1228,6 +1228,10 @@ pub struct PhysicalDeviceProperties {
     /// `VK_EXT_pci_bus_info` extension.
     pci_bus_info: Option<vk::PhysicalDevicePCIBusInfoPropertiesEXT<'static>>,
 
+    /// Vulkan 1.1 / `VkPhysicalDeviceIDProperties::deviceUUID` (Anvil Tier 1).
+    /// Zeros when `vkGetPhysicalDeviceProperties2` is unavailable.
+    device_uuid: [u8; 16],
+
     /// The device API version.
     ///
     /// Which is the version of Vulkan supported for device-level functionality.
@@ -1244,6 +1248,11 @@ pub struct PhysicalDeviceProperties {
 impl PhysicalDeviceProperties {
     pub fn properties(&self) -> vk::PhysicalDeviceProperties {
         self.properties
+    }
+
+    /// `VkPhysicalDeviceIDProperties::deviceUUID`, or zeros.
+    pub fn device_uuid(&self) -> [u8; 16] {
+        self.device_uuid
     }
 
     pub fn supports_extension(&self, extension: &CStr) -> bool {
@@ -2073,9 +2082,14 @@ impl super::InstanceShared {
                     properties2 = properties2.push_next(next);
                 }
 
+                let mut id_properties = vk::PhysicalDeviceIDProperties::default();
+                properties2 = properties2.push_next(&mut id_properties);
+
                 unsafe {
                     get_device_properties.get_physical_device_properties2(phd, &mut properties2)
                 };
+
+                capabilities.device_uuid = id_properties.device_uuid;
 
                 // Query cooperative matrix properties
                 if capabilities.supports_extension(khr::cooperative_matrix::NAME) {
@@ -2644,6 +2658,11 @@ impl super::Adapter {
 
     pub fn physical_device_capabilities(&self) -> &PhysicalDeviceProperties {
         &self.phd_capabilities
+    }
+
+    /// `VkPhysicalDeviceIDProperties::deviceUUID` for this physical device.
+    pub fn device_uuid(&self) -> [u8; 16] {
+        self.phd_capabilities.device_uuid()
     }
 
     pub fn shared_instance(&self) -> &super::InstanceShared {
