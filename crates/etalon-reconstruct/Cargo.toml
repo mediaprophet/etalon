@@ -20,3 +20,6 @@ std = []
 [dependencies]
 image = { workspace = true, features = ["png", "jpeg"] }
 pico-args = { workspace = true }
+
+[lints]
+workspace = true

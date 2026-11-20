@@ -561,8 +561,8 @@ mod biquad_tests {
     #[test]
     fn jury_stability_and_rbj_frequency_response() {
         let sr = 48_000.0;
-        let lp = rbj_lowpass(sr, 1_000.0, 0.7071).unwrap();
-        let hp = rbj_highpass(sr, 1_000.0, 0.7071).unwrap();
+        let lp = rbj_lowpass(sr, 1_000.0, core::f64::consts::FRAC_1_SQRT_2).unwrap();
+        let hp = rbj_highpass(sr, 1_000.0, core::f64::consts::FRAC_1_SQRT_2).unwrap();
         let notch = rbj_notch(sr, 1_000.0, 4.0).unwrap();
         let peak = rbj_peaking_eq(sr, 1_000.0, 2.0, 6.0).unwrap();
         assert!(lp.is_stable() && hp.is_stable() && notch.is_stable() && peak.is_stable());
@@ -583,7 +583,7 @@ mod biquad_tests {
 
     #[test]
     fn cascaded_biquad_df2t_block_processing_attenuates_stopband() {
-        let lp = rbj_lowpass(48_000.0, 2_000.0, 0.7071).unwrap();
+        let lp = rbj_lowpass(48_000.0, 2_000.0, core::f64::consts::FRAC_1_SQRT_2).unwrap();
         let mut cascade = CascadedBiquadDf2t::<2>::new([lp, lp]).unwrap();
         let mut nyq_in = [0.0f32; 256];
         for (i, s) in nyq_in.iter_mut().enumerate() { *s = if i % 2 == 0 { 1.0 } else { -1.0 }; }

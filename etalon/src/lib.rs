@@ -56,6 +56,9 @@
     // These degrade readability significantly.
     clippy::bool_assert_comparison,
     clippy::bool_comparison,
+    clippy::needless_late_init,
+    clippy::chunks_exact_to_as_chunks,
+    clippy::type_complexity
 )]
 // NOTE: Keep this in sync with `etalon-core`.
 #![cfg_attr(not(send_sync), allow(clippy::arc_with_non_send_sync))]

@@ -499,9 +499,11 @@ mod tests {
         assert!((model.calculate_gain(1.0) - 1.0).abs() < 1e-5);
         assert!((model.calculate_gain(2.0) - 0.5).abs() < 1e-4);
 
-        let mut emitter = SpatialEmitter::default();
-        emitter.position = [10.0, 0.0, 0.0];
-        emitter.velocity = [-34.32, 0.0, 0.0];
+        let emitter = SpatialEmitter {
+            position: [10.0, 0.0, 0.0],
+            velocity: [-34.32, 0.0, 0.0],
+            ..Default::default()
+        };
         let listener = SpatialListener::default();
         let params = emitter.evaluate_spatial(&listener);
         assert!(params.gain_right > params.gain_left);

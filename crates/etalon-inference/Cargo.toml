@@ -69,3 +69,6 @@ serial_test = "3.2"
 [[example]]
 name = "dense_gguf_developer"
 required-features = ["gguf-cpu"]
+
+[lints]
+workspace = true

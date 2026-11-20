@@ -17,3 +17,6 @@ etalon-wgsl-forge = { workspace = true, features = ["cuda"] }
 [target.'cfg(not(target_family = "wasm"))'.dev-dependencies]
 etalon = { workspace = true }
 pollster.workspace = true
+
+[lints]
+workspace = true

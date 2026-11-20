@@ -75,7 +75,7 @@ impl DeviceFactory {
             .map_err(DeviceFactoryError::GetInterface)?;
 
         // Step 2: Create device factory with the specified SDK version and path
-        let sdk_path = std::ffi::CString::new(agility_sdk.sdk_path.as_bytes())
+        let sdk_path = alloc::ffi::CString::new(agility_sdk.sdk_path.as_bytes())
             .map_err(|_| DeviceFactoryError::InvalidPath)?;
         let factory: Direct3D12::ID3D12DeviceFactory = unsafe {
             sdk_config.CreateDeviceFactory(

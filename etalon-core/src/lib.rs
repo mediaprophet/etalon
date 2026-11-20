@@ -37,6 +37,9 @@
     clippy::pattern_type_mismatch,
     // `etalon-core` isn't entirely user-facing, so it's useful to document internal items.
     rustdoc::private_intra_doc_links,
+    clippy::needless_late_init,
+    clippy::chunks_exact_to_as_chunks,
+    clippy::type_complexity
 )]
 #![expect(missing_debug_implementations, reason = "TODO")]
 #![warn(

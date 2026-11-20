@@ -30,3 +30,6 @@ windows = { workspace = true, features = [
     "Media_MediaProperties",
     "Storage_Streams",
 ] }
+
+[lints]
+workspace = true

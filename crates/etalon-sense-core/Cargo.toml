@@ -10,3 +10,6 @@ description = "Bounded sensor data and acquisition contracts for Etalon"
 
 [lib]
 path = "src/lib.rs"
+
+[lints]
+workspace = true

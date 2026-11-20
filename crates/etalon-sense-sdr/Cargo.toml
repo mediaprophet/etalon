@@ -11,3 +11,6 @@ description = "Host-owned bounded SDR sample acquisition bridge for Etalon sensi
 [dependencies]
 etalon-sense-core = { path = "../etalon-sense-core" }
 etalon-signal = { path = "../etalon-signal" }
+
+[lints]
+workspace = true

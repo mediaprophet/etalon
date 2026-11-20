@@ -10,3 +10,6 @@ description = "Bounded Windows PC/SC reader enumeration and UID requests"
 
 [dependencies]
 etalon-sense-nfc = { path = "../etalon-sense-nfc" }
+
+[lints]
+workspace = true

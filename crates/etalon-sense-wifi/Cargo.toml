@@ -17,3 +17,6 @@ windows = { workspace = true, features = [
     "Win32_NetworkManagement_Ndis",
     "Win32_NetworkManagement_WiFi",
 ] }
+
+[lints]
+workspace = true

@@ -13,3 +13,6 @@ etalon-sense-core = { path = "../etalon-sense-core" }
 
 [target.'cfg(windows)'.dependencies]
 windows = { workspace = true, features = ["Devices_Sensors", "Foundation"] }
+
+[lints]
+workspace = true

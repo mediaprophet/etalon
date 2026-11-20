@@ -36,3 +36,6 @@ etalon-wgsl-forge = { workspace = true, default-features = false }
 [dev-dependencies]
 naga = { workspace = true, features = ["wgsl-in"] }
 pollster.workspace = true
+
+[lints]
+workspace = true

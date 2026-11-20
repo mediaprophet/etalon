@@ -224,7 +224,11 @@
     // It gets in the way a lot and does not prevent bugs in practice.
     clippy::pattern_type_mismatch,
     // We should investigate these.
-    clippy::large_enum_variant
+    clippy::large_enum_variant,
+    clippy::needless_late_init,
+    clippy::chunks_exact_to_as_chunks,
+    clippy::too_many_arguments,
+    clippy::type_complexity
 )]
 #![warn(
     clippy::alloc_instead_of_core,

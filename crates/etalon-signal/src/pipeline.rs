@@ -27,7 +27,7 @@ pub fn i16_iq_power_into(
         return Err(SignalError::InvalidParameter);
     }
     // A finite scale may still overflow f32 after multiplication by a sample.
-    for pair in bytes.chunks_exact(2) {
+    for pair in bytes.as_chunks::<2>().0 {
         let value = match order {
             ByteOrder::LittleEndian => i16::from_le_bytes([pair[0], pair[1]]),
             ByteOrder::BigEndian => i16::from_be_bytes([pair[0], pair[1]]),

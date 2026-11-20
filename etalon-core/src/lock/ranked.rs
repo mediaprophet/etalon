@@ -80,6 +80,7 @@ pub struct Mutex<T> {
 /// For details, see [the module documentation][self].
 pub struct MutexGuard<'a, T> {
     inner: etalon_sync::MutexGuard<'a, T>,
+    #[allow(dead_code)]
     saved: LockStateGuard,
 }
 
@@ -289,6 +290,7 @@ pub struct RwLockReadGuard<'a, T> {
 /// For details, see [the module documentation][self].
 pub struct RwLockWriteGuard<'a, T> {
     inner: etalon_sync::RwLockWriteGuard<'a, T>,
+    #[allow(dead_code)]
     saved: LockStateGuard,
 }
 

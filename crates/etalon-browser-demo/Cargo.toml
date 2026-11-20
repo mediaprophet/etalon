@@ -32,3 +32,6 @@ etalon-wgsl-forge = { path = "../etalon-wgsl-forge", default-features = false, f
 
 [dev-dependencies]
 etalon-types = { workspace = true }
+
+[lints]
+workspace = true

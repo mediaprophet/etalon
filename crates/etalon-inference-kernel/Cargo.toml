@@ -11,3 +11,6 @@ description = "Dependency-free numerical operator and paged attention contracts"
 
 [features]
 default = []
+
+[lints]
+workspace = true

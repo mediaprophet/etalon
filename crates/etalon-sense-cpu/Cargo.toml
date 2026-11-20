@@ -10,3 +10,6 @@ description = "Caller-buffered CPU sensing execution provider"
 
 [dependencies]
 etalon-sense-core = { path = "../etalon-sense-core" }
+
+[lints]
+workspace = true

@@ -10,3 +10,6 @@ description = "Caller-buffered signal processing primitives for Etalon"
 
 [lib]
 path = "src/lib.rs"
+
+[lints]
+workspace = true

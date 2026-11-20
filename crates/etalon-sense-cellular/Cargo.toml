@@ -13,3 +13,6 @@ etalon-sense-core = { path = "../etalon-sense-core" }
 
 [target.'cfg(windows)'.dependencies]
 windows = { workspace = true, features = ["Foundation", "Networking_Connectivity"] }
+
+[lints]
+workspace = true

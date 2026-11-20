@@ -75,7 +75,10 @@ void main() {
     clippy::derive_partial_eq_without_eq,
     clippy::needless_borrowed_reference,
     clippy::single_match,
-    clippy::enum_variant_names
+    clippy::enum_variant_names,
+    clippy::needless_late_init,
+    clippy::type_complexity,
+    clippy::chunks_exact_to_as_chunks
 )]
 #![warn(
     trivial_casts,

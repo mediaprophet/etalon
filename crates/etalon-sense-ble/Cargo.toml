@@ -16,3 +16,6 @@ windows = { workspace = true, features = [
     "Devices_Bluetooth_Advertisement",
     "Win32_System_WinRT",
 ] }
+
+[lints]
+workspace = true

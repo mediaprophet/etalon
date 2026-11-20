@@ -52,3 +52,6 @@ etalon-sense-camera-windows = { path = "../etalon-sense-camera-windows", optiona
 
 [target.'cfg(not(target_family = "wasm"))'.dependencies]
 etalon-sense-host = { path = "../etalon-sense-host", optional = true }
+
+[lints]
+workspace = true

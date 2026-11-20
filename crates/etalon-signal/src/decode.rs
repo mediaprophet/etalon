@@ -23,13 +23,13 @@ pub fn decode_i16_into(
     if !scale.is_finite() {
         return Err(SignalError::InvalidParameter);
     }
-    for pair in input.chunks_exact(2) {
+    for pair in input.as_chunks::<2>().0 {
         let result = f64::from(read_i16(pair, order)) * f64::from(scale);
         if !result.is_finite() || !(result as f32).is_finite() {
             return Err(SignalError::NumericRange);
         }
     }
-    for (pair, result) in input.chunks_exact(2).zip(out.iter_mut()) {
+    for (pair, result) in input.as_chunks::<2>().0.iter().zip(out.iter_mut()) {
         *result = (f64::from(read_i16(pair, order)) * f64::from(scale)) as f32;
     }
     Ok(out.len())

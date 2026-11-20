@@ -31,3 +31,6 @@ required-features = ["standalone-cpu"]
 [[example]]
 name = "operator_comparison"
 required-features = ["operator-lab"]
+
+[lints]
+workspace = true
