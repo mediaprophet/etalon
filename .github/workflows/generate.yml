@@ -10,7 +10,7 @@ env:
   #
 
   # This is the MSRV used by `etalon` itself.
-  ETALON_MSRV: "1.87"
+  ETALON_MSRV: "1.99.1"
   RUSTFLAGS: -D warnings
 
 # Every time a PR is pushed to, cancel any previous jobs. This

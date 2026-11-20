@@ -4,6 +4,8 @@
 //! Closes R03 Gap #3 for advanced continuum/wave acoustic models in `etalon-signal`
 //! using allocation-free caller-owned structs and `crate::filter` `no_std` transcendentals.
 
+#![allow(clippy::needless_range_loop, clippy::should_implement_trait)]
+
 use crate::filter::{cos_f64, round_symmetric_f64, sin_cos_f64, sin_f64, sqrt_f64};
 use crate::SignalError;
 

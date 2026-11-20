@@ -73,7 +73,7 @@ ref_as_ptr = "warn"
 
 [workspace.package]
 edition = "2021"
-rust-version = "1.95"
+rust-version = "1.99"
 authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]
 keywords = ["graphics"]
 license = "CC-BY-NC-ND-4.0"

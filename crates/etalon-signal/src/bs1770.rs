@@ -257,7 +257,7 @@ pub fn measure_true_peak_4x_f32(samples: &[f32]) -> Result<TruePeakReading, Sign
     let mut coeffs = [[0.0f64; TAPS_PER_PHASE]; 3];
     for (p_idx, &frac) in [0.25f64, 0.50, 0.75].iter().enumerate() {
         let mut sum = 0.0f64;
-        for k in 0..TAPS_PER_PHASE {
+        for (k, coeff_slot) in coeffs[p_idx].iter_mut().enumerate().take(TAPS_PER_PHASE) {
             let x = (k as f64) - CENTER - frac;
             let sinc = if x.abs() <= 1e-12 {
                 1.0
@@ -271,7 +271,7 @@ pub fn measure_true_peak_4x_f32(samples: &[f32]) -> Result<TruePeakReading, Sign
             let (_, cos_w) = sin_cos_f64(w_ang);
             let win = 0.5 * (1.0 - cos_w);
             let c = sinc * win;
-            coeffs[p_idx][k] = c;
+            *coeff_slot = c;
             sum += c;
         }
         if sum.abs() > 1e-12 {

@@ -267,15 +267,15 @@ impl HoaWignerRotation {
             }
         }
         let mut d2_t = [[0.0f64; 5]; 5];
-        for i in 0..5 {
-            for j in 0..5 {
-                d2_t[i][j] = self.d2[j][i];
+        for (i, row_t) in d2_t.iter_mut().enumerate() {
+            for (j, slot) in row_t.iter_mut().enumerate() {
+                *slot = self.d2[j][i];
             }
         }
         let mut d3_t = [[0.0f64; 7]; 7];
-        for i in 0..7 {
-            for j in 0..7 {
-                d3_t[i][j] = self.d3[j][i];
+        for (i, row_t) in d3_t.iter_mut().enumerate() {
+            for (j, slot) in row_t.iter_mut().enumerate() {
+                *slot = self.d3[j][i];
             }
         }
         Self {

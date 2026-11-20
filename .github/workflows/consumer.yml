@@ -31,7 +31,7 @@ jobs:
           persist-credentials: false
 
       - name: Install qualified toolchain
-        run: rustup toolchain install 1.96.1 --no-self-update --profile minimal --target wasm32-unknown-unknown
+        run: rustup toolchain install 1.99.1 --no-self-update --profile minimal --target wasm32-unknown-unknown
 
       - name: Resolve and build an independent Git consumer
         run: python3 tests/consumer/check_git_consumer.py

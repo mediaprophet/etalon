@@ -65,7 +65,7 @@ pub fn spread_zwicker_bark_excitation_into(
         let e_src = pow10_f64(0.1 * l_db);
         let upper_slope_db = (-24.0 - 230.0 / ZWICKER_24_BARK_CENTER_HZ[src] + 0.2 * l_db.clamp(0.0, 110.0))
             .clamp(-45.0, -5.0);
-        for dst in 0..ZWICKER_BARK_BANDS {
+        for (dst, out_slot) in out_excitation_ratio.iter_mut().enumerate().take(ZWICKER_BARK_BANDS) {
             let dz = (dst as f64) - (src as f64);
             let att_db = if dz < 0.0 {
                 27.0 * dz
@@ -74,7 +74,7 @@ pub fn spread_zwicker_bark_excitation_into(
             } else {
                 0.0
             };
-            out_excitation_ratio[dst] += e_src * pow10_f64(0.1 * att_db);
+            *out_slot += e_src * pow10_f64(0.1 * att_db);
         }
     }
     Ok(())
