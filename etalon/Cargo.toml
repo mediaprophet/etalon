@@ -16,7 +16,7 @@ exclude = ["Cargo.lock"]
 # have a less strict MSRV, to allow users more leeway in updating their Rust toolchain.
 #
 # See the repo README for more information on MSRV policy.
-rust-version = "1.87.0"
+rust-version = "1.99"
 
 [package.metadata.docs.rs]
 all-features = true

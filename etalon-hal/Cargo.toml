@@ -14,7 +14,7 @@ publish = false
 # have a less strict MSRV, to allow firefox more leeway in updating their Rust toolchain.
 #
 # See the repo README for more information on MSRV policy.
-rust-version = "1.87"
+rust-version = "1.99"
 
 [package.metadata.docs.rs]
 # Ideally we would enable all the features.

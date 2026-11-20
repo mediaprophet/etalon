@@ -16,6 +16,6 @@ members = [
 version = "0.0.2"
 edition = "2021"
 authors = ["Timothy Charles Holborn <timothy.holborn@gmail.com>"]
-rust-version = "1.95"
+rust-version = "1.99"
 license = "CC-BY-NC-ND-4.0"
 publish = false
