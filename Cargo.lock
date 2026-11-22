@@ -146,6 +146,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "anvil-core"
+version = "0.1.0"
+
+[[package]]
+name = "anvil-gpu"
+version = "0.1.0"
+dependencies = [
+ "anvil-core",
+]
+
+[[package]]
 name = "anyhow"
 version = "1.0.104"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1035,6 +1046,8 @@ dependencies = [
 name = "etalon-agent"
 version = "0.0.2"
 dependencies = [
+ "anvil-core",
+ "anvil-gpu",
  "bytemuck",
  "etalon",
  "etalon-cuda",
@@ -1502,6 +1515,8 @@ dependencies = [
 name = "etalon-resources"
 version = "0.0.2"
 dependencies = [
+ "anvil-core",
+ "anvil-gpu",
  "etalon",
 ]
 

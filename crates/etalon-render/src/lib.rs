@@ -66,6 +66,9 @@ pub mod readback;
 #[cfg(feature = "gpu")]
 pub mod compute_readback;
 
+#[cfg(all(feature = "gpu", not(target_arch = "wasm32")))]
+pub mod vbd_spatial_filter;
+
 #[cfg(feature = "gpu")]
 pub mod indirect_cull;
 pub mod instance_culling;

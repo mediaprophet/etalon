@@ -479,6 +479,11 @@ impl SkeletalPlayer {
     pub fn normals(&self) -> &[[f32; 3]] {
         &self.normals
     }
+
+    /// Returns the original positions and normals in authored bind space.
+    pub fn bind_geometry(&self) -> (&[[f32; 3]], &[[f32; 3]]) {
+        (&self.bind_positions, &self.bind_normals)
+    }
     /// Vertex tangents slice.
     pub fn tangents(&self) -> &[[f32; 4]] {
         &self.tangents
@@ -672,6 +677,17 @@ impl SkeletalPlayer {
             blend,
             &mut self.local,
         )?;
+        self.compose_controlled_palette()?;
+        Ok(PlaybackReceipt {
+            clip_id: clip.id,
+            time: self.time,
+            vertices: self.positions.len(),
+            joints: self.joints.len(),
+            reduced_motion,
+        })
+    }
+
+    fn compose_controlled_palette(&mut self) -> Result<(), PlayerError> {
         for ((controlled, local), delta) in self
             .controlled_local
             .iter_mut()
@@ -695,13 +711,7 @@ impl SkeletalPlayer {
         {
             *gpu_slot = super::gpu_skin::GpuJointMotorPair::from_motors(curr, prev);
         }
-        Ok(PlaybackReceipt {
-            clip_id: clip.id,
-            time: self.time,
-            vertices: self.positions.len(),
-            joints: self.joints.len(),
-            reduced_motion,
-        })
+        Ok(())
     }
 
     /// Samples and deforms from immutable bind data, avoiding accumulated drift.
@@ -722,9 +732,74 @@ impl SkeletalPlayer {
         policy: PoseTimePolicy,
     ) -> Result<PlaybackReceipt, PlayerError> {
         let receipt = self.advance_pose_only_with_policy(dt_seconds, reduced_motion, policy)?;
+        self.deform_bind_geometry(None)?;
+        Ok(receipt)
+    }
+
+    /// Advance from caller-prepared bind-space geometry for this frame.
+    /// Skin weights, UVs, topology and the stored bind geometry remain reusable.
+    pub fn advance_with_bind_geometry(
+        &mut self,
+        dt_seconds: f64,
+        reduced_motion: bool,
+        positions: &[[f32; 3]],
+        normals: &[[f32; 3]],
+    ) -> Result<PlaybackReceipt, PlayerError> {
+        self.validate_bind_geometry(positions, normals)?;
+        let receipt = self.advance_pose_only_with_mode(dt_seconds, reduced_motion)?;
+        self.deform_bind_geometry(Some((positions, normals)))?;
+        Ok(receipt)
+    }
+
+    /// Sample the three resident clips at the supplied authored time, then
+    /// compose the barycentric local pose, persistent control deltas and skin.
+    /// Optional bind geometry uses the resident skin weights and UV topology.
+    pub fn advance_with_clip_blend(
+        &mut self,
+        sample: BlendSample2D,
+        seconds: f64,
+        scratch: &mut [[Motor; MAX_JOINTS]; 3],
+        geometry: Option<(&[[f32; 3]], &[[f32; 3]])>,
+    ) -> Result<(), PlayerError> {
+        if !seconds.is_finite() || seconds < 0.0
+            || sample.weights.iter().any(|weight| !(0.0..=1.0).contains(weight))
+            || (sample.weights.iter().sum::<f32>() - 1.0).abs() > 1e-5
+        {
+            return Err(PlayerError::InvalidInput);
+        }
+        if let Some((positions, normals)) = geometry {
+            self.validate_bind_geometry(positions, normals)?;
+        }
+        let count = self.joints.len();
+        for (index, pose) in sample.clips.into_iter().zip(scratch.iter_mut()) {
+            let record = *self.clips.get(usize::from(index)).ok_or(PlayerError::UnknownClip)?;
+            let clip = clip_view(record, &self.tracks, &self.keys).ok_or(PlayerError::InvalidInput)?;
+            sample_pose_into(&self.joints, clip, seconds, None, 1.0, &mut pose[..count])?;
+        }
+        let poses = std::array::from_fn(|i| &scratch[i][..count]);
+        super::blend_space_2d::blend_sampled_poses(sample, poses, &mut self.local)?;
+        self.prev_skin_motors.copy_from_slice(&self.palette);
+        self.compose_controlled_palette()?;
+        self.deform_bind_geometry(geometry)
+    }
+
+    fn validate_bind_geometry(&self, positions: &[[f32; 3]], normals: &[[f32; 3]]) -> Result<(), PlayerError> {
+        if positions.len() != self.bind_positions.len() || normals.len() != self.bind_normals.len()
+            || positions.iter().chain(normals).flatten().any(|value| !value.is_finite())
+        {
+            return Err(PlayerError::InvalidInput);
+        }
+        Ok(())
+    }
+
+    fn deform_bind_geometry(
+        &mut self,
+        geometry: Option<(&[[f32; 3]], &[[f32; 3]])>,
+    ) -> Result<(), PlayerError> {
+        let (positions, normals) = geometry.unwrap_or((&self.bind_positions, &self.bind_normals));
         skin_vertices_into(
-            &self.bind_positions,
-            &self.bind_normals,
+            positions,
+            normals,
             &self.skin,
             &self.palette,
             &mut self.positions,
@@ -753,7 +828,7 @@ impl SkeletalPlayer {
             &mut self.tangent_scratch,
         )
         .map_err(|_| PlayerError::Tangents)?;
-        Ok(receipt)
+        Ok(())
     }
 
     /// Current GPU dual-quaternion skinning motor palette (`current_r/d` + `prev_r/d`).
@@ -802,18 +877,14 @@ mod tests {
             joints: [0; 4],
             weights: [1.0, 0.0, 0.0, 0.0],
         }; 3];
-        let clips = [ClipRecord {
-            id: 202,
-            duration: 1.0,
-            first_track: 0,
-            track_count: 1,
-            looping: false,
-        }];
-        let tracks = [Track {
-            joint: 0,
-            first_key: 0,
-            key_count: 2,
-        }];
+        let clips = [
+            ClipRecord { id: 202, duration: 1.0, first_track: 0, track_count: 1, looping: false },
+            ClipRecord { id: 303, duration: 1.0, first_track: 1, track_count: 1, looping: false },
+        ];
+        let tracks = [
+            Track { joint: 0, first_key: 0, key_count: 2 },
+            Track { joint: 0, first_key: 2, key_count: 1 },
+        ];
         let keys = [
             Key {
                 time: 0.0,
@@ -822,6 +893,10 @@ mod tests {
             Key {
                 time: 1.0,
                 local: Motor::from_translation(1.0, 0.0, 0.0),
+            },
+            Key {
+                time: 0.0,
+                local: Motor::from_translation(0.0, 0.5, 0.0),
             },
         ];
         let rig = SkeletalRigDescriptor {
@@ -856,6 +931,27 @@ mod tests {
             assert_eq!(receipt.vertices, 3);
             assert_eq!(receipt.joints, 1);
         });
+        assert!((player.positions()[2][1] - 2.16).abs() < 1e-3);
+
+        let morphed = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 2.0, 0.5]];
+        let normals = [[0.0, 0.0, 1.0]; 3];
+        assert_zero_alloc("etalon_skeletal_player_bind_geometry", || {
+            player.advance_with_bind_geometry(0.0, true, &morphed, &normals).unwrap();
+        });
+        assert!((player.positions()[2][1] - 2.4).abs() < 1e-3);
+        assert!(player.normals()[0][1].abs() > 0.1);
+        assert!(player.tangents().iter().flatten().all(|v| v.is_finite()));
+        player.advance(0.0, true).unwrap();
+        assert!((player.positions()[2][1] - 2.16).abs() < 1e-3);
+
+        let sample = BlendSample2D { clips: [0, 1, 1], weights: [0.25, 0.75, 0.0] };
+        let mut blend_scratch = [[identity; MAX_JOINTS]; 3];
+        assert_zero_alloc("etalon_skeletal_player_clip_blend", || {
+            player.advance_with_clip_blend(sample, 0.5, &mut blend_scratch, Some((&morphed, &normals))).unwrap();
+        });
+        assert!((player.positions()[0][1] - 0.45).abs() < 1e-3);
+        assert!((player.positions()[2][1] - 2.85).abs() < 1e-3);
+        player.advance(0.0, true).unwrap();
         assert!((player.positions()[2][1] - 2.16).abs() < 1e-3);
     }
 }

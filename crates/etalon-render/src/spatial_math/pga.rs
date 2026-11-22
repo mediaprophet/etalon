@@ -31,6 +31,65 @@ impl Motor {
     pub fn from_rotor(r: [f32; 4]) -> Self {
         Self { r, d: [0.0; 4] }
     }
+
+    /// Constructs a rigid motor from a translation vector and axis-angle rotation.
+    #[inline]
+    pub fn from_translation_axis_angle(
+        translation: [f32; 3],
+        axis: [f32; 3],
+        angle_rad: f32,
+    ) -> Self {
+        let t = motor_translate(translation);
+        let r = Self::from_rotor(rotor_from_axis_angle(axis, angle_rad));
+        motor_mul(t, r)
+    }
+
+    /// Extracts the translation of a unit motor.
+    pub fn translation(&self) -> [f32; 3] {
+        let [_, x, y, z] = quat_mul(blade4_to_quat(self.d), quat_conj(blade4_to_quat(self.r)));
+        [2.0 * x, 2.0 * y, 2.0 * z]
+    }
+
+    /// Rotates a direction without applying translation.
+    pub fn transform_vector(&self, vector: [f32; 3]) -> [f32; 3] {
+        legacy_rotor_apply_vector(self.r, vector)
+    }
+
+    /// Applies the rigid transform to a position.
+    pub fn transform_point(&self, point: [f32; 3]) -> [f32; 3] {
+        let rotated = self.transform_vector(point);
+        let translation = self.translation();
+        std::array::from_fn(|axis| rotated[axis] + translation[axis])
+    }
+
+    /// Reverses this motor, giving the inverse of a unit motor.
+    pub fn reverse(&self) -> Self {
+        motor_reverse(*self)
+    }
+
+    /// Composes `rhs` followed by this motor.
+    pub fn motor_mul(&self, rhs: &Self) -> Self {
+        motor_mul(*self, *rhs)
+    }
+
+    /// Normalizes the rotor and removes the parallel component of the dual part.
+    pub fn normalize(&self) -> Self {
+        let magnitude_squared = self.r.iter().map(|x| x * x).sum::<f32>();
+        if magnitude_squared < 1e-12 { return Self::identity(); }
+        let reciprocal_norm = magnitude_squared.sqrt().recip();
+        let r = self.r.map(|x| x * reciprocal_norm);
+        let projection = self.d.iter().zip(r).map(|(d, r)| d * r).sum::<f32>();
+        let d = std::array::from_fn(|axis| (self.d[axis] - projection * r[axis]) * reciprocal_norm);
+        Self { r, d }
+    }
+
+    /// Screw-linearly interpolates between two rigid poses.
+    pub fn sclerp(&self, rhs: &Self, fraction: f32) -> Self {
+        use crate::skeletal::Motor as PreciseMotor;
+        let start = PreciseMotor::from_pga_f32(self.normalize());
+        let end = PreciseMotor::from_pga_f32(rhs.normalize());
+        PreciseMotor::sclerp(&start, &end, f64::from(fraction)).to_pga_f32()
+    }
 }
 
 /// Quaternion `(w, x, y, z)` stored as `[w, x, y, z]`.
@@ -398,6 +457,18 @@ mod tests {
     fn identity_sandwich_is_noop() {
         let p = [0.3, -0.7, 0.15];
         assert!(approx_eq3(sandwich_point(Motor::identity(), p), p, EPS));
+    }
+
+    #[test]
+    fn rigid_motor_methods_keep_pga_signs_and_translation() {
+        let rotor = Motor::from_rotor(rotor_from_axis_angle([0.0, 0.0, 1.0], std::f32::consts::FRAC_PI_2));
+        let pose = motor_translate([2.0, -3.0, 4.0]).motor_mul(&rotor).normalize();
+        let point = [1.0, 0.0, 0.0];
+        assert!(approx_eq3(pose.translation(), [2.0, -3.0, 4.0], EPS));
+        assert!(approx_eq3(pose.transform_vector(point), [0.0, 1.0, 0.0], EPS));
+        assert!(approx_eq3(pose.reverse().transform_point(pose.transform_point(point)), point, EPS));
+        let midpoint = Motor::identity().sclerp(&motor_translate([0.0, 0.0, 4.0]), 0.5);
+        assert!(approx_eq3(midpoint.translation(), [0.0, 0.0, 2.0], EPS));
     }
 
     #[test]

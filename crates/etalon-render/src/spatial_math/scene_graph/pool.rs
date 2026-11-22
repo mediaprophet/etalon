@@ -16,10 +16,7 @@
 
 use bytemuck::{Pod, Zeroable};
 
-use crate::spatial_math::pga::{
-    blade4_to_quat, motor_mul, motor_reverse, motor_translate, quat_to_blade4,
-    rotor_from_axis_angle, sandwich_point, Motor,
-};
+use crate::spatial_math::pga::Motor;
 
 /// Sentinel generation value indicating an unallocated or invalid [`NodeHandle`].
 pub const INVALID_GENERATION: u32 = 0;
@@ -117,108 +114,6 @@ impl NodeKind {
             10 => Self::Joint,
             _ => Self::Empty,
         }
-    }
-}
-
-/// Inherent PGA [`Motor`] ergonomic helpers for hierarchical scene graph and physics solvers.
-impl Motor {
-    /// Geometric product of two PGA motors: `self ⊗ rhs`.
-    #[inline]
-    pub fn motor_mul(&self, rhs: &Self) -> Self {
-        motor_mul(*self, *rhs)
-    }
-
-    /// PGA reversion $\widetilde{M}$ (inverse for unit motors).
-    #[inline]
-    pub fn reverse(&self) -> Self {
-        motor_reverse(*self)
-    }
-
-    /// Transforms a 3D Euclidean point via the PGA sandwich product $\mathbf{p}' = M \mathbf{p} \widetilde{M}$.
-    #[inline]
-    pub fn transform_point(&self, p: [f32; 3]) -> [f32; 3] {
-        sandwich_point(*self, p)
-    }
-
-    /// Rotates a 3D direction vector using only the rotor part $R \mathbf{v} \widetilde{R}$.
-    #[inline]
-    pub fn transform_vector(&self, v: [f32; 3]) -> [f32; 3] {
-        crate::spatial_math::pga::legacy_rotor_apply_vector(self.r, v)
-    }
-
-    /// Extracts the Euclidean world translation $[x, y, z]$ encoded by this motor.
-    #[inline]
-    pub fn translation(&self) -> [f32; 3] {
-        sandwich_point(*self, [0.0, 0.0, 0.0])
-    }
-
-    /// Constructs a rigid motor from a translation vector and axis-angle rotation.
-    #[inline]
-    pub fn from_translation_axis_angle(
-        translation: [f32; 3],
-        axis: [f32; 3],
-        angle_rad: f32,
-    ) -> Self {
-        let t = motor_translate(translation);
-        let r = Self::from_rotor(rotor_from_axis_angle(axis, angle_rad));
-        motor_mul(t, r)
-    }
-
-    /// Normalizes the motor so its rotor component has unit norm and its dual component is orthogonal.
-    #[inline]
-    pub fn normalize(&self) -> Self {
-        let qr = blade4_to_quat(self.r);
-        let qd = blade4_to_quat(self.d);
-        let norm_sq = qr[0] * qr[0] + qr[1] * qr[1] + qr[2] * qr[2] + qr[3] * qr[3];
-        if norm_sq < 1e-12 {
-            return Self::identity();
-        }
-        let inv_norm = 1.0 / norm_sq.sqrt();
-        let nr = [
-            qr[0] * inv_norm,
-            qr[1] * inv_norm,
-            qr[2] * inv_norm,
-            qr[3] * inv_norm,
-        ];
-        let dot = nr[0] * qd[0] + nr[1] * qd[1] + nr[2] * qd[2] + nr[3] * qd[3];
-        let nd = [
-            qd[0] * inv_norm - nr[0] * dot * inv_norm,
-            qd[1] * inv_norm - nr[1] * dot * inv_norm,
-            qd[2] * inv_norm - nr[2] * dot * inv_norm,
-            qd[3] * inv_norm - nr[3] * dot * inv_norm,
-        ];
-        Self {
-            r: quat_to_blade4(nr),
-            d: quat_to_blade4(nd),
-        }
-    }
-
-    /// Normalized linear interpolation (NLERP / chordal SCLERP approximation) between two motors
-    /// with shortest-path hemisphere alignment.
-    #[inline]
-    pub fn sclerp(&self, other: &Self, t: f32) -> Self {
-        let t = t.clamp(0.0, 1.0);
-        let dot = self.r[0] * other.r[0]
-            + self.r[1] * other.r[1]
-            + self.r[2] * other.r[2]
-            + self.r[3] * other.r[3];
-        let sign = if dot < 0.0 { -1.0 } else { 1.0 };
-        let one_minus_t = 1.0 - t;
-        let blended = Self {
-            r: [
-                one_minus_t * self.r[0] + t * sign * other.r[0],
-                one_minus_t * self.r[1] + t * sign * other.r[1],
-                one_minus_t * self.r[2] + t * sign * other.r[2],
-                one_minus_t * self.r[3] + t * sign * other.r[3],
-            ],
-            d: [
-                one_minus_t * self.d[0] + t * sign * other.d[0],
-                one_minus_t * self.d[1] + t * sign * other.d[1],
-                one_minus_t * self.d[2] + t * sign * other.d[2],
-                one_minus_t * self.d[3] + t * sign * other.d[3],
-            ],
-        };
-        blended.normalize()
     }
 }
 

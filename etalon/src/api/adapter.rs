@@ -214,6 +214,25 @@ impl Adapter {
         self.inner.get_presentation_timestamp()
     }
 
+    /// Vulkan `VkPhysicalDeviceIDProperties::deviceUUID` when this adapter is a
+    /// Vulkan physical device. Other backends return zeros. A DXGI adapter LUID
+    /// is not this slot.
+    pub fn vulkan_device_uuid(&self) -> [u8; 16] {
+        #[cfg(all(etalon_core, vulkan))]
+        {
+            // Safety: read-only ID properties; the adapter is not destroyed.
+            unsafe {
+                self.as_hal::<crate::hal::api::Vulkan>()
+                    .map(|adapter| adapter.device_uuid())
+                    .unwrap_or([0; 16])
+            }
+        }
+        #[cfg(not(all(etalon_core, vulkan)))]
+        {
+            [0; 16]
+        }
+    }
+
     /// Returns the supported cooperative matrix configurations for this adapter.
     ///
     /// Cooperative matrices enable hardware-accelerated matrix multiply-accumulate

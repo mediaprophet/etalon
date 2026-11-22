@@ -354,6 +354,9 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
     let near_plane = shadow_receiver_gradient(dpdx(near_receiver), dpdy(near_receiver), sun_shadow.params.y, sun_shadow.params.z);
     let far_plane = shadow_receiver_gradient(dpdx(far_receiver), dpdy(far_receiver), sun_shadow.params.y, sun_shadow.params.z);
     var n = normalize(input.normal);
+    let double_sided = (material.flags.z & 2u) != 0u;
+    let to_eye = camera._padding0.yzw - input.world_position;
+    let normal_side = select(1.0, -1.0, double_sided && dot(n, to_eye) < 0.0);
     let normal_sample = sample_normal(material_uv(input.uv0, 1u));
     if (material.texture_flags.y != 0u) {
         let encoded = normal_sample.xyz * 2.0 - vec3<f32>(1.0);
@@ -363,6 +366,7 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
         n = normalize(tangent * (encoded.x * normal_scale)
             + bitangent * (encoded.y * normal_scale) + n * encoded.z);
     }
+    n *= normal_side;
 
     // Configurable directional key/sun light:
     // _padding1.w = sun_dir_x, _padding2.x = sun_dir_y, _padding2.y = sun_dir_z
@@ -431,7 +435,10 @@ fn fragment_main(input: VertexOutput) -> @location(0) vec4<f32> {
     );
     let roughness = clamp(material.factors.y * mr_sample.g, 0.045, 1.0);
     let metallic = clamp(material.factors.x * mr_sample.b, 0.0, 1.0);
-    let view_dir = normalize(vec3<f32>(sin(camera.yaw), sin(camera.pitch), cos(camera.yaw)));
+    var view_dir = normalize(vec3<f32>(sin(camera.yaw), sin(camera.pitch), cos(camera.yaw)));
+    if double_sided && dot(to_eye, to_eye) > 1e-12 {
+        view_dir = normalize(to_eye);
+    }
     let environment_radiance = sample_environment_lighting(
         input.world_position,
         n,

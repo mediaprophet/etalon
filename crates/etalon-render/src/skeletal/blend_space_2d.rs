@@ -359,6 +359,15 @@ pub fn sample_blend_space_2d_zero_heap<const MAX_POINTS: usize, const MAX_TRIS: 
     let p0 = clip_poses[i0];
     let p1 = clip_poses[i1];
     let p2 = clip_poses[i2];
+    let count = blend_sampled_poses(sample, [p0, p1, p2], out_pose)?;
+    Ok((sample, count))
+}
+
+pub(super) fn blend_sampled_poses(
+    sample: BlendSample2D,
+    [p0, p1, p2]: [&[Motor]; 3],
+    out_pose: &mut [Motor],
+) -> Result<usize, SkeletalError> {
     let joint_count = p0.len().min(p1.len()).min(p2.len()).min(out_pose.len());
     if joint_count == 0 {
         return Err(SkeletalError::OutputTooSmall);
@@ -374,7 +383,7 @@ pub fn sample_blend_space_2d_zero_heap<const MAX_POINTS: usize, const MAX_TRIS: 
     let t2 = w2.clamp(0.0, 1.0) as f64;
 
     for j in 0..joint_count {
-        let m01 = if t01 <= 1e-6 || i0 == i1 {
+        let m01 = if t01 <= 1e-6 || sample.clips[0] == sample.clips[1] {
             p0[j]
         } else if t01 >= 1.0 - 1e-6 {
             p1[j]
@@ -391,7 +400,7 @@ pub fn sample_blend_space_2d_zero_heap<const MAX_POINTS: usize, const MAX_TRIS: 
         };
     }
 
-    Ok((sample, joint_count))
+    Ok(joint_count)
 }
 
 #[cfg(test)]

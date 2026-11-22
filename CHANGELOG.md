@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `etalon-render` supplies the PGA motor operations used by rigid-body simulation and supports resident 2D clip blends with caller-prepared bind geometry, control deltas, skinning and tangent reconstruction.
+
 - `etalon-hal/gles`, `etalon-core`, `etalon-types`, and `naga` (`back::glsl`) add `DownlevelFlags::READ_ONLY_STORAGE_EMULATION` to emulate read-only storage buffers (`var<storage, read>`) via `RGBA32UI` data textures on GLES/WebGL2 targets without native SSBOs.
 
 - `etalon-render` adds an opt-in shader variant that skips absent material maps while retaining the original default sampling path, and applies instance inverse-transpose normals in the ambient-occlusion prepass.
