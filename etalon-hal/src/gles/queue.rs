@@ -101,26 +101,6 @@ unsafe fn reset_unpack_state(gl: &glow::Context) {
     unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None) };
 }
 
-#[cfg(test)]
-mod unpack_formula_tests {
-    use super::{unpack_client_bytes, unpack_row_or_image_length};
-
-    #[test]
-    fn rgba8_tight_rows_match_gles_last_row_rule() {
-        assert_eq!(unpack_client_bytes(1, 1, 1, 0, 0, 1, 4), 4);
-        assert_eq!(unpack_client_bytes(32, 1, 1, 0, 0, 1, 4), 128);
-        assert_eq!(unpack_client_bytes(32, 2, 1, 64, 0, 1, 4), 256 + 128);
-    }
-
-    #[test]
-    fn webgl_pixel_store_rejects_row_length_below_width() {
-        assert_eq!(unpack_row_or_image_length(0, 32), 0);
-        assert_eq!(unpack_row_or_image_length(16, 32), 0);
-        assert_eq!(unpack_row_or_image_length(32, 32), 32);
-        assert_eq!(unpack_row_or_image_length(64, 32), 64);
-    }
-}
-
 impl super::Queue {
     /// Performs a manual shader clear, used as a workaround for a clearing bug on mesa
     unsafe fn perform_shader_clear(&self, gl: &glow::Context, draw_buffer: u32, color: [f32; 4]) {
@@ -2312,3 +2292,23 @@ impl crate::Queue for super::Queue {
 unsafe impl Sync for super::Queue {}
 #[cfg(send_sync)]
 unsafe impl Send for super::Queue {}
+
+#[cfg(test)]
+mod unpack_formula_tests {
+    use super::{unpack_client_bytes, unpack_row_or_image_length};
+
+    #[test]
+    fn rgba8_tight_rows_match_gles_last_row_rule() {
+        assert_eq!(unpack_client_bytes(1, 1, 1, 0, 0, 1, 4), 4);
+        assert_eq!(unpack_client_bytes(32, 1, 1, 0, 0, 1, 4), 128);
+        assert_eq!(unpack_client_bytes(32, 2, 1, 64, 0, 1, 4), 256 + 128);
+    }
+
+    #[test]
+    fn webgl_pixel_store_rejects_row_length_below_width() {
+        assert_eq!(unpack_row_or_image_length(0, 32), 0);
+        assert_eq!(unpack_row_or_image_length(16, 32), 0);
+        assert_eq!(unpack_row_or_image_length(32, 32), 32);
+        assert_eq!(unpack_row_or_image_length(64, 32), 64);
+    }
+}
