@@ -390,6 +390,7 @@ pub fn checked_field_bytes(cells: u64) -> Option<u64> {
 }
 
 /// High-level descriptor for constructing the EMF visualization pipeline.
+#[cfg(feature = "gpu")]
 #[derive(Clone, Debug)]
 pub struct EmfPipelineDesc {
     pub color_format: etalon::TextureFormat,
@@ -397,6 +398,7 @@ pub struct EmfPipelineDesc {
 }
 
 /// Complete, decoupled GPU state for EMF wave slice visualization.
+#[cfg(feature = "gpu")]
 pub struct EmfPipeline {
     pub param_buf: etalon::Buffer,
     pub params_layout: etalon::BindGroupLayout,
@@ -405,6 +407,7 @@ pub struct EmfPipeline {
     pub pipeline: etalon::RenderPipeline,
 }
 
+#[cfg(feature = "gpu")]
 impl EmfPipeline {
     pub fn new(device: &etalon::Device, color_format: etalon::TextureFormat) -> Self {
         let shader = device.create_shader_module(etalon::ShaderModuleDescriptor {

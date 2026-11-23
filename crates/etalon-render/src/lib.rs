@@ -3,18 +3,18 @@
 #[cfg(test)]
 mod ao_normal_tests;
 
-#[cfg(feature = "gpu")]
 pub mod emf;
 pub mod hud;
 pub mod scene_contract;
 #[cfg(feature = "gpu")]
 pub mod volumetric;
 
-#[cfg(feature = "gpu")]
 pub use emf::{
-    checked_field_bytes, checked_grid_cell_count, EmfFieldCell, EmfPipeline, EmfPipelineDesc,
-    EmfSliceUniform, EMF_VOLUMETRIC_WGSL,
+    checked_field_bytes, checked_grid_cell_count, EmfFieldCell, EmfSliceUniform,
+    EMF_VOLUMETRIC_WGSL,
 };
+#[cfg(feature = "gpu")]
+pub use emf::{EmfPipeline, EmfPipelineDesc};
 pub use hud::{
     AlignItems, ComputedUiRect, Edges, FlexDirection, HudVertex, JustifyContent, Margin, Padding,
     SizeRule, UiLayoutNode, UiLayoutStyle, UiLayoutTree, MAX_UI_NODES, NO_UI_NODE,
