@@ -216,7 +216,10 @@ mod tests {
             blend_radius: 0.4,
         };
         let d_mid = union.evaluate_local([0.0, 0.0, 0.0]);
-        assert!(d_mid < 0.0, "origin should be inside smooth union, got {d_mid}");
+        assert!(
+            d_mid < 0.0,
+            "origin should be inside smooth union, got {d_mid}"
+        );
 
         let motor = motor_translate([10.0, 2.0, -3.0]);
         let (d_world, n_world) = sphere.evaluate_world(&motor, [10.0, 5.0, -3.0]);

@@ -29,7 +29,9 @@ pub mod physics3d;
 pub mod time;
 
 // Module-level aliases preserving 100% path compatibility with `qualia-sim`
-pub use environment::{atmosphere, coupling, excavation, fire_ecology, geomechanics, space_weather};
+pub use environment::{
+    atmosphere, coupling, excavation, fire_ecology, geomechanics, space_weather,
+};
 pub use navigation::navmesh;
 
 // Re-export rendering-coupled simulation modules consolidated in `etalon-render`
@@ -88,8 +90,8 @@ pub use flora_archetype::{
     FloraArchetypeConfig, FloraBiomechanicsEvaluator, RaunkiaerLifeForm, StemSupportRegime,
 };
 pub use geomechanics::{
-    critical_trench_depth_m, evaluate_excavation_pass, evaluate_soil_compaction,
-    ExcavationVerdict, SoilMechanicsProfile, ToolEffector, ToolKind,
+    critical_trench_depth_m, evaluate_excavation_pass, evaluate_soil_compaction, ExcavationVerdict,
+    SoilMechanicsProfile, ToolEffector, ToolKind,
 };
 pub use ground_cover::{
     spatial_hash_2d, EcotopePatch, GroundCoverLod, ToroidalGroundCoverClipmap, TOROIDAL_GRID_DIM,
@@ -129,14 +131,14 @@ pub use physics3d::{
     step_spring, step_thermal, step_xpbd_world, Aabb3D, ArticulatedRagdoll, BallMotorJoint,
     BroadphaseBvh, ColliderShape3D, ContactManifold3D, ContactPoint3D, DrivenSpring,
     FixedMotorJoint, FractureOutcome3D, MotorJoint3D, NarrowphaseContact, RagdollMode, RayHit3D,
-    RevoluteMotorJoint, RigidBody3D, RigidBodyType3D, SdfPrimitive, ShapeCastHit3D,
-    SpringState, SpringSuspensionJoint, ThermalTargets,
+    RevoluteMotorJoint, RigidBody3D, RigidBodyType3D, SdfPrimitive, ShapeCastHit3D, SpringState,
+    SpringSuspensionJoint, ThermalTargets,
 };
 pub use ripple::{InteractiveRippleBuffer, RIPPLE_GRID_DIM, RIPPLE_TOTAL_CELLS};
 pub use space_weather::{
     evaluate_solar_cycle_phase, evaluate_space_weather_coupling, AtmosphericElectricCircuit,
-    GeomagneticStormState, HaleMagneticCycle, SchwabeSolarCycle, SolarWindState,
-    BASELINE_TSI_W_M2, HALE_CYCLE_YEARS, SCHWABE_CYCLE_YEARS,
+    GeomagneticStormState, HaleMagneticCycle, SchwabeSolarCycle, SolarWindState, BASELINE_TSI_W_M2,
+    HALE_CYCLE_YEARS, SCHWABE_CYCLE_YEARS,
 };
 pub use time::{
     AgentState, CommandPayload, CommandReceipt, CommandReceiptStatus, DeterministicPrng,
@@ -196,7 +198,12 @@ mod tests {
         let _transition = hysteresis.update(0.6, 1, dt);
         assert!(hysteresis.wetness_ratio > 0.0);
 
-        ripple.inject_impulse(character.state.position[0], character.state.position[2], 0.15, 0.3);
+        ripple.inject_impulse(
+            character.state.position[0],
+            character.state.position[2],
+            0.15,
+            0.3,
+        );
         ripple.step(dt);
 
         let wave_h = ripple.sample_height(character.state.position[0], character.state.position[2]);

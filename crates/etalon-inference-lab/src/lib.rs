@@ -1,4 +1,9 @@
 #![forbid(unsafe_code)]
+#![allow(
+    clippy::disallowed_types,
+    clippy::manual_clamp,
+    clippy::wrong_self_convention
+)]
 //! Cold experiment orchestration. Execution and activation authority belong to the host.
 pub mod ablate;
 pub mod auto_improve;

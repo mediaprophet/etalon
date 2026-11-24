@@ -1,5 +1,5 @@
 use super::GeneratedShader;
-use crate::numerical::{FORGE_SCHEMA_VERSION, ForgeError, KernelSpec, Schedule};
+use crate::numerical::{ForgeError, KernelSpec, Schedule, FORGE_SCHEMA_VERSION};
 use std::fmt::Write;
 pub fn emit_wgsl(kernel: &KernelSpec, schedule: Schedule) -> Result<GeneratedShader, ForgeError> {
     super::emit_canonical(kernel, schedule, super::TargetBackend::Wgsl)

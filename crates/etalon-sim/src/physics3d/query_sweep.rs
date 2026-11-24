@@ -70,9 +70,7 @@ pub fn cast_sphere<const MAX_LEAVES: usize>(
 
         // Inflate target shape by `radius` (Minkowski sum with sphere) and raycast!
         let inflated = match shapes[idx] {
-            ColliderShape3D::Sphere { radius: r } => ColliderShape3D::Sphere {
-                radius: r + radius,
-            },
+            ColliderShape3D::Sphere { radius: r } => ColliderShape3D::Sphere { radius: r + radius },
             ColliderShape3D::Capsule {
                 radius: r,
                 half_height,
@@ -104,9 +102,7 @@ pub fn cast_sphere<const MAX_LEAVES: usize>(
             }
             ColliderShape3D::SdfAnalytical { primitive } => match primitive {
                 SdfPrimitive::Sphere { radius: r } => ColliderShape3D::SdfAnalytical {
-                    primitive: SdfPrimitive::Sphere {
-                        radius: r + radius,
-                    },
+                    primitive: SdfPrimitive::Sphere { radius: r + radius },
                 },
                 SdfPrimitive::RoundedBox {
                     half_extents,

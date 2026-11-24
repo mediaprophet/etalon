@@ -118,14 +118,18 @@ pub fn oracle_tile_schedule_gemm(mnk: [u32; 3], wg_mnk: [u32; 3]) -> Result<[u32
 /// Reference oracle for `(0, 1) iq_power_reference` using `etalon_signal::iq::power_into`.
 #[inline]
 pub fn oracle_iq_power_reference(iq_interleaved: &[f32], scale: f32) -> Result<f32, VibeTrap> {
-    if iq_interleaved.len() < 2 || iq_interleaved.len() > 64 || !iq_interleaved.len().is_multiple_of(2) {
+    if iq_interleaved.len() < 2
+        || iq_interleaved.len() > 64
+        || !iq_interleaved.len().is_multiple_of(2)
+    {
         return Err(VibeTrap::SliceLengthMismatch);
     }
     if !scale.is_finite() || scale <= 0.0 {
         return Err(VibeTrap::NumericalDomainError);
     }
     let mut powers = [0.0f64; 32];
-    let pair_count = power_into(iq_interleaved, &mut powers).map_err(|_| VibeTrap::NumericalDomainError)?;
+    let pair_count =
+        power_into(iq_interleaved, &mut powers).map_err(|_| VibeTrap::NumericalDomainError)?;
     let mut sum = 0.0f64;
     for &p in &powers[..pair_count] {
         sum += p * (scale as f64);

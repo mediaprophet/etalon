@@ -132,11 +132,9 @@ impl<const W: usize, const H: usize> NavigationGrid<W, H> {
             return PathResult::TargetInvalid;
         }
 
-        if sx == tx && sy == sy {
-            if sx == tx && sy == ty {
-                out_path[0] = start;
-                return PathResult::Success { length: 1 };
-            }
+        if sx == tx && sy == ty {
+            out_path[0] = start;
+            return PathResult::Success { length: 1 };
         }
 
         let total_cells = self.width * self.height;

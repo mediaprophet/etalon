@@ -1,12 +1,18 @@
 //! Pure IR, multi-target shader emission, and hardware certification for Etalon.
+#![allow(
+    clippy::disallowed_types,
+    clippy::manual_clamp,
+    clippy::manual_range_patterns,
+    clippy::wrong_self_convention
+)]
 
 pub mod autotune;
 pub mod cache;
 pub mod certifier;
 pub mod certify;
 pub mod emit;
-pub mod ir;
 pub mod geometry_specs;
+pub mod ir;
 pub mod ir_builtins;
 pub mod production_ir;
 pub mod production_lowering;

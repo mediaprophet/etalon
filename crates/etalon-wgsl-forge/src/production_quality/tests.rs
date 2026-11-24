@@ -3,9 +3,7 @@ use crate::autotune::{
 };
 use crate::cache::{TimingSource, TimingSummary};
 use crate::certify::{ComparisonReport, OracleTolerance};
-use crate::ir::{
-    ForgeError, Intrinsic, KernelSpec, Op, ScalarType, SharedLen, SharedMemorySpec,
-};
+use crate::ir::{ForgeError, Intrinsic, KernelSpec, Op, ScalarType, SharedLen, SharedMemorySpec};
 use crate::ir_builtins::BuiltinKernel;
 use crate::schedule::{AdapterConstraints, Schedule, ScheduleSpace, WorkgroupSize};
 
@@ -118,7 +116,10 @@ fn evaluate_with(
     }
 }
 
-fn evaluate_uniform(_schedule: Schedule, samples: usize) -> Result<CandidateEvaluation, ForgeError> {
+fn evaluate_uniform(
+    _schedule: Schedule,
+    samples: usize,
+) -> Result<CandidateEvaluation, ForgeError> {
     Ok(CandidateEvaluation {
         oracle: oracle_pass(),
         timing_source: TimingSource::GpuTimestamp,
@@ -175,7 +176,10 @@ fn portable_schedule_is_admitted_with_occupancy_report() {
     assert!(!report.occupancy.assumed);
     assert_eq!(report.occupancy.note, OCCUPANCY_NOTE);
     assert!(report.occupancy.note.contains("admission/report"));
-    assert!(report.occupancy.note.contains("not a promise of measured GPU timing"));
+    assert!(report
+        .occupancy
+        .note
+        .contains("not a promise of measured GPU timing"));
     assert!(!report.subgroup.required);
     assert!(!report.subgroup.adapter_supports);
 }
@@ -275,7 +279,10 @@ fn workgroup_shared_memory_and_subgroup_are_gated() {
     match admit_schedule(&req) {
         Err(ForgeError::InvalidSchedule(message)) => {
             assert!(message.contains("dispatch"), "{message}");
-            assert!(message.contains("max_workgroups_per_dimension"), "{message}");
+            assert!(
+                message.contains("max_workgroups_per_dimension"),
+                "{message}"
+            );
         }
         other => panic!("expected dispatch rejection, got {other:?}"),
     }
@@ -291,7 +298,10 @@ fn workgroup_shared_memory_and_subgroup_are_gated() {
     match admit_schedule(&shared_req) {
         Err(ForgeError::InvalidSchedule(message)) => {
             assert!(message.contains("shared memory"), "{message}");
-            assert!(message.contains("16384") || message.contains("portable"), "{message}");
+            assert!(
+                message.contains("16384") || message.contains("portable"),
+                "{message}"
+            );
         }
         other => panic!("expected shared-memory rejection, got {other:?}"),
     }
@@ -357,7 +367,10 @@ fn timing_fields_are_labeled_and_synthetic_is_not_gpu() {
 
 #[test]
 fn candidate_search_is_bounded_and_fail_closed_on_overflow() {
-    assert_eq!(MAX_RECORDED_CANDIDATES, TuningConfig::default().max_candidates);
+    assert_eq!(
+        MAX_RECORDED_CANDIDATES,
+        TuningConfig::default().max_candidates
+    );
 
     let generated = record_generated_search(MAX_RECORDED_CANDIDATES).expect("generated search");
     assert!(!generated.overflowed);
@@ -386,7 +399,10 @@ fn candidate_search_is_bounded_and_fail_closed_on_overflow() {
         vector_widths: vec![1, 2, 4],
     };
     let count = space.candidates(&kernel, &constraints).len();
-    assert!(count > MAX_RECORDED_CANDIDATES, "need overflow fixture, got {count}");
+    assert!(
+        count > MAX_RECORDED_CANDIDATES,
+        "need overflow fixture, got {count}"
+    );
     match record_search_space(&kernel, &constraints, &space, MAX_RECORDED_CANDIDATES) {
         Err(ForgeError::InvalidSchedule(message)) => {
             assert!(message.contains("overflow"), "{message}");
@@ -452,10 +468,7 @@ fn autotune_result_is_recorded_with_labeled_timing() {
         .timing
         .as_ref()
         .is_none_or(|timing| timing.source != TimingSource::GpuTimestamp)));
-    match admit_timing(
-        &synthetic_tuned.winner.timing,
-        TimingSource::GpuTimestamp,
-    ) {
+    match admit_timing(&synthetic_tuned.winner.timing, TimingSource::GpuTimestamp) {
         Err(ForgeError::Validation(message)) => {
             assert!(message.contains("synthetic"), "{message}");
         }
@@ -521,9 +534,21 @@ fn invalid_fast_candidate_cannot_win() {
 
     let gates = FrozenQualityGates::production();
     let budget = SearchBudget::from_config(unit_config());
-    let baseline = AdmittedBaseline::new(&gates, slow, oracle_pass(), labeled(TimingSource::GpuTimestamp, 1_000))
-        .expect("slow baseline");
-    let request = gated_request(&kernel, &constraints, &space, &gates, Some(&baseline), budget);
+    let baseline = AdmittedBaseline::new(
+        &gates,
+        slow,
+        oracle_pass(),
+        labeled(TimingSource::GpuTimestamp, 1_000),
+    )
+    .expect("slow baseline");
+    let request = gated_request(
+        &kernel,
+        &constraints,
+        &space,
+        &gates,
+        Some(&baseline),
+        budget,
+    );
     let gated = gated_search(&request, evaluate_invalid_fast).expect("gated search");
     assert_eq!(gated.quality.schedule.schedule, slow);
     assert!(!gated.learned_search);
@@ -534,9 +559,12 @@ fn invalid_fast_candidate_cannot_win() {
         .iter()
         .any(|candidate| candidate.schedule == fast
             && candidate.status == CandidateRecordStatus::Rejected
-            && candidate.reason.as_ref().is_some_and(|reason| reason.contains("cannot win")
-                || reason.contains("oracle")
-                || reason.contains("quality"))));
+            && candidate
+                .reason
+                .as_ref()
+                .is_some_and(|reason| reason.contains("cannot win")
+                    || reason.contains("oracle")
+                    || reason.contains("quality"))));
 
     let tampered = TuningResult {
         evaluated_candidates: 2,
@@ -565,7 +593,9 @@ fn invalid_fast_candidate_cannot_win() {
     ) {
         Err(ForgeError::Validation(message)) => {
             assert!(
-                message.contains("cannot win") || message.contains("tamper") || message.contains("oracle"),
+                message.contains("cannot win")
+                    || message.contains("tamper")
+                    || message.contains("oracle"),
                 "{message}"
             );
         }
@@ -580,8 +610,14 @@ fn immutable_thresholds_reject_tampering() {
         FROZEN_MAX_ORACLE_MISMATCHES,
         QualityThresholds::production().max_oracle_mismatches
     );
-    assert_eq!(FROZEN_MAX_ABSOLUTE_ERROR, OracleTolerance::default().absolute);
-    assert_eq!(FROZEN_MAX_RELATIVE_ERROR, OracleTolerance::default().relative);
+    assert_eq!(
+        FROZEN_MAX_ABSOLUTE_ERROR,
+        OracleTolerance::default().absolute
+    );
+    assert_eq!(
+        FROZEN_MAX_RELATIVE_ERROR,
+        OracleTolerance::default().relative
+    );
     assert_eq!(FROZEN_MAX_SHARED_BYTES, PORTABLE_MAX_SHARED_BYTES);
     assert_eq!(
         FROZEN_MAX_WORKGROUP_THREADS,
@@ -593,13 +629,19 @@ fn immutable_thresholds_reject_tampering() {
     loosened.max_oracle_mismatches = 8;
     match FrozenQualityGates::freeze(loosened) {
         Err(ForgeError::Validation(message)) => {
-            assert!(message.contains("tamper") || message.contains("immutable"), "{message}");
+            assert!(
+                message.contains("tamper") || message.contains("immutable"),
+                "{message}"
+            );
         }
         other => panic!("expected freeze refusal, got {other:?}"),
     }
     match gates.attempt_retune(loosened) {
         Err(ForgeError::Validation(message)) => {
-            assert!(message.contains("tamper") || message.contains("immutable"), "{message}");
+            assert!(
+                message.contains("tamper") || message.contains("immutable"),
+                "{message}"
+            );
         }
         other => panic!("expected retune refusal, got {other:?}"),
     }
@@ -616,7 +658,10 @@ fn immutable_thresholds_reject_tampering() {
         serde_json::from_value(json).expect("tampered JSON still deserializes");
     match tampered.validate() {
         Err(ForgeError::Validation(message)) => {
-            assert!(message.contains("tamper") || message.contains("immutable"), "{message}");
+            assert!(
+                message.contains("tamper") || message.contains("immutable"),
+                "{message}"
+            );
         }
         other => panic!("expected digest/threshold tamper refusal, got {other:?}"),
     }
@@ -781,7 +826,10 @@ fn occupancy_is_admission_never_labeled_timing() {
     assert_eq!(report.occupancy.note, OCCUPANCY_NOTE);
     match occupancy_report_as_gpu_timestamp(report.occupancy) {
         Err(ForgeError::Validation(message)) => {
-            assert!(message.contains("never stored as LabeledTiming"), "{message}");
+            assert!(
+                message.contains("never stored as LabeledTiming"),
+                "{message}"
+            );
         }
         other => panic!("expected occupancy report refusal, got {other:?}"),
     }
@@ -801,7 +849,10 @@ fn crc_is_not_a_signature_and_synthetic_is_not_gpu() {
     }
     match parse_content_digest("CRC-32", "deadbeef") {
         Err(ForgeError::Validation(message)) => {
-            assert!(message.contains("checksum") || message.contains("not a signature"), "{message}");
+            assert!(
+                message.contains("checksum") || message.contains("not a signature"),
+                "{message}"
+            );
         }
         other => panic!("expected CRC parse refusal, got {other:?}"),
     }

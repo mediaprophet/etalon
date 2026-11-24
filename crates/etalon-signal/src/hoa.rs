@@ -131,10 +131,9 @@ pub fn spherical_to_unit_cartesian_f64(
         return Err(SignalError::InvalidParameter);
     }
     let (sin_az, cos_az) = sin_cos_f64(azimuth_rad);
-    let (sin_el, cos_el) = sin_cos_f64(elevation_rad.clamp(
-        -core::f64::consts::FRAC_PI_2,
-        core::f64::consts::FRAC_PI_2,
-    ));
+    let (sin_el, cos_el) = sin_cos_f64(
+        elevation_rad.clamp(-core::f64::consts::FRAC_PI_2, core::f64::consts::FRAC_PI_2),
+    );
     Ok([cos_el * cos_az, cos_el * sin_az, sin_el])
 }
 

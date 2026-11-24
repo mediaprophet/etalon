@@ -3,9 +3,9 @@
 //! the throughput-pass driver: context reuse + single-encoder deferred submit.
 
 use super::nodes::prepare_node;
-use crate::numerical::ForgeError;
 use crate::numerical::execute::{BindingUsage, BufferView, GraphPass, WgpuComputeContext};
-use crate::numerical::ir::graph::{ComputeGraph, MAX_IN, NodeId};
+use crate::numerical::ir::graph::{ComputeGraph, NodeId, MAX_IN};
+use crate::numerical::ForgeError;
 
 /// Context capacity (per slab). Large enough for a decode block's tensors held at once.
 const EXEC_CAPACITY: usize = 64 << 20;

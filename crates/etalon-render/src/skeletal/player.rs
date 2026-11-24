@@ -287,7 +287,11 @@ fn smoothstep(edge0: f32, edge1: f32, x: f32) -> f32 {
 
 fn bump(x: f32, center: f32, width: f32) -> f32 {
     let t = ((x - center) / width).abs();
-    if t >= 1.0 { 0.0 } else { 1.0 - t * t }
+    if t >= 1.0 {
+        0.0
+    } else {
+        1.0 - t * t
+    }
 }
 
 /// Buffers are allocated once on validated scene admission, never on advance.
@@ -761,8 +765,12 @@ impl SkeletalPlayer {
         scratch: &mut [[Motor; MAX_JOINTS]; 3],
         geometry: Option<(&[[f32; 3]], &[[f32; 3]])>,
     ) -> Result<(), PlayerError> {
-        if !seconds.is_finite() || seconds < 0.0
-            || sample.weights.iter().any(|weight| !(0.0..=1.0).contains(weight))
+        if !seconds.is_finite()
+            || seconds < 0.0
+            || sample
+                .weights
+                .iter()
+                .any(|weight| !(0.0..=1.0).contains(weight))
             || (sample.weights.iter().sum::<f32>() - 1.0).abs() > 1e-5
         {
             return Err(PlayerError::InvalidInput);
@@ -772,8 +780,12 @@ impl SkeletalPlayer {
         }
         let count = self.joints.len();
         for (index, pose) in sample.clips.into_iter().zip(scratch.iter_mut()) {
-            let record = *self.clips.get(usize::from(index)).ok_or(PlayerError::UnknownClip)?;
-            let clip = clip_view(record, &self.tracks, &self.keys).ok_or(PlayerError::InvalidInput)?;
+            let record = *self
+                .clips
+                .get(usize::from(index))
+                .ok_or(PlayerError::UnknownClip)?;
+            let clip =
+                clip_view(record, &self.tracks, &self.keys).ok_or(PlayerError::InvalidInput)?;
             sample_pose_into(&self.joints, clip, seconds, None, 1.0, &mut pose[..count])?;
         }
         let poses = std::array::from_fn(|i| &scratch[i][..count]);
@@ -783,9 +795,18 @@ impl SkeletalPlayer {
         self.deform_bind_geometry(geometry)
     }
 
-    fn validate_bind_geometry(&self, positions: &[[f32; 3]], normals: &[[f32; 3]]) -> Result<(), PlayerError> {
-        if positions.len() != self.bind_positions.len() || normals.len() != self.bind_normals.len()
-            || positions.iter().chain(normals).flatten().any(|value| !value.is_finite())
+    fn validate_bind_geometry(
+        &self,
+        positions: &[[f32; 3]],
+        normals: &[[f32; 3]],
+    ) -> Result<(), PlayerError> {
+        if positions.len() != self.bind_positions.len()
+            || normals.len() != self.bind_normals.len()
+            || positions
+                .iter()
+                .chain(normals)
+                .flatten()
+                .any(|value| !value.is_finite())
         {
             return Err(PlayerError::InvalidInput);
         }
@@ -878,12 +899,32 @@ mod tests {
             weights: [1.0, 0.0, 0.0, 0.0],
         }; 3];
         let clips = [
-            ClipRecord { id: 202, duration: 1.0, first_track: 0, track_count: 1, looping: false },
-            ClipRecord { id: 303, duration: 1.0, first_track: 1, track_count: 1, looping: false },
+            ClipRecord {
+                id: 202,
+                duration: 1.0,
+                first_track: 0,
+                track_count: 1,
+                looping: false,
+            },
+            ClipRecord {
+                id: 303,
+                duration: 1.0,
+                first_track: 1,
+                track_count: 1,
+                looping: false,
+            },
         ];
         let tracks = [
-            Track { joint: 0, first_key: 0, key_count: 2 },
-            Track { joint: 0, first_key: 2, key_count: 1 },
+            Track {
+                joint: 0,
+                first_key: 0,
+                key_count: 2,
+            },
+            Track {
+                joint: 0,
+                first_key: 2,
+                key_count: 1,
+            },
         ];
         let keys = [
             Key {
@@ -936,7 +977,9 @@ mod tests {
         let morphed = [[0.0, 0.0, 0.0], [1.0, 0.0, 0.0], [0.0, 2.0, 0.5]];
         let normals = [[0.0, 0.0, 1.0]; 3];
         assert_zero_alloc("etalon_skeletal_player_bind_geometry", || {
-            player.advance_with_bind_geometry(0.0, true, &morphed, &normals).unwrap();
+            player
+                .advance_with_bind_geometry(0.0, true, &morphed, &normals)
+                .unwrap();
         });
         assert!((player.positions()[2][1] - 2.4).abs() < 1e-3);
         assert!(player.normals()[0][1].abs() > 0.1);
@@ -944,10 +987,20 @@ mod tests {
         player.advance(0.0, true).unwrap();
         assert!((player.positions()[2][1] - 2.16).abs() < 1e-3);
 
-        let sample = BlendSample2D { clips: [0, 1, 1], weights: [0.25, 0.75, 0.0] };
+        let sample = BlendSample2D {
+            clips: [0, 1, 1],
+            weights: [0.25, 0.75, 0.0],
+        };
         let mut blend_scratch = [[identity; MAX_JOINTS]; 3];
         assert_zero_alloc("etalon_skeletal_player_clip_blend", || {
-            player.advance_with_clip_blend(sample, 0.5, &mut blend_scratch, Some((&morphed, &normals))).unwrap();
+            player
+                .advance_with_clip_blend(
+                    sample,
+                    0.5,
+                    &mut blend_scratch,
+                    Some((&morphed, &normals)),
+                )
+                .unwrap();
         });
         assert!((player.positions()[0][1] - 0.45).abs() < 1e-3);
         assert!((player.positions()[2][1] - 2.85).abs() < 1e-3);

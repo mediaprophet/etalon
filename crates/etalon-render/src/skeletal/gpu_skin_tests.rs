@@ -2,11 +2,11 @@
 
 use super::gpu_skin::*;
 use super::ik_motor::{
-    JointConstraint, dot3, len3, normalize3_or, solve_constrained_fabrik_motor_ik_zero_heap,
-    solve_two_bone_motor_ik_zero_heap, sub3,
+    dot3, len3, normalize3_or, solve_constrained_fabrik_motor_ik_zero_heap,
+    solve_two_bone_motor_ik_zero_heap, sub3, JointConstraint,
 };
-use super::skin::{SkinWeight, skin_vertices_into};
-use super::{Motor, assert_zero_alloc};
+use super::skin::{skin_vertices_into, SkinWeight};
+use super::{assert_zero_alloc, Motor};
 
 #[test]
 fn analytical_two_bone_motor_ik_reaches_target_and_aligns_pole_zero_heap() {

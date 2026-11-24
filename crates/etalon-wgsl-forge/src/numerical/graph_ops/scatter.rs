@@ -9,8 +9,8 @@
 //!
 //! Certified the forge way: exact CPU oracle, naga validation, A2000 GPU differential.
 
-use crate::numerical::ForgeError;
 use crate::numerical::ir::graph::AccumKind;
+use crate::numerical::ForgeError;
 
 /// Entry-point name of the emitted scatter-accumulate kernel.
 pub const SCATTER_ENTRY: &str = "scatter_main";
@@ -95,10 +95,10 @@ pub fn scatter_gpu(
     o_count: usize,
     op: AccumKind,
 ) -> Result<Vec<f32>, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     let p = src.len();
     if p == 0 || o_count == 0 || idx.len() != p {

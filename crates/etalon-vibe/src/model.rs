@@ -25,9 +25,12 @@ static MODEL_ONTOLOGY: [NQuin48; 3] = ontology_triad(
     "https://qualiadb.org/ontology/etalon/model#BoundedResidencyBudgetInvariance",
 );
 
-const PARAMS_P64_ALIGN: [ParamSpec; 1] = [ParamSpec::slice("offset_align", PrimitiveKind::U64, 2, 2)];
-const PARAMS_MOE_TOP2: [ParamSpec; 1] = [ParamSpec::slice("RouterLogits", PrimitiveKind::F32, 4, 16)];
-const PARAMS_RESIDENCY: [ParamSpec; 1] = [ParamSpec::slice("used_req_cap", PrimitiveKind::U64, 3, 3)];
+const PARAMS_P64_ALIGN: [ParamSpec; 1] =
+    [ParamSpec::slice("offset_align", PrimitiveKind::U64, 2, 2)];
+const PARAMS_MOE_TOP2: [ParamSpec; 1] =
+    [ParamSpec::slice("RouterLogits", PrimitiveKind::F32, 4, 16)];
+const PARAMS_RESIDENCY: [ParamSpec; 1] =
+    [ParamSpec::slice("used_req_cap", PrimitiveKind::U64, 3, 3)];
 
 const RUNTIME_FUNCS: [FuncDescriptor; 3] = [
     make_func_descriptor(

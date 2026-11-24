@@ -158,7 +158,10 @@ impl core::fmt::Display for EmfOperatorError {
                 write!(f, "invalid 3D grid spacing: [{dx}, {dy}, {dz}]")
             }
             Self::SliceLengthMismatch { expected, provided } => {
-                write!(f, "slice length mismatch: expected {expected}, provided {provided}")
+                write!(
+                    f,
+                    "slice length mismatch: expected {expected}, provided {provided}"
+                )
             }
             Self::NonFiniteInput => write!(f, "non-finite or invalid scalar input"),
             Self::InvalidConstitutiveParameter {
@@ -170,7 +173,10 @@ impl core::fmt::Display for EmfOperatorError {
                 "invalid constitutive parameter: eps_r={epsilon_r}, mu_r={mu_r}, sigma={sigma}"
             ),
             Self::CflViolation { dt, cfl_limit } => {
-                write!(f, "3D Yee CFL stability violation: dt={dt} > cfl_limit={cfl_limit}")
+                write!(
+                    f,
+                    "3D Yee CFL stability violation: dt={dt} > cfl_limit={cfl_limit}"
+                )
             }
             Self::DispersionEvanescent { rhs } => {
                 write!(f, "discrete dispersion stopband/evanescent mode: rhs={rhs}")
@@ -201,7 +207,10 @@ impl core::fmt::Display for EmfOperatorError {
                 write!(f, "singular dipole potential evaluation at source position")
             }
             Self::DispersionPoleInvalid => {
-                write!(f, "invalid Debye, Drude, or Lorentz dispersion pole parameter")
+                write!(
+                    f,
+                    "invalid Debye, Drude, or Lorentz dispersion pole parameter"
+                )
             }
             Self::GpuParityBudgetExceeded {
                 max_abs_err,

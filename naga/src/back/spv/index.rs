@@ -70,7 +70,7 @@ mod tests {
         instructions
     }
 
-    fn is_op(instruction: &[u32], op: spirv::Op) -> bool {
+    const fn is_op(instruction: &[u32], op: spirv::Op) -> bool {
         instruction[0] & 0xffff == op as u32
     }
 

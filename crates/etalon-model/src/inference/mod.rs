@@ -266,9 +266,7 @@ pub mod qwen_attention;
 pub mod qwen_roles;
 mod types;
 pub use hyperparams::*;
-pub use lookup::{
-    embedding_row_fingerprint, lookup_embedded_token_id, record_embedded_token_id,
-};
+pub use lookup::{embedding_row_fingerprint, lookup_embedded_token_id, record_embedded_token_id};
 pub use types::*;
 
 mod compat_cursor;

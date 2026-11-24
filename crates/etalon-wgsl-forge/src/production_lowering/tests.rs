@@ -23,7 +23,9 @@ fn df64_reduction() -> ProductionContract {
     let mut contract =
         ProductionContract::reduction_sum(Schedule::default()).expect("reduction contract");
     contract.arithmetic = ArithmeticModel::Df64PairedF32;
-    contract.validate().expect("df64 paired-f32 reduction is legal");
+    contract
+        .validate()
+        .expect("df64 paired-f32 reduction is legal");
     contract
 }
 
@@ -70,7 +72,9 @@ fn happy_path_emits_geometry_wgsl_with_explicit_decls() {
             ref entry_points, ..
         } => {
             assert!(
-                entry_points.iter().any(|entry| entry == "point_in_tetra_f32"),
+                entry_points
+                    .iter()
+                    .any(|entry| entry == "point_in_tetra_f32"),
                 "{entry_points:?}"
             );
         }
@@ -94,10 +98,7 @@ fn type_binding_mismatch_fails_closed() {
     let mut bindings = binding_slots();
     match lower_contract(&contract, &portable(), &mut bindings) {
         Err(ForgeError::Validation(message)) => {
-            assert!(
-                message.contains("type/binding mismatch"),
-                "{message}"
-            );
+            assert!(message.contains("type/binding mismatch"), "{message}");
             assert!(
                 message.contains("result_out") || message.contains("array<i32>"),
                 "{message}"

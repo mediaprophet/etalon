@@ -42,10 +42,10 @@ pub fn broadcast_cpu(input: &[f32], out_len: usize) -> Vec<f32> {
 
 /// Run the broadcast on the GPU and read back the `out_len`-element result.
 pub fn broadcast_gpu(input: &[f32], out_len: usize) -> Result<Vec<f32>, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     if input.is_empty() || out_len == 0 {
         return Err(ForgeError::GpuValidation(

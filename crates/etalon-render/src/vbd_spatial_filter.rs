@@ -3,7 +3,7 @@
 use std::num::NonZeroU64;
 
 use bytemuck::{Pod, Zeroable};
-use etalon::{BufferUsages, util::DeviceExt};
+use etalon::{util::DeviceExt, BufferUsages};
 
 const WORKGROUP_SIZE: usize = 64;
 const MAX_PRIMITIVES: usize = 32_768;

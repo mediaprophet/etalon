@@ -1,4 +1,4 @@
-use super::super::{GGML_TYPE_Q5_1, GgmlDequantError, dequantize_row_into};
+use super::super::{dequantize_row_into, GgmlDequantError, GGML_TYPE_Q5_1};
 
 #[test]
 fn q5_1_each_high_bit_selects_its_exact_logical_lane() {

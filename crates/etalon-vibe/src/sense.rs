@@ -32,8 +32,12 @@ const PARAMS_SPECTRUM_BIN: [ParamSpec; 2] = [
     ParamSpec::slice("center_hz_bw_hz", PrimitiveKind::F64, 2, 2),
     ParamSpec::slice("bin_idx_total", PrimitiveKind::U32, 2, 2),
 ];
-const PARAMS_RSSI_DIST: [ParamSpec; 1] =
-    [ParamSpec::slice("rssi_dbm_tx_dbm_n", PrimitiveKind::F64, 3, 3)];
+const PARAMS_RSSI_DIST: [ParamSpec; 1] = [ParamSpec::slice(
+    "rssi_dbm_tx_dbm_n",
+    PrimitiveKind::F64,
+    3,
+    3,
+)];
 const PARAMS_EVIDENCE_GATE: [ParamSpec; 1] =
     [ParamSpec::slice("gate_inputs", PrimitiveKind::U64, 4, 4)];
 const PARAMS_DICOM_CHECK: [ParamSpec; 1] =

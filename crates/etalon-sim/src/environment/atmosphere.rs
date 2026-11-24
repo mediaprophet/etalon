@@ -93,7 +93,9 @@ impl BarometricState {
     /// Horizontal wind speed magnitude at 10m in m/s.
     #[inline]
     pub fn wind_speed_10m(&self) -> f32 {
-        (self.wind_vector_10m[0] * self.wind_vector_10m[0] + self.wind_vector_10m[1] * self.wind_vector_10m[1]).sqrt()
+        (self.wind_vector_10m[0] * self.wind_vector_10m[0]
+            + self.wind_vector_10m[1] * self.wind_vector_10m[1])
+            .sqrt()
     }
 }
 
@@ -126,7 +128,9 @@ impl BoundaryLayerProfile {
         let eff_z = height_z - self.zero_plane_displacement_d;
         if eff_z <= self.roughness_length_z0 {
             // Below canopy / roughness threshold: attenuated quadratic damping
-            let sub_ratio = (height_z / (self.zero_plane_displacement_d + self.roughness_length_z0)).clamp(0.0, 1.0);
+            let sub_ratio = (height_z
+                / (self.zero_plane_displacement_d + self.roughness_length_z0))
+                .clamp(0.0, 1.0);
             (self.friction_velocity_u_star / VON_KARMAN_KAPPA) * sub_ratio * 0.5
         } else {
             let log_ratio = (eff_z / self.roughness_length_z0).max(1.0).ln();
@@ -290,8 +294,8 @@ mod tests {
     fn test_boundary_layer_wind_profile() {
         let profile = BoundaryLayerProfile::default(); // Forest canopy d = 6m, z0 = 1.25m
         let speed_canopy = profile.sample_wind_speed(5.0); // Inside canopy
-        let speed_top = profile.sample_wind_speed(15.0);   // Above canopy
-        let speed_high = profile.sample_wind_speed(40.0);  // High boundary layer
+        let speed_top = profile.sample_wind_speed(15.0); // Above canopy
+        let speed_high = profile.sample_wind_speed(40.0); // High boundary layer
 
         assert!(speed_canopy < speed_top);
         assert!(speed_top < speed_high);

@@ -5,8 +5,8 @@
 
 use crate::numerical::execute::{BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline};
 use crate::numerical::{
-    BuiltinKernel, ForgeError, GeneratedShader, Schedule, TargetBackend, TimingSource,
-    TimingSummary, emit_shader, validate_wgsl,
+    emit_shader, validate_wgsl, BuiltinKernel, ForgeError, GeneratedShader, Schedule,
+    TargetBackend, TimingSource, TimingSummary,
 };
 
 use super::params::*;

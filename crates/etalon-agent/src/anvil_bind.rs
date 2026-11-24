@@ -45,9 +45,7 @@ pub async fn probe_vulkan_device_uuid(vendor_id: u16, device_id: u16) -> [u8; 16
     let mut desc = etalon::InstanceDescriptor::new_without_display_handle();
     desc.backends = etalon::Backends::VULKAN;
     let instance = etalon::Instance::new(desc);
-    let adapters = instance
-        .enumerate_adapters(etalon::Backends::VULKAN)
-        .await;
+    let adapters = instance.enumerate_adapters(etalon::Backends::VULKAN).await;
     for adapter in adapters {
         let info = adapter.get_info();
         if info.vendor as u16 == vendor_id && info.device as u16 == device_id {
@@ -67,7 +65,7 @@ fn uuid_nonzero(uuid: &[u8; 16]) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use anvil_core::{verify_sanctuary_policy, AttestationTier, ISO_VTD_IOMMU, SanctuaryPolicy};
+    use anvil_core::{verify_sanctuary_policy, AttestationTier, SanctuaryPolicy, ISO_VTD_IOMMU};
 
     #[test]
     fn bind_adapter_fills_context_uuid() {

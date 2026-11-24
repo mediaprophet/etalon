@@ -12,7 +12,12 @@ pub fn power_into(interleaved_iq: &[f32], output: &mut [f64]) -> Result<usize, S
         return Err(SignalError::NonFiniteInput);
     }
     let count = interleaved_iq.len() / 2;
-    for (pair, result) in interleaved_iq.as_chunks::<2>().0.iter().zip(output.iter_mut()) {
+    for (pair, result) in interleaved_iq
+        .as_chunks::<2>()
+        .0
+        .iter()
+        .zip(output.iter_mut())
+    {
         let i = f64::from(pair[0]);
         let q = f64::from(pair[1]);
         *result = i * i + q * q;

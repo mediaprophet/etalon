@@ -25,9 +25,7 @@ pub use gpu::{
     oracle_affine_f32, oracle_gemv4_f32, oracle_rmsnorm_f32, oracle_rope_f32, oracle_topk2_f32,
     EtalonGpuComputeProvider, GPU_PROVIDER, GPU_PROVIDER_IRI, GPU_SHORT_ALIAS,
 };
-pub use helpers::{
-    make_func_descriptor, ontology_triad, seal_nquin48, verify_nquin48_5field,
-};
+pub use helpers::{make_func_descriptor, ontology_triad, seal_nquin48, verify_nquin48_5field};
 pub use mechanics::{
     oracle_aabb_volume, oracle_excavation_prism_volume, oracle_kinetic_energy,
     oracle_spring_damper_force, oracle_verlet_step, DeterministicMechanicsProvider, MECH_PROVIDER,
@@ -99,21 +97,17 @@ pub const ETALON_EXTENSION_IRIS: [&str; 8] = [
 /// Looks up an Etalon VibeScript provider by its short alias (e.g. `"gpu"`, `"mech"`).
 #[inline]
 pub fn provider_by_alias(alias: &str) -> Option<&'static dyn VibeNamespaceProvider> {
-    for &p in &ETALON_VIBE_PROVIDERS {
-        if p.descriptor().short_alias == alias {
-            return Some(p);
-        }
-    }
-    None
+    ETALON_VIBE_PROVIDERS
+        .iter()
+        .find(|&&p| p.descriptor().short_alias == alias)
+        .copied()
 }
 
 /// Looks up an Etalon VibeScript provider by its canonical namespace IRI.
 #[inline]
 pub fn provider_by_iri(iri: &str) -> Option<&'static dyn VibeNamespaceProvider> {
-    for &p in &ETALON_VIBE_PROVIDERS {
-        if p.descriptor().canonical_iri.iri == iri {
-            return Some(p);
-        }
-    }
-    None
+    ETALON_VIBE_PROVIDERS
+        .iter()
+        .find(|&&p| p.descriptor().canonical_iri.iri == iri)
+        .copied()
 }

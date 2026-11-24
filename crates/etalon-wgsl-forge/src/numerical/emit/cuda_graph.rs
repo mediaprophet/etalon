@@ -36,13 +36,13 @@
 
 use std::fmt::Write;
 
-use super::GeneratedShader;
 use super::cuda_c::{
     GEMM_F32_ENTRY, GEMM_F32_SRC, GEMV_F32_ENTRY, GEMV_F32_SRC, Q4K_SOA_WMMA_GEMV_ENTRY,
     Q4K_SOA_WMMA_GEMV_SRC, WMMA_GEMM_TILED_ENTRY, WMMA_GEMM_TILED_SRC,
 };
+use super::GeneratedShader;
 use crate::numerical::ir::graph::{ComputeGraph, EwKind, GraphNode, Lowerer, OpNode, RedKind};
-use crate::numerical::{FORGE_SCHEMA_VERSION, ForgeError, Schedule};
+use crate::numerical::{ForgeError, Schedule, FORGE_SCHEMA_VERSION};
 
 /// CUDA-C expression for a unary [`EwKind`] (`f(v)`), or `None` if not unary. Mirrors the
 /// WGSL [`elementwise_wgsl`](crate::numerical::graph_ops::elementwise::elementwise_wgsl)

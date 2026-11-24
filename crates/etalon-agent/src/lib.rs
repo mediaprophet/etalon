@@ -36,10 +36,10 @@ pub use hal_lane::{HalComputeLane, HalOracleError, HalPreparedPlan, HalSubmissio
 pub use lease::{AccessRights, AllocationId, BufferRegion, SubmissionLease};
 pub use slab::{BindingUsage, BufferView, MemoryTopology, QualiaSlabAllocator};
 
-pub mod device_caps;
-pub mod shared_device;
 #[cfg(not(target_family = "wasm"))]
 pub mod anvil_bind;
+pub mod device_caps;
+pub mod shared_device;
 pub use etalon_resources::{device_lease, provider_scope};
 
 #[cfg(all(feature = "diagnostics", not(target_family = "wasm")))]

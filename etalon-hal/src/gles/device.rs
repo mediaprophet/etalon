@@ -100,8 +100,10 @@ impl CompilationContext<'_> {
             let var = &module.global_variables[handle];
             let br = var.binding.as_ref().unwrap();
             let slot = self.layout.get_slot(br);
-            self.name_binding_map
-                .insert(mapping.texture_name, (super::BindingRegister::Textures, slot));
+            self.name_binding_map.insert(
+                mapping.texture_name,
+                (super::BindingRegister::Textures, slot),
+            );
             self.emulated_storage_uniforms.push((
                 slot,
                 mapping.width_uniform,
@@ -688,13 +690,15 @@ impl super::Device {
         let emulated_storage_uniforms: Arc<[super::EmulatedStorageUniformDesc]> =
             emulated_storage_uniform_names
                 .into_iter()
-                .map(|(slot, width_name, byte_size_name)| super::EmulatedStorageUniformDesc {
-                    slot,
-                    width_location: unsafe { gl.get_uniform_location(program, &width_name) },
-                    byte_size_location: unsafe {
-                        gl.get_uniform_location(program, &byte_size_name)
+                .map(
+                    |(slot, width_name, byte_size_name)| super::EmulatedStorageUniformDesc {
+                        slot,
+                        width_location: unsafe { gl.get_uniform_location(program, &width_name) },
+                        byte_size_location: unsafe {
+                            gl.get_uniform_location(program, &byte_size_name)
+                        },
                     },
-                })
+                )
                 .collect();
 
         Ok(Arc::new(super::PipelineInner {

@@ -128,12 +128,7 @@ fn scale3(v: [f32; 3], s: f32) -> [f32; 3] {
 /// Computes the signed volume of a tetrahedron:
 /// $$V(\mathbf{x}_0, \mathbf{x}_1, \mathbf{x}_2, \mathbf{x}_3) = \frac{1}{6}\det[\mathbf{x}_1 - \mathbf{x}_0, \mathbf{x}_2 - \mathbf{x}_0, \mathbf{x}_3 - \mathbf{x}_0]$$
 #[inline]
-pub fn tet_signed_volume(
-    x0: [f32; 3],
-    x1: [f32; 3],
-    x2: [f32; 3],
-    x3: [f32; 3],
-) -> f32 {
+pub fn tet_signed_volume(x0: [f32; 3], x1: [f32; 3], x2: [f32; 3], x3: [f32; 3]) -> f32 {
     let e1 = sub3(x1, x0);
     let e2 = sub3(x2, x0);
     let e3 = sub3(x3, x0);
@@ -276,7 +271,11 @@ pub fn xpbd_volume_step_gpu(tets: &[f32], alpha_tilde: f32) -> Result<Vec<f32>, 
     )?;
 
     let buffers = vec![view_tets, view_params];
-    let pipeline = WgpuPipeline::compile(&ctx, XPBD_VOLUME_CONSTRAINT_WGSL, XPBD_VOLUME_CONSTRAINT_ENTRY)?;
+    let pipeline = WgpuPipeline::compile(
+        &ctx,
+        XPBD_VOLUME_CONSTRAINT_WGSL,
+        XPBD_VOLUME_CONSTRAINT_ENTRY,
+    )?;
     let schedule = Schedule {
         workgroup_size: 64,
         ..Default::default()
@@ -296,7 +295,10 @@ mod tests {
         let report = crate::validate_wgsl(XPBD_VOLUME_CONSTRAINT_WGSL)
             .expect("XPBD volume WGSL must naga-validate");
         assert!(
-            report.entry_points.iter().any(|e| e == XPBD_VOLUME_CONSTRAINT_ENTRY),
+            report
+                .entry_points
+                .iter()
+                .any(|e| e == XPBD_VOLUME_CONSTRAINT_ENTRY),
             "expected entry point {XPBD_VOLUME_CONSTRAINT_ENTRY}, got {:?}",
             report.entry_points
         );
@@ -317,12 +319,14 @@ mod tests {
         // 1. Compressed tetrahedron (scaled by 0.7 -> V < V_rest)
         let mut compressed = rest_pos.map(|p| [p[0] * 0.7, p[1] * 0.7, p[2] * 0.7]);
         let mut lambda_c = 0.0;
-        let v_init_c = tet_signed_volume(compressed[0], compressed[1], compressed[2], compressed[3]);
+        let v_init_c =
+            tet_signed_volume(compressed[0], compressed[1], compressed[2], compressed[3]);
         assert!(v_init_c < v_rest);
         for _ in 0..8 {
             solve_tet_volume_constraint(&mut compressed, [1.0; 4], v_rest, 1.0e-6, &mut lambda_c);
         }
-        let v_final_c = tet_signed_volume(compressed[0], compressed[1], compressed[2], compressed[3]);
+        let v_final_c =
+            tet_signed_volume(compressed[0], compressed[1], compressed[2], compressed[3]);
         assert!(
             (v_final_c - v_rest).abs() < 1.0e-5,
             "compressed tet did not relax to rest volume: {v_final_c} vs {v_rest}"

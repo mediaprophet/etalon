@@ -160,7 +160,12 @@ impl Aabb3D {
 
     /// Slab ray-AABB intersection test. Returns `Some((t_enter, t_exit))` if the ray hits within `[0.0, max_toi]`.
     #[inline]
-    pub fn ray_intersect(&self, origin: [f32; 3], dir: [f32; 3], max_toi: f32) -> Option<(f32, f32)> {
+    pub fn ray_intersect(
+        &self,
+        origin: [f32; 3],
+        dir: [f32; 3],
+        max_toi: f32,
+    ) -> Option<(f32, f32)> {
         let mut t_min = 0.0f32;
         let mut t_max = max_toi;
 
@@ -295,7 +300,10 @@ impl<const MAX_LEAVES: usize> BroadphaseBvh<MAX_LEAVES> {
         }
         self.leaves[leaf_slot].tight_aabb = new_tight_aabb;
 
-        if self.leaves[leaf_slot].fat_aabb.contains_aabb(&new_tight_aabb) {
+        if self.leaves[leaf_slot]
+            .fat_aabb
+            .contains_aabb(&new_tight_aabb)
+        {
             return false;
         }
 
@@ -409,12 +417,7 @@ impl<const MAX_LEAVES: usize> BroadphaseBvh<MAX_LEAVES> {
                 let mut i = start;
                 while i < end {
                     let leaf = &self.leaves[i];
-                    if leaf.active
-                        && leaf
-                            .fat_aabb
-                            .ray_intersect(origin, dir, max_toi)
-                            .is_some()
-                    {
+                    if leaf.active && leaf.fat_aabb.ray_intersect(origin, dir, max_toi).is_some() {
                         if count < out_collider_ids.len() {
                             out_collider_ids[count] = leaf.collider_id;
                             count += 1;

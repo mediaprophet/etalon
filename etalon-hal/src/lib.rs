@@ -257,6 +257,8 @@ pub mod dx12;
 /// GLES API internals.
 #[cfg(gles)]
 pub mod gles;
+/// GLES unpack and storage-emulation counters, always compiled.
+pub mod gles_debug;
 /// Metal API internals.
 #[cfg(metal)]
 pub mod metal;
@@ -265,8 +267,6 @@ pub mod noop;
 /// Vulkan API internals.
 #[cfg(vulkan)]
 pub mod vulkan;
-/// GLES unpack and storage-emulation counters, always compiled.
-pub mod gles_debug;
 
 pub mod auxil;
 pub mod api {

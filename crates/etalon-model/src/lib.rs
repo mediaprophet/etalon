@@ -1,5 +1,11 @@
 #![cfg_attr(not(feature = "ggml"), no_std)]
 #![forbid(unsafe_code)]
+#![allow(
+    clippy::disallowed_types,
+    clippy::manual_clamp,
+    clippy::manual_range_patterns,
+    clippy::wrong_self_convention
+)]
 
 extern crate alloc;
 

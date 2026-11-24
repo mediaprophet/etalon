@@ -1,8 +1,8 @@
 use serde::{Deserialize, Serialize};
 
 use super::{
-    AdapterConstraints, CUDARC_API_VERSION, ComparisonReport, FORGE_SCHEMA_VERSION, ForgeError,
-    GeneratedShader, NAGA_API_VERSION, Schedule, TuningResult, ValidationReport, WGPU_API_VERSION,
+    AdapterConstraints, ComparisonReport, ForgeError, GeneratedShader, Schedule, TuningResult,
+    ValidationReport, CUDARC_API_VERSION, FORGE_SCHEMA_VERSION, NAGA_API_VERSION, WGPU_API_VERSION,
 };
 
 /// Rich, queryable description of the local compute hardware (plan §9

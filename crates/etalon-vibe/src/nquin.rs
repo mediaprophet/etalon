@@ -10,8 +10,7 @@ use vibescript_abi::{
 };
 
 use crate::helpers::{
-    check_arity, check_len_exact, make_func_descriptor, ontology_triad, prepare_output,
-    push_u32_le,
+    check_arity, check_len_exact, make_func_descriptor, ontology_triad, prepare_output, push_u32_le,
 };
 
 pub const NQUIN_PROVIDER_IRI: &str = "https://qualiadb.org/ext/etalon/nquin";
@@ -24,7 +23,8 @@ static NQUIN_ONTOLOGY: [NQuin48; 3] = ontology_triad(
     "https://qualiadb.org/ontology/etalon/nquin#StableRadixKeyPartitionInvariance",
 );
 
-const PARAMS_COMPUTE_PARITY: [ParamSpec; 1] = [ParamSpec::slice("fields5", PrimitiveKind::U64, 5, 5)];
+const PARAMS_COMPUTE_PARITY: [ParamSpec; 1] =
+    [ParamSpec::slice("fields5", PrimitiveKind::U64, 5, 5)];
 const PARAMS_VERIFY_WIRE: [ParamSpec; 1] = [ParamSpec::slice("words6", PrimitiveKind::U64, 6, 6)];
 const PARAMS_RADIX_BYTE: [ParamSpec; 2] = [
     ParamSpec::scalar("key", PrimitiveKind::U64),

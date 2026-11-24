@@ -12,9 +12,17 @@ pub fn acoustic_fluid_fdtd_step_cpu(
     params.validate()?;
     let expected_len = params.cell_count() * ACOUSTIC_FLUID_CELL_STRIDE;
     if state.len() != expected_len {
-        return Err(ForgeError::GpuValidation(format!("acoustic_fluid_fdtd_step_cpu: state length {} != expected {}", state.len(), expected_len)));
+        return Err(ForgeError::GpuValidation(format!(
+            "acoustic_fluid_fdtd_step_cpu: state length {} != expected {}",
+            state.len(),
+            expected_len
+        )));
     }
-    let [nx, ny, nz] = [params.dims[0] as usize, params.dims[1] as usize, params.dims[2] as usize];
+    let [nx, ny, nz] = [
+        params.dims[0] as usize,
+        params.dims[1] as usize,
+        params.dims[2] as usize,
+    ];
     let [dx, dy, dz] = params.spacing_m;
     let dt = params.dt_s;
     let half_damp = 0.5 * params.damping_per_s * dt;
@@ -31,30 +39,48 @@ pub fn acoustic_fluid_fdtd_step_cpu(
                 let b = base_of(ix, iy, iz);
                 let p_curr = state[b];
                 state[b + 1] = if ix + 1 < nx {
-                    decay * state[b + 1] - v_scale * ((state[base_of(ix + 1, iy, iz)] - p_curr) / dx)
+                    decay * state[b + 1]
+                        - v_scale * ((state[base_of(ix + 1, iy, iz)] - p_curr) / dx)
                 } else {
                     match bnd {
-                        AcousticFluidGpuBoundary::Periodic => decay * state[b + 1] - v_scale * ((state[base_of(0, iy, iz)] - p_curr) / dx),
+                        AcousticFluidGpuBoundary::Periodic => {
+                            decay * state[b + 1]
+                                - v_scale * ((state[base_of(0, iy, iz)] - p_curr) / dx)
+                        }
                         AcousticFluidGpuBoundary::Rigid => 0.0,
-                        AcousticFluidGpuBoundary::PressureRelease => decay * state[b + 1] - v_scale * ((-p_curr) / dx),
+                        AcousticFluidGpuBoundary::PressureRelease => {
+                            decay * state[b + 1] - v_scale * ((-p_curr) / dx)
+                        }
                     }
                 };
                 state[b + 2] = if iy + 1 < ny {
-                    decay * state[b + 2] - v_scale * ((state[base_of(ix, iy + 1, iz)] - p_curr) / dy)
+                    decay * state[b + 2]
+                        - v_scale * ((state[base_of(ix, iy + 1, iz)] - p_curr) / dy)
                 } else {
                     match bnd {
-                        AcousticFluidGpuBoundary::Periodic => decay * state[b + 2] - v_scale * ((state[base_of(ix, 0, iz)] - p_curr) / dy),
+                        AcousticFluidGpuBoundary::Periodic => {
+                            decay * state[b + 2]
+                                - v_scale * ((state[base_of(ix, 0, iz)] - p_curr) / dy)
+                        }
                         AcousticFluidGpuBoundary::Rigid => 0.0,
-                        AcousticFluidGpuBoundary::PressureRelease => decay * state[b + 2] - v_scale * ((-p_curr) / dy),
+                        AcousticFluidGpuBoundary::PressureRelease => {
+                            decay * state[b + 2] - v_scale * ((-p_curr) / dy)
+                        }
                     }
                 };
                 state[b + 3] = if iz + 1 < nz {
-                    decay * state[b + 3] - v_scale * ((state[base_of(ix, iy, iz + 1)] - p_curr) / dz)
+                    decay * state[b + 3]
+                        - v_scale * ((state[base_of(ix, iy, iz + 1)] - p_curr) / dz)
                 } else {
                     match bnd {
-                        AcousticFluidGpuBoundary::Periodic => decay * state[b + 3] - v_scale * ((state[base_of(ix, iy, 0)] - p_curr) / dz),
+                        AcousticFluidGpuBoundary::Periodic => {
+                            decay * state[b + 3]
+                                - v_scale * ((state[base_of(ix, iy, 0)] - p_curr) / dz)
+                        }
                         AcousticFluidGpuBoundary::Rigid => 0.0,
-                        AcousticFluidGpuBoundary::PressureRelease => decay * state[b + 3] - v_scale * ((-p_curr) / dz),
+                        AcousticFluidGpuBoundary::PressureRelease => {
+                            decay * state[b + 3] - v_scale * ((-p_curr) / dz)
+                        }
                     }
                 };
             }
@@ -66,27 +92,34 @@ pub fn acoustic_fluid_fdtd_step_cpu(
         for iy in 0..ny {
             for iz in 0..nz {
                 let b = base_of(ix, iy, iz);
-                let on_outer = ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz;
+                let on_outer =
+                    ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz;
                 if matches!(bnd, AcousticFluidGpuBoundary::PressureRelease) && on_outer {
                     state[b] = 0.0;
                     continue;
                 }
                 let (vx_curr, vy_curr, vz_curr) = (state[b + 1], state[b + 2], state[b + 3]);
-                let vx_m = if ix > 0 { state[base_of(ix - 1, iy, iz) + 1] } else {
+                let vx_m = if ix > 0 {
+                    state[base_of(ix - 1, iy, iz) + 1]
+                } else {
                     match bnd {
                         AcousticFluidGpuBoundary::Periodic => state[base_of(nx - 1, iy, iz) + 1],
                         AcousticFluidGpuBoundary::Rigid => 0.0,
                         AcousticFluidGpuBoundary::PressureRelease => vx_curr,
                     }
                 };
-                let vy_m = if iy > 0 { state[base_of(ix, iy - 1, iz) + 2] } else {
+                let vy_m = if iy > 0 {
+                    state[base_of(ix, iy - 1, iz) + 2]
+                } else {
                     match bnd {
                         AcousticFluidGpuBoundary::Periodic => state[base_of(ix, ny - 1, iz) + 2],
                         AcousticFluidGpuBoundary::Rigid => 0.0,
                         AcousticFluidGpuBoundary::PressureRelease => vy_curr,
                     }
                 };
-                let vz_m = if iz > 0 { state[base_of(ix, iy, iz - 1) + 3] } else {
+                let vz_m = if iz > 0 {
+                    state[base_of(ix, iy, iz - 1) + 3]
+                } else {
                     match bnd {
                         AcousticFluidGpuBoundary::Periodic => state[base_of(ix, iy, nz - 1) + 3],
                         AcousticFluidGpuBoundary::Rigid => 0.0,
@@ -109,9 +142,17 @@ pub fn elastic_virieux_fdtd_step_cpu(
     params.validate()?;
     let expected_len = params.cell_count() * ELASTIC_VIRIEUX_CELL_STRIDE;
     if state.len() != expected_len {
-        return Err(ForgeError::GpuValidation(format!("elastic_virieux_fdtd_step_cpu: state length {} != expected {}", state.len(), expected_len)));
+        return Err(ForgeError::GpuValidation(format!(
+            "elastic_virieux_fdtd_step_cpu: state length {} != expected {}",
+            state.len(),
+            expected_len
+        )));
     }
-    let [nx, ny, nz] = [params.dims[0] as usize, params.dims[1] as usize, params.dims[2] as usize];
+    let [nx, ny, nz] = [
+        params.dims[0] as usize,
+        params.dims[1] as usize,
+        params.dims[2] as usize,
+    ];
     let [dx, dy, dz] = params.spacing_m;
     let dt = params.dt_s;
     let dt_rho = dt / params.density_kg_m3;
@@ -123,14 +164,50 @@ pub fn elastic_virieux_fdtd_step_cpu(
 
     // Pass 0: update velocities (vx, vy, vz) from Cauchy stress divergence.
     for ix in 0..nx {
-        let ixp = if ix + 1 < nx { ix + 1 } else if periodic { 0 } else { ix };
-        let ixm = if ix > 0 { ix - 1 } else if periodic { nx - 1 } else { 0 };
+        let ixp = if ix + 1 < nx {
+            ix + 1
+        } else if periodic {
+            0
+        } else {
+            ix
+        };
+        let ixm = if ix > 0 {
+            ix - 1
+        } else if periodic {
+            nx - 1
+        } else {
+            0
+        };
         for iy in 0..ny {
-            let iyp = if iy + 1 < ny { iy + 1 } else if periodic { 0 } else { iy };
-            let iym = if iy > 0 { iy - 1 } else if periodic { ny - 1 } else { 0 };
+            let iyp = if iy + 1 < ny {
+                iy + 1
+            } else if periodic {
+                0
+            } else {
+                iy
+            };
+            let iym = if iy > 0 {
+                iy - 1
+            } else if periodic {
+                ny - 1
+            } else {
+                0
+            };
             for iz in 0..nz {
-                let izp = if iz + 1 < nz { iz + 1 } else if periodic { 0 } else { iz };
-                let izm = if iz > 0 { iz - 1 } else if periodic { nz - 1 } else { 0 };
+                let izp = if iz + 1 < nz {
+                    iz + 1
+                } else if periodic {
+                    0
+                } else {
+                    iz
+                };
+                let izm = if iz > 0 {
+                    iz - 1
+                } else if periodic {
+                    nz - 1
+                } else {
+                    0
+                };
                 let b = base_of(ix, iy, iz);
                 let dvx = (state[base_of(ixp, iy, iz) + 3] - state[b + 3]) / dx
                     + (state[b + 6] - state[base_of(ix, iym, iz) + 6]) / dy
@@ -150,18 +227,57 @@ pub fn elastic_virieux_fdtd_step_cpu(
 
     // Pass 1: update 6-component Cauchy stress from velocity gradients.
     for ix in 0..nx {
-        let ixp = if ix + 1 < nx { ix + 1 } else if periodic { 0 } else { ix };
-        let ixm = if ix > 0 { ix - 1 } else if periodic { nx - 1 } else { 0 };
+        let ixp = if ix + 1 < nx {
+            ix + 1
+        } else if periodic {
+            0
+        } else {
+            ix
+        };
+        let ixm = if ix > 0 {
+            ix - 1
+        } else if periodic {
+            nx - 1
+        } else {
+            0
+        };
         for iy in 0..ny {
-            let iyp = if iy + 1 < ny { iy + 1 } else if periodic { 0 } else { iy };
-            let iym = if iy > 0 { iy - 1 } else if periodic { ny - 1 } else { 0 };
+            let iyp = if iy + 1 < ny {
+                iy + 1
+            } else if periodic {
+                0
+            } else {
+                iy
+            };
+            let iym = if iy > 0 {
+                iy - 1
+            } else if periodic {
+                ny - 1
+            } else {
+                0
+            };
             for iz in 0..nz {
-                let izp = if iz + 1 < nz { iz + 1 } else if periodic { 0 } else { iz };
-                let izm = if iz > 0 { iz - 1 } else if periodic { nz - 1 } else { 0 };
+                let izp = if iz + 1 < nz {
+                    iz + 1
+                } else if periodic {
+                    0
+                } else {
+                    iz
+                };
+                let izm = if iz > 0 {
+                    iz - 1
+                } else if periodic {
+                    nz - 1
+                } else {
+                    0
+                };
                 let b = base_of(ix, iy, iz);
-                let on_outer = ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz;
+                let on_outer =
+                    ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz;
                 if !periodic && on_outer {
-                    for s in 3..9 { state[b + s] = 0.0; }
+                    for s in 3..9 {
+                        state[b + s] = 0.0;
+                    }
                     continue;
                 }
                 let (vx, vy, vz) = (state[b], state[b + 1], state[b + 2]);
@@ -172,9 +288,18 @@ pub fn elastic_virieux_fdtd_step_cpu(
                 state[b + 3] += dt * (l2m * dvx_dx + lambda * (dvy_dy + dvz_dz));
                 state[b + 4] += dt * (l2m * dvy_dy + lambda * (dvx_dx + dvz_dz));
                 state[b + 5] += dt * (l2m * dvz_dz + lambda * (dvx_dx + dvy_dy));
-                state[b + 6] += dt * mu * ((state[base_of(ix, iyp, iz)] - vx) / dy + (state[base_of(ixp, iy, iz) + 1] - vy) / dx);
-                state[b + 7] += dt * mu * ((state[base_of(ix, iy, izp) + 1] - vy) / dz + (state[base_of(ix, iyp, iz) + 2] - vz) / dy);
-                state[b + 8] += dt * mu * ((state[base_of(ix, iy, izp)] - vx) / dz + (state[base_of(ixp, iy, iz) + 2] - vz) / dx);
+                state[b + 6] += dt
+                    * mu
+                    * ((state[base_of(ix, iyp, iz)] - vx) / dy
+                        + (state[base_of(ixp, iy, iz) + 1] - vy) / dx);
+                state[b + 7] += dt
+                    * mu
+                    * ((state[base_of(ix, iy, izp) + 1] - vy) / dz
+                        + (state[base_of(ix, iyp, iz) + 2] - vz) / dy);
+                state[b + 8] += dt
+                    * mu
+                    * ((state[base_of(ix, iy, izp)] - vx) / dz
+                        + (state[base_of(ixp, iy, iz) + 2] - vz) / dx);
             }
         }
     }
@@ -190,11 +315,20 @@ pub fn acoustic_fluid_fdtd_step_with_context(
     params.validate()?;
     let expected_len = params.cell_count() * ACOUSTIC_FLUID_CELL_STRIDE;
     if state_in.len() != expected_len {
-        return Err(ForgeError::GpuValidation(format!("acoustic_fluid_fdtd_step_with_context: state length {} != expected {}", state_in.len(), expected_len)));
+        return Err(ForgeError::GpuValidation(format!(
+            "acoustic_fluid_fdtd_step_with_context: state length {} != expected {}",
+            state_in.len(),
+            expected_len
+        )));
     }
     run_two_pass_fdtd_with_context(
-        ctx, ACOUSTIC_FLUID_FDTD_WGSL, ACOUSTIC_FLUID_FDTD_ENTRY,
-        state_in, params.cell_count(), params.to_uniform_words(0), params.to_uniform_words(1),
+        ctx,
+        ACOUSTIC_FLUID_FDTD_WGSL,
+        ACOUSTIC_FLUID_FDTD_ENTRY,
+        state_in,
+        params.cell_count(),
+        params.to_uniform_words(0),
+        params.to_uniform_words(1),
     )
 }
 
@@ -218,11 +352,20 @@ pub fn elastic_virieux_fdtd_step_with_context(
     params.validate()?;
     let expected_len = params.cell_count() * ELASTIC_VIRIEUX_CELL_STRIDE;
     if state_in.len() != expected_len {
-        return Err(ForgeError::GpuValidation(format!("elastic_virieux_fdtd_step_with_context: state length {} != expected {}", state_in.len(), expected_len)));
+        return Err(ForgeError::GpuValidation(format!(
+            "elastic_virieux_fdtd_step_with_context: state length {} != expected {}",
+            state_in.len(),
+            expected_len
+        )));
     }
     run_two_pass_fdtd_with_context(
-        ctx, ELASTIC_VIRIEUX_FDTD_WGSL, ELASTIC_VIRIEUX_FDTD_ENTRY,
-        state_in, params.cell_count(), params.to_uniform_words(0), params.to_uniform_words(1),
+        ctx,
+        ELASTIC_VIRIEUX_FDTD_WGSL,
+        ELASTIC_VIRIEUX_FDTD_ENTRY,
+        state_in,
+        params.cell_count(),
+        params.to_uniform_words(0),
+        params.to_uniform_words(1),
     )
 }
 
@@ -248,12 +391,31 @@ fn run_two_pass_fdtd_with_context(
 ) -> Result<Vec<f32>, ForgeError> {
     let len = state_in.len();
     let zeros = vec![0.0f32; len];
-    let schedule = Schedule { workgroup_size: 64, items_per_invocation: 1, vector_width: 1 };
+    let schedule = Schedule {
+        workgroup_size: 64,
+        items_per_invocation: 1,
+        vector_width: 1,
+    };
 
     ctx.clear_transient_allocations();
-    let v_in0 = ctx.allocate_and_write(bytemuck::cast_slice(state_in), 0, 0, BindingUsage::StorageRead)?;
-    let v_mid0 = ctx.allocate_and_write(bytemuck::cast_slice(&zeros), 1, 0, BindingUsage::StorageReadWrite)?;
-    let v_p0 = ctx.allocate_and_write(bytemuck::cast_slice(&params_pass0), 2, 0, BindingUsage::StorageRead)?;
+    let v_in0 = ctx.allocate_and_write(
+        bytemuck::cast_slice(state_in),
+        0,
+        0,
+        BindingUsage::StorageRead,
+    )?;
+    let v_mid0 = ctx.allocate_and_write(
+        bytemuck::cast_slice(&zeros),
+        1,
+        0,
+        BindingUsage::StorageReadWrite,
+    )?;
+    let v_p0 = ctx.allocate_and_write(
+        bytemuck::cast_slice(&params_pass0),
+        2,
+        0,
+        BindingUsage::StorageRead,
+    )?;
     {
         let pipe0 = WgpuPipeline::compile(ctx, wgsl_source, entry_point)?;
         pipe0.dispatch(&[v_in0, v_mid0, v_p0], &schedule, cell_count)?;
@@ -262,9 +424,20 @@ fn run_two_pass_fdtd_with_context(
     mid.truncate(len);
 
     ctx.clear_transient_allocations();
-    let v_in1 = ctx.allocate_and_write(bytemuck::cast_slice(&mid), 0, 0, BindingUsage::StorageRead)?;
-    let v_out1 = ctx.allocate_and_write(bytemuck::cast_slice(&zeros), 1, 0, BindingUsage::StorageReadWrite)?;
-    let v_p1 = ctx.allocate_and_write(bytemuck::cast_slice(&params_pass1), 2, 0, BindingUsage::StorageRead)?;
+    let v_in1 =
+        ctx.allocate_and_write(bytemuck::cast_slice(&mid), 0, 0, BindingUsage::StorageRead)?;
+    let v_out1 = ctx.allocate_and_write(
+        bytemuck::cast_slice(&zeros),
+        1,
+        0,
+        BindingUsage::StorageReadWrite,
+    )?;
+    let v_p1 = ctx.allocate_and_write(
+        bytemuck::cast_slice(&params_pass1),
+        2,
+        0,
+        BindingUsage::StorageRead,
+    )?;
     {
         let pipe1 = WgpuPipeline::compile(ctx, wgsl_source, entry_point)?;
         pipe1.dispatch(&[v_in1, v_out1, v_p1], &schedule, cell_count)?;
@@ -280,27 +453,43 @@ mod tests {
 
     #[test]
     fn wgsl_kernels_validate_cleanly() {
-        let rep_fluid = crate::validate_wgsl(ACOUSTIC_FLUID_FDTD_WGSL).expect("fluid FDTD WGSL valid");
-        assert_eq!(rep_fluid.entry_points, vec![ACOUSTIC_FLUID_FDTD_ENTRY.to_string()]);
+        let rep_fluid =
+            crate::validate_wgsl(ACOUSTIC_FLUID_FDTD_WGSL).expect("fluid FDTD WGSL valid");
+        assert_eq!(
+            rep_fluid.entry_points,
+            vec![ACOUSTIC_FLUID_FDTD_ENTRY.to_string()]
+        );
         assert_eq!(rep_fluid.binding_count, 3);
 
-        let rep_elastic = crate::validate_wgsl(ELASTIC_VIRIEUX_FDTD_WGSL).expect("elastic Virieux WGSL valid");
-        assert_eq!(rep_elastic.entry_points, vec![ELASTIC_VIRIEUX_FDTD_ENTRY.to_string()]);
+        let rep_elastic =
+            crate::validate_wgsl(ELASTIC_VIRIEUX_FDTD_WGSL).expect("elastic Virieux WGSL valid");
+        assert_eq!(
+            rep_elastic.entry_points,
+            vec![ELASTIC_VIRIEUX_FDTD_ENTRY.to_string()]
+        );
         assert_eq!(rep_elastic.binding_count, 3);
     }
 
     #[test]
     fn courant_and_capacity_gates_reject_invalid_inputs() {
         let bad_fluid = AcousticFluidFdtdGpuParams {
-            dims: [8, 8, 8], spacing_m: [0.05, 0.05, 0.05], dt_s: 1.0,
-            density_kg_m3: 1000.0, bulk_modulus_pa: 2.25e9, damping_per_s: 0.0,
+            dims: [8, 8, 8],
+            spacing_m: [0.05, 0.05, 0.05],
+            dt_s: 1.0,
+            density_kg_m3: 1000.0,
+            bulk_modulus_pa: 2.25e9,
+            damping_per_s: 0.0,
             boundary: AcousticFluidGpuBoundary::Periodic,
         };
         assert!(bad_fluid.validate().is_err());
 
         let bad_elastic = ElasticVirieuxFdtdGpuParams {
-            dims: [8, 8, 8], spacing_m: [0.05, 0.05, 0.05], dt_s: 1.0,
-            density_kg_m3: 2000.0, bulk_modulus_pa: 8.0e9, shear_modulus_pa: 3.0e9,
+            dims: [8, 8, 8],
+            spacing_m: [0.05, 0.05, 0.05],
+            dt_s: 1.0,
+            density_kg_m3: 2000.0,
+            bulk_modulus_pa: 8.0e9,
+            shear_modulus_pa: 3.0e9,
             boundary: ElasticVirieuxGpuBoundary::Periodic,
         };
         assert!(bad_elastic.validate().is_err());
@@ -309,8 +498,12 @@ mod tests {
     #[test]
     fn cpu_reference_fluid_and_elastic_steps_propagate_wave() {
         let fluid_params = AcousticFluidFdtdGpuParams {
-            dims: [6, 6, 6], spacing_m: [0.1, 0.1, 0.1], dt_s: 1e-5,
-            density_kg_m3: 1000.0, bulk_modulus_pa: 2.25e9, damping_per_s: 0.0,
+            dims: [6, 6, 6],
+            spacing_m: [0.1, 0.1, 0.1],
+            dt_s: 1e-5,
+            density_kg_m3: 1000.0,
+            bulk_modulus_pa: 2.25e9,
+            damping_per_s: 0.0,
             boundary: AcousticFluidGpuBoundary::Periodic,
         };
         let mut fluid_state = vec![0.0f32; fluid_params.cell_count() * ACOUSTIC_FLUID_CELL_STRIDE];
@@ -319,11 +512,16 @@ mod tests {
         assert!(fluid_state.iter().any(|&v| v != 0.0));
 
         let elastic_params = ElasticVirieuxFdtdGpuParams {
-            dims: [6, 6, 6], spacing_m: [0.1, 0.1, 0.1], dt_s: 5e-6,
-            density_kg_m3: 2000.0, bulk_modulus_pa: 8.0e9, shear_modulus_pa: 3.0e9,
+            dims: [6, 6, 6],
+            spacing_m: [0.1, 0.1, 0.1],
+            dt_s: 5e-6,
+            density_kg_m3: 2000.0,
+            bulk_modulus_pa: 8.0e9,
+            shear_modulus_pa: 3.0e9,
             boundary: ElasticVirieuxGpuBoundary::FreeSurface,
         };
-        let mut elastic_state = vec![0.0f32; elastic_params.cell_count() * ELASTIC_VIRIEUX_CELL_STRIDE];
+        let mut elastic_state =
+            vec![0.0f32; elastic_params.cell_count() * ELASTIC_VIRIEUX_CELL_STRIDE];
         elastic_state[((3 * 6 + 3) * 6 + 3) * 9] = 0.05;
         elastic_virieux_fdtd_step_cpu(&mut elastic_state, &elastic_params).unwrap();
         assert!(elastic_state.iter().any(|&v| v != 0.0));
@@ -332,10 +530,16 @@ mod tests {
     #[test]
     #[serial_test::serial(gpu)]
     fn gpu_matches_cpu_oracle_fluid_and_elastic() {
-        if !crate::numerical::test_gpu_available() { return; }
+        if !crate::numerical::test_gpu_available() {
+            return;
+        }
         let fluid_params = AcousticFluidFdtdGpuParams {
-            dims: [4, 4, 4], spacing_m: [0.1, 0.1, 0.1], dt_s: 1e-5,
-            density_kg_m3: 1000.0, bulk_modulus_pa: 2.25e9, damping_per_s: 0.5,
+            dims: [4, 4, 4],
+            spacing_m: [0.1, 0.1, 0.1],
+            dt_s: 1e-5,
+            density_kg_m3: 1000.0,
+            bulk_modulus_pa: 2.25e9,
+            damping_per_s: 0.5,
             boundary: AcousticFluidGpuBoundary::Periodic,
         };
         let mut fluid_cpu = vec![0.0f32; fluid_params.cell_count() * ACOUSTIC_FLUID_CELL_STRIDE];
@@ -347,16 +551,24 @@ mod tests {
         }
 
         let elastic_params = ElasticVirieuxFdtdGpuParams {
-            dims: [4, 4, 4], spacing_m: [0.1, 0.1, 0.1], dt_s: 5e-6,
-            density_kg_m3: 2000.0, bulk_modulus_pa: 8.0e9, shear_modulus_pa: 3.0e9,
+            dims: [4, 4, 4],
+            spacing_m: [0.1, 0.1, 0.1],
+            dt_s: 5e-6,
+            density_kg_m3: 2000.0,
+            bulk_modulus_pa: 8.0e9,
+            shear_modulus_pa: 3.0e9,
             boundary: ElasticVirieuxGpuBoundary::Periodic,
         };
-        let mut elastic_cpu = vec![0.0f32; elastic_params.cell_count() * ELASTIC_VIRIEUX_CELL_STRIDE];
+        let mut elastic_cpu =
+            vec![0.0f32; elastic_params.cell_count() * ELASTIC_VIRIEUX_CELL_STRIDE];
         elastic_cpu[((2 * 4 + 2) * 4 + 2) * 9] = 0.02;
         let elastic_gpu = elastic_virieux_fdtd_step_gpu(&elastic_cpu, &elastic_params).unwrap();
         elastic_virieux_fdtd_step_cpu(&mut elastic_cpu, &elastic_params).unwrap();
         for (a, b) in elastic_cpu.iter().zip(elastic_gpu.iter()) {
-            assert!((a - b).abs() <= 1e-3, "elastic GPU/CPU mismatch: {a} vs {b}");
+            assert!(
+                (a - b).abs() <= 1e-3,
+                "elastic GPU/CPU mismatch: {a} vs {b}"
+            );
         }
     }
 }

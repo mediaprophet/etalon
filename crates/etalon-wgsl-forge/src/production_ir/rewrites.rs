@@ -308,13 +308,15 @@ fn has_mul_add_pair(ops: &[Op]) -> bool {
 }
 
 fn sequential_mul_add(ops: &[Op]) -> bool {
-    ops.windows(2).any(|pair| matches!(
-        (&pair[0], &pair[1]),
-        (
-            Op::Mul { destination, .. },
-            Op::Add { left, right, .. },
-        ) if left == destination || right == destination
-    ))
+    ops.windows(2).any(|pair| {
+        matches!(
+            (&pair[0], &pair[1]),
+            (
+                Op::Mul { destination, .. },
+                Op::Add { left, right, .. },
+            ) if left == destination || right == destination
+        )
+    })
 }
 
 fn commute_add(ops: &mut [Op]) {

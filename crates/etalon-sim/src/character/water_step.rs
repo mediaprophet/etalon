@@ -3,8 +3,8 @@
 //! Evaluates water surface at feet, handles wading drag, swimming, diving 6-DOF locomotion,
 //! Archimedes buoyancy lifting, and dynamic surface wetness tracking.
 
-use etalon_render::water_surface::SubmersionState;
 use super::config::{lerp_accel, CharacterController};
+use etalon_render::water_surface::SubmersionState;
 
 impl CharacterController {
     /// Advances the character simulation with two-way fluid coupling:
@@ -67,7 +67,8 @@ impl CharacterController {
                 self.step(wish_dir, false, false, false, dt, ground_probe);
                 let target_y = water_y - 1.2;
                 let vert_diff = target_y - self.state.position[1];
-                self.state.velocity[1] = lerp_accel(self.state.velocity[1], vert_diff * 4.0, 15.0, dt);
+                self.state.velocity[1] =
+                    lerp_accel(self.state.velocity[1], vert_diff * 4.0, 15.0, dt);
                 self.state.position[1] += self.state.velocity[1] * dt;
                 self.state.is_grounded = false;
             }
@@ -102,9 +103,12 @@ impl CharacterController {
                 }
 
                 let swim_speed = 3.2;
-                self.state.velocity[0] = lerp_accel(self.state.velocity[0], dir[0] * swim_speed, 12.0, dt);
-                self.state.velocity[1] = lerp_accel(self.state.velocity[1], dir[1] * swim_speed + 0.3, 12.0, dt);
-                self.state.velocity[2] = lerp_accel(self.state.velocity[2], dir[2] * swim_speed, 12.0, dt);
+                self.state.velocity[0] =
+                    lerp_accel(self.state.velocity[0], dir[0] * swim_speed, 12.0, dt);
+                self.state.velocity[1] =
+                    lerp_accel(self.state.velocity[1], dir[1] * swim_speed + 0.3, 12.0, dt);
+                self.state.velocity[2] =
+                    lerp_accel(self.state.velocity[2], dir[2] * swim_speed, 12.0, dt);
 
                 self.state.position[0] += self.state.velocity[0] * dt;
                 self.state.position[1] += self.state.velocity[1] * dt;

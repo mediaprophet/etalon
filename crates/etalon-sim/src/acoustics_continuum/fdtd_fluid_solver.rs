@@ -1,7 +1,7 @@
 //! 3D Staggered Acoustic Pressure-Velocity FDTD State, Leapfrog Stepper & Collocation.
 
-use core::convert::TryInto;
 use super::*;
+use core::convert::TryInto;
 
 /// Complete restartable state for the 3D staggered fluid acoustic FDTD solver.
 #[derive(Debug, Clone, PartialEq)]
@@ -85,7 +85,9 @@ impl FluidFdtdState {
     ) -> Result<Self, NumericalError> {
         cfg.validate()?;
         if bytes.len() < 32 || &bytes[0..8] != FLUID_RESTART_MAGIC {
-            return Err(NumericalError::WireEncoding("invalid FluidFdtdState restart header"));
+            return Err(NumericalError::WireEncoding(
+                "invalid FluidFdtdState restart header",
+            ));
         }
         let step_index = u64::from_le_bytes(bytes[8..16].try_into().unwrap());
         let n = u64::from_le_bytes(bytes[16..24].try_into().unwrap()) as usize;
@@ -102,7 +104,9 @@ impl FluidFdtdState {
             ));
         }
         if bytes.len() != 32 + (7 * n + cpml_n) * 8 {
-            return Err(NumericalError::WireEncoding("FluidFdtdState restart byte length mismatch"));
+            return Err(NumericalError::WireEncoding(
+                "FluidFdtdState restart byte length mismatch",
+            ));
         }
         let mut cursor = 32usize;
         let mut read_vec = |count: usize| -> Result<Vec<f64>, NumericalError> {
@@ -176,7 +180,8 @@ pub fn step_fluid_fdtd_in_place(
     let p_scale = (k_mod * dt) / (1.0 + 0.5 * damp * dt);
     let idx = |ix: usize, iy: usize, iz: usize| -> usize { (ix * ny + iy) * nz + iz };
 
-    if matches!(cfg.boundary, FluidBoundaryCondition::Cpml { .. }) && state.cpml_psi.len() != 6 * n {
+    if matches!(cfg.boundary, FluidBoundaryCondition::Cpml { .. }) && state.cpml_psi.len() != 6 * n
+    {
         return Err(NumericalError::BufferLengthMismatch {
             buffer: "FluidFdtdState::cpml_psi",
             expected: 6 * n,
@@ -190,12 +195,63 @@ pub fn step_fluid_fdtd_in_place(
             for iz in 0..nz {
                 let c_idx = idx(ix, iy, iz);
                 let p_curr = state.p[c_idx];
-                let px = if ix + 1 < nx { Some(state.p[idx(ix + 1, iy, iz)]) } else { None };
-                let py = if iy + 1 < ny { Some(state.p[idx(ix, iy + 1, iz)]) } else { None };
-                let pz = if iz + 1 < nz { Some(state.p[idx(ix, iy, iz + 1)]) } else { None };
-                state.vx[c_idx] = update_face_velocity(state.vx[c_idx], p_curr, px, state.p[idx(0, iy, iz)], ix, nx, dx, dt, v_decay, v_scale, &cfg.boundary, state.cpml_psi.get_mut(c_idx));
-                state.vy[c_idx] = update_face_velocity(state.vy[c_idx], p_curr, py, state.p[idx(ix, 0, iz)], iy, ny, dy, dt, v_decay, v_scale, &cfg.boundary, state.cpml_psi.get_mut(n + c_idx));
-                state.vz[c_idx] = update_face_velocity(state.vz[c_idx], p_curr, pz, state.p[idx(ix, iy, 0)], iz, nz, dz, dt, v_decay, v_scale, &cfg.boundary, state.cpml_psi.get_mut(2 * n + c_idx));
+                let px = if ix + 1 < nx {
+                    Some(state.p[idx(ix + 1, iy, iz)])
+                } else {
+                    None
+                };
+                let py = if iy + 1 < ny {
+                    Some(state.p[idx(ix, iy + 1, iz)])
+                } else {
+                    None
+                };
+                let pz = if iz + 1 < nz {
+                    Some(state.p[idx(ix, iy, iz + 1)])
+                } else {
+                    None
+                };
+                state.vx[c_idx] = update_face_velocity(
+                    state.vx[c_idx],
+                    p_curr,
+                    px,
+                    state.p[idx(0, iy, iz)],
+                    ix,
+                    nx,
+                    dx,
+                    dt,
+                    v_decay,
+                    v_scale,
+                    &cfg.boundary,
+                    state.cpml_psi.get_mut(c_idx),
+                );
+                state.vy[c_idx] = update_face_velocity(
+                    state.vy[c_idx],
+                    p_curr,
+                    py,
+                    state.p[idx(ix, 0, iz)],
+                    iy,
+                    ny,
+                    dy,
+                    dt,
+                    v_decay,
+                    v_scale,
+                    &cfg.boundary,
+                    state.cpml_psi.get_mut(n + c_idx),
+                );
+                state.vz[c_idx] = update_face_velocity(
+                    state.vz[c_idx],
+                    p_curr,
+                    pz,
+                    state.p[idx(ix, iy, 0)],
+                    iz,
+                    nz,
+                    dz,
+                    dt,
+                    v_decay,
+                    v_scale,
+                    &cfg.boundary,
+                    state.cpml_psi.get_mut(2 * n + c_idx),
+                );
             }
         }
     }
@@ -206,33 +262,116 @@ pub fn step_fluid_fdtd_in_place(
         for iy in 0..ny {
             for iz in 0..nz {
                 let c_idx = idx(ix, iy, iz);
-                let on_outer = ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz;
+                let on_outer =
+                    ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz;
                 if matches!(cfg.boundary, FluidBoundaryCondition::PressureRelease) && on_outer {
                     state.p[c_idx] = 0.0;
                     continue;
                 }
 
-                let vx_m = minus_velocity(ix, nx, state.vx[c_idx], || state.vx[idx(ix - 1, iy, iz)], || state.vx[idx(nx - 1, iy, iz)], &cfg.boundary);
-                let vy_m = minus_velocity(iy, ny, state.vy[c_idx], || state.vy[idx(ix, iy - 1, iz)], || state.vy[idx(ix, ny - 1, iz)], &cfg.boundary);
-                let vz_m = minus_velocity(iz, nz, state.vz[c_idx], || state.vz[idx(ix, iy, iz - 1)], || state.vz[idx(ix, iy, nz - 1)], &cfg.boundary);
+                let vx_m = minus_velocity(
+                    ix,
+                    nx,
+                    state.vx[c_idx],
+                    || state.vx[idx(ix - 1, iy, iz)],
+                    || state.vx[idx(nx - 1, iy, iz)],
+                    &cfg.boundary,
+                );
+                let vy_m = minus_velocity(
+                    iy,
+                    ny,
+                    state.vy[c_idx],
+                    || state.vy[idx(ix, iy - 1, iz)],
+                    || state.vy[idx(ix, ny - 1, iz)],
+                    &cfg.boundary,
+                );
+                let vz_m = minus_velocity(
+                    iz,
+                    nz,
+                    state.vz[c_idx],
+                    || state.vz[idx(ix, iy, iz - 1)],
+                    || state.vz[idx(ix, iy, nz - 1)],
+                    &cfg.boundary,
+                );
 
                 let dvx_dx = (state.vx[c_idx] - vx_m) / dx;
                 let dvy_dy = (state.vy[c_idx] - vy_m) / dy;
                 let dvz_dz = (state.vz[c_idx] - vz_m) / dz;
 
-                let div_v = if let FluidBoundaryCondition::Cpml { layers, sigma_max, kappa_max, alpha_max } = cfg.boundary {
-                    let gx = apply_cpml_grad(dvx_dx, ix as f64, nx, layers, dx, dt, sigma_max, kappa_max, alpha_max, &mut state.cpml_psi[3 * n + c_idx]);
-                    let gy = apply_cpml_grad(dvy_dy, iy as f64, ny, layers, dy, dt, sigma_max, kappa_max, alpha_max, &mut state.cpml_psi[4 * n + c_idx]);
-                    let gz = apply_cpml_grad(dvz_dz, iz as f64, nz, layers, dz, dt, sigma_max, kappa_max, alpha_max, &mut state.cpml_psi[5 * n + c_idx]);
+                let div_v = if let FluidBoundaryCondition::Cpml {
+                    layers,
+                    sigma_max,
+                    kappa_max,
+                    alpha_max,
+                } = cfg.boundary
+                {
+                    let gx = apply_cpml_grad(
+                        dvx_dx,
+                        ix as f64,
+                        nx,
+                        layers,
+                        dx,
+                        dt,
+                        sigma_max,
+                        kappa_max,
+                        alpha_max,
+                        &mut state.cpml_psi[3 * n + c_idx],
+                    );
+                    let gy = apply_cpml_grad(
+                        dvy_dy,
+                        iy as f64,
+                        ny,
+                        layers,
+                        dy,
+                        dt,
+                        sigma_max,
+                        kappa_max,
+                        alpha_max,
+                        &mut state.cpml_psi[4 * n + c_idx],
+                    );
+                    let gz = apply_cpml_grad(
+                        dvz_dz,
+                        iz as f64,
+                        nz,
+                        layers,
+                        dz,
+                        dt,
+                        sigma_max,
+                        kappa_max,
+                        alpha_max,
+                        &mut state.cpml_psi[5 * n + c_idx],
+                    );
                     gx + gy + gz
                 } else {
                     dvx_dx + dvy_dy + dvz_dz
                 };
 
-                if matches!(cfg.boundary, FluidBoundaryCondition::EngquistMajdaFirstOrder) && on_outer {
-                    let i_in = if ix == 0 { 1 } else if ix + 1 == nx { nx - 2 } else { ix };
-                    let j_in = if iy == 0 { 1 } else if iy + 1 == ny { ny - 2 } else { iy };
-                    let k_in = if iz == 0 { 1 } else if iz + 1 == nz { nz - 2 } else { iz };
+                if matches!(
+                    cfg.boundary,
+                    FluidBoundaryCondition::EngquistMajdaFirstOrder
+                ) && on_outer
+                {
+                    let i_in = if ix == 0 {
+                        1
+                    } else if ix + 1 == nx {
+                        nx - 2
+                    } else {
+                        ix
+                    };
+                    let j_in = if iy == 0 {
+                        1
+                    } else if iy + 1 == ny {
+                        ny - 2
+                    } else {
+                        iy
+                    };
+                    let k_in = if iz == 0 {
+                        1
+                    } else if iz + 1 == nz {
+                        nz - 2
+                    } else {
+                        iz
+                    };
                     let p_inner = state.p[idx(i_in, j_in, k_in)];
                     let s = c_sound * dt / dx.min(dy).min(dz);
                     state.p[c_idx] += s * (p_inner - state.p[c_idx]);
@@ -263,9 +402,27 @@ pub fn collocate_fluid_cell(
     let idx = |x: usize, y: usize, z: usize| -> usize { (x * ny + y) * nz + z };
     let c_idx = idx(ix, iy, iz);
     let periodic = matches!(cfg.boundary, FluidBoundaryCondition::Periodic);
-    let xm = if ix > 0 { ix - 1 } else if periodic { nx - 1 } else { 0 };
-    let ym = if iy > 0 { iy - 1 } else if periodic { ny - 1 } else { 0 };
-    let zm = if iz > 0 { iz - 1 } else if periodic { nz - 1 } else { 0 };
+    let xm = if ix > 0 {
+        ix - 1
+    } else if periodic {
+        nx - 1
+    } else {
+        0
+    };
+    let ym = if iy > 0 {
+        iy - 1
+    } else if periodic {
+        ny - 1
+    } else {
+        0
+    };
+    let zm = if iz > 0 {
+        iz - 1
+    } else if periodic {
+        nz - 1
+    } else {
+        0
+    };
 
     let (vx_m, vy_m, vz_m) = v_minus_half;
     let (vx_p, vy_p, vz_p) = v_plus_half;
@@ -298,19 +455,43 @@ fn update_face_velocity(
 ) -> f64 {
     if let Some(p_hi) = p_next {
         let dp = (p_hi - p_curr) / dh;
-        let grad = if let (FluidBoundaryCondition::Cpml { layers, sigma_max, kappa_max, alpha_max }, Some(psi)) = (*boundary, psi_slot) {
-            apply_cpml_grad(dp, coord as f64 + 0.5, n_dim, layers, dh, dt, sigma_max, kappa_max, alpha_max, psi)
+        let grad = if let (
+            FluidBoundaryCondition::Cpml {
+                layers,
+                sigma_max,
+                kappa_max,
+                alpha_max,
+            },
+            Some(psi),
+        ) = (*boundary, psi_slot)
+        {
+            apply_cpml_grad(
+                dp,
+                coord as f64 + 0.5,
+                n_dim,
+                layers,
+                dh,
+                dt,
+                sigma_max,
+                kappa_max,
+                alpha_max,
+                psi,
+            )
         } else {
             dp
         };
         v_decay * v_curr - v_scale * grad
     } else {
         match boundary {
-            FluidBoundaryCondition::Periodic => v_decay * v_curr - v_scale * ((p_wrap0 - p_curr) / dh),
+            FluidBoundaryCondition::Periodic => {
+                v_decay * v_curr - v_scale * ((p_wrap0 - p_curr) / dh)
+            }
             FluidBoundaryCondition::Rigid
             | FluidBoundaryCondition::EngquistMajdaFirstOrder
             | FluidBoundaryCondition::Cpml { .. } => 0.0,
-            FluidBoundaryCondition::PressureRelease => v_decay * v_curr - v_scale * ((-p_curr) / dh),
+            FluidBoundaryCondition::PressureRelease => {
+                v_decay * v_curr - v_scale * ((-p_curr) / dh)
+            }
         }
     }
 }
@@ -369,7 +550,11 @@ fn apply_cpml_grad(
     let alpha = alpha_max * (1.0 - d);
     let b = (-(sigma / kappa + alpha) * dt).exp();
     let denom = kappa * (sigma + kappa * alpha) * dh;
-    let a = if denom.abs() > 1e-30 { sigma * (b - 1.0) / denom } else { 0.0 };
+    let a = if denom.abs() > 1e-30 {
+        sigma * (b - 1.0) / denom
+    } else {
+        0.0
+    };
     *psi = b * (*psi) + a * grad;
     grad / kappa + *psi
 }

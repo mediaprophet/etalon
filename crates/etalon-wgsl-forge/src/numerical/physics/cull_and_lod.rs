@@ -200,16 +200,12 @@ pub fn cluster_dag_cull_and_lod_cpu(
             min_depth: clusters[b + 10],
             hzb_occluder_depth: clusters[b + 11],
         };
-        out_selected[i] = if evaluate_cluster_visibility_and_cut(
-            &node,
-            frustum_planes,
-            camera_eye,
-            tau_px,
-        ) {
-            1.0
-        } else {
-            0.0
-        };
+        out_selected[i] =
+            if evaluate_cluster_visibility_and_cut(&node, frustum_planes, camera_eye, tau_px) {
+                1.0
+            } else {
+                0.0
+            };
     }
 }
 
@@ -402,7 +398,12 @@ mod tests {
             min_depth: 0.2,
             hzb_occluder_depth: 0.9,
         };
-        assert!(!evaluate_cluster_visibility_and_cut(&backfacing, &frustum, eye, 1.0));
+        assert!(!evaluate_cluster_visibility_and_cut(
+            &backfacing,
+            &frustum,
+            eye,
+            1.0
+        ));
 
         // Outside frustum: x = -2000 outside plane x >= -1000
         let outside_frustum = ClusterDagNode {
@@ -415,7 +416,12 @@ mod tests {
             min_depth: 0.2,
             hzb_occluder_depth: 0.9,
         };
-        assert!(!evaluate_cluster_visibility_and_cut(&outside_frustum, &frustum, eye, 1.0));
+        assert!(!evaluate_cluster_visibility_and_cut(
+            &outside_frustum,
+            &frustum,
+            eye,
+            1.0
+        ));
 
         // HZB occluded: min_depth (0.85) > hzb_occluder_depth (0.40)
         let occluded = ClusterDagNode {
@@ -428,6 +434,8 @@ mod tests {
             min_depth: 0.85,
             hzb_occluder_depth: 0.40,
         };
-        assert!(!evaluate_cluster_visibility_and_cut(&occluded, &frustum, eye, 1.0));
+        assert!(!evaluate_cluster_visibility_and_cut(
+            &occluded, &frustum, eye, 1.0
+        ));
     }
 }

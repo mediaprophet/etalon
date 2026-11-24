@@ -670,29 +670,27 @@ mod tests {
         // Wrong static shape on the edge → reject.
         let mut wrong = mm;
         wrong.shape = Shape::new(&[8, 8]);
-        assert!(
-            g.push(
+        assert!(g
+            .push(
                 OpNode::Elementwise { f: EwKind::Relu },
                 &[wrong],
                 Shape::new(&[8, 8]),
                 DType::F32,
                 Schedule::default(),
             )
-            .is_err()
-        );
+            .is_err());
         // Dynamic edge shape (wildcard) → accepted.
         let mut dynamic = mm;
         dynamic.shape = Shape::new(&[0, 0]);
-        assert!(
-            g.push(
+        assert!(g
+            .push(
                 OpNode::Elementwise { f: EwKind::Relu },
                 &[dynamic],
                 Shape::new(&[4, 4]),
                 DType::F32,
                 Schedule::default(),
             )
-            .is_ok()
-        );
+            .is_ok());
     }
 
     /// `MAX_IN + 1` inputs are rejected.
@@ -700,16 +698,15 @@ mod tests {
     fn too_many_inputs_rejected() {
         let mut g = ComputeGraph::new();
         let ins: Vec<TensorRef> = (0..(MAX_IN + 1)).map(|_| ext(&[2])).collect();
-        assert!(
-            g.push(
+        assert!(g
+            .push(
                 OpNode::Elementwise { f: EwKind::Add },
                 &ins,
                 Shape::new(&[2]),
                 DType::F32,
                 Schedule::default(),
             )
-            .is_err()
-        );
+            .is_err());
     }
 
     /// The `gemm`/`gemv`/`fft` bridges each produce a single-node graph with the expected

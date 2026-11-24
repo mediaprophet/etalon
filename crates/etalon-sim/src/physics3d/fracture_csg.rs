@@ -80,8 +80,11 @@ pub fn evaluate_and_fracture_body(
     };
     let half_mass = (total_mass * 0.5).max(0.05);
 
-    let (shape_pos, offset_pos_local, shape_neg, offset_neg_local) =
-        partition_shape_by_plane(&body.collider_shape, cleavage_normal_local, cleavage_dist_local);
+    let (shape_pos, offset_pos_local, shape_neg, offset_neg_local) = partition_shape_by_plane(
+        &body.collider_shape,
+        cleavage_normal_local,
+        cleavage_dist_local,
+    );
 
     let world_offset_pos = body.pose.transform_vector(offset_pos_local);
     let world_offset_neg = body.pose.transform_vector(offset_neg_local);
@@ -171,15 +174,31 @@ fn partition_shape_by_plane(
                 i += 1;
             }
             if pos_len == 0 {
-                pos_pts[0] = [cleavage_n[0] * 0.1, cleavage_n[1] * 0.1, cleavage_n[2] * 0.1];
+                pos_pts[0] = [
+                    cleavage_n[0] * 0.1,
+                    cleavage_n[1] * 0.1,
+                    cleavage_n[2] * 0.1,
+                ];
                 pos_len = 1;
             }
             if neg_len == 0 {
-                neg_pts[0] = [-cleavage_n[0] * 0.1, -cleavage_n[1] * 0.1, -cleavage_n[2] * 0.1];
+                neg_pts[0] = [
+                    -cleavage_n[0] * 0.1,
+                    -cleavage_n[1] * 0.1,
+                    -cleavage_n[2] * 0.1,
+                ];
                 neg_len = 1;
             }
-            let off_p = [cleavage_n[0] * 0.1, cleavage_n[1] * 0.1, cleavage_n[2] * 0.1];
-            let off_n = [-cleavage_n[0] * 0.1, -cleavage_n[1] * 0.1, -cleavage_n[2] * 0.1];
+            let off_p = [
+                cleavage_n[0] * 0.1,
+                cleavage_n[1] * 0.1,
+                cleavage_n[2] * 0.1,
+            ];
+            let off_n = [
+                -cleavage_n[0] * 0.1,
+                -cleavage_n[1] * 0.1,
+                -cleavage_n[2] * 0.1,
+            ];
             (
                 ColliderShape3D::ConvexHull {
                     points: pos_pts,
@@ -236,9 +255,7 @@ mod tests {
         );
         parent.linear_velocity = [2.0, 0.0, -1.0];
 
-        assert!(
-            evaluate_and_fracture_body(&parent, 5.0, 0.1, [0.0, 1.0, 0.0], 100.0).is_none()
-        );
+        assert!(evaluate_and_fracture_body(&parent, 5.0, 0.1, [0.0, 1.0, 0.0], 100.0).is_none());
 
         let outcome =
             evaluate_and_fracture_body(&parent, 50.0, 0.1, [0.0, 1.0, 0.0], 100.0).unwrap();

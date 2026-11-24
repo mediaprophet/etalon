@@ -80,12 +80,7 @@ pub fn yin_absolute_threshold(
 /// Parabolic interpolation of the CMNDF minimum around integer lag `tau`,
 /// returning `(refined_tau, interpolated_min_val)`.
 #[inline]
-pub fn yin_parabolic_min(
-    cmndf: &[f32],
-    tau: usize,
-    min_lag: usize,
-    max_lag: usize,
-) -> (f32, f32) {
+pub fn yin_parabolic_min(cmndf: &[f32], tau: usize, min_lag: usize, max_lag: usize) -> (f32, f32) {
     if cmndf.is_empty() {
         return (0.0, 1.0);
     }
@@ -198,9 +193,9 @@ pub fn hz_to_midi_quantized(freq_hz: f32, ref_a4_hz: f32) -> (u8, f32) {
     if !freq_hz.is_finite() || freq_hz <= 0.0 || !ref_a4_hz.is_finite() || ref_a4_hz <= 0.0 {
         return (0, 0.0);
     }
-    let exact =
-        (69.0 + 12.0 * (ln_f64(f64::from(freq_hz) / f64::from(ref_a4_hz)) * core::f64::consts::LOG2_E))
-            as f32;
+    let exact = (69.0
+        + 12.0 * (ln_f64(f64::from(freq_hz) / f64::from(ref_a4_hz)) * core::f64::consts::LOG2_E))
+        as f32;
     let rounded = round_symmetric_f64(f64::from(exact)) as f32;
     let note = rounded.clamp(0.0, 127.0) as u8;
     let cents = (exact - (note as f32)) * 100.0;
@@ -213,8 +208,8 @@ pub fn midi_note_to_hz(note: u8, ref_a4_hz: f32) -> f32 {
     if !ref_a4_hz.is_finite() || ref_a4_hz <= 0.0 {
         return 0.0;
     }
-    (f64::from(ref_a4_hz)
-        * exp_f64(((f64::from(note) - 69.0) / 12.0) * core::f64::consts::LN_2)) as f32
+    (f64::from(ref_a4_hz) * exp_f64(((f64::from(note) - 69.0) / 12.0) * core::f64::consts::LN_2))
+        as f32
 }
 
 #[cfg(test)]

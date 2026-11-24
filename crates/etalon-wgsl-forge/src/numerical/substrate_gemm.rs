@@ -11,8 +11,8 @@
 //! Correctness is gated against the CPU reference before this path may be a default
 //! (§13); see the test and [`super::execute`].
 
-use std::sync::OnceLock;
 use std::sync::mpsc;
+use std::sync::OnceLock;
 
 /// A ready-to-dispatch GEMM context: one device/queue/pipeline, built once.
 pub struct WgpuGemm {

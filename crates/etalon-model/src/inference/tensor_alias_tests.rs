@@ -1,4 +1,4 @@
-use super::{ModelHyperparams, TensorIndex, canonical_component_name};
+use super::{canonical_component_name, ModelHyperparams, TensorIndex};
 use crate::gguf::fnv1a64;
 use crate::tensor_roles::name_to_role;
 

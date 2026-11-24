@@ -29,14 +29,21 @@ impl ElasticMedium {
             ));
         }
         if !bulk_modulus_pa.is_finite() || bulk_modulus_pa <= 0.0 {
-            return Err(NumericalError::InvalidMedium("elastic bulk_modulus_pa must be finite and > 0"));
+            return Err(NumericalError::InvalidMedium(
+                "elastic bulk_modulus_pa must be finite and > 0",
+            ));
         }
         if !shear_modulus_pa.is_finite() || shear_modulus_pa <= 0.0 {
             return Err(NumericalError::InvalidMedium(
                 "elastic solid requires finite shear_modulus_pa > 0 (use new_fluid_limit for mu=0)",
             ));
         }
-        Ok(Self { density_kg_m3, bulk_modulus_pa, shear_modulus_pa, material_ref })
+        Ok(Self {
+            density_kg_m3,
+            bulk_modulus_pa,
+            shear_modulus_pa,
+            material_ref,
+        })
     }
 
     /// Construct the explicitly admitted $\mu = 0$ fluid limit of the elastic equations (C02-C06).
@@ -46,12 +53,21 @@ impl ElasticMedium {
         material_ref: u32,
     ) -> Result<Self, NumericalError> {
         if !density_kg_m3.is_finite() || density_kg_m3 <= 0.0 {
-            return Err(NumericalError::InvalidMedium("fluid-limit density_kg_m3 must be finite and > 0"));
+            return Err(NumericalError::InvalidMedium(
+                "fluid-limit density_kg_m3 must be finite and > 0",
+            ));
         }
         if !bulk_modulus_pa.is_finite() || bulk_modulus_pa <= 0.0 {
-            return Err(NumericalError::InvalidMedium("fluid-limit bulk_modulus_pa must be finite and > 0"));
+            return Err(NumericalError::InvalidMedium(
+                "fluid-limit bulk_modulus_pa must be finite and > 0",
+            ));
         }
-        Ok(Self { density_kg_m3, bulk_modulus_pa, shear_modulus_pa: 0.0, material_ref })
+        Ok(Self {
+            density_kg_m3,
+            bulk_modulus_pa,
+            shear_modulus_pa: 0.0,
+            material_ref,
+        })
     }
 
     /// First Lamé parameter $\lambda = K - \frac{2}{3}\mu$ in $\text{Pa}$.
@@ -123,7 +139,8 @@ impl ElasticMedium {
         let v_sq = v[0] * v[0] + v[1] * v[1] + v[2] * v[2];
         let [sxx, syy, szz, sxy, syz, sxz] = stress.components;
         let [exx, eyy, ezz, exy, eyz, exz] = strain.components;
-        let u_strain = 0.5 * (sxx * exx + syy * eyy + szz * ezz + 2.0 * (sxy * exy + syz * eyz + sxz * exz));
+        let u_strain =
+            0.5 * (sxx * exx + syy * eyy + szz * ezz + 2.0 * (sxy * exy + syz * eyz + sxz * exz));
         0.5 * self.density_kg_m3 * v_sq + u_strain
     }
 }
@@ -150,7 +167,9 @@ impl TensorStrain6 {
     /// by halving the three engineering shear components ($\varepsilon_{ij} = \frac{1}{2}\gamma_{ij}$).
     #[inline]
     pub fn from_engineering_voigt(v: [f64; 6]) -> Self {
-        Self { components: [v[0], v[1], v[2], 0.5 * v[3], 0.5 * v[4], 0.5 * v[5]] }
+        Self {
+            components: [v[0], v[1], v[2], 0.5 * v[3], 0.5 * v[4], 0.5 * v[5]],
+        }
     }
 
     /// Convert to engineering Voigt strain `[exx, eyy, ezz, 2*exy, 2*eyz, 2*exz]`.
@@ -257,7 +276,9 @@ impl CauchyStress6 {
                 sxz = 0.0;
             }
         }
-        Self { components: [sxx, syy, szz, sxy, syz, sxz] }
+        Self {
+            components: [sxx, syy, szz, sxy, syz, sxz],
+        }
     }
 
     /// Principal invariants $(I_1, I_2, I_3)$ of the Cauchy stress tensor, which remain invariant
@@ -267,8 +288,7 @@ impl CauchyStress6 {
         let [sxx, syy, szz, sxy, syz, sxz] = self.components;
         let i1 = sxx + syy + szz;
         let i2 = (sxx * syy + syy * szz + szz * sxx) - (sxy * sxy + syz * syz + sxz * sxz);
-        let i3 = sxx * (syy * szz - syz * syz)
-            - sxy * (sxy * szz - syz * sxz)
+        let i3 = sxx * (syy * szz - syz * syz) - sxy * (sxy * szz - syz * sxz)
             + sxz * (sxy * syz - syy * sxz);
         (i1, i2, i3)
     }
@@ -298,7 +318,9 @@ impl HamiltonQuaternionXyzw {
     /// Admit a raw `[x, y, z, w]` quaternion and derive its orthogonal rotation matrix.
     pub fn admit(raw_xyzw: [f64; 4]) -> Result<Self, NumericalError> {
         if raw_xyzw.iter().any(|v| !v.is_finite()) {
-            return Err(NumericalError::InvalidRotation("quaternion contains non-finite component"));
+            return Err(NumericalError::InvalidRotation(
+                "quaternion contains non-finite component",
+            ));
         }
         let n2 = Self::ordered_norm_squared(raw_xyzw);
         if (n2 - 1.0).abs() > 1e-12 {
@@ -307,7 +329,12 @@ impl HamiltonQuaternionXyzw {
             ));
         }
         let n = n2.sqrt();
-        let [x, y, z, w] = [raw_xyzw[0] / n, raw_xyzw[1] / n, raw_xyzw[2] / n, raw_xyzw[3] / n];
+        let [x, y, z, w] = [
+            raw_xyzw[0] / n,
+            raw_xyzw[1] / n,
+            raw_xyzw[2] / n,
+            raw_xyzw[3] / n,
+        ];
         let (xx, yy, zz) = (x * x, y * y, z * z);
         let (xy, xz, yz) = (x * y, x * z, y * z);
         let (wx, wy, wz) = (w * x, w * y, w * z);
@@ -316,7 +343,11 @@ impl HamiltonQuaternionXyzw {
             [2.0 * (xy + wz), 1.0 - 2.0 * (xx + zz), 2.0 * (yz - wx)],
             [2.0 * (xz - wy), 2.0 * (yz + wx), 1.0 - 2.0 * (xx + yy)],
         ];
-        Ok(Self { raw_xyzw, derived_unit_xyzw: [x, y, z, w], rotation_matrix: r })
+        Ok(Self {
+            raw_xyzw,
+            derived_unit_xyzw: [x, y, z, w],
+            rotation_matrix: r,
+        })
     }
 
     /// Derived unit quaternion `[x, y, z, w]`.

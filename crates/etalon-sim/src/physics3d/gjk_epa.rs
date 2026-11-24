@@ -89,11 +89,7 @@ pub fn gjk_intersect(
     None
 }
 
-fn update_gjk_simplex(
-    s: &mut [SupportVertex; 4],
-    len: &mut usize,
-    dir: &mut [f32; 3],
-) -> bool {
+fn update_gjk_simplex(s: &mut [SupportVertex; 4], len: &mut usize, dir: &mut [f32; 3]) -> bool {
     match *len {
         2 => {
             let (a, b) = (s[1].point, s[0].point);
@@ -217,9 +213,7 @@ pub fn compute_narrowphase_contact(
         return collide_sdf_vs_convex(primitive, motor_b, shape_a, motor_a, true);
     }
 
-    if gjk_intersect(shape_a, motor_a, shape_b, motor_b).is_none() {
-        return None;
-    }
+    gjk_intersect(shape_a, motor_a, shape_b, motor_b)?;
     Some(epa_extract_contact(shape_a, motor_a, shape_b, motor_b))
 }
 
@@ -398,10 +392,14 @@ mod tests {
         let m_sphere_hit = motor_translate([1.4, 0.0, 0.0]);
         let m_sphere_miss = motor_translate([2.0, 0.0, 0.0]);
 
-        let c = compute_narrowphase_contact(&box_shape, &m_box, &sphere_shape, &m_sphere_hit).unwrap();
+        let c =
+            compute_narrowphase_contact(&box_shape, &m_box, &sphere_shape, &m_sphere_hit).unwrap();
         assert!((c.penetration - 0.2).abs() < 0.05);
         assert!(c.normal[0] > 0.9);
-        assert!(compute_narrowphase_contact(&box_shape, &m_box, &sphere_shape, &m_sphere_miss).is_none());
+        assert!(
+            compute_narrowphase_contact(&box_shape, &m_box, &sphere_shape, &m_sphere_miss)
+                .is_none()
+        );
 
         let sdf_shape = ColliderShape3D::SdfAnalytical {
             primitive: SdfPrimitive::RoundedBox {

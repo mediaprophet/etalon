@@ -11,8 +11,8 @@
 //! the certified `affine-f32` BuiltinKernel already covers them — so the lowerer returns an
 //! explicit `Err` for those, never a silent no-op.
 
-use crate::numerical::ForgeError;
 use crate::numerical::ir::graph::EwKind;
+use crate::numerical::ForgeError;
 
 /// Entry-point name of every emitted elementwise kernel.
 pub const EWISE_ENTRY: &str = "ewise_main";
@@ -153,10 +153,10 @@ pub fn fma_cpu(a: &[f32], b: &[f32], c: &[f32]) -> Vec<f32> {
 
 /// Run a unary elementwise on the GPU and read back the result.
 pub fn unary_gpu(input: &[f32], kind: EwKind) -> Result<Vec<f32>, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     let n = input.len();
     if n == 0 {
@@ -196,10 +196,10 @@ pub fn unary_gpu(input: &[f32], kind: EwKind) -> Result<Vec<f32>, ForgeError> {
 
 /// Run a binary elementwise (`Add`/`Mul`) on the GPU and read back the result.
 pub fn binary_gpu(a: &[f32], b: &[f32], kind: EwKind) -> Result<Vec<f32>, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     let n = a.len();
     if n == 0 || b.len() != n {

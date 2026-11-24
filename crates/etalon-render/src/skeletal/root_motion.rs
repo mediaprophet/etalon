@@ -1,7 +1,7 @@
 //! Loop-Safe Root Motion Extraction & Ontogenetic Posture Modulation (`root_motion.rs`).
 
 use super::absm_types::{BoneLayerMask, OntogeneticStateHeader};
-use super::{MAX_JOINTS, Motor};
+use super::{Motor, MAX_JOINTS};
 
 /// Frame-to-frame root motion displacement extracted from the skeleton's root joint.
 #[repr(C)]

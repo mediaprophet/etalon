@@ -26,14 +26,20 @@ impl DebyePole {
         Ok(())
     }
 
-    pub fn continuous_susceptibility(&self, omega_rad_s: f64) -> Result<(f64, f64), EmfOperatorError> {
+    pub fn continuous_susceptibility(
+        &self,
+        omega_rad_s: f64,
+    ) -> Result<(f64, f64), EmfOperatorError> {
         self.validate()?;
         if !omega_rad_s.is_finite() || omega_rad_s < 0.0 {
             return Err(EmfOperatorError::NonFiniteInput);
         }
         let wt = omega_rad_s * self.tau_s;
         let denom = 1.0 + wt * wt;
-        Ok((self.delta_epsilon / denom, (self.delta_epsilon * wt) / denom))
+        Ok((
+            self.delta_epsilon / denom,
+            (self.delta_epsilon * wt) / denom,
+        ))
     }
 
     pub fn discrete_susceptibility(
@@ -48,7 +54,10 @@ impl DebyePole {
         let omega_eff = (2.0 / dt) * (0.5 * omega_rad_s * dt).tan();
         let wt = omega_eff * self.tau_s;
         let denom = 1.0 + wt * wt;
-        Ok((self.delta_epsilon / denom, (self.delta_epsilon * wt) / denom))
+        Ok((
+            self.delta_epsilon / denom,
+            (self.delta_epsilon * wt) / denom,
+        ))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -144,7 +153,10 @@ impl DrudePole {
         Ok(())
     }
 
-    pub fn continuous_susceptibility(&self, omega_rad_s: f64) -> Result<(f64, f64), EmfOperatorError> {
+    pub fn continuous_susceptibility(
+        &self,
+        omega_rad_s: f64,
+    ) -> Result<(f64, f64), EmfOperatorError> {
         self.validate()?;
         if !omega_rad_s.is_finite() || omega_rad_s <= 0.0 {
             return Err(EmfOperatorError::InvalidFrequencyOrWavelength { value: omega_rad_s });
@@ -234,7 +246,10 @@ impl LorentzPole {
         Ok(())
     }
 
-    pub fn continuous_susceptibility(&self, omega_rad_s: f64) -> Result<(f64, f64), EmfOperatorError> {
+    pub fn continuous_susceptibility(
+        &self,
+        omega_rad_s: f64,
+    ) -> Result<(f64, f64), EmfOperatorError> {
         self.validate()?;
         if !omega_rad_s.is_finite() || omega_rad_s < 0.0 {
             return Err(EmfOperatorError::NonFiniteInput);

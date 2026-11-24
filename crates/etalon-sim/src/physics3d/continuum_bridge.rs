@@ -53,8 +53,7 @@ pub fn couple_rigid_body_with_soil(
     // Bekker / Mohr-Coulomb bearing capacity & plastic sinkage
     let bearing_modulus_kpa =
         (soil.cohesion_kpa * 12.0 + soil.unconfined_compressive_strength_kpa * 1.5).max(25.0);
-    let sinkage_depth_m =
-        ((pressure_kpa / bearing_modulus_kpa).powf(1.2) * 0.15).clamp(0.0, 0.45);
+    let sinkage_depth_m = ((pressure_kpa / bearing_modulus_kpa).powf(1.2) * 0.15).clamp(0.0, 0.45);
 
     // Compaction bulldozing resistance force: F_res ~ gamma * z^2 * N_phi + c * z
     let horiz_speed = (body.linear_velocity[0] * body.linear_velocity[0]
@@ -215,8 +214,7 @@ pub fn couple_rigid_body_with_botanical_stem(
     // Outer-fiber bending stress in MPa: sigma = (M * r / I) * 1e-6
     let fiber_stress_mpa = ((induced_moment_nm * r) / i_moment) * 1e-6;
     let e_pa = (plant.wood_elastic_modulus_mpa.max(100.0)) * 1e6;
-    let elastic_deflection_rad =
-        ((induced_moment_nm * length) / (e_pa * i_moment)).clamp(0.0, 1.2);
+    let elastic_deflection_rad = ((induced_moment_nm * length) / (e_pa * i_moment)).clamp(0.0, 1.2);
 
     plant.metamers[metamer_idx].bending_moment_nm += induced_moment_nm;
 
@@ -276,8 +274,7 @@ mod tests {
             },
         );
         let spectrum = SimdGerstnerSpectrum::default();
-        let hydro_out =
-            couple_rigid_body_with_hydro(&mut crate_body, &spectrum, 0.0, 1.0 / 64.0);
+        let hydro_out = couple_rigid_body_with_hydro(&mut crate_body, &spectrum, 0.0, 1.0 / 64.0);
         assert!((hydro_out.submerged_volume_m3 - 1.0).abs() < 1e-4);
         assert!(hydro_out.buoyant_force_n > 9_000.0);
         assert!(crate_body.linear_velocity[1] > 0.0);
@@ -291,25 +288,13 @@ mod tests {
         );
         boulder.linear_velocity = [3.0, 0.0, 0.0];
 
-        let bend = couple_rigid_body_with_botanical_stem(
-            &mut boulder,
-            &mut tree,
-            1,
-            0.02,
-            0.05,
-            65.0,
-        );
+        let bend =
+            couple_rigid_body_with_botanical_stem(&mut boulder, &mut tree, 1, 0.02, 0.05, 65.0);
         assert!(!bend.branch_fractured);
         assert!(bend.elastic_deflection_rad > 0.0);
 
-        let snap = couple_rigid_body_with_botanical_stem(
-            &mut boulder,
-            &mut tree,
-            1,
-            25.0,
-            0.01,
-            65.0,
-        );
+        let snap =
+            couple_rigid_body_with_botanical_stem(&mut boulder, &mut tree, 1, 25.0, 0.01, 65.0);
         assert!(snap.branch_fractured);
         assert_eq!(tree.metamers[1].parent_idx, NO_PARENT_METAMER);
     }

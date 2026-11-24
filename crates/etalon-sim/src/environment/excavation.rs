@@ -66,11 +66,11 @@ impl ToolEffector {
     pub fn hand_spade() -> Self {
         Self {
             kind: ToolKind::HandSpade,
-            blade_width_m: 0.20,     // 20 cm wide blade
-            rake_angle_rad: 1.0472,  // 60° plunge angle
-            wedge_angle_rad: 0.3491, // 20° beveled edge
-            applied_force_n: 650.0,  // ~66 kg operator driving with boot heel
-            applied_torque_nm: 95.0, // Prying leverage on handle
+            blade_width_m: 0.20,       // 20 cm wide blade
+            rake_angle_rad: 1.0472,    // 60° plunge angle
+            wedge_angle_rad: 0.3491,   // 20° beveled edge
+            applied_force_n: 650.0,    // ~66 kg operator driving with boot heel
+            applied_torque_nm: 95.0,   // Prying leverage on handle
             capacity_volume_m3: 0.005, // 5 liters scoop volume
         }
     }
@@ -79,9 +79,9 @@ impl ToolEffector {
     pub fn pickaxe() -> Self {
         Self {
             kind: ToolKind::Pickaxe,
-            blade_width_m: 0.025,    // 2.5 cm point tip
-            rake_angle_rad: 1.2217,  // 70° impact angle
-            wedge_angle_rad: 0.4363, // 25° forged tip
+            blade_width_m: 0.025,     // 2.5 cm point tip
+            rake_angle_rad: 1.2217,   // 70° impact angle
+            wedge_angle_rad: 0.4363,  // 25° forged tip
             applied_force_n: 2_400.0, // Dynamic impact force ($F = \Delta p / \Delta t$)
             applied_torque_nm: 40.0,
             capacity_volume_m3: 0.001,
@@ -92,12 +92,12 @@ impl ToolEffector {
     pub fn mini_excavator() -> Self {
         Self {
             kind: ToolKind::ExcavatorBucket,
-            blade_width_m: 0.60,      // 60 cm bucket with 4 teeth
-            rake_angle_rad: 0.7854,   // 45° crowd angle
-            wedge_angle_rad: 0.5236,  // 30° tooth wedge
+            blade_width_m: 0.60,       // 60 cm bucket with 4 teeth
+            rake_angle_rad: 0.7854,    // 45° crowd angle
+            wedge_angle_rad: 0.5236,   // 30° tooth wedge
             applied_force_n: 38_000.0, // 38 kN hydraulic breakout force
             applied_torque_nm: 4_500.0,
-            capacity_volume_m3: 0.18,  // 180 liters
+            capacity_volume_m3: 0.18, // 180 liters
         }
     }
 
@@ -162,9 +162,9 @@ pub fn evaluate_excavation_pass(
     // 2. Lithic refusal check: if soil compressive strength exceeds tool capability
     let max_penetrable_ucs = match tool.kind {
         ToolKind::ObservationRay => 0.0,
-        ToolKind::HandSpade => 400.0,       // Hand spade halts on hardpan / soft rock
-        ToolKind::FossorialClaw => 300.0,   // Claws cannot dig solid shale/rock
-        ToolKind::Pickaxe => 35_000.0,      // Pickaxe fractures soft to medium rock
+        ToolKind::HandSpade => 400.0, // Hand spade halts on hardpan / soft rock
+        ToolKind::FossorialClaw => 300.0, // Claws cannot dig solid shale/rock
+        ToolKind::Pickaxe => 35_000.0, // Pickaxe fractures soft to medium rock
         ToolKind::ExcavatorBucket => 12_000.0, // Excavator teeth rip gravel/caliche, not solid granite
     };
 

@@ -2,11 +2,11 @@
 //! threading each node's output forward. This is the differential floor certified against the
 //! GPU executor.
 
-use crate::numerical::ForgeError;
 use crate::numerical::graph_ops::{
     broadcast, elementwise, gather_dequant, reduce, slice, stencil, vision,
 };
 use crate::numerical::ir::graph::{ComputeGraph, DType, NodeId, OpNode};
+use crate::numerical::ForgeError;
 
 /// Compose the graph on the CPU in topological order — the differential oracle for
 /// [`execute_graph`](super::execute_graph). Each node's output is computed from its inputs (graph

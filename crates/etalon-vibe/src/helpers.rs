@@ -111,7 +111,10 @@ pub const fn make_func_descriptor(
 
 /// Validates exact argument count.
 #[inline]
-pub const fn check_arity(inputs: &[BorrowedSliceView<'_>], expected: usize) -> Result<(), VibeTrap> {
+pub const fn check_arity(
+    inputs: &[BorrowedSliceView<'_>],
+    expected: usize,
+) -> Result<(), VibeTrap> {
     if inputs.len() != expected {
         return Err(VibeTrap::ArityMismatch);
     }

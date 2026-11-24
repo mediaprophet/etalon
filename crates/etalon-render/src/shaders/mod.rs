@@ -7,7 +7,10 @@ pub const PROJECTOR_WGSL: &str = concat!(
     include_str!("projector.wgsl")
 );
 pub const SHADOW_RECEIVER_WGSL: &str = include_str!("shadow_receiver.wgsl");
-pub const MESH_WGSL: &str = concat!(include_str!("shadow_receiver.wgsl"), include_str!("mesh.wgsl"));
+pub const MESH_WGSL: &str = concat!(
+    include_str!("shadow_receiver.wgsl"),
+    include_str!("mesh.wgsl")
+);
 pub const WATER_WGSL: &str = include_str!("water.wgsl");
 pub const HYDROLOGIC_OPTICS_WGSL: &str = include_str!("hydrologic_optics.wgsl");
 pub const SUN_SHADOW_WGSL: &str = include_str!("sun_shadow.wgsl");
@@ -55,14 +58,26 @@ mod emf_tests {
     #[test]
     fn current_emf_shader_validates_with_sixteen_lane_storage_layout() {
         let module = naga::front::wgsl::parse_str(super::EMF_VOLUMETRIC_WGSL).unwrap();
-        naga::valid::Validator::new(naga::valid::ValidationFlags::all(), naga::valid::Capabilities::all())
-            .validate(&module).unwrap();
+        naga::valid::Validator::new(
+            naga::valid::ValidationFlags::all(),
+            naga::valid::Capabilities::all(),
+        )
+        .validate(&module)
+        .unwrap();
         for name in ["EmfFieldCell", "EmfSliceUniform"] {
-            let (_, ty) = module.types.iter().find(|(_, ty)| ty.name.as_deref() == Some(name)).unwrap();
-            let naga::TypeInner::Struct { members, span } = &ty.inner else { panic!("expected struct"); };
+            let (_, ty) = module
+                .types
+                .iter()
+                .find(|(_, ty)| ty.name.as_deref() == Some(name))
+                .unwrap();
+            let naga::TypeInner::Struct { members, span } = &ty.inner else {
+                panic!("expected struct");
+            };
             assert_eq!(*span, 64, "{name} storage ABI");
             assert_eq!(members.len(), 16);
-            for (i, member) in members.iter().enumerate() { assert_eq!(member.offset, i as u32 * 4); }
+            for (i, member) in members.iter().enumerate() {
+                assert_eq!(member.offset, i as u32 * 4);
+            }
         }
     }
 }

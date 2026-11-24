@@ -13,15 +13,14 @@ pub const ZWICKER_BARK_BANDS: usize = 24;
 
 /// Center frequencies (Hz) of the 24 Zwicker critical bands (ISO 532-1).
 pub const ZWICKER_24_BARK_CENTER_HZ: [f64; ZWICKER_BARK_BANDS] = [
-    50.0, 150.0, 250.0, 350.0, 450.0, 570.0, 700.0, 840.0, 1000.0, 1170.0, 1370.0, 1600.0,
-    1850.0, 2150.0, 2500.0, 2900.0, 3400.0, 4000.0, 4800.0, 5800.0, 7000.0, 8500.0, 10500.0,
-    13500.0,
+    50.0, 150.0, 250.0, 350.0, 450.0, 570.0, 700.0, 840.0, 1000.0, 1170.0, 1370.0, 1600.0, 1850.0,
+    2150.0, 2500.0, 2900.0, 3400.0, 4000.0, 4800.0, 5800.0, 7000.0, 8500.0, 10500.0, 13500.0,
 ];
 
 /// Threshold in quiet $L_{\text{TQ},b}$ (dB SPL re $20\text{ }\mu\text{Pa}$) across the 24 Bark bands.
 pub const ZWICKER_24_BARK_THRESHOLD_IN_QUIET_DB: [f64; ZWICKER_BARK_BANDS] = [
-    38.0, 24.0, 16.0, 11.0, 8.0, 6.0, 5.0, 4.0, 3.0, 3.0, 3.0, 3.0,
-    3.0, 2.0, 1.0, 1.0, 2.0, 4.0, 7.0, 12.0, 18.0, 26.0, 36.0, 48.0,
+    38.0, 24.0, 16.0, 11.0, 8.0, 6.0, 5.0, 4.0, 3.0, 3.0, 3.0, 3.0, 3.0, 2.0, 1.0, 1.0, 2.0, 4.0,
+    7.0, 12.0, 18.0, 26.0, 36.0, 48.0,
 ];
 
 /// Canonical URI for AIUM/NEMA UD 3 soft-tissue thermal index (`TIS`).
@@ -63,9 +62,14 @@ pub fn spread_zwicker_bark_excitation_into(
             continue;
         }
         let e_src = pow10_f64(0.1 * l_db);
-        let upper_slope_db = (-24.0 - 230.0 / ZWICKER_24_BARK_CENTER_HZ[src] + 0.2 * l_db.clamp(0.0, 110.0))
-            .clamp(-45.0, -5.0);
-        for (dst, out_slot) in out_excitation_ratio.iter_mut().enumerate().take(ZWICKER_BARK_BANDS) {
+        let upper_slope_db = (-24.0 - 230.0 / ZWICKER_24_BARK_CENTER_HZ[src]
+            + 0.2 * l_db.clamp(0.0, 110.0))
+        .clamp(-45.0, -5.0);
+        for (dst, out_slot) in out_excitation_ratio
+            .iter_mut()
+            .enumerate()
+            .take(ZWICKER_BARK_BANDS)
+        {
             let dz = (dst as f64) - (src as f64);
             let att_db = if dz < 0.0 {
                 27.0 * dz
@@ -309,8 +313,9 @@ pub fn solve_pennes_bioheat_steady_state(
     }
     let q_v = 2.0 * params.absorption_np_per_m_mhz * params.frequency_mhz * params.i_spta_w_per_m2
         + params.metabolic_heat_w_per_m3;
-    let perfusion_sink =
-        params.blood_perfusion_rate_s1 * params.blood_density_kg_m3 * params.blood_specific_heat_j_kg_k;
+    let perfusion_sink = params.blood_perfusion_rate_s1
+        * params.blood_density_kg_m3
+        * params.blood_specific_heat_j_kg_k;
     let l_th = sqrt_f64(params.tissue_thermal_conductivity_w_m_k / perfusion_sink);
     let delta_t = q_v / perfusion_sink;
     Ok(PennesBioheatResult {

@@ -81,7 +81,9 @@ pub fn run_tests(
         let target_dir = warp_target_dir(std::env::var_os("CARGO_TARGET_DIR"), llvm_cov, profile);
         install_warp::install_warp(
             &shell,
-            target_dir.to_str().context("WARP target directory is not valid UTF-8")?,
+            target_dir
+                .to_str()
+                .context("WARP target directory is not valid UTF-8")?,
         )?;
         Some(install_agility_sdk::install_agility_sdk(&shell)?)
     } else {
@@ -185,7 +187,10 @@ mod tests {
             assert_eq!(actual, expected.join(profile));
             assert!(!actual.starts_with("target"));
         }
-        assert_eq!(warp_target_dir(None, false, "debug"), Path::new("target/debug"));
+        assert_eq!(
+            warp_target_dir(None, false, "debug"),
+            Path::new("target/debug")
+        );
         assert_eq!(
             warp_target_dir(None, true, "debug"),
             Path::new("target/llvm-cov-target/debug")

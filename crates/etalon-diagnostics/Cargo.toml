@@ -15,7 +15,7 @@ gpu = ["dep:etalon", "dep:pollster", "dep:bytemuck"]
 
 [dependencies]
 serde = { workspace = true, features = ["derive", "std"] }
-ciborium = "0.2"
+ciborium = "0.2.2"
 tempfile.workspace = true
 rayon.workspace = true
 etalon = { workspace = true, optional = true }

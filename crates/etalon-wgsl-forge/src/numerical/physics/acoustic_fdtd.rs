@@ -1,4 +1,4 @@
-﻿//! 3D Staggered Acoustic Fluid Pressure-Velocity & Elastic Virieux Cauchy Stress-Velocity FDTD Kernels.
+//! 3D Staggered Acoustic Fluid Pressure-Velocity & Elastic Virieux Cauchy Stress-Velocity FDTD Kernels.
 //!
 //! Provides certified `@compute @workgroup_size(64)` WGSL kernels [`ACOUSTIC_FLUID_FDTD_WGSL`]
 //! (Mode `0x0000` `pressure_velocity_continuum`) and [`ELASTIC_VIRIEUX_FDTD_WGSL`]
@@ -250,36 +250,58 @@ impl AcousticFluidFdtdGpuParams {
     pub fn validate(&self) -> Result<f32, ForgeError> {
         let [nx, ny, nz] = self.dims;
         if nx < 2 || ny < 2 || nz < 2 {
-            return Err(ForgeError::GpuValidation("AcousticFluidFdtdGpuParams dims must each be >= 2".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "AcousticFluidFdtdGpuParams dims must each be >= 2".to_string(),
+            ));
         }
         let cells = (nx as usize)
             .checked_mul(ny as usize)
             .and_then(|v| v.checked_mul(nz as usize))
             .ok_or_else(|| ForgeError::GpuValidation("grid cell count overflow".to_string()))?;
         if cells > MAX_FDTD_GRID_CELLS {
-            return Err(ForgeError::GpuValidation(format!("grid cell count {cells} exceeds MAX_FDTD_GRID_CELLS ({MAX_FDTD_GRID_CELLS})")));
+            return Err(ForgeError::GpuValidation(format!(
+                "grid cell count {cells} exceeds MAX_FDTD_GRID_CELLS ({MAX_FDTD_GRID_CELLS})"
+            )));
         }
         let [dx, dy, dz] = self.spacing_m;
-        if !dx.is_finite() || !dy.is_finite() || !dz.is_finite() || dx <= 0.0 || dy <= 0.0 || dz <= 0.0 {
-            return Err(ForgeError::GpuValidation("spacing_m components must be finite and > 0".to_string()));
+        if !dx.is_finite()
+            || !dy.is_finite()
+            || !dz.is_finite()
+            || dx <= 0.0
+            || dy <= 0.0
+            || dz <= 0.0
+        {
+            return Err(ForgeError::GpuValidation(
+                "spacing_m components must be finite and > 0".to_string(),
+            ));
         }
         if !self.density_kg_m3.is_finite() || self.density_kg_m3 <= 0.0 {
-            return Err(ForgeError::GpuValidation("density_kg_m3 must be finite and > 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "density_kg_m3 must be finite and > 0".to_string(),
+            ));
         }
         if !self.bulk_modulus_pa.is_finite() || self.bulk_modulus_pa <= 0.0 {
-            return Err(ForgeError::GpuValidation("bulk_modulus_pa must be finite and > 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "bulk_modulus_pa must be finite and > 0".to_string(),
+            ));
         }
         if !self.damping_per_s.is_finite() || self.damping_per_s < 0.0 {
-            return Err(ForgeError::GpuValidation("damping_per_s must be finite and >= 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "damping_per_s must be finite and >= 0".to_string(),
+            ));
         }
         if !self.dt_s.is_finite() || self.dt_s <= 0.0 {
-            return Err(ForgeError::GpuValidation("dt_s must be finite and > 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "dt_s must be finite and > 0".to_string(),
+            ));
         }
         let c = (self.bulk_modulus_pa / self.density_kg_m3).sqrt();
         let inv_h = (1.0 / (dx * dx) + 1.0 / (dy * dy) + 1.0 / (dz * dz)).sqrt();
         let courant = self.dt_s * c * inv_h;
         if !courant.is_finite() || courant > 1.0 {
-            return Err(ForgeError::GpuValidation(format!("3D fluid Courant violation: courant={courant} > 1.0")));
+            return Err(ForgeError::GpuValidation(format!(
+                "3D fluid Courant violation: courant={courant} > 1.0"
+            )));
         }
         Ok(courant)
     }
@@ -293,10 +315,18 @@ impl AcousticFluidFdtdGpuParams {
     #[inline]
     pub(crate) fn to_uniform_words(self, sub_pass: u32) -> [f32; 12] {
         [
-            self.dims[0] as f32, self.dims[1] as f32, self.dims[2] as f32,
-            self.spacing_m[0], self.spacing_m[1], self.spacing_m[2],
-            self.dt_s, self.density_kg_m3, self.bulk_modulus_pa,
-            self.damping_per_s, (self.boundary as u32) as f32, sub_pass as f32,
+            self.dims[0] as f32,
+            self.dims[1] as f32,
+            self.dims[2] as f32,
+            self.spacing_m[0],
+            self.spacing_m[1],
+            self.spacing_m[2],
+            self.dt_s,
+            self.density_kg_m3,
+            self.bulk_modulus_pa,
+            self.damping_per_s,
+            (self.boundary as u32) as f32,
+            sub_pass as f32,
         ]
     }
 }
@@ -347,36 +377,58 @@ impl ElasticVirieuxFdtdGpuParams {
     pub fn validate(&self) -> Result<f32, ForgeError> {
         let [nx, ny, nz] = self.dims;
         if nx < 2 || ny < 2 || nz < 2 {
-            return Err(ForgeError::GpuValidation("ElasticVirieuxFdtdGpuParams dims must each be >= 2".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "ElasticVirieuxFdtdGpuParams dims must each be >= 2".to_string(),
+            ));
         }
         let cells = (nx as usize)
             .checked_mul(ny as usize)
             .and_then(|v| v.checked_mul(nz as usize))
             .ok_or_else(|| ForgeError::GpuValidation("grid cell count overflow".to_string()))?;
         if cells > MAX_FDTD_GRID_CELLS {
-            return Err(ForgeError::GpuValidation(format!("grid cell count {cells} exceeds MAX_FDTD_GRID_CELLS ({MAX_FDTD_GRID_CELLS})")));
+            return Err(ForgeError::GpuValidation(format!(
+                "grid cell count {cells} exceeds MAX_FDTD_GRID_CELLS ({MAX_FDTD_GRID_CELLS})"
+            )));
         }
         let [dx, dy, dz] = self.spacing_m;
-        if !dx.is_finite() || !dy.is_finite() || !dz.is_finite() || dx <= 0.0 || dy <= 0.0 || dz <= 0.0 {
-            return Err(ForgeError::GpuValidation("spacing_m components must be finite and > 0".to_string()));
+        if !dx.is_finite()
+            || !dy.is_finite()
+            || !dz.is_finite()
+            || dx <= 0.0
+            || dy <= 0.0
+            || dz <= 0.0
+        {
+            return Err(ForgeError::GpuValidation(
+                "spacing_m components must be finite and > 0".to_string(),
+            ));
         }
         if !self.density_kg_m3.is_finite() || self.density_kg_m3 <= 0.0 {
-            return Err(ForgeError::GpuValidation("density_kg_m3 must be finite and > 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "density_kg_m3 must be finite and > 0".to_string(),
+            ));
         }
         if !self.bulk_modulus_pa.is_finite() || self.bulk_modulus_pa <= 0.0 {
-            return Err(ForgeError::GpuValidation("bulk_modulus_pa must be finite and > 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "bulk_modulus_pa must be finite and > 0".to_string(),
+            ));
         }
         if !self.shear_modulus_pa.is_finite() || self.shear_modulus_pa < 0.0 {
-            return Err(ForgeError::GpuValidation("shear_modulus_pa must be finite and >= 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "shear_modulus_pa must be finite and >= 0".to_string(),
+            ));
         }
         if !self.dt_s.is_finite() || self.dt_s <= 0.0 {
-            return Err(ForgeError::GpuValidation("dt_s must be finite and > 0".to_string()));
+            return Err(ForgeError::GpuValidation(
+                "dt_s must be finite and > 0".to_string(),
+            ));
         }
         let cp = self.p_wave_speed_m_s();
         let inv_h = (1.0 / (dx * dx) + 1.0 / (dy * dy) + 1.0 / (dz * dz)).sqrt();
         let courant = self.dt_s * cp * inv_h;
         if !courant.is_finite() || courant > 1.0 {
-            return Err(ForgeError::GpuValidation(format!("3D elastic P-wave Courant violation: courant={courant} > 1.0")));
+            return Err(ForgeError::GpuValidation(format!(
+                "3D elastic P-wave Courant violation: courant={courant} > 1.0"
+            )));
         }
         Ok(courant)
     }
@@ -390,10 +442,18 @@ impl ElasticVirieuxFdtdGpuParams {
     #[inline]
     pub(crate) fn to_uniform_words(self, sub_pass: u32) -> [f32; 12] {
         [
-            self.dims[0] as f32, self.dims[1] as f32, self.dims[2] as f32,
-            self.spacing_m[0], self.spacing_m[1], self.spacing_m[2],
-            self.dt_s, self.density_kg_m3, self.lame_lambda_pa(),
-            self.shear_modulus_pa, (self.boundary as u32) as f32, sub_pass as f32,
+            self.dims[0] as f32,
+            self.dims[1] as f32,
+            self.dims[2] as f32,
+            self.spacing_m[0],
+            self.spacing_m[1],
+            self.spacing_m[2],
+            self.dt_s,
+            self.density_kg_m3,
+            self.lame_lambda_pa(),
+            self.shear_modulus_pa,
+            (self.boundary as u32) as f32,
+            sub_pass as f32,
         ]
     }
 }

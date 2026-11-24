@@ -68,8 +68,8 @@ pub fn resample_linear_mono_into(
         out[..n].copy_from_slice(&input[..n]);
         return n;
     }
-    let out_n = (((input.len() as u64 * dst_rate_hz as u64) / src_rate_hz as u64) as usize)
-        .min(out.len());
+    let out_n =
+        (((input.len() as u64 * dst_rate_hz as u64) / src_rate_hz as u64) as usize).min(out.len());
     if out_n == 0 {
         return 0;
     }

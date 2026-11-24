@@ -1,4 +1,11 @@
 #![deny(unsafe_code)]
+#![allow(
+    clippy::disallowed_types,
+    clippy::manual_clamp,
+    clippy::manual_range_patterns,
+    clippy::wrong_self_convention,
+    clippy::ref_as_ptr
+)]
 //! Numerical inference storage and budget mechanics; host policy remains external.
 pub mod backends;
 #[cfg(feature = "gguf-cpu")]

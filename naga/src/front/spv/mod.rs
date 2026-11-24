@@ -3256,8 +3256,8 @@ fn is_parent(mut child: usize, parent: usize, block_ctx: &BlockContext) -> bool 
 
 #[cfg(test)]
 mod test {
-    use alloc::vec;
     use super::CallGraph;
+    use alloc::vec;
 
     #[test]
     fn parse() {
@@ -3298,7 +3298,10 @@ mod test {
         assert!(pos(20) < pos(10), "mid_a must precede main");
         assert!(pos(30) < pos(10), "mid_b must precede main");
         assert!(pos(10) < pos(!0), "main must precede entry wrapper");
-        assert!(order.contains(&50), "uncalled function must still be emitted");
+        assert!(
+            order.contains(&50),
+            "uncalled function must still be emitted"
+        );
     }
 
     #[test]

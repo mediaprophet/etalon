@@ -545,9 +545,7 @@ impl Surface {
 
 #[derive(Debug, Clone, Copy)]
 enum MemoryArchitecture {
-    Unified {
-        cache_coherent: bool,
-    },
+    Unified { cache_coherent: bool },
     NonUnified,
 }
 

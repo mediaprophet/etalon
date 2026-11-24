@@ -43,17 +43,17 @@ pub(crate) fn test_cuda_available() -> bool {
 }
 
 pub use attention::{
-    AttentionSchedule, AttentionShader, AttentionShaderParams, AttentionShape,
-    causal_attention_oracle, synthesize_causal_attention,
+    causal_attention_oracle, synthesize_causal_attention, AttentionSchedule, AttentionShader,
+    AttentionShaderParams, AttentionShape,
 };
 pub use backend::resolve_execution_backend;
 pub use cache::ManifestCache;
 pub use dispatch::{
-    ComputeCaps, GEMM_GPU_THRESHOLD, caps, coopmat_usable, fft_f32, gemm_cpu_f64, gemm_f32,
-    gemm_f32_tc, gemm_f32_tc_coopmat, gemm_f32_tc_reduced, gemm_f64, gemm_f64_df64, gemv_cpu_f64,
-    gemv_f32, gemv_f64, pairwise_sq_dist_cpu_f64, pairwise_sq_dist_f64,
+    caps, coopmat_usable, fft_f32, gemm_cpu_f64, gemm_f32, gemm_f32_tc, gemm_f32_tc_coopmat,
+    gemm_f32_tc_reduced, gemm_f64, gemm_f64_df64, gemv_cpu_f64, gemv_f32, gemv_f64,
+    pairwise_sq_dist_cpu_f64, pairwise_sq_dist_f64, ComputeCaps, GEMM_GPU_THRESHOLD,
 };
-pub use emit::{GeneratedShader, TargetBackend, decode_spirv_words, emit_shader, matmul_tc_wgsl};
+pub use emit::{decode_spirv_words, emit_shader, matmul_tc_wgsl, GeneratedShader, TargetBackend};
 pub use ir::{
     BufferAccess, BufferElement, BufferSpec, BuiltinKernel, KernelSpec, Op, P64GpuWords64,
     ScalarType, SharedLen, SharedMemorySpec,
@@ -64,32 +64,31 @@ pub use manifest::{
 };
 
 pub use oracle::{
-    AffineParams, ComparisonReport, FfnParams, FftParams, GpuEvaluation, OracleCase,
-    OracleTolerance, TopKParams, candidate_evaluation, certify_builtin, compare_f32, dft_cpu,
-    evaluate_builtin, evaluate_ffn, evaluate_fft, evaluate_matmul_tc, evaluate_p64, evaluate_topk,
-    ffn_cpu, ffn_tensors, fft_inputs, matmul_cpu, p64_project_cpu, p64_records, topk_cpu,
-    topk_inputs,
+    candidate_evaluation, certify_builtin, compare_f32, dft_cpu, evaluate_builtin, evaluate_ffn,
+    evaluate_fft, evaluate_matmul_tc, evaluate_p64, evaluate_topk, ffn_cpu, ffn_tensors,
+    fft_inputs, matmul_cpu, p64_project_cpu, p64_records, topk_cpu, topk_inputs, AffineParams,
+    ComparisonReport, FfnParams, FftParams, GpuEvaluation, OracleCase, OracleTolerance, TopKParams,
 };
 #[cfg(feature = "cuda")]
 pub use oracle::{evaluate_affine_cuda, evaluate_ffn_cuda, evaluate_topk_cuda};
-pub use roofline::{RooflineBound, RooflineEstimate, roofline_for};
+pub use roofline::{roofline_for, RooflineBound, RooflineEstimate};
 pub use runtime::ForgeRuntime;
 pub use schedule::{AdapterConstraints, Schedule, ScheduleSpace};
 pub use tune::{
-    CandidateEvaluation, CandidateFailure, CandidateResult, TuningConfig, TuningResult, tune_with,
+    tune_with, CandidateEvaluation, CandidateFailure, CandidateResult, TuningConfig, TuningResult,
 };
-pub use validate::{ValidationReport, validate_native, validate_wgsl};
+pub use validate::{validate_native, validate_wgsl, ValidationReport};
 
 pub mod etalon_bridge {
     use super::{BuiltinKernel, ForgeError, Schedule, TargetBackend};
 
     pub use crate::{
-        BuiltinKernel as EtalonBuiltinKernel, FORGE_CACHE_MAGIC as ETALON_FORGE_CACHE_MAGIC,
+        certify_kernel as certify_etalon_kernel, emit_shader as emit_etalon_shader,
+        BuiltinKernel as EtalonBuiltinKernel, GeneratedShader as EtalonGeneratedShader,
+        KernelSpec as EtalonKernelSpec, Schedule as EtalonSchedule,
+        TargetBackend as EtalonTargetBackend, ValidationReport as EtalonValidationReport,
+        FORGE_CACHE_MAGIC as ETALON_FORGE_CACHE_MAGIC,
         FORGE_SCHEMA_VERSION as ETALON_FORGE_SCHEMA_VERSION,
-        GeneratedShader as EtalonGeneratedShader, KernelSpec as EtalonKernelSpec,
-        Schedule as EtalonSchedule, TargetBackend as EtalonTargetBackend,
-        ValidationReport as EtalonValidationReport, certify_kernel as certify_etalon_kernel,
-        emit_shader as emit_etalon_shader,
     };
 
     // ── TargetBackend conversions ───────────────────────────────────────
@@ -270,10 +269,10 @@ pub mod etalon_bridge {
 }
 
 pub use etalon_bridge::{
-    ETALON_FORGE_CACHE_MAGIC, ETALON_FORGE_SCHEMA_VERSION, EtalonBuiltinKernel,
-    EtalonGeneratedShader, EtalonKernelSpec, EtalonSchedule, EtalonTargetBackend,
-    EtalonValidationReport, certify_etalon_kernel, emit_etalon_shader,
-    generate_and_certify_via_etalon, generate_with_validation_via_etalon,
+    certify_etalon_kernel, emit_etalon_shader, generate_and_certify_via_etalon,
+    generate_with_validation_via_etalon, EtalonBuiltinKernel, EtalonGeneratedShader,
+    EtalonKernelSpec, EtalonSchedule, EtalonTargetBackend, EtalonValidationReport,
+    ETALON_FORGE_CACHE_MAGIC, ETALON_FORGE_SCHEMA_VERSION,
 };
 
 impl From<crate::ForgeError> for ForgeError {

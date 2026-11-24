@@ -248,7 +248,7 @@ mod tests {
 
     #[test]
     fn invalid_schedule_is_rejected_before_emission() {
-        use crate::numerical::{ForgeError, TargetBackend, generate_builtin};
+        use crate::numerical::{generate_builtin, ForgeError, TargetBackend};
 
         // workgroup_size = 100 is not a power of two, so `Schedule::validate`
         // (invoked by `generate_builtin` *before* `emit_shader`) must reject it.
@@ -259,11 +259,9 @@ mod tests {
         };
         // Guard the precondition: the schedule itself is invalid.
         let kernel = BuiltinKernel::AffineF32.spec();
-        assert!(
-            invalid
-                .validate(&kernel, &AdapterConstraints::portable())
-                .is_err()
-        );
+        assert!(invalid
+            .validate(&kernel, &AdapterConstraints::portable())
+            .is_err());
 
         let result = generate_builtin(BuiltinKernel::AffineF32, invalid, TargetBackend::Wgsl);
         // It must be the schedule-validation error, not an emission error — proving
@@ -309,11 +307,9 @@ mod tests {
         };
 
         // Generation/schedule validity is hardware-agnostic and must succeed.
-        assert!(
-            Schedule::default()
-                .validate(&kernel, &AdapterConstraints::portable())
-                .is_ok()
-        );
+        assert!(Schedule::default()
+            .validate(&kernel, &AdapterConstraints::portable())
+            .is_ok());
 
         // The hardware-vs-kernel check prunes it when RT cores are absent...
         let without = AdapterConstraints::portable();

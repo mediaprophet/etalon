@@ -7,8 +7,8 @@ use crate::numerical::execute::{BindingUsage, BufferView, GraphPass, WgpuCompute
 use crate::numerical::graph_ops::{
     broadcast, elementwise, gather_dequant, reduce, slice, stencil, vision,
 };
-use crate::numerical::ir::BuiltinKernel;
 use crate::numerical::ir::graph::{DType, EwKind, GraphNode, OpNode};
+use crate::numerical::ir::BuiltinKernel;
 use crate::numerical::{ForgeError, Schedule};
 
 /// Resolve the f32 element count of a tensor view.
@@ -493,7 +493,7 @@ fn prepare_matmul_coopmat(
     k: u32,
     ins: &[BufferView],
 ) -> Result<(GraphPass, BufferView), ForgeError> {
-    use crate::numerical::emit::{MATMUL_TC_TILED_ENTRY, matmul_tc_wgsl_tiled};
+    use crate::numerical::emit::{matmul_tc_wgsl_tiled, MATMUL_TC_TILED_ENTRY};
     let out_elems = (m as usize) * (n as usize);
     // c is the read_write slab output AND the zero-seeded accumulator (the kernel loads it).
     let out = alloc_out_zeroed(ctx, out_elems, 2)?;

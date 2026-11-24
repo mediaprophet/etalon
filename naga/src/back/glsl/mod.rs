@@ -252,7 +252,8 @@ pub struct ReflectionInfo {
     /// Mapping between uniform variables and names.
     pub uniforms: crate::FastHashMap<Handle<crate::GlobalVariable>, String>,
     /// Mapping for read-only storage globals lowered to `usampler2D` textures.
-    pub emulated_storage_mapping: crate::FastHashMap<Handle<crate::GlobalVariable>, EmulatedStorageMapping>,
+    pub emulated_storage_mapping:
+        crate::FastHashMap<Handle<crate::GlobalVariable>, EmulatedStorageMapping>,
     /// Mapping between names and attribute locations.
     pub varying: crate::FastHashMap<String, VaryingLocation>,
     /// List of immediate data items in the shader.
@@ -532,12 +533,9 @@ mod emulated_storage_tests {
 
     fn compile_es300(wgsl: &str) -> Result<(String, ReflectionInfo), Error> {
         let module = crate::front::wgsl::parse_str(wgsl).expect("valid wgsl");
-        let info = valid::Validator::new(
-            valid::ValidationFlags::all(),
-            supported_capabilities(),
-        )
-        .validate(&module)
-        .expect("valid module");
+        let info = valid::Validator::new(valid::ValidationFlags::all(), supported_capabilities())
+            .validate(&module)
+            .expect("valid module");
         let options = Options {
             version: Version::new_gles(300),
             emulate_readonly_storage_with_textures: true,

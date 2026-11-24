@@ -198,20 +198,18 @@ mod tests {
         fs.name[..4].copy_from_slice(&[78, 84, 70, 83]);
         assert!(classify(local, 8, &fs, 20, 0, 1).is_ok());
         for flags in [0x10, 0x1000, 0x2000, 0x80000] {
-            assert!(
-                classify(
-                    DeviceInfo {
-                        characteristics: flags,
-                        ..local
-                    },
-                    8,
-                    &fs,
-                    20,
-                    0,
-                    1
-                )
-                .is_err()
-            );
+            assert!(classify(
+                DeviceInfo {
+                    characteristics: flags,
+                    ..local
+                },
+                8,
+                &fs,
+                20,
+                0,
+                1
+            )
+            .is_err());
         }
         for flags in [0x220020, 0x8000_0020] {
             let observed = DeviceInfo {
@@ -227,20 +225,18 @@ mod tests {
             }
         }
         for kind in [0, 2, 8, 20, u32::MAX] {
-            assert!(
-                classify(
-                    DeviceInfo {
-                        device_type: kind,
-                        ..local
-                    },
-                    8,
-                    &fs,
-                    20,
-                    0,
-                    1
-                )
-                .is_err()
-            );
+            assert!(classify(
+                DeviceInfo {
+                    device_type: kind,
+                    ..local
+                },
+                8,
+                &fs,
+                20,
+                0,
+                1
+            )
+            .is_err());
         }
         for n in [0, 7, 9, usize::MAX] {
             assert!(classify(local, n, &fs, 20, 0, 1).is_err());
@@ -264,39 +260,33 @@ mod tests {
             assert!(classify(local, 8, &bad, 20, 0, 1).is_err());
         }
         for status in [1, 0x103, -1, i32::MIN] {
-            assert!(
-                completed(
-                    status,
-                    &IoStatus {
-                        status_or_pointer: StatusOrPointer { status: 0 },
-                        information: 8
-                    },
-                    8
-                )
-                .is_err()
-            );
-        }
-        assert!(
-            completed(
-                0,
+            assert!(completed(
+                status,
                 &IoStatus {
-                    status_or_pointer: StatusOrPointer { status: 1 },
+                    status_or_pointer: StatusOrPointer { status: 0 },
                     information: 8
                 },
                 8
             )
-            .is_err()
-        );
-        assert!(
-            completed(
-                0,
-                &IoStatus {
-                    status_or_pointer: StatusOrPointer { status: 0 },
-                    information: 9
-                },
-                8
-            )
-            .is_err()
-        );
+            .is_err());
+        }
+        assert!(completed(
+            0,
+            &IoStatus {
+                status_or_pointer: StatusOrPointer { status: 1 },
+                information: 8
+            },
+            8
+        )
+        .is_err());
+        assert!(completed(
+            0,
+            &IoStatus {
+                status_or_pointer: StatusOrPointer { status: 0 },
+                information: 9
+            },
+            8
+        )
+        .is_err());
     }
 }

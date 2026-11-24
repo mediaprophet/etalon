@@ -22,7 +22,6 @@
 
 use core::ops::{Deref, DerefMut};
 
-use etalon_render::spatial_math::pga::{motor_translate, Motor};
 use crate::character::{CharacterConfig, CharacterController, CharacterState};
 use crate::geomechanics::SoilMechanicsProfile;
 use crate::hydro::SimdGerstnerSpectrum;
@@ -36,6 +35,7 @@ use crate::physics3d::{
     MotorJoint3D, RagdollMode, RayHit3D, RigidBody3D, RigidBodyType3D, SdfPrimitive,
     ShapeCastHit3D, SoilCouplingOutcome, SpringSuspensionJoint,
 };
+use etalon_render::spatial_math::pga::{motor_translate, Motor};
 
 /// Maximum number of active colliders in a sector physics simulation world.
 pub const MAX_SECTOR_COLLIDERS: usize = 256;
@@ -70,7 +70,12 @@ pub struct SdfCollider {
 impl SdfCollider {
     /// Constructs a granite tor landform (Silurian/Devonian granodiorite perched corestones)
     /// using a $C^1$ smooth union pair of weathered spherical boulders.
-    pub fn granite_tor(position: [f32; 3], radius_a: f32, radius_b: f32, blend_radius: f32) -> Self {
+    pub fn granite_tor(
+        position: [f32; 3],
+        radius_a: f32,
+        radius_b: f32,
+        blend_radius: f32,
+    ) -> Self {
         let center_offset = (radius_a + radius_b) * 0.42;
         Self {
             primitive: SdfPrimitive::SmoothUnionPair {
@@ -243,7 +248,11 @@ impl DerefMut for RoverState {
 
 impl RoverState {
     /// Creates a new rover vehicle controller at `start_position`.
-    pub fn new(chassis: VehicleChassisConfig, wheel: WheelConfig, start_position: [f32; 3]) -> Self {
+    pub fn new(
+        chassis: VehicleChassisConfig,
+        wheel: WheelConfig,
+        start_position: [f32; 3],
+    ) -> Self {
         Self {
             kinematics: RoverKinematics::new(chassis, wheel, start_position),
         }
@@ -338,7 +347,8 @@ impl ContinuumBridge3D {
         // 1. Hydrodynamics: 3D Archimedes buoyancy + Gerstner wave lift & drag
         for body in bodies.iter_mut() {
             if body.body_type == RigidBodyType3D::Dynamic {
-                let outcome = couple_rigid_body_with_hydro(body, &self.wave_spectrum, time_seconds, dt);
+                let outcome =
+                    couple_rigid_body_with_hydro(body, &self.wave_spectrum, time_seconds, dt);
                 if outcome.submerged_volume_m3 > 0.0 {
                     self.last_hydro_outcome = Some(outcome);
                 }
@@ -533,17 +543,11 @@ impl SectorPhysicsWorld3D {
         let (soil, porosity, water_elev) = match sector_id {
             "jounama_karst" | "yarrangobilly_cliff" => {
                 // Silurian karst limestone escarpment, dissolution flutings, and cave overhangs
-                let cliff = SdfCollider::silurian_karst_limestone(
-                    [0.0, 1.5, 0.0],
-                    [8.0, 1.5, 8.0],
-                    0.15,
-                );
+                let cliff =
+                    SdfCollider::silurian_karst_limestone([0.0, 1.5, 0.0], [8.0, 1.5, 8.0], 0.15);
                 let tor = SdfCollider::granite_tor([6.0, 1.2, -4.0], 1.4, 1.1, 0.45);
-                let cave_overhang = SdfCollider::silurian_karst_limestone(
-                    [0.0, 4.2, 2.0],
-                    [5.0, 0.35, 4.0],
-                    0.10,
-                );
+                let cave_overhang =
+                    SdfCollider::silurian_karst_limestone([0.0, 4.2, 2.0], [5.0, 0.35, 4.0], 0.10);
                 xpbd.add_body(cliff.to_rigid_body());
                 xpbd.add_body(tor.to_rigid_body());
                 xpbd.add_body(cave_overhang.to_rigid_body());
@@ -1096,13 +1100,7 @@ mod tests {
         let mat = FractureMaterialProps::weathered_sandstone();
 
         // 1. Sub-critical impulse -> No fracture (body index 3 is first Dynamic boulder in jounama_karst)
-        let no_fracture = world.evaluate_fracture_impact(
-            3,
-            2.0,
-            0.05,
-            [0.0, 1.0, 0.0],
-            &mat,
-        );
+        let no_fracture = world.evaluate_fracture_impact(3, 2.0, 0.05, [0.0, 1.0, 0.0], &mat);
         assert!(no_fracture.is_none());
         assert_eq!(world.fracture_events, 0);
 
@@ -1111,14 +1109,11 @@ mod tests {
         let parent_vel = world.xpbd.bodies[3].linear_velocity;
         let parent_mass = 1.0 / world.xpbd.bodies[3].inv_mass;
 
-        let fracture = world.evaluate_fracture_impact(
-            3,
-            55.0,
-            0.05,
-            [0.0, 1.0, 0.0],
-            &mat,
+        let fracture = world.evaluate_fracture_impact(3, 55.0, 0.05, [0.0, 1.0, 0.0], &mat);
+        assert!(
+            fracture.is_some(),
+            "super-critical impulse must fracture body"
         );
-        assert!(fracture.is_some(), "super-critical impulse must fracture body");
         assert_eq!(world.fracture_events, 1);
         assert_eq!(world.xpbd.bodies.len(), pre_body_count + 1);
 

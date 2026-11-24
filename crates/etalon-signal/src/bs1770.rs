@@ -46,9 +46,7 @@ impl Bs1770ChannelRole {
     }
 }
 
-pub fn new_k_weighting_cascade(
-    sample_rate_hz: f64,
-) -> Result<CascadedBiquadDf2t<2>, SignalError> {
+pub fn new_k_weighting_cascade(sample_rate_hz: f64) -> Result<CascadedBiquadDf2t<2>, SignalError> {
     if !sample_rate_hz.is_finite() {
         return Err(SignalError::NonFiniteInput);
     }
@@ -185,10 +183,9 @@ pub fn measure_bs1770_integrated_loudness(
     }
 
     let fs = f64::from(sample_rate_hz);
-    let mut filters = [CascadedBiquadDf2t::<2>::new([
-        BiquadCoeffs::IDENTITY,
-        BiquadCoeffs::IDENTITY,
-    ])?; MAX_BS1770_CHANNELS];
+    let mut filters =
+        [CascadedBiquadDf2t::<2>::new([BiquadCoeffs::IDENTITY, BiquadCoeffs::IDENTITY])?;
+            MAX_BS1770_CHANNELS];
     for f in filters.iter_mut().take(ch) {
         *f = new_k_weighting_cascade(fs)?;
     }

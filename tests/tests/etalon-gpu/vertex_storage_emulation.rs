@@ -54,7 +54,8 @@ static VERTEX_STORAGE_INSTANCED: GpuTestConfiguration = GpuTestConfiguration::ne
 async fn vertex_storage_instanced(ctx: TestingContext) {
     let flags = ctx.adapter.get_downlevel_capabilities().flags;
     if !flags.intersects(
-        etalon::DownlevelFlags::VERTEX_STORAGE | etalon::DownlevelFlags::READ_ONLY_STORAGE_EMULATION,
+        etalon::DownlevelFlags::VERTEX_STORAGE
+            | etalon::DownlevelFlags::READ_ONLY_STORAGE_EMULATION,
     ) {
         return;
     }

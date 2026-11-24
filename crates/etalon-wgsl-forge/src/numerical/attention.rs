@@ -6,7 +6,7 @@
 //! f32 Q/K/V views; quantized projection and KV packing remain outside this
 //! kernel's ABI.
 
-use super::{ForgeError, Schedule, ValidationReport, validate_wgsl};
+use super::{validate_wgsl, ForgeError, Schedule, ValidationReport};
 
 /// The attention workload bound into one Forge kernel.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -304,11 +304,9 @@ mod tests {
         )
         .expect("attention shader");
         assert!(shader.source.contains("@compute @workgroup_size(128)"));
-        assert!(
-            shader
-                .source
-                .contains("var<workgroup> reduce: array<f32, 128>")
-        );
+        assert!(shader
+            .source
+            .contains("var<workgroup> reduce: array<f32, 128>"));
         assert_eq!(shader.validation.entry_points, vec!["causal_attention"]);
     }
 

@@ -13,9 +13,9 @@
 //!      Kramers-Kronig dispersion relation:
 //!      $$\frac{1}{c(\omega)} - \frac{1}{c(\omega_0)} = \frac{2(\omega^2 - \omega_0^2)}{\pi}\,\mathcal{P}\!\int_0^\infty \frac{\alpha(\Omega)/\Omega}{(\Omega^2 - \omega^2)(\Omega^2 - \omega_0^2)}\,d\Omega$$
 
-use core::f64::consts::PI;
 use super::fdtd_fluid::NumericalError;
 use super::helmholtz::Complex64;
+use core::f64::consts::PI;
 
 /// Power-law causal acoustic attenuation and Kramers-Kronig dispersion model.
 #[derive(Debug, Clone, Copy, PartialEq)]

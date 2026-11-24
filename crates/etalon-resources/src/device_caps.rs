@@ -150,8 +150,11 @@ impl GpuAdapterCaps {
 
     /// Anvil adapter snapshot from this caps record (UUID may still be zeros).
     pub fn anvil_adapter_report(&self) -> anvil_gpu::AdapterReport {
-        let mut report =
-            anvil_gpu::AdapterReport::from_pci_uuid(self.vendor as u16, self.device as u16, self.device_uuid);
+        let mut report = anvil_gpu::AdapterReport::from_pci_uuid(
+            self.vendor as u16,
+            self.device as u16,
+            self.device_uuid,
+        );
         report.high_performance = !self.is_integrated_gpu();
         report.unified_zero_copy = self.is_integrated_gpu();
         report

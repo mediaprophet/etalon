@@ -186,15 +186,18 @@ pub fn evaluate_soil_compaction(
     // Compression index C_c for topsoil (humic/clay loam C_c ~ 0.20-0.35)
     let c_c = (0.20 + (soil.cohesion_kpa / 100.0) * 0.15).clamp(0.12, 0.45);
     let initial_effective_stress = 15.0; // ~1m overburden
-    let delta_e = c_c * ((initial_effective_stress + contact_pressure_kpa) / initial_effective_stress).log10();
+    let delta_e = c_c
+        * ((initial_effective_stress + contact_pressure_kpa) / initial_effective_stress).log10();
 
     let initial_void_ratio = current_porosity / (1.0 - current_porosity).max(0.01);
     let final_void_ratio = (initial_void_ratio - delta_e).max(0.20);
     let final_porosity = final_void_ratio / (1.0 + final_void_ratio);
 
     // Kozeny-Carman hydraulic conductivity degradation: K ~ e^3 / (1 + e)
-    let initial_kc = (initial_void_ratio * initial_void_ratio * initial_void_ratio) / (1.0 + initial_void_ratio);
-    let final_kc = (final_void_ratio * final_void_ratio * final_void_ratio) / (1.0 + final_void_ratio);
+    let initial_kc =
+        (initial_void_ratio * initial_void_ratio * initial_void_ratio) / (1.0 + initial_void_ratio);
+    let final_kc =
+        (final_void_ratio * final_void_ratio * final_void_ratio) / (1.0 + final_void_ratio);
     let k_multiplier = (final_kc / initial_kc.max(1e-4)).clamp(0.001, 1.0);
 
     (final_porosity, k_multiplier)
@@ -220,7 +223,8 @@ mod tests {
         let loam = SoilMechanicsProfile::loam();
         let contact_pressure_kpa = 250.0; // Heavy machine track
         let initial_porosity = 0.45;
-        let (new_n, k_ratio) = evaluate_soil_compaction(contact_pressure_kpa, initial_porosity, &loam);
+        let (new_n, k_ratio) =
+            evaluate_soil_compaction(contact_pressure_kpa, initial_porosity, &loam);
         assert!(new_n < initial_porosity);
         assert!(k_ratio < 0.5); // Permeability significantly reduced
     }

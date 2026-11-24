@@ -154,9 +154,7 @@ pub fn admit(
     source: Option<&str>,
     fallbacks_out: &mut [FallbackRecord],
 ) -> Result<AdmissionReport, ForgeError> {
-    request
-        .contract
-        .validate_with(request.constraints)?;
+    request.contract.validate_with(request.constraints)?;
     if matches!(request.occupancy, OccupancyAssumption::Undeclared) {
         return Err(ForgeError::Validation(
             "undeclared occupancy assumption is rejected; occupancy is an admission/report, not measured GPU timing".to_string(),
@@ -421,7 +419,9 @@ fn shared_bytes(kernel: &KernelSpec, workgroup: u32) -> Result<u32, ForgeError> 
             .length
             .resolve(workgroup)
             .checked_mul(spec.element.size_bytes())
-            .ok_or_else(|| ForgeError::InvalidKernel("shared-memory length overflow".to_string()))?;
+            .ok_or_else(|| {
+                ForgeError::InvalidKernel("shared-memory length overflow".to_string())
+            })?;
         total = total.checked_add(bytes).ok_or_else(|| {
             ForgeError::InvalidKernel("shared-memory byte count overflow".to_string())
         })?;
@@ -430,7 +430,10 @@ fn shared_bytes(kernel: &KernelSpec, workgroup: u32) -> Result<u32, ForgeError> 
 }
 
 fn workgroup_threads(schedule: &Schedule) -> u32 {
-    schedule.workgroup.flat_threads().max(schedule.effective_workgroup_size())
+    schedule
+        .workgroup
+        .flat_threads()
+        .max(schedule.effective_workgroup_size())
 }
 
 fn require_stride(
@@ -496,4 +499,3 @@ pub(crate) fn contains_wgsl_f64_type(source: &str) -> bool {
         code.contains("<f64>") || code.contains(" f64")
     })
 }
-

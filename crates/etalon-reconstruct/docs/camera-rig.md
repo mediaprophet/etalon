@@ -16,15 +16,15 @@ Shared constraints for every request:
 
 ## Views (Y-up, +Z anterior, +X patient's left)
 
-| Filename token | Camera | What the silhouette must show |
-|---|---|---|
-| `anterior` | looking −Z | Sternocostal surface, RV facing camera, apex down-left |
-| `posterior` | looking +Z | LA box, pulmonary-vein stumps, IVC |
-| `left-lateral` | looking −X | LV left border, left auricle |
-| `right-lateral` | looking +X | RA, auricle, SVC/IVC stack |
-| `superior` | looking −Y | Base: aorta, pulmonary trunk, SVC, pulmonary veins |
-| `inferior` | looking +Y | Diaphragmatic surface, apex toward the bottom of frame |
-| `three-quarter` | ~35° left of anterior, slightly above | Combined left-anterior silhouette |
+| Filename token  | Camera                                | What the silhouette must show                          |
+| --------------- | ------------------------------------- | ------------------------------------------------------ |
+| `anterior`      | looking −Z                            | Sternocostal surface, RV facing camera, apex down-left |
+| `posterior`     | looking +Z                            | LA box, pulmonary-vein stumps, IVC                     |
+| `left-lateral`  | looking −X                            | LV left border, left auricle                           |
+| `right-lateral` | looking +X                            | RA, auricle, SVC/IVC stack                             |
+| `superior`      | looking −Y                            | Base: aorta, pulmonary trunk, SVC, pulmonary veins     |
+| `inferior`      | looking +Y                            | Diaphragmatic surface, apex toward the bottom of frame |
+| `three-quarter` | ~35° left of anterior, slightly above | Combined left-anterior silhouette                      |
 
 Optional extra angles (tighter hull): three-quarter posterior, high anterior, low anterior.
 

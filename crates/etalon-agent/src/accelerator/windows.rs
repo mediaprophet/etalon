@@ -129,7 +129,7 @@ pub(super) fn probe() -> NpuProbeReport {
             adapter.GetProperty(
                 IsHardware,
                 size_of::<u8>(),
-                (&mut hardware as *mut u8).cast(),
+                std::ptr::from_mut::<u8>(&mut hardware).cast(),
             )
         } {
             report.status = ProbeStatus::Partial;
@@ -149,7 +149,7 @@ pub(super) fn probe() -> NpuProbeReport {
             adapter.GetProperty(
                 InstanceLuid,
                 size_of::<LUID>(),
-                (&mut luid as *mut LUID).cast(),
+                std::ptr::from_mut::<LUID>(&mut luid).cast(),
             )
         } {
             Ok(()) => format!("dxcore:{:08x}{:08x}", luid.HighPart as u32, luid.LowPart),
@@ -174,7 +174,7 @@ pub(super) fn probe() -> NpuProbeReport {
             adapter.GetProperty(
                 DriverVersion,
                 size_of::<u64>(),
-                (&mut version as *mut u64).cast(),
+                std::ptr::from_mut::<u64>(&mut version).cast(),
             )
         } {
             Ok(()) => device.driver_version = Some(format!("{version:016x}")),

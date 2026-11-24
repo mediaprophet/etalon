@@ -79,8 +79,7 @@ impl ColliderShape3D {
                 radius,
                 half_height,
             } => {
-                let radial_len =
-                    (dir_local[0] * dir_local[0] + dir_local[2] * dir_local[2]).sqrt();
+                let radial_len = (dir_local[0] * dir_local[0] + dir_local[2] * dir_local[2]).sqrt();
                 let (sx, sz) = if radial_len > 1e-8 {
                     (
                         dir_local[0] / radial_len * radius,
@@ -207,11 +206,7 @@ impl ColliderShape3D {
         let ix = (mass_kg / 12.0) * (ly * ly + lz * lz);
         let iy = (mass_kg / 12.0) * (lx * lx + lz * lz);
         let iz = (mass_kg / 12.0) * (lx * lx + ly * ly);
-        [
-            1.0 / ix.max(1e-4),
-            1.0 / iy.max(1e-4),
-            1.0 / iz.max(1e-4),
-        ]
+        [1.0 / ix.max(1e-4), 1.0 / iy.max(1e-4), 1.0 / iz.max(1e-4)]
     }
 }
 

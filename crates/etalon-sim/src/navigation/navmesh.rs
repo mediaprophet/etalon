@@ -150,7 +150,8 @@ impl ZeroHeapNavMesh {
             for i in 0..open_count {
                 let node = open_set[i] as usize;
                 let c = self.polygons[node].center;
-                let h = ((c[0] - goal[0]) * (c[0] - goal[0]) + (c[1] - goal[1]) * (c[1] - goal[1])).sqrt();
+                let h = ((c[0] - goal[0]) * (c[0] - goal[0]) + (c[1] - goal[1]) * (c[1] - goal[1]))
+                    .sqrt();
                 let f = g_score[node] + h;
                 if f < lowest_f {
                     lowest_f = f;
@@ -183,7 +184,8 @@ impl ZeroHeapNavMesh {
 
                 let c1 = poly.center;
                 let c2 = self.polygons[neighbor_idx].center;
-                let edge_dist = ((c2[0] - c1[0]) * (c2[0] - c1[0]) + (c2[1] - c1[1]) * (c2[1] - c1[1])).sqrt();
+                let edge_dist =
+                    ((c2[0] - c1[0]) * (c2[0] - c1[0]) + (c2[1] - c1[1]) * (c2[1] - c1[1])).sqrt();
                 let tentative_g = g_score[current] + edge_dist;
 
                 if tentative_g < g_score[neighbor_idx] {
@@ -231,7 +233,8 @@ impl ZeroHeapNavMesh {
 
         for k in (0..path_node_count).rev() {
             let n_idx = path_nodes[k] as usize;
-            if n_idx != start_node && n_idx != goal_node && waypoint_count < MAX_PATH_WAYPOINTS - 1 {
+            if n_idx != start_node && n_idx != goal_node && waypoint_count < MAX_PATH_WAYPOINTS - 1
+            {
                 out_path[waypoint_count] = self.polygons[n_idx].center;
                 waypoint_count += 1;
             }
@@ -258,7 +261,14 @@ mod tests {
         // Polygon 0: [0, 0] to [10, 10]
         nav.polygons[0] = NavPolygon {
             vertex_count: 4,
-            vertices: [[0.0, 0.0], [10.0, 0.0], [10.0, 10.0], [0.0, 10.0], [0.0, 0.0], [0.0, 0.0]],
+            vertices: [
+                [0.0, 0.0],
+                [10.0, 0.0],
+                [10.0, 10.0],
+                [0.0, 10.0],
+                [0.0, 0.0],
+                [0.0, 0.0],
+            ],
             center: [5.0, 5.0],
             neighbors: [255, 1, 255, 255, 255, 255],
         };
@@ -266,7 +276,14 @@ mod tests {
         // Polygon 1: [10, 0] to [20, 10]
         nav.polygons[1] = NavPolygon {
             vertex_count: 4,
-            vertices: [[10.0, 0.0], [20.0, 0.0], [20.0, 10.0], [10.0, 10.0], [0.0, 0.0], [0.0, 0.0]],
+            vertices: [
+                [10.0, 0.0],
+                [20.0, 0.0],
+                [20.0, 10.0],
+                [10.0, 10.0],
+                [0.0, 0.0],
+                [0.0, 0.0],
+            ],
             center: [15.0, 5.0],
             neighbors: [255, 255, 255, 0, 255, 255],
         };

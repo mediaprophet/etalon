@@ -3,9 +3,9 @@
 //! CPU oracles match `qualia_vision::ops` numerical contracts (NCHW f32).
 //! Differential certification runs when a GPU adapter is available.
 
-use crate::numerical::ForgeError;
 #[cfg(test)]
 use crate::numerical::validate::validate_wgsl;
+use crate::numerical::ForgeError;
 
 pub const POOL2D_ENTRY: &str = "pool2d_main";
 pub const RESIZE2D_ENTRY: &str = "resize2d_main";

@@ -247,8 +247,9 @@ pub fn sample_field_bilinear_cpu(
     let c10 = sample_at(ix1, iy0);
     let c01 = sample_at(ix0, iy1);
     let c11 = sample_at(ix1, iy1);
-    let bilerp =
-        |v00: f32, v10: f32, v01: f32, v11: f32| wgsl_mix(wgsl_mix(v00, v10, tx), wgsl_mix(v01, v11, tx), ty);
+    let bilerp = |v00: f32, v10: f32, v01: f32, v11: f32| {
+        wgsl_mix(wgsl_mix(v00, v10, tx), wgsl_mix(v01, v11, tx), ty)
+    };
 
     EmfFieldCell {
         amplitude: bilerp(c00.amplitude, c10.amplitude, c01.amplitude, c11.amplitude),

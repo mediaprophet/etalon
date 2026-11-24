@@ -10,8 +10,8 @@
 //! Certified the forge way: an exact CPU oracle ([`reduce_cpu`]), naga validation, and a
 //! GPU differential test on the A2000 ([`reduce_gpu`] vs the oracle within f32 tolerance).
 
-use crate::numerical::ForgeError;
 use crate::numerical::ir::graph::RedKind;
+use crate::numerical::ForgeError;
 
 /// Entry-point name of the emitted reduce kernel.
 pub const REDUCE_ENTRY: &str = "reduce_main";
@@ -118,10 +118,10 @@ pub fn reduce_cpu(input: &[f32], op: RedKind) -> f32 {
 /// wgpu context, uploads `input` (0), a zeroed output (1) and `params=[n,0,0,0]` (2),
 /// dispatches one workgroup of `wg` threads, and returns `output[0]`.
 pub fn reduce_gpu(input: &[f32], op: RedKind) -> Result<f32, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     if input.is_empty() {
         return Err(ForgeError::GpuValidation(

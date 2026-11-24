@@ -389,54 +389,57 @@ impl super::Queue {
             } => {
                 dst.bump_write_generation();
                 match dst.raw {
-                Some(buffer) => {
-                    // When `INDEX_BUFFER_ROLE_CHANGE` isn't available, we can't copy into the
-                    // index buffer from the zero buffer. This would fail in Chrome with the
-                    // following message:
-                    //
-                    // > Cannot copy into an element buffer destination from a non-element buffer
-                    // > source
-                    //
-                    // Instead, we'll upload zeroes into the buffer.
-                    let can_use_zero_buffer = self
-                        .shared
-                        .private_caps
-                        .contains(PrivateCapabilities::INDEX_BUFFER_ROLE_CHANGE)
-                        || dst_target != glow::ELEMENT_ARRAY_BUFFER;
+                    Some(buffer) => {
+                        // When `INDEX_BUFFER_ROLE_CHANGE` isn't available, we can't copy into the
+                        // index buffer from the zero buffer. This would fail in Chrome with the
+                        // following message:
+                        //
+                        // > Cannot copy into an element buffer destination from a non-element buffer
+                        // > source
+                        //
+                        // Instead, we'll upload zeroes into the buffer.
+                        let can_use_zero_buffer = self
+                            .shared
+                            .private_caps
+                            .contains(PrivateCapabilities::INDEX_BUFFER_ROLE_CHANGE)
+                            || dst_target != glow::ELEMENT_ARRAY_BUFFER;
 
-                    if can_use_zero_buffer {
-                        unsafe { gl.bind_buffer(glow::COPY_READ_BUFFER, Some(self.zero_buffer)) };
-                        unsafe { gl.bind_buffer(dst_target, Some(buffer)) };
-                        let mut dst_offset = range.start;
-                        while dst_offset < range.end {
-                            let size = (range.end - dst_offset).min(super::ZERO_BUFFER_SIZE as u64);
+                        if can_use_zero_buffer {
                             unsafe {
-                                gl.copy_buffer_sub_data(
-                                    glow::COPY_READ_BUFFER,
-                                    dst_target,
-                                    0,
-                                    dst_offset as i32,
-                                    size as i32,
-                                )
+                                gl.bind_buffer(glow::COPY_READ_BUFFER, Some(self.zero_buffer))
                             };
-                            dst_offset += size;
+                            unsafe { gl.bind_buffer(dst_target, Some(buffer)) };
+                            let mut dst_offset = range.start;
+                            while dst_offset < range.end {
+                                let size =
+                                    (range.end - dst_offset).min(super::ZERO_BUFFER_SIZE as u64);
+                                unsafe {
+                                    gl.copy_buffer_sub_data(
+                                        glow::COPY_READ_BUFFER,
+                                        dst_target,
+                                        0,
+                                        dst_offset as i32,
+                                        size as i32,
+                                    )
+                                };
+                                dst_offset += size;
+                            }
+                        } else {
+                            unsafe { gl.bind_buffer(dst_target, Some(buffer)) };
+                            let zeroes = vec![0u8; (range.end - range.start) as usize];
+                            unsafe {
+                                gl.buffer_sub_data_u8_slice(dst_target, range.start as i32, &zeroes)
+                            };
                         }
-                    } else {
-                        unsafe { gl.bind_buffer(dst_target, Some(buffer)) };
-                        let zeroes = vec![0u8; (range.end - range.start) as usize];
-                        unsafe {
-                            gl.buffer_sub_data_u8_slice(dst_target, range.start as i32, &zeroes)
-                        };
+                    }
+                    None => {
+                        let mut map_state = dst.map_state.lock();
+                        map_state.data.as_mut().unwrap().as_mut_slice()
+                            [range.start as usize..range.end as usize]
+                            .fill(0);
                     }
                 }
-                None => {
-                    let mut map_state = dst.map_state.lock();
-                    map_state.data.as_mut().unwrap().as_mut_slice()
-                        [range.start as usize..range.end as usize]
-                        .fill(0);
-                }
             }
-            },
             C::CopyBufferToBuffer {
                 ref src,
                 src_target,
@@ -870,8 +873,7 @@ impl super::Queue {
                     .rows_per_image
                     .map_or(0, |rpi| block_height * rpi);
                 let layered = is_layered_target(dst_target);
-                let unpack_row_length =
-                    unpack_row_or_image_length(row_texels, copy.size.width);
+                let unpack_row_length = unpack_row_or_image_length(row_texels, copy.size.width);
                 let unpack_image_height = if layered {
                     unpack_row_or_image_length(column_texels, copy.size.height)
                 } else {
@@ -910,8 +912,7 @@ impl super::Queue {
                             unsafe { gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None) };
                             map_state = src.map_state.lock();
                             let src_data = map_state.data.as_ref().unwrap().as_slice();
-                            let offset =
-                                (copy.buffer_layout.offset as usize).min(src_data.len());
+                            let offset = (copy.buffer_layout.offset as usize).min(src_data.len());
                             let depth = if layered { copy.size.depth } else { 1 };
                             let needed = unpack_client_bytes(
                                 copy.size.width,
@@ -1781,22 +1782,50 @@ impl super::Queue {
                         rem_texels,
                     );
 
-                    if shadow.texture.is_none() || shadow.width != width || shadow.height != height {
+                    if shadow.texture.is_none() || shadow.width != width || shadow.height != height
+                    {
                         if let Some(old) = shadow.texture.take() {
                             unsafe { gl.delete_texture(old) };
                         }
-                        let tex = unsafe { gl.create_texture() }.expect("create emulated storage texture");
+                        let tex = unsafe { gl.create_texture() }
+                            .expect("create emulated storage texture");
                         unsafe {
                             gl.bind_buffer(glow::PIXEL_UNPACK_BUFFER, None);
                             gl.bind_texture(glow::TEXTURE_2D, Some(tex));
-                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, glow::NEAREST as i32);
-                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, glow::NEAREST as i32);
-                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, glow::CLAMP_TO_EDGE as i32);
-                            gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, glow::CLAMP_TO_EDGE as i32);
+                            gl.tex_parameter_i32(
+                                glow::TEXTURE_2D,
+                                glow::TEXTURE_MIN_FILTER,
+                                glow::NEAREST as i32,
+                            );
+                            gl.tex_parameter_i32(
+                                glow::TEXTURE_2D,
+                                glow::TEXTURE_MAG_FILTER,
+                                glow::NEAREST as i32,
+                            );
+                            gl.tex_parameter_i32(
+                                glow::TEXTURE_2D,
+                                glow::TEXTURE_WRAP_S,
+                                glow::CLAMP_TO_EDGE as i32,
+                            );
+                            gl.tex_parameter_i32(
+                                glow::TEXTURE_2D,
+                                glow::TEXTURE_WRAP_T,
+                                glow::CLAMP_TO_EDGE as i32,
+                            );
                             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_BASE_LEVEL, 0);
                             gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAX_LEVEL, 0);
-                            if self.shared.private_caps.contains(PrivateCapabilities::TEXTURE_STORAGE) {
-                                gl.tex_storage_2d(glow::TEXTURE_2D, 1, glow::RGBA32UI, width, height);
+                            if self
+                                .shared
+                                .private_caps
+                                .contains(PrivateCapabilities::TEXTURE_STORAGE)
+                            {
+                                gl.tex_storage_2d(
+                                    glow::TEXTURE_2D,
+                                    1,
+                                    glow::RGBA32UI,
+                                    width,
+                                    height,
+                                );
                             } else {
                                 gl.tex_image_2d(
                                     glow::TEXTURE_2D,

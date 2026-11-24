@@ -185,11 +185,9 @@ fn floating_point_rewrite_legality_is_not_real_algebra() {
         .iter()
         .any(|item| item.rule == RewriteRequest::ReassociateAdd
             && item.reason.contains("not real-algebra legal")));
-    assert!(trace
-        .rejected
-        .iter()
-        .any(|item| item.rule == RewriteRequest::CancelDiv
-            && item.reason.contains("domain-invalid")));
+    assert!(trace.rejected.iter().any(
+        |item| item.rule == RewriteRequest::CancelDiv && item.reason.contains("domain-invalid")
+    ));
     assert!(contains_swapped_add(&rewritten.kernel.ops));
 }
 
@@ -221,11 +219,15 @@ fn domain_invalid_and_illegal_rewrites_are_rejected() {
     }));
 
     let geometry = ProductionContract::geometry_point_in_tetra(schedule()).unwrap();
-    let (same, trace) =
-        apply_guarded(geometry.clone(), &[RewriteRequest::CollapseGeometryUncertain]).unwrap();
-    assert!(trace.rejected.iter().any(|item| item
-        .reason
-        .contains("geometry_uncertain_policy")));
+    let (same, trace) = apply_guarded(
+        geometry.clone(),
+        &[RewriteRequest::CollapseGeometryUncertain],
+    )
+    .unwrap();
+    assert!(trace
+        .rejected
+        .iter()
+        .any(|item| item.reason.contains("geometry_uncertain_policy")));
     match (&geometry.math, &same.math) {
         (
             MathOp::Geometry {

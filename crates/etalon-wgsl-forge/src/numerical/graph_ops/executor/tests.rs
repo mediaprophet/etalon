@@ -1,6 +1,6 @@
 use super::*;
-use crate::numerical::Schedule;
 use crate::numerical::ir::graph::{ComputeGraph, DType, OpNode, Shape, TensorRef};
+use crate::numerical::Schedule;
 
 /// The composed CPU oracle for softmax is a valid probability distribution
 /// (non-negative, sums to 1) and matches a direct reference.
@@ -361,7 +361,7 @@ fn ref_decode_layer(
     mode: u32,
     base: f32,
 ) -> Vec<f32> {
-    use crate::numerical::graph_ops::stencil::{RopeConfig, RopeMode, rope_cpu};
+    use crate::numerical::graph_ops::stencil::{rope_cpu, RopeConfig, RopeMode};
     let d = (n_heads * head_dim) as usize;
     let (hd, seqn, ffnn) = (head_dim as usize, seq as usize, ffn as usize);
     let group = (n_heads / n_kv_heads) as usize;

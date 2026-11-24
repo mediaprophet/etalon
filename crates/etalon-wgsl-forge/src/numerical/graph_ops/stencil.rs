@@ -15,8 +15,8 @@
 //!
 //! Certified the forge way: exact CPU oracle, naga validation, A2000 GPU differential.
 
-use crate::numerical::ForgeError;
 use crate::numerical::ir::graph::StencilKind;
+use crate::numerical::ForgeError;
 
 /// Entry-point name of the emitted stencil kernel.
 pub const STENCIL_ENTRY: &str = "stencil_main";
@@ -226,10 +226,10 @@ pub fn stencil_gpu(
     kind: StencilKind,
     rope: RopeConfig,
 ) -> Result<Vec<f32>, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     let n = input.len();
     if n == 0 {

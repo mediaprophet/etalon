@@ -89,10 +89,8 @@ pub fn yee_cfl_limit_3d(
 ) -> Result<f64, EmfOperatorError> {
     grid.validate()?;
     let v = mat.phase_velocity_m_per_s()?;
-    let inv_norm = (1.0 / (grid.dx * grid.dx)
-        + 1.0 / (grid.dy * grid.dy)
-        + 1.0 / (grid.dz * grid.dz))
-        .sqrt();
+    let inv_norm =
+        (1.0 / (grid.dx * grid.dx) + 1.0 / (grid.dy * grid.dy) + 1.0 / (grid.dz * grid.dz)).sqrt();
     Ok(1.0 / (v * inv_norm))
 }
 

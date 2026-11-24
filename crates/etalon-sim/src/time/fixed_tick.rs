@@ -184,7 +184,8 @@ pub struct FixedTickWorld<const MAX_AGENTS: usize, const MAX_QUEUE: usize> {
 }
 
 /// Ergonomic alias for `FixedTickWorld`.
-pub type WorldState<const MAX_AGENTS: usize, const MAX_QUEUE: usize> = FixedTickWorld<MAX_AGENTS, MAX_QUEUE>;
+pub type WorldState<const MAX_AGENTS: usize, const MAX_QUEUE: usize> =
+    FixedTickWorld<MAX_AGENTS, MAX_QUEUE>;
 
 impl<const MAX_AGENTS: usize, const MAX_QUEUE: usize> FixedTickWorld<MAX_AGENTS, MAX_QUEUE> {
     /// Creates a default `FixedTickWorld`.

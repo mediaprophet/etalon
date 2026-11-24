@@ -24,8 +24,8 @@ use super::memory::{BindingUsage, BufferView, MemoryTopology, QualiaSlabAllocato
 use super::oracle_ctx::OracleContext;
 #[cfg(feature = "cuda")]
 use crate::numerical::{
-    AdapterConstraints, AdapterIdentity, BufferAccess, BufferElement, BufferSpec, ForgeError,
-    KernelSpec, ScalarType, Schedule, TargetBackend, emit_shader,
+    emit_shader, AdapterConstraints, AdapterIdentity, BufferAccess, BufferElement, BufferSpec,
+    ForgeError, KernelSpec, ScalarType, Schedule, TargetBackend,
 };
 #[cfg(feature = "cuda")]
 use cudarc::driver::{
@@ -118,7 +118,9 @@ impl CudaComputeContext {
     /// Creates `CudaComputeContext` with the given state.
     pub fn new(capacity_bytes: usize) -> Result<Self, ForgeError> {
         if !etalon_resources::provider_scope::admits_new_owner() {
-            return Err(ForgeError::GpuUnavailable("CUDA owner creation after preparation".into()));
+            return Err(ForgeError::GpuUnavailable(
+                "CUDA owner creation after preparation".into(),
+            ));
         }
         // cudarc dynamic loading panics when the driver library is absent. Probe first
         // so callers can treat CUDA as an optional backend through the existing error.
@@ -185,7 +187,8 @@ impl CudaComputeContext {
 
         Ok(Self {
             owner_generation: {
-                static NEXT_OWNER: std::sync::atomic::AtomicU64 = std::sync::atomic::AtomicU64::new(1);
+                static NEXT_OWNER: std::sync::atomic::AtomicU64 =
+                    std::sync::atomic::AtomicU64::new(1);
                 NEXT_OWNER.fetch_add(1, std::sync::atomic::Ordering::Relaxed)
             },
             ctx,
@@ -227,7 +230,11 @@ impl CudaComputeContext {
 
     /// Enqueue one replay on the graph's retained compute stream.
     pub fn launch_graph(&self, graph: &CapturedCudaGraph) -> Result<(), ForgeError> {
-        if !self.admitted_provider() { return Err(ForgeError::GpuUnavailable("CUDA graph owner changed after preparation".into())); }
+        if !self.admitted_provider() {
+            return Err(ForgeError::GpuUnavailable(
+                "CUDA graph owner changed after preparation".into(),
+            ));
+        }
         graph
             .graph
             .launch()
@@ -667,7 +674,7 @@ pub(crate) fn nvrtc_compile_to_ptx_cached(
     context: &CudaComputeContext,
     source: &str,
 ) -> Result<cudarc::nvrtc::Ptx, ForgeError> {
-    use cudarc::nvrtc::{CompileOptions, compile_ptx_with_opts};
+    use cudarc::nvrtc::{compile_ptx_with_opts, CompileOptions};
     let (major, minor) = context.ctx.compute_capability().map_err(|e| {
         ForgeError::GpuUnavailable(format!("compute-capability query failed: {:?}", e))
     })?;
@@ -771,7 +778,11 @@ impl<'a> CudaPipeline<'a> {
         block: (u32, u32, u32),
         shared_mem_bytes: u32,
     ) -> Result<(), ForgeError> {
-        if !self.context.admitted_provider() { return Err(ForgeError::GpuUnavailable("CUDA owner changed after preparation".into())); }
+        if !self.context.admitted_provider() {
+            return Err(ForgeError::GpuUnavailable(
+                "CUDA owner changed after preparation".into(),
+            ));
+        }
         let cfg = LaunchConfig {
             grid_dim: grid,
             block_dim: block,
@@ -811,7 +822,11 @@ impl<'a> CudaPipeline<'a> {
         schedule: &Schedule,
         element_count: usize,
     ) -> Result<(), ForgeError> {
-        if !self.context.admitted_provider() { return Err(ForgeError::GpuUnavailable("CUDA owner changed after preparation".into())); }
+        if !self.context.admitted_provider() {
+            return Err(ForgeError::GpuUnavailable(
+                "CUDA owner changed after preparation".into(),
+            ));
+        }
         let dispatch_x = schedule.dispatch_workgroups(element_count);
         let cfg = LaunchConfig {
             grid_dim: (dispatch_x, 1, 1),
@@ -855,7 +870,11 @@ impl<'a> CudaPipeline<'a> {
         schedule: &Schedule,
         element_count: usize,
     ) -> Result<f32, ForgeError> {
-        if !self.context.admitted_provider() { return Err(ForgeError::GpuUnavailable("CUDA owner changed after preparation".into())); }
+        if !self.context.admitted_provider() {
+            return Err(ForgeError::GpuUnavailable(
+                "CUDA owner changed after preparation".into(),
+            ));
+        }
         let dispatch_x = schedule.dispatch_workgroups(element_count);
         let cfg = LaunchConfig {
             grid_dim: (dispatch_x, 1, 1),
@@ -896,7 +915,11 @@ impl<'a> CudaPipeline<'a> {
         element_count: usize,
         sync: bool,
     ) -> Result<u64, ForgeError> {
-        if !self.context.admitted_provider() { return Err(ForgeError::GpuUnavailable("CUDA owner changed after preparation".into())); }
+        if !self.context.admitted_provider() {
+            return Err(ForgeError::GpuUnavailable(
+                "CUDA owner changed after preparation".into(),
+            ));
+        }
         let dispatch_x = schedule.dispatch_workgroups(element_count);
         let cfg = LaunchConfig {
             grid_dim: (dispatch_x, 1, 1),
@@ -1125,4 +1148,3 @@ extern "C" __global__ void increment(unsigned *value) {
         });
     }
 }
-

@@ -133,7 +133,11 @@ pub struct RoverKinematics {
 
 impl RoverKinematics {
     /// Creates a new vehicle kinematics simulator.
-    pub const fn new(chassis: VehicleChassisConfig, wheel: WheelConfig, start_position: [f32; 3]) -> Self {
+    pub const fn new(
+        chassis: VehicleChassisConfig,
+        wheel: WheelConfig,
+        start_position: [f32; 3],
+    ) -> Self {
         Self {
             chassis,
             wheel,
@@ -158,14 +162,8 @@ impl RoverKinematics {
     /// - `steer`: Steering input in range `[-1.0, 1.0]` (positive is right).
     /// - `brake`: Brake input in range `[0.0, 1.0]`.
     /// - `ground_probe`: Elevation query function `(x, z) -> (elevation, normal)`.
-    pub fn step<F>(
-        &mut self,
-        throttle: f32,
-        steer: f32,
-        brake: f32,
-        dt: f32,
-        ground_probe: F,
-    ) where
+    pub fn step<F>(&mut self, throttle: f32, steer: f32, brake: f32, dt: f32, ground_probe: F)
+    where
         F: Fn(f32, f32) -> (f32, [f32; 3]),
     {
         // 1. Steering rate limiter (Ackermann steering target)
@@ -210,7 +208,8 @@ impl RoverKinematics {
             avg_normal[2] += norm[2];
 
             let wheel_hub_y = self.state.position[1];
-            let compression = (gy + self.wheel.radius - (wheel_hub_y - self.wheel.rest_length)).clamp(0.0, self.wheel.max_travel);
+            let compression = (gy + self.wheel.radius - (wheel_hub_y - self.wheel.rest_length))
+                .clamp(0.0, self.wheel.max_travel);
             self.state.suspension_compression[i] = compression;
 
             // Hooke's law spring + damping
@@ -220,15 +219,27 @@ impl RoverKinematics {
             _total_normal_force += f_norm;
         }
 
-        let avg_norm_len = (avg_normal[0] * avg_normal[0] + avg_normal[1] * avg_normal[1] + avg_normal[2] * avg_normal[2]).sqrt().max(1e-4);
-        let normal = [avg_normal[0] / avg_norm_len, avg_normal[1] / avg_norm_len, avg_normal[2] / avg_norm_len];
+        let avg_norm_len = (avg_normal[0] * avg_normal[0]
+            + avg_normal[1] * avg_normal[1]
+            + avg_normal[2] * avg_normal[2])
+            .sqrt()
+            .max(1e-4);
+        let normal = [
+            avg_normal[0] / avg_norm_len,
+            avg_normal[1] / avg_norm_len,
+            avg_normal[2] / avg_norm_len,
+        ];
 
         // 4. Longitudinal traction and braking force
-        let current_speed = self.state.velocity[0] * forward[0] + self.state.velocity[2] * forward[2];
+        let current_speed =
+            self.state.velocity[0] * forward[0] + self.state.velocity[2] * forward[2];
         let drive_f = throttle * self.chassis.max_drive_torque / self.wheel.radius;
-        let brake_f = -current_speed.signum() * (brake.clamp(0.0, 1.0) * self.chassis.max_brake_torque / self.wheel.radius);
-        let roll_res = -current_speed.signum() * (self.chassis.rolling_resistance * self.chassis.mass * 9.81);
-        let aero_drag = -current_speed * current_speed.abs() * self.chassis.aerodynamic_drag * 0.5 * 1.225;
+        let brake_f = -current_speed.signum()
+            * (brake.clamp(0.0, 1.0) * self.chassis.max_brake_torque / self.wheel.radius);
+        let roll_res =
+            -current_speed.signum() * (self.chassis.rolling_resistance * self.chassis.mass * 9.81);
+        let aero_drag =
+            -current_speed * current_speed.abs() * self.chassis.aerodynamic_drag * 0.5 * 1.225;
 
         let net_forward_force = drive_f + brake_f + roll_res + aero_drag;
         let forward_accel = net_forward_force / self.chassis.mass;

@@ -29,10 +29,10 @@ use std::path::PathBuf;
 use super::emit::{compile_hlsl_to_spirv, compile_hlsl_to_spirv_cached};
 use super::execute::{BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline};
 use super::oracle::{
-    FftParams, GemmParams, GemvParams, TERNARY_CODES_PER_WORD, TernaryGemvParams, TopKParams,
+    FftParams, GemmParams, GemvParams, TernaryGemvParams, TopKParams, TERNARY_CODES_PER_WORD,
 };
 use super::{
-    BuiltinKernel, ForgeError, ManifestCache, Schedule, TargetBackend, emit_shader, validate_wgsl,
+    emit_shader, validate_wgsl, BuiltinKernel, ForgeError, ManifestCache, Schedule, TargetBackend,
 };
 
 /// A ready-to-use handle for running certified forge kernels on real data.
@@ -60,7 +60,9 @@ impl ForgeRuntime {
     #[cfg(not(target_arch = "wasm32"))]
     pub fn prepared_device(&self) -> etalon_resources::provider_scope::PreparedDevice {
         etalon_resources::provider_scope::PreparedDevice {
-            device: self.context.device.clone(), queue: self.context.queue.clone(), caps: self.context.provider_caps.clone(),
+            device: self.context.device.clone(),
+            queue: self.context.queue.clone(),
+            caps: self.context.provider_caps.clone(),
         }
     }
     /// Build the GPU context, optionally attaching a manifest-cache directory for

@@ -8,9 +8,9 @@ use crate::numerical::execute::{
     BindingUsage, OracleContext, QualiaCompute, WgpuComputeContext, WgpuPipeline,
 };
 use crate::numerical::{
-    BuiltinKernel, CandidateEvaluation, CertificationManifest, ForgeError, GeneratedShader,
-    Schedule, TargetBackend, TimingSource, TimingSummary, ValidationLevel, emit_shader,
-    validate_wgsl,
+    emit_shader, validate_wgsl, BuiltinKernel, CandidateEvaluation, CertificationManifest,
+    ForgeError, GeneratedShader, Schedule, TargetBackend, TimingSource, TimingSummary,
+    ValidationLevel,
 };
 
 use super::kernels::*;

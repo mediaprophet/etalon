@@ -191,7 +191,8 @@ pub fn evaluate_fireline_intensity(
 
     // 3. Fuel consumed in surface fire (kg/m²)
     let surface_fine_kg = fuels.total_fine_fuel_kg_m2();
-    let mut fuel_consumed = surface_fine_kg * ((1.0 - (dfmc / DEAD_FUEL_EXTINCTION_MOISTURE)).clamp(0.2, 1.0));
+    let mut fuel_consumed =
+        surface_fine_kg * ((1.0 - (dfmc / DEAD_FUEL_EXTINCTION_MOISTURE)).clamp(0.2, 1.0));
 
     // 4. Initial surface fireline intensity I_surface = H * w * r (in kW/m)
     let mut intensity = EUCALYPT_HEAT_YIELD_KJ_KG * fuel_consumed * rate_of_spread_m_s;

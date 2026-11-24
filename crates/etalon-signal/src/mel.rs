@@ -26,13 +26,19 @@ pub struct MelShape {
 }
 impl MelShape {
     pub fn spectrum_len(self) -> Result<usize, SignalError> {
-        self.n_frames.checked_mul(self.n_bins).ok_or(SignalError::NumericRange)
+        self.n_frames
+            .checked_mul(self.n_bins)
+            .ok_or(SignalError::NumericRange)
     }
     pub fn filterbank_len(self) -> Result<usize, SignalError> {
-        self.n_mel.checked_mul(self.n_bins).ok_or(SignalError::NumericRange)
+        self.n_mel
+            .checked_mul(self.n_bins)
+            .ok_or(SignalError::NumericRange)
     }
     pub fn output_len(self) -> Result<usize, SignalError> {
-        self.n_frames.checked_mul(self.n_mel).ok_or(SignalError::NumericRange)
+        self.n_frames
+            .checked_mul(self.n_mel)
+            .ok_or(SignalError::NumericRange)
     }
 }
 /// Borrows a constructed filterbank; preparation and execution allocate nothing.
@@ -50,8 +56,12 @@ impl<'a> PreparedMel<'a> {
         }
         Ok(Self { shape, filterbank })
     }
-    pub fn shape(self) -> MelShape { self.shape }
-    pub fn filterbank(self) -> &'a [f32] { self.filterbank }
+    pub fn shape(self) -> MelShape {
+        self.shape
+    }
+    pub fn filterbank(self) -> &'a [f32] {
+        self.filterbank
+    }
     /// Writes the output prefix in increasing-bin f32 accumulation order.
     /// IEEE non-finite values propagate as in the original scalar oracle.
     pub fn apply_into(self, spectrum: &[f32], out: &mut [f32]) -> Result<usize, SignalError> {
@@ -60,7 +70,9 @@ impl<'a> PreparedMel<'a> {
         if spectrum.len() != shape.spectrum_len()? || out.len() < len {
             return Err(SignalError::LengthMismatch);
         }
-        if len == 0 { return Ok(0); }
+        if len == 0 {
+            return Ok(0);
+        }
         for frame in 0..shape.n_frames {
             let spec_base = frame * shape.n_bins;
             for m in 0..shape.n_mel {
@@ -75,8 +87,12 @@ impl<'a> PreparedMel<'a> {
         Ok(len)
     }
 }
-pub fn mel_apply_into(spectrum: &[f32], filterbank: &[f32], shape: MelShape,
-                      out: &mut [f32]) -> Result<usize, SignalError> {
+pub fn mel_apply_into(
+    spectrum: &[f32],
+    filterbank: &[f32],
+    shape: MelShape,
+    out: &mut [f32],
+) -> Result<usize, SignalError> {
     PreparedMel::new(shape, filterbank)?.apply_into(spectrum, out)
 }
 #[cfg(test)]

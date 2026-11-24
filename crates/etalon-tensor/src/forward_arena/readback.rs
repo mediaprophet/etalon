@@ -1,8 +1,8 @@
 use super::ForwardArena;
 use core::task::{Context, Poll, Waker};
 use std::sync::{
-    Arc, Mutex,
     atomic::{AtomicBool, Ordering},
+    Arc, Mutex,
 };
 use thiserror::Error;
 

@@ -17,12 +17,20 @@ pub(crate) fn floor_f64(x: f64) -> f64 {
         return x;
     }
     let t = (x as i64) as f64;
-    if x < t { t - 1.0 } else { t }
+    if x < t {
+        t - 1.0
+    } else {
+        t
+    }
 }
 
 #[inline]
 pub(crate) fn round_symmetric_f64(x: f64) -> f64 {
-    if x >= 0.0 { floor_f64(x + 0.5) } else { -floor_f64(-x + 0.5) }
+    if x >= 0.0 {
+        floor_f64(x + 0.5)
+    } else {
+        -floor_f64(-x + 0.5)
+    }
 }
 
 #[inline]
@@ -76,10 +84,14 @@ pub(crate) fn sin_cos_f64(x: f64) -> (f64, f64) {
 }
 
 #[inline]
-pub(crate) fn sin_f64(x: f64) -> f64 { sin_cos_f64(x).0 }
+pub(crate) fn sin_f64(x: f64) -> f64 {
+    sin_cos_f64(x).0
+}
 
 #[inline]
-pub(crate) fn cos_f64(x: f64) -> f64 { sin_cos_f64(x).1 }
+pub(crate) fn cos_f64(x: f64) -> f64 {
+    sin_cos_f64(x).1
+}
 
 #[inline]
 pub(crate) fn tan_f64(x: f64) -> f64 {
@@ -89,9 +101,15 @@ pub(crate) fn tan_f64(x: f64) -> f64 {
 
 #[inline]
 pub(crate) fn exp_f64(x: f64) -> f64 {
-    if x.is_nan() { return f64::NAN; }
-    if x >= 709.782_712_893_384 { return f64::INFINITY; }
-    if x <= -708.396_418_532_264_1 { return 0.0; }
+    if x.is_nan() {
+        return f64::NAN;
+    }
+    if x >= 709.782_712_893_384 {
+        return f64::INFINITY;
+    }
+    if x <= -708.396_418_532_264_1 {
+        return 0.0;
+    }
     let k_f = round_symmetric_f64(x * core::f64::consts::LOG2_E);
     let r = (x - k_f * LN2_HI) - k_f * LN2_LO;
     let exp_r = 1.0
@@ -112,9 +130,15 @@ pub(crate) fn exp_f64(x: f64) -> f64 {
 
 #[inline]
 pub(crate) fn ln_f64(x: f64) -> f64 {
-    if x < 0.0 || x.is_nan() { return f64::NAN; }
-    if x == 0.0 { return f64::NEG_INFINITY; }
-    if x.is_infinite() { return f64::INFINITY; }
+    if x < 0.0 || x.is_nan() {
+        return f64::NAN;
+    }
+    if x == 0.0 {
+        return f64::NEG_INFINITY;
+    }
+    if x.is_infinite() {
+        return f64::INFINITY;
+    }
     let bits = x.to_bits();
     let mut exp = ((bits >> 52) & 0x7ff) as i64 - 1023;
     let mut m = f64::from_bits((bits & 0x000f_ffff_ffff_ffff) | (1023_u64 << 52));
@@ -141,14 +165,24 @@ pub(crate) fn log10_f64(x: f64) -> f64 {
 
 #[inline]
 pub(crate) fn pow10_f64(x: f64) -> f64 {
-    if x == 0.0 { 1.0 } else { exp_f64(x * core::f64::consts::LN_10) }
+    if x == 0.0 {
+        1.0
+    } else {
+        exp_f64(x * core::f64::consts::LN_10)
+    }
 }
 
 #[inline]
 pub(crate) fn pow_f64(base: f64, exp: f64) -> f64 {
-    if exp == 0.0 || base == 1.0 { return 1.0; }
-    if base == 0.0 { return if exp > 0.0 { 0.0 } else { f64::INFINITY }; }
-    if base < 0.0 { return f64::NAN; }
+    if exp == 0.0 || base == 1.0 {
+        return 1.0;
+    }
+    if base == 0.0 {
+        return if exp > 0.0 { 0.0 } else { f64::INFINITY };
+    }
+    if base < 0.0 {
+        return f64::NAN;
+    }
     exp_f64(exp * ln_f64(base))
 }
 
@@ -164,13 +198,20 @@ impl OnePoleLowPass {
         if !alpha.is_finite() || !initial_state.is_finite() || !(0.0..=1.0).contains(&alpha) {
             return Err(SignalError::InvalidParameter);
         }
-        Ok(Self { alpha: f64::from(alpha), state: f64::from(initial_state) })
+        Ok(Self {
+            alpha: f64::from(alpha),
+            state: f64::from(initial_state),
+        })
     }
 
-    pub fn state(&self) -> f64 { self.state }
+    pub fn state(&self) -> f64 {
+        self.state
+    }
 
     pub fn process_into(&mut self, samples: &[f32], out: &mut [f32]) -> Result<usize, SignalError> {
-        if out.len() < samples.len() { return Err(SignalError::LengthMismatch); }
+        if out.len() < samples.len() {
+            return Err(SignalError::LengthMismatch);
+        }
         if samples.iter().any(|sample| !sample.is_finite()) {
             return Err(SignalError::NonFiniteInput);
         }
@@ -200,11 +241,19 @@ pub struct BiquadCoeffs {
 }
 
 impl Default for BiquadCoeffs {
-    fn default() -> Self { Self::IDENTITY }
+    fn default() -> Self {
+        Self::IDENTITY
+    }
 }
 
 impl BiquadCoeffs {
-    pub const IDENTITY: Self = Self { b0: 1.0, b1: 0.0, b2: 0.0, a1: 0.0, a2: 0.0 };
+    pub const IDENTITY: Self = Self {
+        b0: 1.0,
+        b1: 0.0,
+        b2: 0.0,
+        a1: 0.0,
+        a2: 0.0,
+    };
 
     #[inline]
     pub const fn new(b0: f64, b1: f64, b2: f64, a1: f64, a2: f64) -> Self {
@@ -236,8 +285,12 @@ impl BiquadCoeffs {
 
     /// Evaluate squared magnitude response $|H(e^{j\omega})|^2$ at digital angle $\omega \in [0, \pi]$.
     pub fn frequency_response_mag_sq(&self, omega_rad: f64) -> Result<f64, SignalError> {
-        if !omega_rad.is_finite() { return Err(SignalError::NonFiniteInput); }
-        if !self.is_stable() { return Err(SignalError::InvalidParameter); }
+        if !omega_rad.is_finite() {
+            return Err(SignalError::NonFiniteInput);
+        }
+        if !self.is_stable() {
+            return Err(SignalError::InvalidParameter);
+        }
         let (sin_w, cos_w) = sin_cos_f64(omega_rad);
         let cos_2w = 2.0 * cos_w * cos_w - 1.0;
         let sin_2w = 2.0 * sin_w * cos_w;
@@ -255,18 +308,31 @@ impl BiquadCoeffs {
 }
 
 #[inline]
-fn normalize_rbj(b0: f64, b1: f64, b2: f64, a0: f64, a1: f64, a2: f64) -> Result<BiquadCoeffs, SignalError> {
+fn normalize_rbj(
+    b0: f64,
+    b1: f64,
+    b2: f64,
+    a0: f64,
+    a1: f64,
+    a2: f64,
+) -> Result<BiquadCoeffs, SignalError> {
     if !a0.is_finite() || a0.abs() <= f64::EPSILON {
         return Err(SignalError::NumericRange);
     }
     let inv = 1.0 / a0;
     let c = BiquadCoeffs::new(b0 * inv, b1 * inv, b2 * inv, a1 * inv, a2 * inv);
-    if !c.is_stable() { return Err(SignalError::NumericRange); }
+    if !c.is_stable() {
+        return Err(SignalError::NumericRange);
+    }
     Ok(c)
 }
 
 #[inline]
-fn validate_rbj_inputs(sample_rate_hz: f64, freq_hz: f64, q: f64) -> Result<(f64, f64, f64), SignalError> {
+fn validate_rbj_inputs(
+    sample_rate_hz: f64,
+    freq_hz: f64,
+    q: f64,
+) -> Result<(f64, f64, f64), SignalError> {
     if !sample_rate_hz.is_finite() || !freq_hz.is_finite() || !q.is_finite() {
         return Err(SignalError::NonFiniteInput);
     }
@@ -277,43 +343,94 @@ fn validate_rbj_inputs(sample_rate_hz: f64, freq_hz: f64, q: f64) -> Result<(f64
     Ok((sin_w0, cos_w0, sin_w0 / (2.0 * q)))
 }
 
-pub fn rbj_lowpass(sample_rate_hz: f64, cutoff_hz: f64, q: f64) -> Result<BiquadCoeffs, SignalError> {
+pub fn rbj_lowpass(
+    sample_rate_hz: f64,
+    cutoff_hz: f64,
+    q: f64,
+) -> Result<BiquadCoeffs, SignalError> {
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, cutoff_hz, q)?;
     let b1 = 1.0 - cos_w0;
     let b0 = 0.5 * b1;
     normalize_rbj(b0, b1, b0, 1.0 + alpha, -2.0 * cos_w0, 1.0 - alpha)
 }
 
-pub fn rbj_highpass(sample_rate_hz: f64, cutoff_hz: f64, q: f64) -> Result<BiquadCoeffs, SignalError> {
+pub fn rbj_highpass(
+    sample_rate_hz: f64,
+    cutoff_hz: f64,
+    q: f64,
+) -> Result<BiquadCoeffs, SignalError> {
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, cutoff_hz, q)?;
     let one_plus_cos = 1.0 + cos_w0;
     let b0 = 0.5 * one_plus_cos;
-    normalize_rbj(b0, -one_plus_cos, b0, 1.0 + alpha, -2.0 * cos_w0, 1.0 - alpha)
+    normalize_rbj(
+        b0,
+        -one_plus_cos,
+        b0,
+        1.0 + alpha,
+        -2.0 * cos_w0,
+        1.0 - alpha,
+    )
 }
 
-pub fn rbj_bandpass(sample_rate_hz: f64, center_hz: f64, q: f64) -> Result<BiquadCoeffs, SignalError> {
+pub fn rbj_bandpass(
+    sample_rate_hz: f64,
+    center_hz: f64,
+    q: f64,
+) -> Result<BiquadCoeffs, SignalError> {
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, center_hz, q)?;
     normalize_rbj(alpha, 0.0, -alpha, 1.0 + alpha, -2.0 * cos_w0, 1.0 - alpha)
 }
 
 pub fn rbj_notch(sample_rate_hz: f64, center_hz: f64, q: f64) -> Result<BiquadCoeffs, SignalError> {
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, center_hz, q)?;
-    normalize_rbj(1.0, -2.0 * cos_w0, 1.0, 1.0 + alpha, -2.0 * cos_w0, 1.0 - alpha)
+    normalize_rbj(
+        1.0,
+        -2.0 * cos_w0,
+        1.0,
+        1.0 + alpha,
+        -2.0 * cos_w0,
+        1.0 - alpha,
+    )
 }
 
-pub fn rbj_peaking_eq(sample_rate_hz: f64, center_hz: f64, q: f64, gain_db: f64) -> Result<BiquadCoeffs, SignalError> {
-    if !gain_db.is_finite() { return Err(SignalError::NonFiniteInput); }
+pub fn rbj_peaking_eq(
+    sample_rate_hz: f64,
+    center_hz: f64,
+    q: f64,
+    gain_db: f64,
+) -> Result<BiquadCoeffs, SignalError> {
+    if !gain_db.is_finite() {
+        return Err(SignalError::NonFiniteInput);
+    }
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, center_hz, q)?;
     let a = pow10_f64(gain_db / 40.0);
-    if !a.is_finite() || a <= 0.0 { return Err(SignalError::NumericRange); }
-    normalize_rbj(1.0 + alpha * a, -2.0 * cos_w0, 1.0 - alpha * a, 1.0 + alpha / a, -2.0 * cos_w0, 1.0 - alpha / a)
+    if !a.is_finite() || a <= 0.0 {
+        return Err(SignalError::NumericRange);
+    }
+    normalize_rbj(
+        1.0 + alpha * a,
+        -2.0 * cos_w0,
+        1.0 - alpha * a,
+        1.0 + alpha / a,
+        -2.0 * cos_w0,
+        1.0 - alpha / a,
+    )
 }
 
-pub fn rbj_low_shelf(sample_rate_hz: f64, cutoff_hz: f64, q: f64, gain_db: f64) -> Result<BiquadCoeffs, SignalError> {
-    if !gain_db.is_finite() { return Err(SignalError::NonFiniteInput); }
+pub fn rbj_low_shelf(
+    sample_rate_hz: f64,
+    cutoff_hz: f64,
+    q: f64,
+    gain_db: f64,
+) -> Result<BiquadCoeffs, SignalError> {
+    if !gain_db.is_finite() {
+        return Err(SignalError::NonFiniteInput);
+    }
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, cutoff_hz, q)?;
     let a = pow10_f64(gain_db / 40.0);
-    if !a.is_finite() || a <= 0.0 { return Err(SignalError::NumericRange); }
+    if !a.is_finite() || a <= 0.0 {
+        return Err(SignalError::NumericRange);
+    }
     let t = 2.0 * sqrt_f64(a) * alpha;
     normalize_rbj(
         a * ((a + 1.0) - (a - 1.0) * cos_w0 + t),
@@ -325,11 +442,20 @@ pub fn rbj_low_shelf(sample_rate_hz: f64, cutoff_hz: f64, q: f64, gain_db: f64) 
     )
 }
 
-pub fn rbj_high_shelf(sample_rate_hz: f64, cutoff_hz: f64, q: f64, gain_db: f64) -> Result<BiquadCoeffs, SignalError> {
-    if !gain_db.is_finite() { return Err(SignalError::NonFiniteInput); }
+pub fn rbj_high_shelf(
+    sample_rate_hz: f64,
+    cutoff_hz: f64,
+    q: f64,
+    gain_db: f64,
+) -> Result<BiquadCoeffs, SignalError> {
+    if !gain_db.is_finite() {
+        return Err(SignalError::NonFiniteInput);
+    }
     let (_s, cos_w0, alpha) = validate_rbj_inputs(sample_rate_hz, cutoff_hz, q)?;
     let a = pow10_f64(gain_db / 40.0);
-    if !a.is_finite() || a <= 0.0 { return Err(SignalError::NumericRange); }
+    if !a.is_finite() || a <= 0.0 {
+        return Err(SignalError::NumericRange);
+    }
     let t = 2.0 * sqrt_f64(a) * alpha;
     normalize_rbj(
         a * ((a + 1.0) + (a - 1.0) * cos_w0 + t),
@@ -348,7 +474,11 @@ pub fn design_k_weighting_stage1(sample_rate_hz: f64) -> BiquadCoeffs {
     const SHELF_GAIN_DB: f64 = 3.999_843_853_973_347;
     const SHELF_VB_EXP: f64 = 0.499_666_774_154_541_6;
 
-    let fs = if sample_rate_hz.is_finite() && sample_rate_hz > 1.0 { sample_rate_hz } else { 1.0 };
+    let fs = if sample_rate_hz.is_finite() && sample_rate_hz > 1.0 {
+        sample_rate_hz
+    } else {
+        1.0
+    };
     let k = tan_f64(PI_F64 * SHELF_F0 / fs);
     let vh = pow10_f64(SHELF_GAIN_DB / 20.0);
     let vb = pow_f64(vh, SHELF_VB_EXP);
@@ -369,7 +499,11 @@ pub fn design_k_weighting_stage2(sample_rate_hz: f64) -> BiquadCoeffs {
     const HP_F0: f64 = 38.135_470_876_024_44;
     const HP_Q: f64 = 0.500_327_037_323_877_3;
 
-    let fs = if sample_rate_hz.is_finite() && sample_rate_hz > 1.0 { sample_rate_hz } else { 1.0 };
+    let fs = if sample_rate_hz.is_finite() && sample_rate_hz > 1.0 {
+        sample_rate_hz
+    } else {
+        1.0
+    };
     let kb = tan_f64(PI_F64 * HP_F0 / fs);
     let kkb = kb * kb;
     let kqb = kb / HP_Q;
@@ -436,33 +570,54 @@ pub struct BiquadDf2t {
 
 impl Default for BiquadDf2t {
     fn default() -> Self {
-        Self { coeffs: BiquadCoeffs::IDENTITY, s1: 0.0, s2: 0.0 }
+        Self {
+            coeffs: BiquadCoeffs::IDENTITY,
+            s1: 0.0,
+            s2: 0.0,
+        }
     }
 }
 
 impl BiquadDf2t {
     pub fn new(coeffs: BiquadCoeffs) -> Result<Self, SignalError> {
-        if !coeffs.is_stable() { return Err(SignalError::InvalidParameter); }
-        Ok(Self { coeffs, s1: 0.0, s2: 0.0 })
+        if !coeffs.is_stable() {
+            return Err(SignalError::InvalidParameter);
+        }
+        Ok(Self {
+            coeffs,
+            s1: 0.0,
+            s2: 0.0,
+        })
     }
 
     pub fn set_coeffs(&mut self, coeffs: BiquadCoeffs) -> Result<(), SignalError> {
-        if !coeffs.is_stable() { return Err(SignalError::InvalidParameter); }
+        if !coeffs.is_stable() {
+            return Err(SignalError::InvalidParameter);
+        }
         self.coeffs = coeffs;
         Ok(())
     }
 
     #[inline]
-    pub const fn coeffs(&self) -> BiquadCoeffs { self.coeffs }
+    pub const fn coeffs(&self) -> BiquadCoeffs {
+        self.coeffs
+    }
 
     #[inline]
-    pub const fn state(&self) -> (f64, f64) { (self.s1, self.s2) }
+    pub const fn state(&self) -> (f64, f64) {
+        (self.s1, self.s2)
+    }
 
     #[inline]
-    pub fn is_stable(&self) -> bool { self.coeffs.is_stable() }
+    pub fn is_stable(&self) -> bool {
+        self.coeffs.is_stable()
+    }
 
     #[inline]
-    pub fn reset(&mut self) { self.s1 = 0.0; self.s2 = 0.0; }
+    pub fn reset(&mut self) {
+        self.s1 = 0.0;
+        self.s2 = 0.0;
+    }
 
     #[inline]
     pub fn tick(&mut self, x: f64) -> f64 {
@@ -473,16 +628,30 @@ impl BiquadDf2t {
     }
 
     #[inline]
-    pub fn tick_f32(&mut self, x: f32) -> f32 { self.tick(f64::from(x)) as f32 }
+    pub fn tick_f32(&mut self, x: f32) -> f32 {
+        self.tick(f64::from(x)) as f32
+    }
 
-    pub fn process_block_into(&mut self, input: &[f32], output: &mut [f32]) -> Result<(), SignalError> {
-        if output.len() < input.len() { return Err(SignalError::LengthMismatch); }
-        if input.iter().any(|sample| !sample.is_finite()) { return Err(SignalError::NonFiniteInput); }
-        if !self.coeffs.is_stable() { return Err(SignalError::InvalidParameter); }
+    pub fn process_block_into(
+        &mut self,
+        input: &[f32],
+        output: &mut [f32],
+    ) -> Result<(), SignalError> {
+        if output.len() < input.len() {
+            return Err(SignalError::LengthMismatch);
+        }
+        if input.iter().any(|sample| !sample.is_finite()) {
+            return Err(SignalError::NonFiniteInput);
+        }
+        if !self.coeffs.is_stable() {
+            return Err(SignalError::InvalidParameter);
+        }
         let mut sim = *self;
         for &sample in input {
             let y = sim.tick(f64::from(sample));
-            if !y.is_finite() || !(y as f32).is_finite() { return Err(SignalError::NumericRange); }
+            if !y.is_finite() || !(y as f32).is_finite() {
+                return Err(SignalError::NumericRange);
+            }
         }
         for (dst, &sample) in output.iter_mut().zip(input.iter()) {
             *dst = self.tick(f64::from(sample)) as f32;
@@ -499,7 +668,9 @@ pub struct CascadedBiquadDf2t<const STAGES: usize> {
 
 impl<const STAGES: usize> CascadedBiquadDf2t<STAGES> {
     pub fn new(coeffs: [BiquadCoeffs; STAGES]) -> Result<Self, SignalError> {
-        if STAGES == 0 { return Err(SignalError::InvalidParameter); }
+        if STAGES == 0 {
+            return Err(SignalError::InvalidParameter);
+        }
         let mut stages = [BiquadDf2t::default(); STAGES];
         let mut i = 0;
         while i < STAGES {
@@ -510,38 +681,67 @@ impl<const STAGES: usize> CascadedBiquadDf2t<STAGES> {
     }
 
     #[inline]
-    pub fn is_stable(&self) -> bool { STAGES > 0 && self.stages.iter().all(BiquadDf2t::is_stable) }
+    pub fn is_stable(&self) -> bool {
+        STAGES > 0 && self.stages.iter().all(BiquadDf2t::is_stable)
+    }
 
     #[inline]
-    pub fn stage(&self, index: usize) -> Option<&BiquadDf2t> { self.stages.get(index) }
+    pub fn stage(&self, index: usize) -> Option<&BiquadDf2t> {
+        self.stages.get(index)
+    }
 
-    pub fn set_stage_coeffs(&mut self, index: usize, coeffs: BiquadCoeffs) -> Result<(), SignalError> {
-        self.stages.get_mut(index).ok_or(SignalError::InvalidParameter)?.set_coeffs(coeffs)
+    pub fn set_stage_coeffs(
+        &mut self,
+        index: usize,
+        coeffs: BiquadCoeffs,
+    ) -> Result<(), SignalError> {
+        self.stages
+            .get_mut(index)
+            .ok_or(SignalError::InvalidParameter)?
+            .set_coeffs(coeffs)
     }
 
     #[inline]
     pub fn reset(&mut self) {
-        for stage in &mut self.stages { stage.reset(); }
+        for stage in &mut self.stages {
+            stage.reset();
+        }
     }
 
     #[inline]
     pub fn tick(&mut self, x: f64) -> f64 {
         let mut acc = x;
-        for stage in &mut self.stages { acc = stage.tick(acc); }
+        for stage in &mut self.stages {
+            acc = stage.tick(acc);
+        }
         acc
     }
 
     #[inline]
-    pub fn tick_f32(&mut self, x: f32) -> f32 { self.tick(f64::from(x)) as f32 }
+    pub fn tick_f32(&mut self, x: f32) -> f32 {
+        self.tick(f64::from(x)) as f32
+    }
 
-    pub fn process_block_into(&mut self, input: &[f32], output: &mut [f32]) -> Result<(), SignalError> {
-        if output.len() < input.len() { return Err(SignalError::LengthMismatch); }
-        if input.iter().any(|sample| !sample.is_finite()) { return Err(SignalError::NonFiniteInput); }
-        if !self.is_stable() { return Err(SignalError::InvalidParameter); }
+    pub fn process_block_into(
+        &mut self,
+        input: &[f32],
+        output: &mut [f32],
+    ) -> Result<(), SignalError> {
+        if output.len() < input.len() {
+            return Err(SignalError::LengthMismatch);
+        }
+        if input.iter().any(|sample| !sample.is_finite()) {
+            return Err(SignalError::NonFiniteInput);
+        }
+        if !self.is_stable() {
+            return Err(SignalError::InvalidParameter);
+        }
         let mut sim = *self;
         for &sample in input {
             let y = sim.tick(f64::from(sample));
-            if !y.is_finite() || !(y as f32).is_finite() { return Err(SignalError::NumericRange); }
+            if !y.is_finite() || !(y as f32).is_finite() {
+                return Err(SignalError::NumericRange);
+            }
         }
         for (dst, &sample) in output.iter_mut().zip(input.iter()) {
             *dst = self.tick(f64::from(sample)) as f32;
@@ -586,10 +786,14 @@ mod biquad_tests {
         let lp = rbj_lowpass(48_000.0, 2_000.0, core::f64::consts::FRAC_1_SQRT_2).unwrap();
         let mut cascade = CascadedBiquadDf2t::<2>::new([lp, lp]).unwrap();
         let mut nyq_in = [0.0f32; 256];
-        for (i, s) in nyq_in.iter_mut().enumerate() { *s = if i % 2 == 0 { 1.0 } else { -1.0 }; }
+        for (i, s) in nyq_in.iter_mut().enumerate() {
+            *s = if i % 2 == 0 { 1.0 } else { -1.0 };
+        }
         let mut nyq_out = [0.0f32; 256];
         cascade.process_block_into(&nyq_in, &mut nyq_out).unwrap();
-        let tail_max = nyq_out[128..].iter().fold(0.0f32, |acc, &x| acc.max(x.abs()));
+        let tail_max = nyq_out[128..]
+            .iter()
+            .fold(0.0f32, |acc, &x| acc.max(x.abs()));
         assert!(tail_max < 1e-6);
     }
 }

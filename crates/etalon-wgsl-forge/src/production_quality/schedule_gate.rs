@@ -158,9 +158,7 @@ pub struct TuningQualityReport {
     pub search: CandidateSearchRecord,
 }
 
-pub fn admit_schedule(
-    request: &ScheduleGateRequest<'_>,
-) -> Result<ScheduleGateReport, ForgeError> {
+pub fn admit_schedule(request: &ScheduleGateRequest<'_>) -> Result<ScheduleGateReport, ForgeError> {
     if matches!(request.occupancy, OccupancyAssumption::Undeclared) {
         return Err(ForgeError::Validation(
             "undeclared occupancy assumption is rejected; occupancy is an admission/report, not measured GPU timing".to_string(),
@@ -203,9 +201,8 @@ pub fn admit_schedule(
 
 /// Labels samples with the true method. Does not relabel synthetic as GPU.
 pub fn label_timing(source: TimingSource, samples: &[u64]) -> Result<LabeledTiming, ForgeError> {
-    let summary = TimingSummary::from_samples(source, samples).ok_or_else(|| {
-        ForgeError::Validation("timing produced no samples".to_string())
-    })?;
+    let summary = TimingSummary::from_samples(source, samples)
+        .ok_or_else(|| ForgeError::Validation("timing produced no samples".to_string()))?;
     Ok(LabeledTiming::from_summary(summary))
 }
 
@@ -502,7 +499,9 @@ fn shared_bytes(kernel: &KernelSpec, workgroup: u32) -> Result<u32, ForgeError> 
             .length
             .resolve(workgroup)
             .checked_mul(spec.element.size_bytes())
-            .ok_or_else(|| ForgeError::InvalidKernel("shared-memory length overflow".to_string()))?;
+            .ok_or_else(|| {
+                ForgeError::InvalidKernel("shared-memory length overflow".to_string())
+            })?;
         total = total.checked_add(bytes).ok_or_else(|| {
             ForgeError::InvalidKernel("shared-memory byte count overflow".to_string())
         })?;

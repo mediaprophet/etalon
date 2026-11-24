@@ -218,10 +218,13 @@ pub fn evaluate_space_weather_coupling(
     // 2. Newell coupling function: dPhi/dt ~ v^(4/3) * B_T^(2/3) * sin^(8/3)(theta_clock / 2)
     let clock_angle = wind.imf_bz_nt.atan2(wind.imf_total_nt.max(0.1));
     let sin_half = ((PI - clock_angle) * 0.5).sin().abs();
-    let newell_rate = (wind.velocity_km_s.powf(1.333) * wind.imf_total_nt.powf(0.667) * sin_half.powf(2.667)) * 1e-4;
+    let newell_rate =
+        (wind.velocity_km_s.powf(1.333) * wind.imf_total_nt.powf(0.667) * sin_half.powf(2.667))
+            * 1e-4;
 
     // 3. Planetary Kp-index estimation [0.0, 9.0]
-    let base_kp = (wind.velocity_km_s / 160.0) + (bz_drive * 0.7) + (wind.dynamic_pressure_npa * 0.4);
+    let base_kp =
+        (wind.velocity_km_s / 160.0) + (bz_drive * 0.7) + (wind.dynamic_pressure_npa * 0.4);
     let kp = base_kp.clamp(0.0, 9.0);
 
     // 4. Dst ring current index: quiet +5 nT, storms reach -100 to -350 nT
@@ -248,7 +251,8 @@ pub fn evaluate_space_weather_coupling(
     let fair_weather_v_m = 110.0 + (iono_pot_kv - 240.0) * 0.35;
 
     // 7. Dry lightning susceptibility: high when ionization is elevated and solar heating creates high VPD
-    let dry_lightning = (0.25 + (kp / 15.0) + (1.0 - solar.spotless_days_ratio) * 0.35).clamp(0.0, 1.0);
+    let dry_lightning =
+        (0.25 + (kp / 15.0) + (1.0 - solar.spotless_days_ratio) * 0.35).clamp(0.0, 1.0);
 
     let gec = AtmosphericElectricCircuit {
         ionospheric_potential_kv: iono_pot_kv,
@@ -280,7 +284,10 @@ mod tests {
         assert!(max_schwabe.f10_7_radio_flux_sfu > min_schwabe.f10_7_radio_flux_sfu);
 
         // Hale cycle polarity is consistent
-        assert_eq!(min_hale.is_solar_north_positive, max_hale.is_solar_north_positive);
+        assert_eq!(
+            min_hale.is_solar_north_positive,
+            max_hale.is_solar_north_positive
+        );
     }
 
     #[test]

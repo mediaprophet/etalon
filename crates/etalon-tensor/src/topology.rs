@@ -84,8 +84,8 @@ impl TopologyClass {
                 let r1 = (p1.0 * p1.0 + p1.1 * p1.1 + p1.2 * p1.2).sqrt();
                 let r2 = (p2.0 * p2.0 + p2.1 * p2.1 + p2.2 * p2.2).sqrt();
                 if r1 > 1e-6 && r2 > 1e-6 {
-                    let dot = ((p1.0 * p2.0 + p1.1 * p2.1 + p1.2 * p2.2) / (r1 * r2))
-                        .clamp(-1.0, 1.0);
+                    let dot =
+                        ((p1.0 * p2.0 + p1.1 * p2.1 + p1.2 * p2.2) / (r1 * r2)).clamp(-1.0, 1.0);
                     let delta_theta = dot.acos();
                     let r_mean = 0.5 * (r1 + r2);
                     let arc = r_mean * delta_theta;
@@ -154,10 +154,7 @@ mod tests {
         for (expected_idx, variant) in variants.iter().enumerate() {
             assert_eq!(*variant as u32, expected_idx as u32);
             assert_eq!(variant.to_v_value(), expected_idx as f32);
-            assert_eq!(
-                TopologyClass::from_v_value(expected_idx as f32),
-                *variant
-            );
+            assert_eq!(TopologyClass::from_v_value(expected_idx as f32), *variant);
         }
     }
 

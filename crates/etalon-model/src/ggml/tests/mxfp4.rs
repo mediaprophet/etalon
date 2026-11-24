@@ -1,4 +1,4 @@
-use super::super::{GGML_TYPE_MXFP4, GgmlDequantError, dequantize_row_into, ggml_row_bytes};
+use super::super::{dequantize_row_into, ggml_row_bytes, GgmlDequantError, GGML_TYPE_MXFP4};
 
 // Natural E2M1 values and an f64 power-of-two scale form an independent oracle.
 const E2M1: [f64; 16] = [

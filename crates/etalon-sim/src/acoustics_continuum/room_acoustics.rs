@@ -198,7 +198,9 @@ pub struct RirAcousticsReport {
 /// Compute the normalized Schroeder backward energy integration curve in dB:
 /// $$E(k) = \sum_{n=k}^{N-1} h[n]^2, \qquad L_{\text{EDC}}(k) = 10\log_{10}\!\left(\frac{E(k)}{E(0)}\right)$$
 /// Rejects empty, non-finite, or all-zero silent impulse responses (C02-C01 / AQ-04).
-pub fn schroeder_backward_integration_db(impulse_response: &[f64]) -> Result<Vec<f64>, NumericalError> {
+pub fn schroeder_backward_integration_db(
+    impulse_response: &[f64],
+) -> Result<Vec<f64>, NumericalError> {
     if impulse_response.len() < 4 {
         return Err(NumericalError::DomainError(
             "impulse_response must contain at least 4 samples",
@@ -249,12 +251,13 @@ pub fn fit_decay_rt60_s(
             "fit_decay_rt60_s requires 0 >= start_db > end_db",
         ));
     }
-    let i_start = edc_db
-        .iter()
-        .position(|&db| db <= start_db)
-        .ok_or(NumericalError::DomainError(
-            "EDC never reaches start_db threshold",
-        ))?;
+    let i_start =
+        edc_db
+            .iter()
+            .position(|&db| db <= start_db)
+            .ok_or(NumericalError::DomainError(
+                "EDC never reaches start_db threshold",
+            ))?;
     let i_end = edc_db[i_start..]
         .iter()
         .position(|&db| db <= end_db)

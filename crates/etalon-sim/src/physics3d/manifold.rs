@@ -83,18 +83,15 @@ impl ContactManifold3D {
             body_a,
             body_b,
             normal,
-            points: [
-                ContactPoint3D {
-                    local_a: [0.0; 3],
-                    local_b: [0.0; 3],
-                    world_point: [0.0; 3],
-                    penetration: 0.0,
-                    normal_impulse: 0.0,
-                    tangent_impulse: [0.0; 2],
-                    feature_id: 0,
-                };
-                MAX_MANIFOLD_POINTS
-            ],
+            points: [ContactPoint3D {
+                local_a: [0.0; 3],
+                local_b: [0.0; 3],
+                world_point: [0.0; 3],
+                penetration: 0.0,
+                normal_impulse: 0.0,
+                tangent_impulse: [0.0; 2],
+                feature_id: 0,
+            }; MAX_MANIFOLD_POINTS],
             point_count: 0,
         }
     }

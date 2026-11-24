@@ -51,9 +51,7 @@ pub const fn quaternion_conjugate_xyzw(xyzw: [f64; 4]) -> [f64; 4] {
     [-xyzw[0], -xyzw[1], -xyzw[2], xyzw[3]]
 }
 
-pub fn rotation_matrix_from_quaternion_f64(
-    xyzw: [f64; 4],
-) -> Result<[[f64; 3]; 3], SignalError> {
+pub fn rotation_matrix_from_quaternion_f64(xyzw: [f64; 4]) -> Result<[[f64; 3]; 3], SignalError> {
     let ([qx, qy, qz, qw], _) = admit_and_derive_unit_quaternion_f64(xyzw)?;
     let xx = qx * qx;
     let yy = qy * qy;
@@ -111,12 +109,7 @@ pub fn rotate_symmetric_tensor_active_f64(
         }
     }
     Ok([
-        rtrt[0][0],
-        rtrt[1][1],
-        rtrt[2][2],
-        rtrt[0][1],
-        rtrt[1][2],
-        rtrt[0][2],
+        rtrt[0][0], rtrt[1][1], rtrt[2][2], rtrt[0][1], rtrt[1][2], rtrt[0][2],
     ])
 }
 

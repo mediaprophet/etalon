@@ -11,11 +11,11 @@ use std::collections::HashMap;
 use super::compute::QualiaCompute;
 #[cfg(not(target_arch = "wasm32"))]
 use super::memory::MemoryTopology;
-use super::memory::{BindingUsage, BufferView, DEFAULT_BINDING_ALIGNMENT, QualiaSlabAllocator};
+use super::memory::{BindingUsage, BufferView, QualiaSlabAllocator, DEFAULT_BINDING_ALIGNMENT};
 use super::oracle_ctx::OracleContext;
 use crate::numerical::{
-    AdapterConstraints, AdapterIdentity, ForgeError, HardwareProfile, KernelSpec, Schedule,
-    TargetBackend, emit_shader,
+    emit_shader, AdapterConstraints, AdapterIdentity, ForgeError, HardwareProfile, KernelSpec,
+    Schedule, TargetBackend,
 };
 #[cfg(not(target_arch = "wasm32"))]
 use etalon_resources::device_caps::GpuAdapterCaps;

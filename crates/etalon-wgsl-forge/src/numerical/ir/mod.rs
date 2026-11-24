@@ -12,6 +12,6 @@ pub use core::{
     ScalarType, SharedLen, SharedMemorySpec,
 };
 pub use graph::{
-    ComputeGraph, DType, GraphNode, Layout, Lowerer, NodeId, OpNode, Shape, TensorRef, lower_graph,
+    lower_graph, ComputeGraph, DType, GraphNode, Layout, Lowerer, NodeId, OpNode, Shape, TensorRef,
 };
 pub use intrinsics::{Intrinsic, IntrinsicClass, SubgroupReduceOp};

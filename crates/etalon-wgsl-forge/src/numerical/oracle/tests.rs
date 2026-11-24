@@ -8,14 +8,12 @@ fn oracle_vectors_are_reproducible() {
     let first = OracleCase::affine(17, 42, 1.5, -0.25);
     let second = OracleCase::affine(17, 42, 1.5, -0.25);
     assert_eq!(first, second);
-    assert!(
-        compare_f32(
-            &first.expected,
-            &second.expected,
-            OracleTolerance::default()
-        )
-        .passed()
-    );
+    assert!(compare_f32(
+        &first.expected,
+        &second.expected,
+        OracleTolerance::default()
+    )
+    .passed());
 }
 
 #[test]

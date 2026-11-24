@@ -9,9 +9,7 @@ use crate::cache::{
 use crate::certify::{ComparisonReport, ValidationReport};
 use crate::emit::GeneratedShader;
 use crate::ir::ForgeError;
-use crate::{
-    CUDARC_API_VERSION, FORGE_SCHEMA_VERSION_NUM, NAGA_API_VERSION, WGPU_API_VERSION,
-};
+use crate::{CUDARC_API_VERSION, FORGE_SCHEMA_VERSION_NUM, NAGA_API_VERSION, WGPU_API_VERSION};
 
 use super::contract::{ArithmeticModel, ProductionContract};
 use super::rewrites::RewriteTrace;
@@ -294,7 +292,9 @@ impl StageReceipt {
         match next {
             EvidenceStage::NagaValidated => {
                 let report = evidence.validation.ok_or_else(|| {
-                    ForgeError::Validation("Naga promotion requires a validation report".to_string())
+                    ForgeError::Validation(
+                        "Naga promotion requires a validation report".to_string(),
+                    )
                 })?;
                 let manifest = CertificationManifest::naga_only(evidence.shader, report.clone());
                 if manifest.validation_level != ValidationLevel::NagaValidated {
@@ -337,7 +337,9 @@ impl StageReceipt {
             EvidenceStage::Profiled => {
                 let adapter = require_same_adapter(self, evidence.adapter)?;
                 let summary = evidence.timing.ok_or_else(|| {
-                    ForgeError::Validation("profiled evidence requires a timing summary".to_string())
+                    ForgeError::Validation(
+                        "profiled evidence requires a timing summary".to_string(),
+                    )
                 })?;
                 reject_synthetic_as_gpu(evidence.measurement, summary)?;
                 promoted.adapter = Some(adapter.clone());
@@ -351,8 +353,7 @@ impl StageReceipt {
             }
             EvidenceStage::Certified => {
                 let adapter = require_same_adapter(self, evidence.adapter)?;
-                if self.certification.is_none() || self.adapter.is_none() || self.timing.is_none()
-                {
+                if self.certification.is_none() || self.adapter.is_none() || self.timing.is_none() {
                     return Err(ForgeError::Validation(
                         "certified evidence requires Naga, adapter, oracle, and timing parents"
                             .to_string(),
@@ -609,11 +610,9 @@ fn require_same_adapter<'a>(
         ForgeError::Validation("adapter-backed promotion requires AdapterIdentity".to_string())
     })?;
     match &parent.adapter {
-        Some(existing) if existing != adapter => {
-            Err(ForgeError::Validation(
-                "adapter identity changed; downstream evidence is invalid".to_string(),
-            ))
-        }
+        Some(existing) if existing != adapter => Err(ForgeError::Validation(
+            "adapter identity changed; downstream evidence is invalid".to_string(),
+        )),
         _ => Ok(adapter),
     }
 }
@@ -622,8 +621,7 @@ fn reject_synthetic_as_gpu(
     measurement: MeasurementMethod,
     timing: &TimingSummary,
 ) -> Result<(), ForgeError> {
-    if measurement == MeasurementMethod::GpuTimestamp
-        && timing.source != TimingSource::GpuTimestamp
+    if measurement == MeasurementMethod::GpuTimestamp && timing.source != TimingSource::GpuTimestamp
     {
         return Err(ForgeError::Validation(
             "synthetic or completion-clock timing cannot be presented as GPU timing".to_string(),

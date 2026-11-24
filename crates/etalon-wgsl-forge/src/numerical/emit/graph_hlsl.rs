@@ -12,7 +12,7 @@ use std::fmt::Write;
 
 use super::GeneratedShader;
 use crate::numerical::ir::graph::{ComputeGraph, EwKind, GraphNode, Lowerer, OpNode, RedKind};
-use crate::numerical::{FORGE_SCHEMA_VERSION, ForgeError, Schedule};
+use crate::numerical::{ForgeError, Schedule, FORGE_SCHEMA_VERSION};
 
 /// Entry point name for graph-lowered GEMV kernels.
 const GEMV_ENTRY: &str = "gemv_main";
@@ -365,11 +365,9 @@ mod tests {
 
     #[test]
     fn hlsl_portable_kit_emits_hlsl_constructs() {
-        assert!(
-            elementwise_hlsl(EwKind::Silu, 64)
-                .unwrap()
-                .contains("void ewise_main")
-        );
+        assert!(elementwise_hlsl(EwKind::Silu, 64)
+            .unwrap()
+            .contains("void ewise_main"));
         assert!(elementwise_hlsl(EwKind::Add, 64).unwrap().contains("a + b"));
         assert!(elementwise_hlsl(EwKind::Fma, 64).unwrap().contains("mad("));
         assert!(elementwise_hlsl(EwKind::Bias, 64).is_err());

@@ -8,9 +8,9 @@ use super::poynting_energy::{
     mode6_photon_attenuation_and_independent_dose, mode7_quasi_static_dipole_potential_v,
     mueller_apply, mueller_ideal_linear_polarizer_x, peak_phasor_time_average_poynting,
     ray_geometric_delay_s, reconstruct_rf_emf_negative_carrier,
-    reconstruct_rf_qac_positive_carrier, rms_phasor_time_average_poynting,
-    rotate_eb_hamilton_xyzw, rotate_stokes_basis_passive,
-    spectral_density_wavelength_midpoint_integral, verify_discrete_poynting_power_balance,
+    reconstruct_rf_qac_positive_carrier, rms_phasor_time_average_poynting, rotate_eb_hamilton_xyzw,
+    rotate_stokes_basis_passive, spectral_density_wavelength_midpoint_integral,
+    verify_discrete_poynting_power_balance,
 };
 use super::vector_calculus::{
     spectral_plane_wave_curl, verify_discrete_charge_conservation, verify_div_curl_zero_2nd,
@@ -118,10 +118,9 @@ fn test_etalon_sim_maxwell_emf_oracles_and_yee_convergence() {
             <= c02_small_op_f64_budget(1.0)
     );
 
-    let (mu, flu_out, dose_gy, e_j) = mode6_photon_attenuation_and_independent_dose(
-        1000.0, 0.01, 0.2, 100.0, 0.002, 0.01, 1e5,
-    )
-    .unwrap();
+    let (mu, flu_out, dose_gy, e_j) =
+        mode6_photon_attenuation_and_independent_dose(1000.0, 0.01, 0.2, 100.0, 0.002, 0.01, 1e5)
+            .unwrap();
     assert!((mu - 10.0).abs() <= c02_small_op_f64_budget(10.0));
     assert!((flu_out - 13.533_528_323_661_27).abs() <= c02_small_op_f64_budget(100.0));
     assert!((dose_gy - 0.2).abs() <= c02_small_op_f64_budget(0.2));

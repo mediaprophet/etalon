@@ -405,18 +405,18 @@ pub fn maxwell_yee_step_with_context(
 
     {
         let pipeline = WgpuPipeline::compile(ctx, MAXWELL_YEE_STEP_WGSL, MAXWELL_YEE_STEP_ENTRY)?;
-        pipeline.dispatch(&[view_in_0, view_out_0, view_params_0], &schedule, cell_count)?;
+        pipeline.dispatch(
+            &[view_in_0, view_out_0, view_params_0],
+            &schedule,
+            cell_count,
+        )?;
     }
     let mut mid = ctx.read_buffer_f32(&view_out_0)?;
     mid.truncate(len);
 
     // Pass 2: E-field full-step (stage = 1)
-    let view_in_1 = ctx.allocate_and_write(
-        bytemuck::cast_slice(&mid),
-        0,
-        0,
-        BindingUsage::StorageRead,
-    )?;
+    let view_in_1 =
+        ctx.allocate_and_write(bytemuck::cast_slice(&mid), 0, 0, BindingUsage::StorageRead)?;
     let view_out_1 = ctx.allocate_and_write(
         bytemuck::cast_slice(&zeros),
         1,
@@ -433,7 +433,11 @@ pub fn maxwell_yee_step_with_context(
 
     {
         let pipeline = WgpuPipeline::compile(ctx, MAXWELL_YEE_STEP_WGSL, MAXWELL_YEE_STEP_ENTRY)?;
-        pipeline.dispatch(&[view_in_1, view_out_1, view_params_1], &schedule, cell_count)?;
+        pipeline.dispatch(
+            &[view_in_1, view_out_1, view_params_1],
+            &schedule,
+            cell_count,
+        )?;
     }
     let mut out = ctx.read_buffer_f32(&view_out_1)?;
     out.truncate(len);

@@ -226,35 +226,29 @@ pub fn yee_curl_e_4th(
                 let ey_c = ey[c];
                 let ez_c = ez[c];
 
-                let dez_dy = (C1
-                    * (sample_shifted(grid, bc, ez, ix, iy, iz, 0, 1, 0) - ez_c)
+                let dez_dy = (C1 * (sample_shifted(grid, bc, ez, ix, iy, iz, 0, 1, 0) - ez_c)
                     + C2 * (sample_shifted(grid, bc, ez, ix, iy, iz, 0, 2, 0)
                         - sample_shifted(grid, bc, ez, ix, iy, iz, 0, -1, 0)))
                     * inv_dy;
-                let dey_dz = (C1
-                    * (sample_shifted(grid, bc, ey, ix, iy, iz, 0, 0, 1) - ey_c)
+                let dey_dz = (C1 * (sample_shifted(grid, bc, ey, ix, iy, iz, 0, 0, 1) - ey_c)
                     + C2 * (sample_shifted(grid, bc, ey, ix, iy, iz, 0, 0, 2)
                         - sample_shifted(grid, bc, ey, ix, iy, iz, 0, 0, -1)))
                     * inv_dz;
 
-                let dex_dz = (C1
-                    * (sample_shifted(grid, bc, ex, ix, iy, iz, 0, 0, 1) - ex_c)
+                let dex_dz = (C1 * (sample_shifted(grid, bc, ex, ix, iy, iz, 0, 0, 1) - ex_c)
                     + C2 * (sample_shifted(grid, bc, ex, ix, iy, iz, 0, 0, 2)
                         - sample_shifted(grid, bc, ex, ix, iy, iz, 0, 0, -1)))
                     * inv_dz;
-                let dez_dx = (C1
-                    * (sample_shifted(grid, bc, ez, ix, iy, iz, 1, 0, 0) - ez_c)
+                let dez_dx = (C1 * (sample_shifted(grid, bc, ez, ix, iy, iz, 1, 0, 0) - ez_c)
                     + C2 * (sample_shifted(grid, bc, ez, ix, iy, iz, 2, 0, 0)
                         - sample_shifted(grid, bc, ez, ix, iy, iz, -1, 0, 0)))
                     * inv_dx;
 
-                let dey_dx = (C1
-                    * (sample_shifted(grid, bc, ey, ix, iy, iz, 1, 0, 0) - ey_c)
+                let dey_dx = (C1 * (sample_shifted(grid, bc, ey, ix, iy, iz, 1, 0, 0) - ey_c)
                     + C2 * (sample_shifted(grid, bc, ey, ix, iy, iz, 2, 0, 0)
                         - sample_shifted(grid, bc, ey, ix, iy, iz, -1, 0, 0)))
                     * inv_dx;
-                let dex_dy = (C1
-                    * (sample_shifted(grid, bc, ex, ix, iy, iz, 0, 1, 0) - ex_c)
+                let dex_dy = (C1 * (sample_shifted(grid, bc, ex, ix, iy, iz, 0, 1, 0) - ex_c)
                     + C2 * (sample_shifted(grid, bc, ex, ix, iy, iz, 0, 2, 0)
                         - sample_shifted(grid, bc, ex, ix, iy, iz, 0, -1, 0)))
                     * inv_dy;
@@ -302,35 +296,29 @@ pub fn yee_curl_h_4th(
                 let hy_c = hy[c];
                 let hz_c = hz[c];
 
-                let dhz_dy = (C1
-                    * (hz_c - sample_shifted(grid, bc, hz, ix, iy, iz, 0, -1, 0))
+                let dhz_dy = (C1 * (hz_c - sample_shifted(grid, bc, hz, ix, iy, iz, 0, -1, 0))
                     + C2 * (sample_shifted(grid, bc, hz, ix, iy, iz, 0, 1, 0)
                         - sample_shifted(grid, bc, hz, ix, iy, iz, 0, -2, 0)))
                     * inv_dy;
-                let dhy_dz = (C1
-                    * (hy_c - sample_shifted(grid, bc, hy, ix, iy, iz, 0, 0, -1))
+                let dhy_dz = (C1 * (hy_c - sample_shifted(grid, bc, hy, ix, iy, iz, 0, 0, -1))
                     + C2 * (sample_shifted(grid, bc, hy, ix, iy, iz, 0, 0, 1)
                         - sample_shifted(grid, bc, hy, ix, iy, iz, 0, 0, -2)))
                     * inv_dz;
 
-                let dhx_dz = (C1
-                    * (hx_c - sample_shifted(grid, bc, hx, ix, iy, iz, 0, 0, -1))
+                let dhx_dz = (C1 * (hx_c - sample_shifted(grid, bc, hx, ix, iy, iz, 0, 0, -1))
                     + C2 * (sample_shifted(grid, bc, hx, ix, iy, iz, 0, 0, 1)
                         - sample_shifted(grid, bc, hx, ix, iy, iz, 0, 0, -2)))
                     * inv_dz;
-                let dhz_dx = (C1
-                    * (hz_c - sample_shifted(grid, bc, hz, ix, iy, iz, -1, 0, 0))
+                let dhz_dx = (C1 * (hz_c - sample_shifted(grid, bc, hz, ix, iy, iz, -1, 0, 0))
                     + C2 * (sample_shifted(grid, bc, hz, ix, iy, iz, 1, 0, 0)
                         - sample_shifted(grid, bc, hz, ix, iy, iz, -2, 0, 0)))
                     * inv_dx;
 
-                let dhy_dx = (C1
-                    * (hy_c - sample_shifted(grid, bc, hy, ix, iy, iz, -1, 0, 0))
+                let dhy_dx = (C1 * (hy_c - sample_shifted(grid, bc, hy, ix, iy, iz, -1, 0, 0))
                     + C2 * (sample_shifted(grid, bc, hy, ix, iy, iz, 1, 0, 0)
                         - sample_shifted(grid, bc, hy, ix, iy, iz, -2, 0, 0)))
                     * inv_dx;
-                let dhx_dy = (C1
-                    * (hx_c - sample_shifted(grid, bc, hx, ix, iy, iz, 0, -1, 0))
+                let dhx_dy = (C1 * (hx_c - sample_shifted(grid, bc, hx, ix, iy, iz, 0, -1, 0))
                     + C2 * (sample_shifted(grid, bc, hx, ix, iy, iz, 0, 1, 0)
                         - sample_shifted(grid, bc, hx, ix, iy, iz, 0, -2, 0)))
                     * inv_dy;
@@ -516,14 +504,7 @@ pub fn yee_double_curl_e_2nd(
         scratch_fz[i] *= inv_mu[i];
     }
     yee_curl_h_2nd(
-        grid,
-        bc,
-        scratch_fx,
-        scratch_fy,
-        scratch_fz,
-        out_x,
-        out_y,
-        out_z,
+        grid, bc, scratch_fx, scratch_fy, scratch_fz, out_x, out_y, out_z,
     )
 }
 
@@ -544,24 +525,10 @@ pub fn verify_div_curl_zero_2nd(
     scratch_div: &mut [f64],
 ) -> Result<(f64, f64), EmfOperatorError> {
     yee_curl_e_2nd(grid, bc, ex, ey, ez, scratch_cx, scratch_cy, scratch_cz)?;
-    let max_e = gauss_magnetic_residual(
-        grid,
-        bc,
-        scratch_cx,
-        scratch_cy,
-        scratch_cz,
-        scratch_div,
-    )?;
+    let max_e = gauss_magnetic_residual(grid, bc, scratch_cx, scratch_cy, scratch_cz, scratch_div)?;
 
     yee_curl_h_2nd(grid, bc, hx, hy, hz, scratch_cx, scratch_cy, scratch_cz)?;
-    yee_div_d_2nd(
-        grid,
-        bc,
-        scratch_cx,
-        scratch_cy,
-        scratch_cz,
-        scratch_div,
-    )?;
+    yee_div_d_2nd(grid, bc, scratch_cx, scratch_cy, scratch_cz, scratch_div)?;
     let mut max_h = 0.0_f64;
     for &v in scratch_div.iter() {
         max_h = max_h.max(v.abs());

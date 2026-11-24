@@ -169,7 +169,11 @@ impl<const MAX_POINTS: usize, const MAX_TRIS: usize> BlendSpace2D<MAX_POINTS, MA
 
         let get_pos = |idx: u8, pts: &[BlendPoint2D; MAX_POINTS]| -> [f32; 2] {
             let u = idx as usize;
-            if u < n { pts[u].pos } else { super_pts[u - n] }
+            if u < n {
+                pts[u].pos
+            } else {
+                super_pts[u - n]
+            }
         };
 
         let mut work_tris = [[0u8; 3]; 128];

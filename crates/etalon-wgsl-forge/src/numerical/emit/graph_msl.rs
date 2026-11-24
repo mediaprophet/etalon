@@ -17,7 +17,7 @@ use std::fmt::Write;
 
 use super::GeneratedShader;
 use crate::numerical::ir::graph::{ComputeGraph, EwKind, GraphNode, Lowerer, OpNode, RedKind};
-use crate::numerical::{FORGE_SCHEMA_VERSION, ForgeError, Schedule};
+use crate::numerical::{ForgeError, Schedule, FORGE_SCHEMA_VERSION};
 
 /// Entry point name for graph-lowered GEMV kernels in MSL.
 const GEMV_ENTRY: &str = "gemv_main";
@@ -379,11 +379,9 @@ mod tests {
     #[test]
     fn msl_portable_kit_emits_metal_constructs() {
         // Elementwise: a unary, a binary, fma.
-        assert!(
-            elementwise_msl(EwKind::Silu)
-                .unwrap()
-                .contains("kernel void ewise_main")
-        );
+        assert!(elementwise_msl(EwKind::Silu)
+            .unwrap()
+            .contains("kernel void ewise_main"));
         assert!(elementwise_msl(EwKind::Add).unwrap().contains("a + b"));
         assert!(elementwise_msl(EwKind::Fma).unwrap().contains("fma("));
         assert!(elementwise_msl(EwKind::Scale).is_err());

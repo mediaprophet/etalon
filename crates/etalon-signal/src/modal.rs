@@ -3,9 +3,7 @@
 //! status-aware perceptual feature bridges.
 
 use crate::{
-    audio::{
-        convolve_fir_into, spherical_ild_db, stft_frame_into, stft_one_sided_magnitudes_into,
-    },
+    audio::{convolve_fir_into, spherical_ild_db, stft_frame_into, stft_one_sided_magnitudes_into},
     bs1770::QualityStatus,
     filter::{exp_f64, ln_f64, sin_cos_f64, sqrt_f64},
     hoa::{decode_hoa_frame_to_direction_f64, HoaNormalization, HoaOrder},
@@ -217,12 +215,8 @@ impl ModalOscillatorState {
                 .checked_add(offset as u64)
                 .ok_or(SignalError::NumericRange)?;
             let t = (n as f64) * inv_fs;
-            let val = evaluate_modal_bank_at_time_f64(
-                modes,
-                mode_shape_weights,
-                excitation_weights,
-                t,
-            )?;
+            let val =
+                evaluate_modal_bank_at_time_f64(modes, mode_shape_weights, excitation_weights, t)?;
             let val_f32 = val as f32;
             if !val_f32.is_finite() {
                 return Err(SignalError::NumericRange);

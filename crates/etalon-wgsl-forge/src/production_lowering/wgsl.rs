@@ -338,7 +338,9 @@ fn match_contract_bindings(
         if !type_compatible(spec, found.wgsl_type()) {
             return Err(ForgeError::Validation(format!(
                 "type/binding mismatch: {:?} emitted type {:?} is incompatible with {:?}",
-                spec.name, found.wgsl_type(), spec.element
+                spec.name,
+                found.wgsl_type(),
+                spec.element
             )));
         }
         bindings_out[index] = BindingDecl {

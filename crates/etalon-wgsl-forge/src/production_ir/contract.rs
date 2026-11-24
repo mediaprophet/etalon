@@ -260,12 +260,7 @@ impl ProductionContract {
             description: "Workgroup tree reduction (sum) over existing Forge IR".to_string(),
             buffers: vec![
                 buffer(0, "input", ScalarType::F32, BufferAccess::StorageRead),
-                buffer(
-                    1,
-                    "output",
-                    ScalarType::F32,
-                    BufferAccess::StorageReadWrite,
-                ),
+                buffer(1, "output", ScalarType::F32, BufferAccess::StorageReadWrite),
                 buffer(2, "params", ScalarType::U32, BufferAccess::StorageRead),
             ],
             ops: vec![
@@ -363,12 +358,7 @@ impl ProductionContract {
             buffers: vec![
                 buffer(0, "src", ScalarType::F32, BufferAccess::StorageRead),
                 buffer(1, "idx", ScalarType::U32, BufferAccess::StorageRead),
-                buffer(
-                    2,
-                    "output",
-                    ScalarType::U32,
-                    BufferAccess::StorageReadWrite,
-                ),
+                buffer(2, "output", ScalarType::U32, BufferAccess::StorageReadWrite),
                 buffer(3, "params", ScalarType::U32, BufferAccess::StorageRead),
             ],
             ops: vec![
@@ -581,18 +571,26 @@ impl ProductionContract {
             self.discretization,
             &self.assumptions,
         ))?;
-        Ok(delimited_blake3(PRODUCTION_IR_SCHEMA_V1, &[bytes.as_slice()]))
+        Ok(delimited_blake3(
+            PRODUCTION_IR_SCHEMA_V1,
+            &[bytes.as_slice()],
+        ))
     }
 
     fn validate_layers(&self) -> Result<(), ForgeError> {
         match (&self.math, self.discretization, self.arithmetic) {
-            (MathOp::Reduction { .. }, Discretization::TreeReduceShared, ArithmeticModel::IeeeF32)
+            (
+                MathOp::Reduction { .. },
+                Discretization::TreeReduceShared,
+                ArithmeticModel::IeeeF32,
+            )
             | (
                 MathOp::Reduction { .. },
                 Discretization::TreeReduceShared,
                 ArithmeticModel::Df64PairedF32,
             ) => {}
-            (MathOp::Sparse { .. }, Discretization::AtomicCasBitcast, ArithmeticModel::IeeeF32) => {}
+            (MathOp::Sparse { .. }, Discretization::AtomicCasBitcast, ArithmeticModel::IeeeF32) => {
+            }
             (
                 MathOp::Geometry { .. },
                 Discretization::FilteredOrient3d,
@@ -664,7 +662,10 @@ impl ProductionContract {
                 )));
             }
             if tensor.effects.write
-                && matches!(spec.access, BufferAccess::StorageRead | BufferAccess::Uniform)
+                && matches!(
+                    spec.access,
+                    BufferAccess::StorageRead | BufferAccess::Uniform
+                )
             {
                 return Err(ForgeError::InvalidKernel(format!(
                     "tensor {:?} writes buffer {:?} with access {:?}",

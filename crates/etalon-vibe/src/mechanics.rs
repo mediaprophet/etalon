@@ -42,7 +42,12 @@ const PARAMS_AABB: [ParamSpec; 2] = [
     ParamSpec::slice("min_xyz", PrimitiveKind::F64, 3, 3),
     ParamSpec::slice("max_xyz", PrimitiveKind::F64, 3, 3),
 ];
-const PARAMS_PRISM: [ParamSpec; 1] = [ParamSpec::slice("base_area_depths", PrimitiveKind::F64, 4, 4)];
+const PARAMS_PRISM: [ParamSpec; 1] = [ParamSpec::slice(
+    "base_area_depths",
+    PrimitiveKind::F64,
+    4,
+    4,
+)];
 
 const KINEMATICS_FUNCS: [FuncDescriptor; 3] = [
     make_func_descriptor(

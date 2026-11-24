@@ -1,5 +1,5 @@
 use super::{
-    Clip, Joint, MAX_JOINTS, MAX_KEYS, Motor, SkeletalError, valid_motor, validate_joints,
+    valid_motor, validate_joints, Clip, Joint, Motor, SkeletalError, MAX_JOINTS, MAX_KEYS,
 };
 
 fn validate_clip(clip: Clip<'_>, count: usize) -> Result<(), SkeletalError> {

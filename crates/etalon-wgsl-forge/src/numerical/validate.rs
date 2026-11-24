@@ -151,7 +151,7 @@ pub fn validate_native(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::numerical::{BuiltinKernel, Schedule, TargetBackend, generate_builtin};
+    use crate::numerical::{generate_builtin, BuiltinKernel, Schedule, TargetBackend};
 
     #[test]
     fn generated_schedules_pass_full_naga_validation() {
@@ -257,17 +257,13 @@ mod tests {
             TargetBackend::Wgsl,
         )
         .unwrap();
-        assert!(
-            generated
-                .source
-                .contains("var scene: acceleration_structure;")
-        );
+        assert!(generated
+            .source
+            .contains("var scene: acceleration_structure;"));
         assert!(generated.source.contains("rayQueryInitialize"));
-        assert!(
-            generated
-                .source
-                .contains("rayQueryGetCommittedIntersection")
-        );
+        assert!(generated
+            .source
+            .contains("rayQueryGetCommittedIntersection"));
         let report = validate_wgsl(&generated.source).expect("Naga validation of ray-probe");
         assert_eq!(report.entry_points, vec!["ray_probe"]);
         assert_eq!(report.binding_count, 3);

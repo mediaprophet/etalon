@@ -275,8 +275,16 @@ fn render_signal_sense_model_and_nquin_providers_match_oracles() {
         oracle_cfar_cell_average(&[2.0, 4.0, 6.0, 8.0], 3.0).unwrap(),
         [5.0, 15.0]
     );
-    assert!((oracle_biquad_df1_step([1.0, 0.5, 0.0], [0.0, 0.0], [0.5, 0.5, 0.0, 0.0, 0.0]).unwrap() - 0.75).abs() < 1e-6);
-    assert_eq!(oracle_region_mean_u8(&[10, 20, 30, 40]).unwrap(), [25.0, 30.0]);
+    assert!(
+        (oracle_biquad_df1_step([1.0, 0.5, 0.0], [0.0, 0.0], [0.5, 0.5, 0.0, 0.0, 0.0]).unwrap()
+            - 0.75)
+            .abs()
+            < 1e-6
+    );
+    assert_eq!(
+        oracle_region_mean_u8(&[10, 20, 30, 40]).unwrap(),
+        [25.0, 30.0]
+    );
 
     // Sense
     assert_eq!(
@@ -320,7 +328,10 @@ fn render_signal_sense_model_and_nquin_providers_match_oracles() {
         oracle_verify_wire_words([fields5[0], fields5[1], fields5[2], fields5[3], fields5[4], p]),
         [1, p]
     );
-    assert_eq!(oracle_radix_bucket_byte(0xABCD_EF12_3456_789Au64, 8).unwrap(), 0x78);
+    assert_eq!(
+        oracle_radix_bucket_byte(0xABCD_EF12_3456_789Au64, 8).unwrap(),
+        0x78
+    );
     assert_eq!(
         oracle_radix_bucket_byte(0x1234, 7),
         Err(VibeTrap::NumericalDomainError)
@@ -332,11 +343,16 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     // Render (0,0), (0,1), (0,2), (0,3)
     let mut s10_b = [0u8; 40];
     let mut w7_b = [0u8; 28];
-    let s10 = encode_f32_slice([1.0, 2.0, 3.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0], &mut s10_b);
+    let s10 = encode_f32_slice(
+        [1.0, 2.0, 3.0, 1.0, 1.0, 1.0, 2.0, 2.0, 2.0, 3.0],
+        &mut s10_b,
+    );
     let w7 = encode_f32_slice([0.5, 0.5, 0.5, 1.0, 1.0, 1.0, 2.0], &mut w7_b);
     let mut out_raw = [0u8; 12];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    RENDER_PROVIDER.call(StableFuncId::new(0, 0), &[s10, w7], &mut out).unwrap();
+    RENDER_PROVIDER
+        .call(StableFuncId::new(0, 0), &[s10, w7], &mut out)
+        .unwrap();
 
     let mut pt_b = [0u8; 12];
     let mut r_b = [0u8; 8];
@@ -344,7 +360,9 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     let rad = encode_f32_slice([2.0, 0.5], &mut r_b);
     let mut out_raw = [0u8; 4];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    RENDER_PROVIDER.call(StableFuncId::new(0, 1), &[pt, rad], &mut out).unwrap();
+    RENDER_PROVIDER
+        .call(StableFuncId::new(0, 1), &[pt, rad], &mut out)
+        .unwrap();
 
     let mut jb_b = [0u8; 12];
     let mut t_b = [0u8; 4];
@@ -352,39 +370,51 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     let tv = encode_f32_slice([0.5], &mut t_b);
     let mut out_raw = [0u8; 12];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    RENDER_PROVIDER.call(StableFuncId::new(0, 2), &[pt, jb, tv], &mut out).unwrap();
+    RENDER_PROVIDER
+        .call(StableFuncId::new(0, 2), &[pt, jb, tv], &mut out)
+        .unwrap();
 
     let mut vef_b = [0u8; 12];
     let vef = encode_u32_slice([8, 12, 6], &mut vef_b);
     let mut out_raw = [0u8; 16];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::I64).unwrap();
-    RENDER_PROVIDER.call(StableFuncId::new(0, 3), &[vef], &mut out).unwrap();
+    RENDER_PROVIDER
+        .call(StableFuncId::new(0, 3), &[vef], &mut out)
+        .unwrap();
 
     // Signal (0,0), (0,1), (0,2), (1,0)
     let mut smp_b = [0u8; 16];
     let smp = encode_f32_slice([3.0, -3.0, 3.0, -3.0], &mut smp_b);
     let mut out_raw = [0u8; 8];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    SIGNAL_PROVIDER.call(StableFuncId::new(0, 0), &[smp], &mut out).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(0, 0), &[smp], &mut out)
+        .unwrap();
 
     let mut out_raw = [0u8; 8];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
     let mut al_b = [0u8; 4];
     let al = encode_f32_slice([2.5], &mut al_b);
     let pos_cells = encode_f32_slice([2.0, 4.0, 6.0, 8.0], &mut smp_b);
-    SIGNAL_PROVIDER.call(StableFuncId::new(0, 1), &[pos_cells, al], &mut out).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(0, 1), &[pos_cells, al], &mut out)
+        .unwrap();
 
     let mut c5_b = [0u8; 20];
     let c5 = encode_f32_slice([0.5, 0.5, 0.0, 0.0, 0.0], &mut c5_b);
     let mut out_raw = [0u8; 4];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    SIGNAL_PROVIDER.call(StableFuncId::new(0, 2), &[pt, rad, c5], &mut out).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(0, 2), &[pt, rad, c5], &mut out)
+        .unwrap();
 
     let px_raw = [10u8, 20, 30, 40];
     let px_v = BorrowedSliceView::from_raw_bytes(&px_raw, PrimitiveKind::U8, 4).unwrap();
     let mut out_raw = [0u8; 8];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    SIGNAL_PROVIDER.call(StableFuncId::new(1, 0), &[px_v], &mut out).unwrap();
+    SIGNAL_PROVIDER
+        .call(StableFuncId::new(1, 0), &[px_v], &mut out)
+        .unwrap();
 
     // Sense (0,0), (0,1), (0,2)
     let mut st_b = [0u8; 16];
@@ -393,7 +423,9 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     let unc = encode_u64_slice([500], &mut u_b);
     let mut out_raw = [0u8; 16];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U64).unwrap();
-    SENSE_PROVIDER.call(StableFuncId::new(0, 0), &[st, unc], &mut out).unwrap();
+    SENSE_PROVIDER
+        .call(StableFuncId::new(0, 0), &[st, unc], &mut out)
+        .unwrap();
 
     let mut cb_b = [0u8; 16];
     let mut bt_b = [0u8; 8];
@@ -401,37 +433,49 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     let bt = encode_u32_slice([1, 4], &mut bt_b);
     let mut out_raw = [0u8; 8];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F64).unwrap();
-    SENSE_PROVIDER.call(StableFuncId::new(0, 1), &[cb, bt], &mut out).unwrap();
+    SENSE_PROVIDER
+        .call(StableFuncId::new(0, 1), &[cb, bt], &mut out)
+        .unwrap();
 
     let mut rssi_b = [0u8; 24];
     let rssi = encode_f64_slice([-60.0, -40.0, 2.0], &mut rssi_b);
     let mut out_raw = [0u8; 8];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F64).unwrap();
-    SENSE_PROVIDER.call(StableFuncId::new(0, 2), &[rssi], &mut out).unwrap();
+    SENSE_PROVIDER
+        .call(StableFuncId::new(0, 2), &[rssi], &mut out)
+        .unwrap();
 
     // Model (0,0), (0,1), (0,2)
     let mut oa_b = [0u8; 16];
     let oa = encode_u64_slice([100, 64], &mut oa_b);
     let mut out_raw = [0u8; 16];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U64).unwrap();
-    MODEL_PROVIDER.call(StableFuncId::new(0, 0), &[oa], &mut out).unwrap();
+    MODEL_PROVIDER
+        .call(StableFuncId::new(0, 0), &[oa], &mut out)
+        .unwrap();
 
     let mut out_raw = [0u8; 16];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::F32).unwrap();
-    MODEL_PROVIDER.call(StableFuncId::new(0, 1), &[pos_cells], &mut out).unwrap();
+    MODEL_PROVIDER
+        .call(StableFuncId::new(0, 1), &[pos_cells], &mut out)
+        .unwrap();
 
     let mut urc_b = [0u8; 24];
     let urc = encode_u64_slice([1024, 512, 2048], &mut urc_b);
     let mut out_raw = [0u8; 16];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U64).unwrap();
-    MODEL_PROVIDER.call(StableFuncId::new(0, 2), &[urc], &mut out).unwrap();
+    MODEL_PROVIDER
+        .call(StableFuncId::new(0, 2), &[urc], &mut out)
+        .unwrap();
 
     // NQuin (0,1), (0,2) and trap checks
     let mut w6_b = [0u8; 48];
     let w6 = encode_u64_slice([1, 2, 3, 4, 5, 1 ^ 2 ^ 3 ^ 4 ^ 5], &mut w6_b);
     let mut out_raw = [0u8; 16];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U64).unwrap();
-    NQUIN_PROVIDER.call(StableFuncId::new(0, 1), &[w6], &mut out).unwrap();
+    NQUIN_PROVIDER
+        .call(StableFuncId::new(0, 1), &[w6], &mut out)
+        .unwrap();
 
     let mut k_b = [0u8; 8];
     let mut sh_b = [0u8; 4];
@@ -439,7 +483,9 @@ fn all_remaining_provider_call_arms_and_traps_round_trip() {
     let shv = encode_u32_slice([8], &mut sh_b);
     let mut out_raw = [0u8; 4];
     let mut out = CallerOutputSlice::new(&mut out_raw, PrimitiveKind::U32).unwrap();
-    NQUIN_PROVIDER.call(StableFuncId::new(0, 2), &[kv, shv], &mut out).unwrap();
+    NQUIN_PROVIDER
+        .call(StableFuncId::new(0, 2), &[kv, shv], &mut out)
+        .unwrap();
 
     assert_eq!(
         NQUIN_PROVIDER.call(StableFuncId::new(9, 9), &[], &mut out),

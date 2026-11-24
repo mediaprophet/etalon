@@ -209,15 +209,7 @@ pub fn collocate_yee_poynting_and_energy_cell_centers(
     let mu = mat.mu_h_per_m();
 
     for slice in [
-        ex_n,
-        ey_n,
-        ez_n,
-        hx_nm_half,
-        hy_nm_half,
-        hz_nm_half,
-        hx_np_half,
-        hy_np_half,
-        hz_np_half,
+        ex_n, ey_n, ez_n, hx_nm_half, hy_nm_half, hz_nm_half, hx_np_half, hy_np_half, hz_np_half,
     ] {
         if slice.len() != n {
             return Err(EmfOperatorError::SliceLengthMismatch {
@@ -311,14 +303,7 @@ pub fn verify_discrete_poynting_power_balance(
 ) -> Result<f64, EmfOperatorError> {
     let n = grid.validate()?;
     yee_curl_h_2nd(
-        grid,
-        bc,
-        hx_half,
-        hy_half,
-        hz_half,
-        scratch_cx,
-        scratch_cy,
-        scratch_cz,
+        grid, bc, hx_half, hy_half, hz_half, scratch_cx, scratch_cy, scratch_cz,
     )?;
 
     let eps = mat.epsilon_f_per_m();
@@ -443,10 +428,7 @@ pub fn spectral_density_wavelength_midpoint_integral(
 }
 
 /// Mode `0x0104` $4 \times 4$ Mueller matrix multiplication $\mathbf{S}_{\text{out}} = M \mathbf{S}_{\text{in}}$.
-pub fn mueller_apply(
-    m: &[[f64; 4]; 4],
-    stokes_in: [f64; 4],
-) -> Result<[f64; 4], EmfOperatorError> {
+pub fn mueller_apply(m: &[[f64; 4]; 4], stokes_in: [f64; 4]) -> Result<[f64; 4], EmfOperatorError> {
     admit_stokes_vector(stokes_in)?;
     let mut out = [0.0_f64; 4];
     for r in 0..4 {

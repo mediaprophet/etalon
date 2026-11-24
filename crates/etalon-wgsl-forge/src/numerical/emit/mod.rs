@@ -18,14 +18,14 @@ pub mod wgsl;
 use serde::{Deserialize, Serialize};
 
 use super::{ForgeError, KernelSpec, Schedule};
-pub use coopmat::{MATMUL_TC_TILED_ENTRY, matmul_tc_wgsl, matmul_tc_wgsl_tiled};
+pub use coopmat::{matmul_tc_wgsl, matmul_tc_wgsl_tiled, MATMUL_TC_TILED_ENTRY};
 pub use cuda_c::emit_cuda_c;
-pub use cuda_graph::{CudaCLowerer, emit_graph_cuda_c, graph_cuda_entry};
+pub use cuda_graph::{emit_graph_cuda_c, graph_cuda_entry, CudaCLowerer};
 pub use df64::{GEMM_DF64_ENTRY, GEMM_DF64_WGSL};
 pub use dxc::compile_hlsl_to_spirv;
 pub use dxc_cache::{clear_dxc_cache, compile_hlsl_to_spirv_cached, dxc_cache_len};
-pub use graph_hlsl::{HlslLowerer, conv2d_hlsl, emit_graph_hlsl};
-pub use graph_msl::{MslLowerer, conv2d_msl, emit_graph_msl};
+pub use graph_hlsl::{conv2d_hlsl, emit_graph_hlsl, HlslLowerer};
+pub use graph_msl::{conv2d_msl, emit_graph_msl, MslLowerer};
 pub use hlsl::emit_hlsl;
 pub use msl::emit_msl;
 pub use ptx::emit_ptx;

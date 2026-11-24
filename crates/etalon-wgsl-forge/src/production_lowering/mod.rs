@@ -13,13 +13,11 @@ mod tests;
 pub use admission::{
     admit, layout_from_contract, precision_from_contract, AdmissionReport, AdmissionRequest,
     DeclaredOccupancy, FallbackKind, FallbackRecord, LayoutKind, OccupancyAssumption,
-    OccupancyReport, PrecisionAdmission, RequestedPrecision,
-    SharedMemoryAdmission, SubgroupAdmission, CLUSTER_NODE_STRIDE_SCALARS, DF64_PAIR_STRIDE,
-    GEOMETRY_PACKED_QUERY_STRIDE, MAX_FALLBACKS, OCCUPANCY_NOTE, PORTABLE_MAX_SHARED_BYTES,
+    OccupancyReport, PrecisionAdmission, RequestedPrecision, SharedMemoryAdmission,
+    SubgroupAdmission, CLUSTER_NODE_STRIDE_SCALARS, DF64_PAIR_STRIDE, GEOMETRY_PACKED_QUERY_STRIDE,
+    MAX_FALLBACKS, OCCUPANCY_NOTE, PORTABLE_MAX_SHARED_BYTES,
 };
-pub use wgsl::{
-    lower_contract, BindingDecl, EmitterKind, LoweredWgsl, NagaStep, MAX_BINDINGS,
-};
+pub use wgsl::{lower_contract, BindingDecl, EmitterKind, LoweredWgsl, NagaStep, MAX_BINDINGS};
 
 use crate::ir::ForgeError;
 use crate::production_ir::ProductionContract;

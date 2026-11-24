@@ -53,7 +53,6 @@ mod oom;
 mod pass_ops;
 mod passthrough;
 mod per_vertex;
-mod vertex_storage_emulation;
 mod pipeline;
 mod pipeline_cache;
 mod planar_texture;
@@ -88,6 +87,7 @@ mod transition_resources;
 mod vertex_formats;
 mod vertex_indices;
 mod vertex_state;
+mod vertex_storage_emulation;
 mod write_texture;
 mod zero_init;
 

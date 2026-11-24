@@ -7,7 +7,7 @@
 mod allocation;
 mod readback;
 
-pub use allocation::{DEFAULT_FORWARD_ARENA_BUDGET, TensorArenaError};
+pub use allocation::{TensorArenaError, DEFAULT_FORWARD_ARENA_BUDGET};
 pub use readback::TokenReadbackError;
 
 /// Operational mode of the forward execution arena.

@@ -125,10 +125,10 @@ pub fn gather_dequant_ternary_gpu(
     rows: usize,
     cols: usize,
 ) -> Result<Vec<f32>, ForgeError> {
-    use crate::numerical::Schedule;
     use crate::numerical::execute::{
         BindingUsage, QualiaCompute, WgpuComputeContext, WgpuPipeline,
     };
+    use crate::numerical::Schedule;
 
     if rows == 0 || cols == 0 {
         return Err(ForgeError::GpuValidation(
@@ -185,12 +185,10 @@ mod tests {
     #[test]
     fn gather_dequant_wgsl_validates() {
         let report = validate_wgsl(&gather_dequant_ternary_wgsl(64)).expect("validate");
-        assert!(
-            report
-                .entry_points
-                .iter()
-                .any(|e| e == GATHER_DEQUANT_ENTRY)
-        );
+        assert!(report
+            .entry_points
+            .iter()
+            .any(|e| e == GATHER_DEQUANT_ENTRY));
         assert_eq!(report.binding_count, 4);
     }
 

@@ -140,8 +140,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
                 let element_type =
                     u32::from_le_bytes(mmap[*pos..*pos + 4].try_into().unwrap_or([0; 4]));
                 *pos += 4;
-                let items =
-                    u64::from_le_bytes(mmap[*pos..*pos + 8].try_into().unwrap_or([0; 8]));
+                let items = u64::from_le_bytes(mmap[*pos..*pos + 8].try_into().unwrap_or([0; 8]));
                 *pos += 8;
                 let mut max_kv = 0u32;
                 for _ in 0..items {

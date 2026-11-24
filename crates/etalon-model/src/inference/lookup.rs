@@ -90,11 +90,7 @@ impl<H: From<ModelHyperparams>> TensorIndex<H> {
             b"ffn_gate.weight" => &[b"mlp.gate_proj.weight", b"gate_proj.weight"],
             b"ffn_up.weight" => &[b"mlp.up_proj.weight", b"up_proj.weight"],
             b"ffn_down.weight" => &[b"mlp.down_proj.weight", b"down_proj.weight"],
-            b"ffn_gate_inp.weight" => &[
-                b"mlp.gate.weight",
-                b"gate.weight",
-                b"router.proj.weight",
-            ],
+            b"ffn_gate_inp.weight" => &[b"mlp.gate.weight", b"gate.weight", b"router.proj.weight"],
             b"ffn_gate_inp_shexp.weight" => &[b"ffn_gate_inp.scale", b"router.scale"],
             b"ffn_down_exps.scale" => &[b"router.per_expert_scale"],
             b"ssm_conv1d.weight" => &[b"linear_attn.conv1d.weight", b"conv1d.weight"],

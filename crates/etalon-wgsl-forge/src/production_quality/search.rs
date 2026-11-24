@@ -6,9 +6,7 @@ use crate::ir::{ForgeError, KernelSpec};
 use crate::production_lowering::OccupancyAssumption;
 use crate::schedule::{AdapterConstraints, Schedule, ScheduleSpace};
 
-use super::gates::{
-    admit_oracle, FrozenQualityGates, LEARNED_SEARCH_EXCLUDED_NOTE,
-};
+use super::gates::{admit_oracle, FrozenQualityGates, LEARNED_SEARCH_EXCLUDED_NOTE};
 use super::schedule_gate::{
     admit_schedule, label_timing, CandidateRecordStatus, CandidateSearchRecord, LabeledTiming,
     RecordedCandidate, ScheduleGateReport, ScheduleGateRequest, TuningQualityReport,
@@ -129,7 +127,13 @@ where
         ));
     }
     let baseline_extra = match request.baseline {
-        Some(baseline) if !schedules.iter().any(|schedule| *schedule == baseline.schedule) => 1,
+        Some(baseline)
+            if !schedules
+                .iter()
+                .any(|schedule| *schedule == baseline.schedule) =>
+        {
+            1
+        }
         _ => 0,
     };
     let recorded_need = schedules.len() + baseline_extra;
@@ -249,13 +253,9 @@ where
         (winner, WinnerSource::Search, false)
     };
 
-    if recorded
-        .iter()
-        .any(|candidate| {
-            candidate.schedule == winner.schedule
-                && candidate.status == CandidateRecordStatus::Rejected
-        })
-    {
+    if recorded.iter().any(|candidate| {
+        candidate.schedule == winner.schedule && candidate.status == CandidateRecordStatus::Rejected
+    }) {
         return Err(ForgeError::Validation(
             "invalid fast candidate cannot win".to_string(),
         ));

@@ -75,7 +75,9 @@ impl Motor {
     /// Normalizes the rotor and removes the parallel component of the dual part.
     pub fn normalize(&self) -> Self {
         let magnitude_squared = self.r.iter().map(|x| x * x).sum::<f32>();
-        if magnitude_squared < 1e-12 { return Self::identity(); }
+        if magnitude_squared < 1e-12 {
+            return Self::identity();
+        }
         let reciprocal_norm = magnitude_squared.sqrt().recip();
         let r = self.r.map(|x| x * reciprocal_norm);
         let projection = self.d.iter().zip(r).map(|(d, r)| d * r).sum::<f32>();
@@ -461,12 +463,25 @@ mod tests {
 
     #[test]
     fn rigid_motor_methods_keep_pga_signs_and_translation() {
-        let rotor = Motor::from_rotor(rotor_from_axis_angle([0.0, 0.0, 1.0], std::f32::consts::FRAC_PI_2));
-        let pose = motor_translate([2.0, -3.0, 4.0]).motor_mul(&rotor).normalize();
+        let rotor = Motor::from_rotor(rotor_from_axis_angle(
+            [0.0, 0.0, 1.0],
+            std::f32::consts::FRAC_PI_2,
+        ));
+        let pose = motor_translate([2.0, -3.0, 4.0])
+            .motor_mul(&rotor)
+            .normalize();
         let point = [1.0, 0.0, 0.0];
         assert!(approx_eq3(pose.translation(), [2.0, -3.0, 4.0], EPS));
-        assert!(approx_eq3(pose.transform_vector(point), [0.0, 1.0, 0.0], EPS));
-        assert!(approx_eq3(pose.reverse().transform_point(pose.transform_point(point)), point, EPS));
+        assert!(approx_eq3(
+            pose.transform_vector(point),
+            [0.0, 1.0, 0.0],
+            EPS
+        ));
+        assert!(approx_eq3(
+            pose.reverse().transform_point(pose.transform_point(point)),
+            point,
+            EPS
+        ));
         let midpoint = Motor::identity().sclerp(&motor_translate([0.0, 0.0, 4.0]), 0.5);
         assert!(approx_eq3(midpoint.translation(), [0.0, 0.0, 2.0], EPS));
     }

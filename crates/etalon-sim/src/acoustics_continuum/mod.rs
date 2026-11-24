@@ -33,10 +33,10 @@ mod tests;
 pub use attenuation_kk::{MultiRelaxationMedium, PowerLawAttenuation, RelaxationProcess};
 pub use elastic_virieux::{
     step_elastic_virieux_in_place, CauchyStress6, ElasticBoundaryCondition, ElasticMedium,
-    ElasticStressVelocityRecord, ElasticVirieuxConfig, ElasticVirieuxState,
-    HamiltonQuaternionXyzw, NormalIncidenceInterface, TensorStrain6,
-    ELASTIC_STRESS_VELOCITY_RECORD_STRIDE, ESV_DEFINED_VALIDITY_MASK, ESV_VALID_DISPLACEMENT,
-    ESV_VALID_STRESS, ESV_VALID_VELOCITY, MODE_ELASTIC_STRESS_VELOCITY_CONTINUUM,
+    ElasticStressVelocityRecord, ElasticVirieuxConfig, ElasticVirieuxState, HamiltonQuaternionXyzw,
+    NormalIncidenceInterface, TensorStrain6, ELASTIC_STRESS_VELOCITY_RECORD_STRIDE,
+    ESV_DEFINED_VALIDITY_MASK, ESV_VALID_DISPLACEMENT, ESV_VALID_STRESS, ESV_VALID_VELOCITY,
+    MODE_ELASTIC_STRESS_VELOCITY_CONTINUUM,
 };
 pub use fdtd_fluid::{
     collocate_fluid_cell, evaluate_direct_energy_and_intensity, step_fluid_fdtd_in_place,
@@ -46,10 +46,9 @@ pub use fdtd_fluid::{
     PV_VALID_INTENSITY, PV_VALID_POSITION, PV_VALID_PRESSURE, PV_VALID_VELOCITY,
 };
 pub use helmholtz::{
-    apply_helmholtz_operator, helmholtz_greens_function_3d,
-    rectangular_cavity_eigenfrequency_hz, rectangular_cavity_eigenmode_value,
-    solve_helmholtz_bicgstab, step_helmholtz_jacobi, Complex64, HelmholtzBoundary,
-    HelmholtzConfig, HelmholtzSolveReport, HelmholtzStencil, HelmholtzWorkspace,
+    apply_helmholtz_operator, helmholtz_greens_function_3d, rectangular_cavity_eigenfrequency_hz,
+    rectangular_cavity_eigenmode_value, solve_helmholtz_bicgstab, step_helmholtz_jacobi, Complex64,
+    HelmholtzBoundary, HelmholtzConfig, HelmholtzSolveReport, HelmholtzStencil, HelmholtzWorkspace,
 };
 pub use room_acoustics::{
     analyze_room_impulse_response, fit_decay_rt60_s, schroeder_backward_integration_db,

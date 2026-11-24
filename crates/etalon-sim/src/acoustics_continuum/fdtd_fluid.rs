@@ -103,12 +103,21 @@ impl FluidMedium {
             ));
         }
         if !bulk_modulus_pa.is_finite() || bulk_modulus_pa <= 0.0 {
-            return Err(NumericalError::InvalidMedium("fluid bulk_modulus_pa must be finite and > 0"));
+            return Err(NumericalError::InvalidMedium(
+                "fluid bulk_modulus_pa must be finite and > 0",
+            ));
         }
         if !damping_per_s.is_finite() || damping_per_s < 0.0 {
-            return Err(NumericalError::InvalidMedium("fluid damping_per_s must be finite and >= 0"));
+            return Err(NumericalError::InvalidMedium(
+                "fluid damping_per_s must be finite and >= 0",
+            ));
         }
-        Ok(Self { density_kg_m3, bulk_modulus_pa, damping_per_s, material_ref })
+        Ok(Self {
+            density_kg_m3,
+            bulk_modulus_pa,
+            damping_per_s,
+            material_ref,
+        })
     }
 
     /// Phase speed of sound $c = \sqrt{K / \rho}$ in $\text{m}\cdot\text{s}^{-1}$.
@@ -172,18 +181,24 @@ impl StaggeredFluidOffsets {
     /// $p$ at $(0,0,0), t=0$; $v_x$ at $(0.5,0,0)$, $v_y$ at $(0,0.5,0)$, $v_z$ at $(0,0,0.5)$ at $t=0.5$.
     pub const fn canonical_staggered() -> Self {
         Self {
-            p_space_cell_frac: [0.0, 0.0, 0.0], p_time_step_frac: 0.0,
-            vx_space_cell_frac: [0.5, 0.0, 0.0], vy_space_cell_frac: [0.0, 0.5, 0.0],
-            vz_space_cell_frac: [0.0, 0.0, 0.5], v_time_step_frac: 0.5,
+            p_space_cell_frac: [0.0, 0.0, 0.0],
+            p_time_step_frac: 0.0,
+            vx_space_cell_frac: [0.5, 0.0, 0.0],
+            vy_space_cell_frac: [0.0, 0.5, 0.0],
+            vz_space_cell_frac: [0.0, 0.0, 0.5],
+            v_time_step_frac: 0.5,
         }
     }
 
     /// Already collocated cell-center representation (all offsets zero).
     pub const fn collocated() -> Self {
         Self {
-            p_space_cell_frac: [0.0, 0.0, 0.0], p_time_step_frac: 0.0,
-            vx_space_cell_frac: [0.0, 0.0, 0.0], vy_space_cell_frac: [0.0, 0.0, 0.0],
-            vz_space_cell_frac: [0.0, 0.0, 0.0], v_time_step_frac: 0.0,
+            p_space_cell_frac: [0.0, 0.0, 0.0],
+            p_time_step_frac: 0.0,
+            vx_space_cell_frac: [0.0, 0.0, 0.0],
+            vy_space_cell_frac: [0.0, 0.0, 0.0],
+            vz_space_cell_frac: [0.0, 0.0, 0.0],
+            v_time_step_frac: 0.0,
         }
     }
 
@@ -242,14 +257,21 @@ impl PressureVelocityRecord {
         medium: &FluidMedium,
     ) -> Result<Self, NumericalError> {
         let p64 = pressure_pa as f64;
-        let v64 = [particle_velocity_m_s[0] as f64, particle_velocity_m_s[1] as f64, particle_velocity_m_s[2] as f64];
+        let v64 = [
+            particle_velocity_m_s[0] as f64,
+            particle_velocity_m_s[1] as f64,
+            particle_velocity_m_s[2] as f64,
+        ];
         let e64 = medium.energy_density_j_m3(p64, v64);
         let i64 = FluidMedium::instantaneous_intensity_w_m2(p64, v64);
         let rec = Self {
-            position_m, pressure_pa, particle_velocity_m_s,
+            position_m,
+            pressure_pa,
+            particle_velocity_m_s,
             energy_density_j_m3: e64 as f32,
             intensity_w_m2: [i64[0] as f32, i64[1] as f32, i64[2] as f32],
-            material_ref: medium.material_ref, validity_bits: PV_DEFINED_VALIDITY_MASK,
+            material_ref: medium.material_ref,
+            validity_bits: PV_DEFINED_VALIDITY_MASK,
         };
         rec.validate()?;
         Ok(rec)
@@ -258,7 +280,9 @@ impl PressureVelocityRecord {
     /// Validate C02-C01 finiteness, validity-mask rules, and absent-placeholder zeroing.
     pub fn validate(&self) -> Result<(), NumericalError> {
         if (self.validity_bits & !PV_DEFINED_VALIDITY_MASK) != 0 {
-            return Err(NumericalError::WireEncoding("reserved validity_bits set in PressureVelocityRecord"));
+            return Err(NumericalError::WireEncoding(
+                "reserved validity_bits set in PressureVelocityRecord",
+            ));
         }
         if self.position_m.iter().any(|v| !v.is_finite())
             || !self.pressure_pa.is_finite()
@@ -266,13 +290,19 @@ impl PressureVelocityRecord {
             || !self.energy_density_j_m3.is_finite()
             || self.intensity_w_m2.iter().any(|v| !v.is_finite())
         {
-            return Err(NumericalError::WireEncoding("non-finite float in PressureVelocityRecord"));
+            return Err(NumericalError::WireEncoding(
+                "non-finite float in PressureVelocityRecord",
+            ));
         }
         if (self.validity_bits & PV_VALID_PRESSURE) == 0 && self.pressure_pa.to_bits() != 0 {
-            return Err(NumericalError::WireEncoding("invalid pressure lane must carry canonical +0.0 placeholder"));
+            return Err(NumericalError::WireEncoding(
+                "invalid pressure lane must carry canonical +0.0 placeholder",
+            ));
         }
         if (self.validity_bits & PV_VALID_ENERGY_DENSITY) != 0 && self.energy_density_j_m3 < 0.0 {
-            return Err(NumericalError::WireEncoding("acoustic energy_density_j_m3 must be non-negative"));
+            return Err(NumericalError::WireEncoding(
+                "acoustic energy_density_j_m3 must be non-negative",
+            ));
         }
         Ok(())
     }
@@ -300,17 +330,33 @@ impl PressureVelocityRecord {
     /// Decode from exact 64-byte little-endian wire layout.
     pub fn from_wire_bytes(bytes: &[u8]) -> Result<Self, NumericalError> {
         if bytes.len() != PRESSURE_VELOCITY_RECORD_STRIDE {
-            return Err(NumericalError::WireEncoding("PressureVelocityRecord must be exactly 64 bytes"));
+            return Err(NumericalError::WireEncoding(
+                "PressureVelocityRecord must be exactly 64 bytes",
+            ));
         }
         if bytes[52..64].iter().any(|&b| b != 0) {
-            return Err(NumericalError::WireEncoding("PressureVelocityRecord reserved bytes 52..64 must be zero"));
+            return Err(NumericalError::WireEncoding(
+                "PressureVelocityRecord reserved bytes 52..64 must be zero",
+            ));
         }
         let rec = Self {
-            position_m: [read_f32_le(bytes, 0), read_f32_le(bytes, 4), read_f32_le(bytes, 8)],
+            position_m: [
+                read_f32_le(bytes, 0),
+                read_f32_le(bytes, 4),
+                read_f32_le(bytes, 8),
+            ],
             pressure_pa: read_f32_le(bytes, 12),
-            particle_velocity_m_s: [read_f32_le(bytes, 16), read_f32_le(bytes, 20), read_f32_le(bytes, 24)],
+            particle_velocity_m_s: [
+                read_f32_le(bytes, 16),
+                read_f32_le(bytes, 20),
+                read_f32_le(bytes, 24),
+            ],
             energy_density_j_m3: read_f32_le(bytes, 28),
-            intensity_w_m2: [read_f32_le(bytes, 32), read_f32_le(bytes, 36), read_f32_le(bytes, 40)],
+            intensity_w_m2: [
+                read_f32_le(bytes, 32),
+                read_f32_le(bytes, 36),
+                read_f32_le(bytes, 40),
+            ],
             material_ref: u32::from_le_bytes(bytes[44..48].try_into().unwrap()),
             validity_bits: u32::from_le_bytes(bytes[48..52].try_into().unwrap()),
         };
@@ -368,23 +414,38 @@ impl FluidFdtdConfig {
             ));
         }
         let [dx, dy, dz] = self.spacing_m;
-        if !dx.is_finite() || !dy.is_finite() || !dz.is_finite() || dx <= 0.0 || dy <= 0.0 || dz <= 0.0
+        if !dx.is_finite()
+            || !dy.is_finite()
+            || !dz.is_finite()
+            || dx <= 0.0
+            || dy <= 0.0
+            || dz <= 0.0
         {
             return Err(NumericalError::InvalidGrid(
                 "FluidFdtdConfig spacing_m components must be finite and > 0",
             ));
         }
         if !self.dt_s.is_finite() || self.dt_s <= 0.0 {
-            return Err(NumericalError::CourantViolation { courant: f64::NAN, max_admissible: 1.0 });
+            return Err(NumericalError::CourantViolation {
+                courant: f64::NAN,
+                max_admissible: 1.0,
+            });
         }
         let c = self.medium.sound_speed_m_s();
         let inv_h = (1.0 / (dx * dx) + 1.0 / (dy * dy) + 1.0 / (dz * dz)).sqrt();
         let courant = self.dt_s * c * inv_h;
         if !courant.is_finite() || courant > 1.0 {
-            return Err(NumericalError::CourantViolation { courant, max_admissible: 1.0 });
+            return Err(NumericalError::CourantViolation {
+                courant,
+                max_admissible: 1.0,
+            });
         }
-        if let FluidBoundaryCondition::Cpml { layers, sigma_max, kappa_max, alpha_max } =
-            self.boundary
+        if let FluidBoundaryCondition::Cpml {
+            layers,
+            sigma_max,
+            kappa_max,
+            alpha_max,
+        } = self.boundary
         {
             if layers == 0 || layers * 2 >= nx.min(ny).min(nz) {
                 return Err(NumericalError::InvalidGrid(

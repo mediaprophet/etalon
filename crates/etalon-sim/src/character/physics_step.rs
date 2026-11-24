@@ -74,18 +74,26 @@ impl CharacterController {
             self.config.air_accel
         };
 
-        self.state.velocity[0] =
-            lerp_accel(self.state.velocity[0], world_wish[0] * target_speed, accel, dt);
-        self.state.velocity[2] =
-            lerp_accel(self.state.velocity[2], world_wish[2] * target_speed, accel, dt);
+        self.state.velocity[0] = lerp_accel(
+            self.state.velocity[0],
+            world_wish[0] * target_speed,
+            accel,
+            dt,
+        );
+        self.state.velocity[2] = lerp_accel(
+            self.state.velocity[2],
+            world_wish[2] * target_speed,
+            accel,
+            dt,
+        );
 
         // 2. Jump & Gravity
         if self.state.is_grounded && jump {
             self.state.velocity[1] = self.config.jump_impulse;
             self.state.is_grounded = false;
         } else if !self.state.is_grounded {
-            self.state.velocity[1] =
-                (self.state.velocity[1] + self.config.gravity * dt).max(self.config.terminal_velocity);
+            self.state.velocity[1] = (self.state.velocity[1] + self.config.gravity * dt)
+                .max(self.config.terminal_velocity);
         }
 
         let mut cap_center = [
@@ -95,21 +103,16 @@ impl CharacterController {
         ];
 
         // 3. Horizontal 3D capsule sweep with stair auto-stepping & slide-and-collide planes
-        let horiz_disp = [self.state.velocity[0] * dt, 0.0, self.state.velocity[2] * dt];
-        let horiz_dist =
-            (horiz_disp[0] * horiz_disp[0] + horiz_disp[2] * horiz_disp[2]).sqrt();
+        let horiz_disp = [
+            self.state.velocity[0] * dt,
+            0.0,
+            self.state.velocity[2] * dt,
+        ];
+        let horiz_dist = (horiz_disp[0] * horiz_disp[0] + horiz_disp[2] * horiz_disp[2]).sqrt();
         if horiz_dist > 1e-5 {
             let h_dir = [horiz_disp[0] / horiz_dist, 0.0, horiz_disp[2] / horiz_dist];
             if let Some(hit) = cast_capsule(
-                bvh,
-                shapes,
-                motors,
-                cap_center,
-                radius,
-                half_cyl,
-                h_dir,
-                horiz_dist,
-                None,
+                bvh, shapes, motors, cap_center, radius, half_cyl, h_dir, horiz_dist, None,
             ) {
                 // Attempt stair auto-step if grounded and obstacle is steep
                 let mut stepped = false;
@@ -194,14 +197,7 @@ impl CharacterController {
                     if slide_len > 1e-5 {
                         let s_dir = [slide[0] / slide_len, 0.0, slide[2] / slide_len];
                         if let Some(hit2) = cast_capsule(
-                            bvh,
-                            shapes,
-                            motors,
-                            cap_center,
-                            radius,
-                            half_cyl,
-                            s_dir,
-                            slide_len,
+                            bvh, shapes, motors, cap_center, radius, half_cyl, s_dir, slide_len,
                             None,
                         ) {
                             let s_toi = (hit2.toi - 0.002).max(0.0);

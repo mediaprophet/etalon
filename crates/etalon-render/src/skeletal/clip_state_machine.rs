@@ -1,7 +1,7 @@
 //! Zero-Heap Clip State Machine, Layer Blending & Sim Blend Space (`clip_state_machine.rs`).
 
 use super::transform_hierarchy::{
-    MAX_BONES, Transform3D, ZeroHeapSkeleton, quat_conjugate_xyzw, quat_mul_xyzw, quat_slerp,
+    quat_conjugate_xyzw, quat_mul_xyzw, quat_slerp, Transform3D, ZeroHeapSkeleton, MAX_BONES,
 };
 
 /// Animation state machine transition blend mode.
@@ -419,7 +419,7 @@ impl<const CAP: usize> SimSignalQueue<CAP> {
 mod tests {
     use super::*;
     use crate::skeletal::gpu_skin::{
-        GpuJointMotorPair, GpuSkinnedVertex, gpu_shader_skin_vertex_reference,
+        gpu_shader_skin_vertex_reference, GpuJointMotorPair, GpuSkinnedVertex,
     };
 
     #[test]

@@ -184,11 +184,7 @@ pub fn oracle_project_10d_to_3d(
     if state10d.iter().any(|x| !x.is_finite()) || weights7d.iter().any(|w| !w.is_finite()) {
         return Err(VibeTrap::NumericalDomainError);
     }
-    let mut acc = [
-        state10d[0] as f64,
-        state10d[1] as f64,
-        state10d[2] as f64,
-    ];
+    let mut acc = [state10d[0] as f64, state10d[1] as f64, state10d[2] as f64];
     for d in 0..7 {
         acc[d % 3] += (state10d[3 + d] as f64) * (weights7d[d] as f64);
     }

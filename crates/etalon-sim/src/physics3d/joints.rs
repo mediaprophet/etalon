@@ -123,10 +123,8 @@ pub fn solve_motor_joint_xpbd(joint: &MotorJoint3D, bodies: &mut [RigidBody3D], 
 
                 if j.max_motor_torque > 0.0 && bodies[b].effective_inv_mass() > 0.0 {
                     let cur_w = dot3(bodies[b].angular_velocity, axis_a);
-                    let dw = (j.motor_target_vel - cur_w).clamp(
-                        -j.max_motor_torque * dt,
-                        j.max_motor_torque * dt,
-                    );
+                    let dw = (j.motor_target_vel - cur_w)
+                        .clamp(-j.max_motor_torque * dt, j.max_motor_torque * dt);
                     bodies[b].angular_velocity[0] += axis_a[0] * dw;
                     bodies[b].angular_velocity[1] += axis_a[1] * dw;
                     bodies[b].angular_velocity[2] += axis_a[2] * dw;
@@ -142,8 +140,7 @@ pub fn solve_motor_joint_xpbd(joint: &MotorJoint3D, bodies: &mut [RigidBody3D], 
             let target_pose = bodies[a].pose.motor_mul(&j.relative_motor).normalize();
             let w_b = bodies[b].effective_inv_mass();
             if w_b > 0.0 {
-                let stiffness =
-                    (1.0 / (1.0 + j.compliance / (dt * dt).max(1e-6))).clamp(0.0, 1.0);
+                let stiffness = (1.0 / (1.0 + j.compliance / (dt * dt).max(1e-6))).clamp(0.0, 1.0);
                 bodies[b].pose = bodies[b].pose.sclerp(&target_pose, stiffness);
                 bodies[b].linear_velocity = bodies[a].linear_velocity;
                 bodies[b].angular_velocity = bodies[a].angular_velocity;
@@ -262,10 +259,8 @@ mod tests {
 
     #[test]
     fn ball_motor_joint_pulls_separated_anchors_together() {
-        let b0 = RigidBody3D::new_static(
-            Motor::identity(),
-            ColliderShape3D::Sphere { radius: 0.2 },
-        );
+        let b0 =
+            RigidBody3D::new_static(Motor::identity(), ColliderShape3D::Sphere { radius: 0.2 });
         let b1 = RigidBody3D::new_dynamic(
             motor_translate([0.0, -2.0, 0.0]),
             1.0,
@@ -282,6 +277,10 @@ mod tests {
 
         solve_motor_joint_xpbd(&joint, &mut bodies, 1.0 / 64.0);
         let pos1 = bodies[1].pose.translation();
-        assert!((pos1[1] + 1.0).abs() < 1e-4, "expected y = -1.0, got {}", pos1[1]);
+        assert!(
+            (pos1[1] + 1.0).abs() < 1e-4,
+            "expected y = -1.0, got {}",
+            pos1[1]
+        );
     }
 }

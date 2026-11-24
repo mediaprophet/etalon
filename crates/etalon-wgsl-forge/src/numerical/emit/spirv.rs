@@ -16,7 +16,7 @@
 //! trivially round-trippable with `split(';')` + `u32::from_str`; the first word
 //! is always the SPIR-V magic number `0x07230203` = `119734787` decimal.
 
-use super::{GeneratedShader, emit_wgsl};
+use super::{emit_wgsl, GeneratedShader};
 use crate::numerical::{ForgeError, KernelSpec, Schedule};
 
 /// SPIR-V opcodes used by the workgroup-size patcher.

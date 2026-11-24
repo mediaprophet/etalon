@@ -90,10 +90,7 @@ impl PhaseCosts {
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum BreakEvenStatus {
-    CandidateWins {
-        from_n: u64,
-        until_n: Option<u64>,
-    },
+    CandidateWins { from_n: u64, until_n: Option<u64> },
     BaselineRemains,
     Inconclusive,
 }

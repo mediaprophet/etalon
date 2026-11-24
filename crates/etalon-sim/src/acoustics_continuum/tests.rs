@@ -1,7 +1,6 @@
 //! Comprehensive unit tests for QAC continuum numerical solvers, room acoustics,
 //! Helmholtz frequency-domain solvers, and Kramers-Kronig attenuation-dispersion causality.
 
-use core::f64::consts::PI;
 use super::{
     assert_b32_scalar_budget,
     attenuation_kk::{MultiRelaxationMedium, PowerLawAttenuation},
@@ -28,6 +27,7 @@ use super::{
         SurfacePatch,
     },
 };
+use core::f64::consts::PI;
 
 #[test]
 fn c02_mode00_water_algebra_and_scale_factors() {
@@ -234,10 +234,18 @@ fn c02_mode00_fdtd_courant_gate_convergence_and_bitwise_restart() {
         // Bit-exact continuation verification (C02-C09).
         assert_eq!(state.step_index, restarted.step_index);
         for (a, b) in state.p.iter().zip(restarted.p.iter()) {
-            assert_eq!(a.to_bits(), b.to_bits(), "restart p must be bitwise identical");
+            assert_eq!(
+                a.to_bits(),
+                b.to_bits(),
+                "restart p must be bitwise identical"
+            );
         }
         for (a, b) in state.vx.iter().zip(restarted.vx.iter()) {
-            assert_eq!(a.to_bits(), b.to_bits(), "restart vx must be bitwise identical");
+            assert_eq!(
+                a.to_bits(),
+                b.to_bits(),
+                "restart vx must be bitwise identical"
+            );
         }
 
         // Check collocated cell interpolation at step n = total_steps.

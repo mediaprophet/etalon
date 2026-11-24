@@ -9,8 +9,8 @@
 //! - Analytical free-space 3D Green's function $G(r) = \frac{e^{ikr}}{4\pi r}$ ($r > 0$) and
 //!   rectangular cavity Dirichlet/Neumann eigenfrequencies and eigenmodes.
 
-use core::f64::consts::PI;
 use super::fdtd_fluid::NumericalError;
+use core::f64::consts::PI;
 
 /// Complex double-precision scalar `re + i * im`.
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
@@ -157,7 +157,12 @@ impl HelmholtzConfig {
             ));
         }
         let [dx, dy, dz] = self.spacing_m;
-        if !dx.is_finite() || !dy.is_finite() || !dz.is_finite() || dx <= 0.0 || dy <= 0.0 || dz <= 0.0
+        if !dx.is_finite()
+            || !dy.is_finite()
+            || !dz.is_finite()
+            || dx <= 0.0
+            || dy <= 0.0
+            || dz <= 0.0
         {
             return Err(NumericalError::InvalidGrid(
                 "HelmholtzConfig spacing_m components must be finite and > 0",
@@ -245,7 +250,12 @@ pub fn apply_helmholtz_operator(
                     for iz in 0..nz {
                         let c = idx(ix, iy, iz);
                         if !periodic
-                            && (ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz)
+                            && (ix == 0
+                                || ix + 1 == nx
+                                || iy == 0
+                                || iy + 1 == ny
+                                || iz == 0
+                                || iz + 1 == nz)
                         {
                             out[c] = u[c];
                             continue;
@@ -281,7 +291,12 @@ pub fn apply_helmholtz_operator(
                     for iz in 0..nz {
                         let c = idx(ix, iy, iz);
                         if !periodic
-                            && (ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz)
+                            && (ix == 0
+                                || ix + 1 == nx
+                                || iy == 0
+                                || iy + 1 == ny
+                                || iz == 0
+                                || iz + 1 == nz)
                         {
                             out[c] = u[c];
                             continue;
@@ -292,8 +307,10 @@ pub fn apply_helmholtz_operator(
                             for oy in -1isize..=1 {
                                 let ny_i = ((iy as isize + oy).rem_euclid(ny as isize)) as usize;
                                 for oz in -1isize..=1 {
-                                    let nz_i = ((iz as isize + oz).rem_euclid(nz as isize)) as usize;
-                                    let manhattan = ox.unsigned_abs() + oy.unsigned_abs() + oz.unsigned_abs();
+                                    let nz_i =
+                                        ((iz as isize + oz).rem_euclid(nz as isize)) as usize;
+                                    let manhattan =
+                                        ox.unsigned_abs() + oy.unsigned_abs() + oz.unsigned_abs();
                                     let w = match manhattan {
                                         0 => w0,
                                         1 => w_face,
@@ -503,7 +520,9 @@ pub fn step_helmholtz_jacobi(
     }
     let [dx, dy, dz] = cfg.spacing_m;
     let center_lap = match cfg.stencil {
-        HelmholtzStencil::SevenPoint => -2.0 * (1.0 / (dx * dx) + 1.0 / (dy * dy) + 1.0 / (dz * dz)),
+        HelmholtzStencil::SevenPoint => {
+            -2.0 * (1.0 / (dx * dx) + 1.0 / (dy * dy) + 1.0 / (dz * dz))
+        }
         HelmholtzStencil::TwentySevenPointIsotropic => (-128.0 / 30.0) / (dx * dx),
     };
     let diag = Complex64::new(center_lap + k2.re, k2.im);
@@ -520,7 +539,12 @@ pub fn step_helmholtz_jacobi(
                 let r = rhs[c].sub(scratch_residual[c]);
                 sum_sq += r.norm_sqr();
                 let is_bnd = !periodic
-                    && (ix == 0 || ix + 1 == nx || iy == 0 || iy + 1 == ny || iz == 0 || iz + 1 == nz);
+                    && (ix == 0
+                        || ix + 1 == nx
+                        || iy == 0
+                        || iy + 1 == ny
+                        || iz == 0
+                        || iz + 1 == nz);
                 let d = if is_bnd { Complex64::ONE } else { diag };
                 solution[c] = solution[c].add(r.div(d).scale(omega_relax));
             }
@@ -532,7 +556,10 @@ pub fn step_helmholtz_jacobi(
 /// Analytical 3D free-space outgoing Green's function
 /// $$G(r) = \frac{e^{i k r}}{4\pi r}, \qquad r = \|\mathbf{x} - \mathbf{x}_0\|_2 > 0$$
 /// Rejects $r \le 0$ singularity per C02.
-pub fn helmholtz_greens_function_3d(distance_m: f64, k: Complex64) -> Result<Complex64, NumericalError> {
+pub fn helmholtz_greens_function_3d(
+    distance_m: f64,
+    k: Complex64,
+) -> Result<Complex64, NumericalError> {
     if !distance_m.is_finite() || distance_m <= 0.0 {
         return Err(NumericalError::DomainError(
             "3D Helmholtz Green's function requires finite distance_m > 0 (singular at r=0)",
@@ -546,10 +573,7 @@ pub fn helmholtz_greens_function_3d(distance_m: f64, k: Complex64) -> Result<Com
     // i * k * r = i * (k_re + i * k_im) * r = -k_im * r + i * k_re * r
     let exp_mag = (-k.im * distance_m).exp() / (4.0 * PI * distance_m);
     let phase = k.re * distance_m;
-    Ok(Complex64::new(
-        exp_mag * phase.cos(),
-        exp_mag * phase.sin(),
-    ))
+    Ok(Complex64::new(exp_mag * phase.cos(), exp_mag * phase.sin()))
 }
 
 /// Analytical eigenfrequency $f_{n_x,n_y,n_z}$ (in Hz) of a 3D rectangular acoustic cavity

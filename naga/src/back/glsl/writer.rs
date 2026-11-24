@@ -46,7 +46,8 @@ pub struct Writer<'a, W> {
     /// Number of user-defined clip planes. Only non-zero for vertex shaders.
     clip_distance_count: u32,
     /// Emulated read-only storage globals mapped to `usampler2D` uniforms.
-    emulated_storage_globals: crate::FastHashMap<Handle<crate::GlobalVariable>, EmulatedStorageMapping>,
+    emulated_storage_globals:
+        crate::FastHashMap<Handle<crate::GlobalVariable>, EmulatedStorageMapping>,
     /// Type layouter, populated when `emulate_readonly_storage_with_textures` is enabled.
     layouter: proc::Layouter,
 }
@@ -408,7 +409,11 @@ impl<'a, W: Write> Writer<'a, W> {
                 // All other globals are written by `write_global`
                 _ => {
                     if let Some(mapping) = self.emulated_storage_globals.get(&handle).cloned() {
-                        writeln!(self.out, "uniform highp usampler2D {};", mapping.texture_name)?;
+                        writeln!(
+                            self.out,
+                            "uniform highp usampler2D {};",
+                            mapping.texture_name
+                        )?;
                         writeln!(self.out, "uniform int {};", mapping.width_uniform)?;
                         writeln!(self.out, "uniform uint {};", mapping.byte_size_uniform)?;
                         writeln!(self.out)?;
@@ -4779,7 +4784,10 @@ impl<'a, W: Write> Writer<'a, W> {
             self.out,
             "    uint max_word = (byte_size >= 4u) ? ((byte_size >> 2u) - 1u) : 0u;"
         )?;
-        writeln!(self.out, "    uint word_idx = min(byte_off >> 2u, max_word);")?;
+        writeln!(
+            self.out,
+            "    uint word_idx = min(byte_off >> 2u, max_word);"
+        )?;
         writeln!(self.out, "    int texel_idx = int(word_idx >> 2u);")?;
         writeln!(self.out, "    int comp = int(word_idx & 3u);")?;
         writeln!(
@@ -4919,7 +4927,10 @@ impl<'a, W: Write> Writer<'a, W> {
                         if r > 0 {
                             write!(self.out, ", ")?;
                         }
-                        let off = format!("base_off + {}u", u32::from(c) * col_stride + u32::from(r) * 4);
+                        let off = format!(
+                            "base_off + {}u",
+                            u32::from(c) * col_stride + u32::from(r) * 4
+                        );
                         self.write_emulated_scalar_expr(scalar, "tex", "width", "byte_size", &off)?;
                     }
                     write!(self.out, ")")?;
@@ -4950,7 +4961,13 @@ impl<'a, W: Write> Writer<'a, W> {
                     count.get()
                 )?;
                 write!(self.out, "        res[i] = ")?;
-                self.write_emulated_value_load(base, "tex", "width", "byte_size", &format!("base_off + i * {stride}u"))?;
+                self.write_emulated_value_load(
+                    base,
+                    "tex",
+                    "width",
+                    "byte_size",
+                    &format!("base_off + i * {stride}u"),
+                )?;
                 writeln!(self.out, ";")?;
                 writeln!(self.out, "    }}")?;
                 writeln!(self.out, "    return res;")?;
@@ -5087,7 +5104,10 @@ impl<'a, W: Write> Writer<'a, W> {
                         )));
                     }
                 };
-                terms.push(EmulatedOffsetTerm::Expr { expr: index, stride });
+                terms.push(EmulatedOffsetTerm::Expr {
+                    expr: index,
+                    stride,
+                });
                 Ok(Some((handle, terms)))
             }
             _ => Ok(None),

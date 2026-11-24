@@ -41,8 +41,7 @@ pub mod query {
 pub use broadphase_bvh::{Aabb3D, BroadphaseBvh, BvhLeafEntry};
 pub use continuum_bridge::{
     couple_rigid_body_with_botanical_stem, couple_rigid_body_with_hydro,
-    couple_rigid_body_with_soil, BotanicalImpactOutcome, HydroCouplingOutcome,
-    SoilCouplingOutcome,
+    couple_rigid_body_with_soil, BotanicalImpactOutcome, HydroCouplingOutcome, SoilCouplingOutcome,
 };
 pub use fracture_csg::{
     evaluate_and_fracture_body, evaluate_stress_cleavage_partition, FractureOutcome3D,

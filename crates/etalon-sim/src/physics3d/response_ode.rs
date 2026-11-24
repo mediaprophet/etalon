@@ -43,7 +43,13 @@ pub struct Rk4Integrator4D {
 impl Rk4Integrator4D {
     #[inline]
     pub const fn new(dt: f64, max_iterations: u32) -> Self {
-        Self { state: [0.0; 4], dt, t: 0.0, max_iterations, iteration: 0 }
+        Self {
+            state: [0.0; 4],
+            dt,
+            t: 0.0,
+            max_iterations,
+            iteration: 0,
+        }
     }
 
     pub fn integrate<F: ODEFunction4D>(
@@ -74,7 +80,11 @@ impl Rk4Integrator4D {
             self.rk4_step(f, step)?;
             self.iteration += 1;
         }
-        Ok(ODEState4D { y: self.state, t: self.t, dt: self.dt })
+        Ok(ODEState4D {
+            y: self.state,
+            t: self.t,
+            dt: self.dt,
+        })
     }
 
     #[inline]
@@ -136,12 +146,21 @@ pub struct DrivenSpring {
 impl ODEFunction4D for DrivenSpring {
     #[inline]
     fn derivatives(&self, _t: f64, y: &[f64; 4]) -> [f64; 4] {
-        [y[1], self.stiffness * (self.target - y[0]) - self.damping * y[1], 0.0, 0.0]
+        [
+            y[1],
+            self.stiffness * (self.target - y[0]) - self.damping * y[1],
+            0.0,
+            0.0,
+        ]
     }
 }
 
 /// Steps a [`DrivenSpring`] over `dt` (`0.0..=0.05` s), substepped at $\le 1/240$ s via [`Rk4Integrator4D`].
-pub fn step_spring(state: SpringState, model: DrivenSpring, dt: f64) -> ResponseOdeResult<SpringState> {
+pub fn step_spring(
+    state: SpringState,
+    model: DrivenSpring,
+    dt: f64,
+) -> ResponseOdeResult<SpringState> {
     if [
         state.position,
         state.velocity,
@@ -166,7 +185,8 @@ pub fn step_spring(state: SpringState, model: DrivenSpring, dt: f64) -> Response
         return Ok(state);
     }
     let mut solver = Rk4Integrator4D::new(dt.min(1.0 / 240.0), 16);
-    let integrated = solver.integrate(&model, 0.0, [state.position, state.velocity, 0.0, 0.0], dt)?;
+    let integrated =
+        solver.integrate(&model, 0.0, [state.position, state.velocity, 0.0, 0.0], dt)?;
     let lower = model.target - model.max_displacement;
     let upper = model.target + model.max_displacement;
     let position = integrated.y[0].clamp(lower, upper);
@@ -187,12 +207,21 @@ pub struct ThermalTargets {
 impl ODEFunction4D for ThermalTargets {
     #[inline]
     fn derivatives(&self, _t: f64, y: &[f64; 4]) -> [f64; 4] {
-        [(self.temperatures[0] - y[0]) * self.rates[0], (self.temperatures[1] - y[1]) * self.rates[1], 0.0, 0.0]
+        [
+            (self.temperatures[0] - y[0]) * self.rates[0],
+            (self.temperatures[1] - y[1]) * self.rates[1],
+            0.0,
+            0.0,
+        ]
     }
 }
 
 /// Steps two thermal channels toward `targets` over `dt` (`0.0..=0.05` s) via [`Rk4Integrator4D`].
-pub fn step_thermal(temperatures: [f64; 2], targets: ThermalTargets, dt: f64) -> ResponseOdeResult<[f64; 2]> {
+pub fn step_thermal(
+    temperatures: [f64; 2],
+    targets: ThermalTargets,
+    dt: f64,
+) -> ResponseOdeResult<[f64; 2]> {
     if temperatures
         .iter()
         .chain(targets.temperatures.iter())
@@ -208,7 +237,12 @@ pub fn step_thermal(temperatures: [f64; 2], targets: ThermalTargets, dt: f64) ->
         return Ok(temperatures);
     }
     let mut solver = Rk4Integrator4D::new(dt.min(1.0 / 240.0), 16);
-    let state = solver.integrate(&targets, 0.0, [temperatures[0], temperatures[1], 0.0, 0.0], dt)?;
+    let state = solver.integrate(
+        &targets,
+        0.0,
+        [temperatures[0], temperatures[1], 0.0, 0.0],
+        dt,
+    )?;
     Ok([state.y[0], state.y[1]])
 }
 
@@ -217,16 +251,28 @@ mod tests {
     use super::*;
 
     fn model() -> DrivenSpring {
-        DrivenSpring { target: 1.0, stiffness: 25.0, damping: 10.0, max_displacement: 2.0, max_speed: 10.0 }
+        DrivenSpring {
+            target: 1.0,
+            stiffness: 25.0,
+            damping: 10.0,
+            max_displacement: 2.0,
+            max_speed: 10.0,
+        }
     }
 
     #[test]
     fn driven_spring_and_thermal_ode_match_analytic_references() {
-        let mut state = SpringState { position: 0.0, velocity: 0.0 };
+        let mut state = SpringState {
+            position: 0.0,
+            velocity: 0.0,
+        };
         assert_eq!(step_spring(state, model(), 0.0).unwrap(), state);
         let one = step_spring(state, model(), 0.05).unwrap();
         let two = step_spring(step_spring(state, model(), 0.025).unwrap(), model(), 0.025).unwrap();
-        assert!((one.position - two.position).abs() < 1e-12 && (one.velocity - two.velocity).abs() < 1e-12);
+        assert!(
+            (one.position - two.position).abs() < 1e-12
+                && (one.velocity - two.velocity).abs() < 1e-12
+        );
 
         for _ in 0..20 {
             state = step_spring(state, model(), 0.05).unwrap();
@@ -236,19 +282,34 @@ mod tests {
 
         let mut clamped_m = model();
         clamped_m.max_displacement = 0.1;
-        let clamped = step_spring(SpringState { position: 4.0, velocity: 9.0 }, clamped_m, 0.01).unwrap();
+        let clamped = step_spring(
+            SpringState {
+                position: 4.0,
+                velocity: 9.0,
+            },
+            clamped_m,
+            0.01,
+        )
+        .unwrap();
         assert_eq!((clamped.position, clamped.velocity), (1.1, 0.0));
-        assert_eq!(step_spring(state, model(), 0.051), Err(ResponseOdeError::InvalidParameters));
+        assert_eq!(
+            step_spring(state, model(), 0.051),
+            Err(ResponseOdeError::InvalidParameters)
+        );
 
         let initial = [140.0, 112.0];
-        let targets = ThermalTargets { temperatures: [85.0, 75.0], rates: [0.028, 0.04] };
+        let targets = ThermalTargets {
+            temperatures: [85.0, 75.0],
+            rates: [0.028, 0.04],
+        };
         assert_eq!(step_thermal(initial, targets, 0.0).unwrap(), initial);
         let mut t_state = initial;
         for _ in 0..200 {
             t_state = step_thermal(t_state, targets, 0.05).unwrap();
         }
         for i in 0..2 {
-            let expected = targets.temperatures[i] + (initial[i] - targets.temperatures[i]) * (-targets.rates[i] * 10.0).exp();
+            let expected = targets.temperatures[i]
+                + (initial[i] - targets.temperatures[i]) * (-targets.rates[i] * 10.0).exp();
             assert!((t_state[i] - expected).abs() < 1e-9);
         }
     }
