@@ -400,7 +400,7 @@ pub struct Buffer {
     /// `Buffer` is `Clone`, so the guard is shared via `Arc`
     /// and only fires its callback once every clone is dropped.
     drop_guard: Option<Arc<crate::DropGuard>>,
-    write_generation: Arc<core::sync::atomic::AtomicU64>,
+    write_generation: Arc<etalon_sync::atomic::AtomicU64>,
 }
 
 impl Buffer {
@@ -696,7 +696,7 @@ enum RawBinding {
         raw: glow::Buffer,
         offset: i32,
         size: i32,
-        write_generation: Arc<core::sync::atomic::AtomicU64>,
+        write_generation: Arc<etalon_sync::atomic::AtomicU64>,
         shadow: Arc<Mutex<EmulatedStorageShadowState>>,
     },
     Texture {
@@ -1118,7 +1118,7 @@ enum Command {
         buffer: glow::Buffer,
         offset: i32,
         size: i32,
-        write_generation: Arc<core::sync::atomic::AtomicU64>,
+        write_generation: Arc<etalon_sync::atomic::AtomicU64>,
         shadow: Arc<Mutex<EmulatedStorageShadowState>>,
     },
     SetEmulatedStorageUniforms(Arc<[EmulatedStorageUniformDesc]>),

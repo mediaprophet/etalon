@@ -55,8 +55,8 @@ pub enum QkNorm {
     FoldedMultiplier,
 }
 
-/// q_gate rows are per head [Q[head_dim], gate[head_dim]], matching the
-/// pinned HF view(..., heads, 2*head_dim).chunk(2, -1). No biases are admitted.
+/// q_gate rows are per head `[Q[head_dim], gate[head_dim]]`, matching the
+/// pinned HF `view(..., heads, 2*head_dim).chunk(2, -1)`. No biases are admitted.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct Qwen35AttentionRoles {
     pub geometry: Qwen35AttentionGeometry,

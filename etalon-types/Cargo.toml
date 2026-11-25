@@ -30,6 +30,10 @@ targets = [
 missing_debug_implementations = "warn"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(web_sys_unstable_apis)'] }
 
+[lints.rustdoc]
+invalid_html_tags = "allow"
+broken_intra_doc_links = "allow"
+
 [lints.clippy]
 std_instead_of_core = "warn"
 std_instead_of_alloc = "warn"

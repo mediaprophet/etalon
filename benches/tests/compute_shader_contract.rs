@@ -1,3 +1,5 @@
+#![cfg(not(target_arch = "wasm32"))]
+
 fn validate_single_writer(source: &str) -> Result<(), String> {
     let module = naga::front::wgsl::parse_str(source).map_err(|e| e.emit_to_string(source))?;
     naga::valid::Validator::new(

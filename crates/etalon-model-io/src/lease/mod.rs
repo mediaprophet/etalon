@@ -2,8 +2,8 @@
 //! Local disk/NTFS support is verified from the opened exclusion handle; remote,
 //! redirected, unknown filesystem or ambiguous query results fail before mapping.
 //! A retained read handle excludes ordinary writers/delete access before reading
-//! length, mapping or hashing. All consumers must retain Arc<ModelLease> or borrow
-//! its bytes; returning a bare Arc<Mmap> would break this lifetime guarantee.
+//! length, mapping or hashing. All consumers must retain `Arc<ModelLease>` or borrow
+//! its bytes; returning a bare `Arc<Mmap>` would break this lifetime guarantee.
 //!
 //! Source-byte plus mapped-range accounting is not a measured resident-memory
 //! ceiling: hashing touches all pages, and OS working set/page-cache costs remain.

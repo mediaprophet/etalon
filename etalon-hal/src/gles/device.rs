@@ -324,7 +324,7 @@ impl super::Device {
                 offset_of_current_mapping: 0,
             })),
             drop_guard: crate::DropGuard::from_option(drop_callback).map(Arc::new),
-            write_generation: Arc::new(core::sync::atomic::AtomicU64::new(0)),
+            write_generation: Arc::new(etalon_sync::atomic::AtomicU64::new(0)),
         }
     }
 
@@ -746,7 +746,7 @@ impl crate::Device for super::Device {
                         offset_of_current_mapping: 0,
                     })),
                     drop_guard: None,
-                    write_generation: Arc::new(core::sync::atomic::AtomicU64::new(0)),
+                    write_generation: Arc::new(etalon_sync::atomic::AtomicU64::new(0)),
                 },
                 desc.size,
             ));
@@ -863,7 +863,7 @@ impl crate::Device for super::Device {
                     offset_of_current_mapping: 0,
                 })),
                 drop_guard: None,
-                write_generation: Arc::new(core::sync::atomic::AtomicU64::new(0)),
+                write_generation: Arc::new(etalon_sync::atomic::AtomicU64::new(0)),
             },
             desc.size,
         ))

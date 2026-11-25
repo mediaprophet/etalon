@@ -3,7 +3,8 @@
 //! Record functions are atomic stores for the queue submit hot path.
 //! Snapshot/JSON lives on the portal diagnostic cadence, not per draw.
 
-use core::sync::atomic::{AtomicI32, AtomicU32, AtomicU64, Ordering};
+use core::sync::atomic::{AtomicI32, AtomicU32, Ordering};
+use etalon_sync::atomic::AtomicU64;
 
 const RELAXED: Ordering = Ordering::Relaxed;
 
