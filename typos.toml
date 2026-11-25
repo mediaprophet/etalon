@@ -48,6 +48,19 @@ matric = "matric"
 MOR = "MOR"
 thi = "thi"
 
+# A DXC command line argument
+Fo = "Fo"
+
+# Abbreviation of Structured Exception Handling
+SEH = "SEH"
+
+# Content Light Level (HDR mastering metadata, e.g. MaxCLL)
+CLL = "CLL"
+
+# Usernames
+Healthire = "Healthire"
+REASY = "REASY"
+
 [default.extend-identifiers]
 FIEL = "FIEL"
 numer = "numer"
@@ -69,17 +82,9 @@ toi = "toi"
 matric = "matric"
 MOR = "MOR"
 thi = "thi"
-
-# A DXC command line argument
 Fo = "Fo"
-
-# Abbreviation of Structured Exception Handling
 SEH = "SEH"
-
-# Content Light Level (HDR mastering metadata, e.g. MaxCLL)
 CLL = "CLL"
-
-# Usernames
 Healthire = "Healthire"
 REASY = "REASY"
 

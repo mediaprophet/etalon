@@ -147,6 +147,7 @@ unnecessary_unwrap = "allow"
 option_as_ref_deref = "allow"
 drop_non_drop = "allow"
 cmp_owned = "allow"
+arc_with_non_send_sync = "allow"
 # NOTE: clippy configuration values (disallowed-types and
 # large-error-threshold) are in other file: clippy.toml
 
