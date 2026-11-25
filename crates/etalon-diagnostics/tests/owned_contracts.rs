@@ -1,3 +1,5 @@
+#![cfg(not(target_family = "wasm"))]
+
 use etalon_diagnostics::{
     ipc::{
         decode_matching_response, decode_response, encode_response, WorkerArtifacts, RESPONSE_BYTES,

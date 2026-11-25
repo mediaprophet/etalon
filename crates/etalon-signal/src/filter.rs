@@ -56,25 +56,24 @@ pub(crate) fn sin_cos_f64(x: f64) -> (f64, f64) {
     let k = round_symmetric_f64(x * INV_PIO2);
     let r = (x - k * PIO2_HI) - k * PIO2_LO;
     let r2 = r * r;
-    let sin_r = r
-        * (1.0
-            + r2 * (-1.0 / 6.0
-                + r2 * (1.0 / 120.0
-                    + r2 * (-1.0 / 5040.0
-                        + r2 * (1.0 / 362_880.0
-                            + r2 * (-1.0 / 39_916_800.0
-                                + r2 * (1.0 / 6_227_020_800.0
-                                    + r2 * (-1.0 / 1_307_674_368_000.0
-                                        + r2 * (1.0 / 355_687_428_096_000.0)))))))));
-    let cos_r = 1.0
-        + r2 * (-0.5
-            + r2 * (1.0 / 24.0
-                + r2 * (-1.0 / 720.0
-                    + r2 * (1.0 / 40_320.0
-                        + r2 * (-1.0 / 3_628_800.0
-                            + r2 * (1.0 / 479_001_600.0
-                                + r2 * (-1.0 / 87_178_291_200.0
-                                    + r2 * (1.0 / 20_922_789_888_000.0))))))));
+    let mut sin_poly = 1.0 / 355_687_428_096_000.0;
+    sin_poly = -1.0 / 1_307_674_368_000.0 + r2 * sin_poly;
+    sin_poly = 1.0 / 6_227_020_800.0 + r2 * sin_poly;
+    sin_poly = -1.0 / 39_916_800.0 + r2 * sin_poly;
+    sin_poly = 1.0 / 362_880.0 + r2 * sin_poly;
+    sin_poly = -1.0 / 5040.0 + r2 * sin_poly;
+    sin_poly = 1.0 / 120.0 + r2 * sin_poly;
+    sin_poly = -1.0 / 6.0 + r2 * sin_poly;
+    let sin_r = r * (1.0 + r2 * sin_poly);
+    let mut cos_poly = 1.0 / 20_922_789_888_000.0;
+    cos_poly = -1.0 / 87_178_291_200.0 + r2 * cos_poly;
+    cos_poly = 1.0 / 479_001_600.0 + r2 * cos_poly;
+    cos_poly = -1.0 / 3_628_800.0 + r2 * cos_poly;
+    cos_poly = 1.0 / 40_320.0 + r2 * cos_poly;
+    cos_poly = -1.0 / 720.0 + r2 * cos_poly;
+    cos_poly = 1.0 / 24.0 + r2 * cos_poly;
+    cos_poly = -0.5 + r2 * cos_poly;
+    let cos_r = 1.0 + r2 * cos_poly;
     match (k as i64) & 3 {
         0 => (sin_r, cos_r),
         1 => (cos_r, -sin_r),
@@ -112,19 +111,19 @@ pub(crate) fn exp_f64(x: f64) -> f64 {
     }
     let k_f = round_symmetric_f64(x * core::f64::consts::LOG2_E);
     let r = (x - k_f * LN2_HI) - k_f * LN2_LO;
-    let exp_r = 1.0
-        + r * (1.0
-            + r * (0.5
-                + r * (1.0 / 6.0
-                    + r * (1.0 / 24.0
-                        + r * (1.0 / 120.0
-                            + r * (1.0 / 720.0
-                                + r * (1.0 / 5040.0
-                                    + r * (1.0 / 40_320.0
-                                        + r * (1.0 / 362_880.0
-                                            + r * (1.0 / 3_628_800.0
-                                                + r * (1.0 / 39_916_800.0
-                                                    + r * (1.0 / 479_001_600.0))))))))))));
+    let mut exp_poly = 1.0 / 479_001_600.0;
+    exp_poly = 1.0 / 39_916_800.0 + r * exp_poly;
+    exp_poly = 1.0 / 3_628_800.0 + r * exp_poly;
+    exp_poly = 1.0 / 362_880.0 + r * exp_poly;
+    exp_poly = 1.0 / 40_320.0 + r * exp_poly;
+    exp_poly = 1.0 / 5040.0 + r * exp_poly;
+    exp_poly = 1.0 / 720.0 + r * exp_poly;
+    exp_poly = 1.0 / 120.0 + r * exp_poly;
+    exp_poly = 1.0 / 24.0 + r * exp_poly;
+    exp_poly = 1.0 / 6.0 + r * exp_poly;
+    exp_poly = 0.5 + r * exp_poly;
+    exp_poly = 1.0 + r * exp_poly;
+    let exp_r = 1.0 + r * exp_poly;
     exp_r * f64::from_bits(((1023 + (k_f as i64)) as u64) << 52)
 }
 
@@ -148,13 +147,13 @@ pub(crate) fn ln_f64(x: f64) -> f64 {
     }
     let u = (m - 1.0) / (m + 1.0);
     let u2 = u * u;
-    let ln_m = 2.0
-        * u
-        * (1.0
-            + u2 * (1.0 / 3.0
-                + u2 * (1.0 / 5.0
-                    + u2 * (1.0 / 7.0
-                        + u2 * (1.0 / 9.0 + u2 * (1.0 / 11.0 + u2 * (1.0 / 13.0 + u2 / 15.0)))))));
+    let mut ln_poly = 1.0 / 13.0 + u2 / 15.0;
+    ln_poly = 1.0 / 11.0 + u2 * ln_poly;
+    ln_poly = 1.0 / 9.0 + u2 * ln_poly;
+    ln_poly = 1.0 / 7.0 + u2 * ln_poly;
+    ln_poly = 1.0 / 5.0 + u2 * ln_poly;
+    ln_poly = 1.0 / 3.0 + u2 * ln_poly;
+    let ln_m = 2.0 * u * (1.0 + u2 * ln_poly);
     (exp as f64) * core::f64::consts::LN_2 + ln_m
 }
 

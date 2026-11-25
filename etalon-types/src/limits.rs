@@ -1125,7 +1125,7 @@ pub struct DownlevelCapabilities {
 impl Default for DownlevelCapabilities {
     fn default() -> Self {
         Self {
-            flags: DownlevelFlags::all(),
+            flags: DownlevelFlags::all().difference(DownlevelFlags::READ_ONLY_STORAGE_EMULATION),
             limits: DownlevelLimits::default(),
             shader_model: ShaderModel::Sm5,
         }
