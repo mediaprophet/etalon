@@ -11,3 +11,6 @@ description = "Native no-std Qualcomm Hexagon sensing DSP provider"
 [dependencies]
 etalon-sense-core = { path = "../../crates/etalon-sense-core" }
 etalon-sense-dsp = { path = "../etalon-sense-dsp" }
+
+[lints]
+workspace = true

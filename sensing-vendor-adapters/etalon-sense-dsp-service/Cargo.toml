@@ -16,3 +16,6 @@ ffi = []
 etalon-sense-core = { path = "../../crates/etalon-sense-core" }
 etalon-sense-dsp-hexagon = { path = "../etalon-sense-dsp-hexagon" }
 etalon-sense-dsp-wire = { path = "../etalon-sense-dsp-wire" }
+
+[lints]
+workspace = true

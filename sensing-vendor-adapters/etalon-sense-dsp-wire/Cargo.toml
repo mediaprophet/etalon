@@ -9,3 +9,6 @@ publish.workspace = true
 description = "Bounded pointer-free Etalon IQ power DSP service wire contract"
 
 [dependencies]
+
+[lints]
+workspace = true

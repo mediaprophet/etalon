@@ -12,3 +12,6 @@ description = "Opt-in Qualcomm QNN HTP model execution for sensing"
 etalon-sense-deployment = { path = "../etalon-sense-deployment" }
 etalon-sense-npu = { path = "../etalon-sense-npu" }
 ort = { version = "=2.0.0-rc.15", default-features = false, features = ["std", "load-dynamic", "api-24", "qnn"] }
+
+[lints]
+workspace = true

@@ -40,7 +40,7 @@ sensing-gpu-metal = ["sensing-gpu", "etalon-sense/gpu-metal"]
 sensing-gpu-gles = ["sensing-gpu", "etalon-sense/gpu-gles"]
 
 [dependencies]
-etalon-resources = { path="../etalon-resources",features=["device"] }
+etalon-resources = { path = "../etalon-resources", features = ["device"] }
 etalon = { workspace = true }
 anvil-core = { workspace = true }
 anvil-gpu = { workspace = true }

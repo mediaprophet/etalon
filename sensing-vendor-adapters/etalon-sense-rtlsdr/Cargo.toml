@@ -14,3 +14,6 @@ etalon-sense-core = { path = "../../crates/etalon-sense-core" }
 
 [target.'cfg(any(windows, unix))'.dependencies]
 libloading = "=0.9.0"
+
+[lints]
+workspace = true

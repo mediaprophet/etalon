@@ -10,3 +10,6 @@ description = "Explicit multi-target DSP dispatch using Etalon sensing contracts
 
 [dependencies]
 etalon-sense-core = { path = "../../crates/etalon-sense-core" }
+
+[lints]
+workspace = true

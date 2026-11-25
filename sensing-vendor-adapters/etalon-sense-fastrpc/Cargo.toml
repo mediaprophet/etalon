@@ -16,3 +16,6 @@ etalon-sense-deployment = { path = "../etalon-sense-deployment" }
 
 [target.'cfg(any(target_os = "linux", target_os = "android"))'.dependencies]
 libloading = "=0.9.0"
+
+[lints]
+workspace = true

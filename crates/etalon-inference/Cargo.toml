@@ -22,7 +22,15 @@ inference-model = ["dep:etalon-model", "etalon-model/inference-model", "dep:byte
 native-weights = ["inference-model", "dep:memmap2", "dep:rayon", "dep:etalon-model-io"]
 qwen-metadata = ["inference-model"]
 qwen-native = ["qwen-metadata", "native-weights"]
-cuda = ["inference-model", "dep:etalon-wgsl-forge", "dep:etalon-resources", "dep:half", "dep:bytemuck", "dep:log", "dep:libc"]
+cuda = [
+    "inference-model",
+    "dep:etalon-wgsl-forge",
+    "dep:etalon-resources",
+    "dep:half",
+    "dep:bytemuck",
+    "dep:log",
+    "dep:libc"
+]
 
 [dependencies]
 etalon-inference-kernel = { version = "0.0.2", path = "../etalon-inference-kernel" }
@@ -39,7 +47,10 @@ log = { workspace = true, optional = true }
 
 [target.'cfg(not(target_arch = "wasm32"))'.dependencies]
 etalon-model-io = { path = "../etalon-model-io", optional = true }
-wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl"] }
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = [
+    "std",
+    "wgsl"
+] }
 etalon-wgsl-forge = { path = "../etalon-wgsl-forge", optional = true, features = ["runtime", "cuda"] }
 etalon-resources = { path = "../etalon-resources", optional = true, features = ["device"] }
 
@@ -47,17 +58,31 @@ etalon-resources = { path = "../etalon-resources", optional = true, features = [
 libc = { workspace = true, optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
-wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl"] }
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = [
+    "std",
+    "wgsl"
+] }
 
 [target.'cfg(target_os = "macos")'.dependencies]
-wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = ["std", "wgsl", "metal"] }
+wgpu = { package = "etalon", path = "../../etalon", optional = true, default-features = false, features = [
+    "std",
+    "wgsl",
+    "metal"
+] }
 
 [target.'cfg(windows)'.dependencies]
 windows = { workspace = true, optional = true, features = [
-    "Win32_AI_MachineLearning_DirectML", "Win32_Graphics_Direct3D",
-    "Win32_Graphics_Direct3D12", "Win32_Graphics_Dxgi", "Win32_Graphics_Dxgi_Common",
-    "Win32_Foundation", "Win32_Storage_FileSystem", "Win32_System_IO",
-    "Win32_System_Memory", "Win32_System_LibraryLoader", "Win32_System_Threading",
+    "Win32_AI_MachineLearning_DirectML",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D12",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+    "Win32_Foundation",
+    "Win32_Storage_FileSystem",
+    "Win32_System_IO",
+    "Win32_System_Memory",
+    "Win32_System_LibraryLoader",
+    "Win32_System_Threading",
     "Win32_Security",
 ] }
 
