@@ -35,6 +35,7 @@ fn decode(bytes: &[u8], out: &mut [u8]) -> Result<Rgba8Ktx2Image, Rgba8Ktx2Error
     decode_ktx2_rgba8_base_level(&document, out)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn decode_with_scratch(
     bytes: &[u8],
     out: &mut [u8],
@@ -44,6 +45,7 @@ fn decode_with_scratch(
     decode_ktx2_rgba8_base_level_with_scratch(&document, out, scratch)
 }
 
+#[cfg(not(target_arch = "wasm32"))]
 fn supercompressed_fixture(
     vk_format: u32,
     scheme: u32,
