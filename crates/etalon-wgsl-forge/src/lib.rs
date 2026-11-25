@@ -63,5 +63,5 @@ pub const NAGA_API_VERSION: &str = "30.0.0-etalon";
 pub const CUDARC_API_VERSION: &str = "0.12";
 pub const FORGE_CACHE_MAGIC: [u8; 8] = *b"ETALFORG";
 
-#[cfg(feature = "runtime")]
+#[cfg(all(feature = "runtime", not(target_family = "wasm")))]
 pub mod numerical;
